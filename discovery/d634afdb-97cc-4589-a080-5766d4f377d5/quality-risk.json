@@ -1,0 +1,151 @@
+{
+  "$schema": "olympus:artifact:quality-risk:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "assessment_date": "2026-09-28",
+  "assessment_pass": "quality-risk-assessment",
+  "structural_map_source": "discovery-structural-analysis/structural-analysis.json",
+  "risk_summary": {
+    "overall_risk_tier": "HIGH",
+    "top_risk_drivers": [
+      "Zero executable test coverage over the entire business-rules engine, and this is structurally proven (no <ProjectReference> from GildedRose.Tests to GildedRose.Console), not merely an unmeasured gap.",
+      "The application's only business logic, UpdateQuality (src/GildedRose.Console/Program.cs:37-111), is a single 75-line method with 5 levels of nested conditionals, 8 item-name magic-string comparisons, and 4 duplicated quality-increment blocks — no seam exists to test or safely modify it.",
+      "Both projects target .NET Framework 4.5 / 4.5.1, past Microsoft end-of-support, with no in-place path onto the FAA profile's AWS GovCloud / Amazon ECS-on-Fargate substrate (profiles/faa/config/common.yaml) without a full runtime port.",
+      "The build chain is non-hermetic and internet-dependent: build.bat downloads an unpinned NuGet.exe over HTTPS and restores from the deprecated nuget.org v2 feed (NuGet.config:7), and tasks.ps1 imports its Clean/Build/Test/Version task bodies from an out-of-repo psake.net 0.1.3 package not present in this workspace.",
+      "No SCA tool output or vulnerability database was supplied as an input to this assessment, so the 12 distinct NuGet package dependencies (several pinned to 2014-era versions) are UNASSESSED for known CVEs — this is a measurement gap, not a clean bill of health, and must not be read as 'no vulnerabilities found'.",
+      "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY (recorded per this task's binding instruction, not adopted as fact): the governing profile for this assessment is authoritatively `faa`, but the source tree is the publicly published, generic 'Gilded Rose Refactoring Kata' with no aviation/NAS/FAA content, and Pass 1 (structural-analysis.json open_questions[0]) separately observed a conflicting `AssemblyCompany(\"DSHS\")`/`Copyright \"DSHS 2015\"` attribution embedded in the shipped assembly metadata. Whether application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system is unconfirmed, which bears directly on whether the FAA-specific weighting used in this assessment (profiles/faa/scoring.yaml) is the correct lens at all."
+    ],
+    "highest_risk_modules": [
+      {
+        "module": "gildedrose-console",
+        "reason": "The entire application (160 of 172 LOC): hosts the process entry point, the seed data, the complete business-rules engine, and the domain model in one file/class/namespace, with 0% proven test coverage and the EOL runtime dependency."
+      },
+      {
+        "module": "gildedrose-tests",
+        "reason": "Structurally disconnected from production code (no <ProjectReference>, one tautological Assert.True(true) test) — the risk it carries is the false impression of a safety net where none exists."
+      }
+    ],
+    "regulatory_surface_flags": []
+  },
+  "technical_debt_score": {
+    "score": 76,
+    "scale": "0-100",
+    "band": "high",
+    "per_module": [
+      {
+        "module": "gildedrose-console",
+        "score": "76",
+        "band": "high",
+        "smell_count": "18",
+        "note": "All measured debt is concentrated here; this module is effectively the entire application."
+      },
+      {
+        "module": "gildedrose-tests",
+        "score": "n/a",
+        "band": "not-scored",
+        "note": "Test-scaffold module carries no production logic. Its contribution to debt is captured as the coverage gap on gildedrose-console (zero exercised production code), not as an independent module score."
+      }
+    ],
+    "contributing_factors": {
+      "smell_density": "18 weighted code-smell occurrences (sum of code_smells[].count for QR-001..QR-008 below) inside the gildedrose-console module (160 LOC per structural-analysis.json modules[0].loc) => normalized score = round(100 * 18 / 25) = 72/100. 25 weighted occurrences was chosen as the saturation point because a per-KLOC formula is unstable at this module's tiny size (160 LOC).",
+      "coverage_gap": "test_coverage.gap_to_baseline_pct = 80 (0% measured line coverage vs the profile's 80% default baseline) used directly as the 0-100 gap score.",
+      "vulnerability_count": "EXCLUDED from the weighted sum: measurement.method = unavailable — no SCA tool or vulnerability-database output was supplied as an input to this assessment. Treating an unmeasured input as 0 would misreport an unknown as a clean result, so its weight is dropped rather than defaulted to zero.",
+      "churn_rate": "EXCLUDED from the weighted sum: measurement.method = unavailable — the repository's history is a single commit ('Update README.md', no remote configured; structural-analysis.json open_questions[6]), which cannot support a commits/quarter figure.",
+      "weighting": "Default full-input weights per the rubric are smell_density 0.35, coverage_gap 0.35, vulnerability_count 0.15, churn_rate 0.15 (summing to 1.0). With the latter two unavailable, their combined 0.30 weight is redistributed proportionally across the two measured inputs, giving smell_density 0.50 and coverage_gap 0.50.",
+      "score_formula": "score = round(0.50 * smell_density_score + 0.50 * coverage_gap_score) = round(0.50*72 + 0.50*80) = round(76.0) = 76",
+      "band_thresholds": "Assessor-defined default (no FAA-profile-specific debt-band thresholds were found in profiles/faa/scoring.yaml or profiles/faa/risk-classification.yaml): 0-25 low, 26-50 moderate, 51-80 high, 81-100 critical."
+    },
+    "measurement": {
+      "method": "repository-scan",
+      "source": {
+        "citation": {
+          "type": "artifact",
+          "artifact": "structural-analysis.json",
+          "section": "coupling_indicators, summary_metrics, modules"
+        }
+      },
+      "confidence": "medium",
+      "notes": "Derived by hand from Pass 1's structural map plus a direct re-read of src/GildedRose.Console/Program.cs; no automated debt-scoring tool was run. Confidence is medium rather than high because two of the rubric's four inputs (vulnerability_count, churn_rate) are unmeasured and the smell-density normalization constant (25) is an assessor judgment call, stated explicitly in contributing_factors so a reviewer can substitute their own constant and rerun the math."
+    }
+  },
+  "vulnerabilities": [],
+  "test_coverage": {
+    "line_pct": 0,
+    "branch_pct": 0,
+    "overall": 0,
+    "suites": 1,
+    "per_module": {
+      "gildedrose-console": {
+        "line_pct": "0",
+        "branch_pct": "0",
+        "note": "Sole production module. No statement or branch in Program.cs/UpdateQuality can execute under the current test suite (see measurement.notes)."
+      },
+      "gildedrose-tests": {
+        "note": "The test harness itself; not a coverage target. Contains 1 test method (TestTheTruth), which asserts Assert.True(true) and calls no production code."
+      }
+    },
+    "gap_to_baseline_pct": 80,
+    "measurement": {
+      "method": "repository-scan",
+      "source": {
+        "citation": {
+          "type": "artifact",
+          "artifact": "structural-analysis.json",
+          "section": "modules[gildedrose-tests].coupling_signals, summary_metrics.test_methods_exercising_business_logic"
+        }
+      },
+      "confidence": "high",
+      "notes": "No coverage tool or CI-emitted coverage report exists for this application (primary_technology.ci_cd = [] in structural-analysis.json; no CI/CD config found in the repository). 0% is not a fabricated default: GildedRose.Tests.csproj declares zero <ProjectReference> to GildedRose.Console (confirmed by direct read of src/GildedRose.Tests/GildedRose.Tests.csproj:42-58 and a repo-wide grep for ProjectReference returning nothing), so the single test method at src/GildedRose.Tests/TestAssemblyTests.cs:7-11 (Assert.True(true)) is mechanically incapable of executing any statement in the production assembly. Line and branch coverage of gildedrose-console are therefore 0% by structural proof, which is the 'measurement unavailable' vs 'measurement = zero' distinction resolved in favor of a provable zero. gap_to_baseline_pct uses the profile's stated 80% default baseline; this application's risk_classification.yaml tier is unconfirmed (application-catalog-entry.md safety_tier = null), so the tier-specific 90%/80%/80% baselines in profiles/faa/risk-classification.yaml could not be selected between and the skill's stated 80% default was used instead."
+    }
+  },
+  "code_smells": [
+    {
+      "id": "QR-001",
+      "kind": "long-method",
+      "module": "gildedrose-console",
+      "count": 1
+    },
+    {
+      "id": "QR-002",
+      "kind": "god-class",
+      "module": "gildedrose-console",
+      "count": 1
+    },
+    {
+      "id": "QR-003",
+      "kind": "deep-nesting",
+      "module": "gildedrose-console",
+      "count": 1
+    },
+    {
+      "id": "QR-004",
+      "kind": "duplicated-code",
+      "module": "gildedrose-console",
+      "count": 4
+    },
+    {
+      "id": "QR-005",
+      "kind": "magic-string-dispatch",
+      "module": "gildedrose-console",
+      "count": 8
+    },
+    {
+      "id": "QR-006",
+      "kind": "cyclomatic-complexity-hotspot",
+      "module": "gildedrose-console",
+      "count": 1
+    },
+    {
+      "id": "QR-007",
+      "kind": "dead-code",
+      "module": "gildedrose-console",
+      "count": 1
+    },
+    {
+      "id": "QR-008",
+      "kind": "unguarded-invariants",
+      "module": "gildedrose-console",
+      "count": 1
+    }
+  ]
+}
