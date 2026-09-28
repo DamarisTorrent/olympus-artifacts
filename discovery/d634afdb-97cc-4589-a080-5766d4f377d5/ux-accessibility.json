@@ -1,0 +1,121 @@
+{
+  "$schema": "olympus:artifact:ux-accessibility:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "assessment_date": "2026-09-28",
+  "measurement_window": "No measurement window could be established. No usage telemetry, login system, audit log, or session/event logging of any kind exists anywhere in this application (structural-analysis.json summary_metrics: connection_strings 0, external_integration_points 0, environment_variable_reads 0; a case-insensitive grep of all 22 tracked files for connectionstring/HttpClient/WebRequest/Authenticate/Login/Identity/Principal returned zero matches). Every figure below that would normally come from a measurement window is instead labelled an instrumentation gap.",
+  "scope_caveat": "GOVERNING-PROFILE DISCREPANCY, carried forward from Pass 0/Pass 1 (not adopted here): this assessment is produced under the governing `faa` profile as directed, but the source tree contains no aviation/NAS/FAA content of any kind. It is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata' (README.md, attributed to @TerryHughes/@NotMyself, https://github.com/NotMyself/GildedRose) — a 172-line C# console app that models a retail inn's nightly inventory update, with no HTTP listener, database, scheduler, or GUI. src/GildedRose.Console/Properties/AssemblyInfo.cs additionally asserts AssemblyCompany('DSHS') and Copyright 'DSHS 2015', a THIRD, non-FAA attribution. catalog.json (Pass 0) and structural-analysis.json (Pass 1) both already flagged this independently and recommended stakeholder confirmation before downstream use; this artifact does not resolve that question and treats every persona/adoption/accessibility figure below as conditional on it. SEPARATE GAP: Methodology §4 of this skill directs composition with the accessibility-checker sub-skill via a 'Sub-Skill Output Contract' that this producing agent's system prompt is supposed to reproduce verbatim (exact output path + schema). No such section, and no accessibility-checker schema, was present anywhere in the system prompt or dispatch bundle actually supplied for this run. Rather than invent a path/schema for a sub-skill this agent cannot correctly invoke, accessibility_findings below is this assessor's own direct, transparent read of the one discovered surface — not accessibility-checker output — and per gate_decision_note should be superseded by a real checker composition once the missing contract is supplied.",
+  "review_asks": [
+    {
+      "ask_slug": "personas-confirmed",
+      "action": "verify",
+      "title": "Confirm the single inferred user persona for this application (or tell us who the real users are)",
+      "why": "If this application_id has real operational users beyond a kata participant/build-verifier, or does not actually map to an FAA-owned production system at all, every downstream persona-dependent artifact (adoption baseline, training-debt scoring, Rationalization's UX-overlap comparison) will be built on a fictional user base.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "confidence": {
+        "level": "low",
+        "score": 0.3,
+        "rationale": "High confidence in what the source literally shows (one console entry point, no auth, one git commit) but low confidence that this represents a real, in-scope FAA application population worth basing a persona/adoption baseline on at all — that determination needs a stakeholder, not more static analysis."
+      },
+      "assessment": "Only one persona could be derived from source: a single local console operator who builds and runs GildedRose.Console.exe interactively and presses a key to exit. This is inferred entirely from code structure (Program.cs's console Main(), no argument parsing, no authentication) and from the README's framing of the repository as a refactoring-kata exercise — there is NO usage telemetry, login system, audit log, or role/permission model anywhere in this application to measure or corroborate that inference. Every adoption_baseline and training_state figure in this artifact is consequently either an explicit 'instrumentation gap' or derived only from the repository's single 2017 commit, not from observed usage. Separately, and independent of the persona question itself: Discovery's Pass 0 and Pass 1 outputs for this application_id both already flagged that the source tree contains no aviation/FAA/NAS content (it is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata'), while an embedded AssemblyInfo.cs attribute separately claims a different, non-FAA company ('DSHS'). This assessment proceeds under the governing `faa` profile as directed, but a reviewer should confirm whether this application_id is genuinely in scope for FAA Discovery before the persona/adoption baseline below is used for any downstream decision.",
+      "reasoning": "Evidence for the persona: src/GildedRose.Console/Program.cs:8-35 (console Main, args parameter never read, no auth); README.md ('Your task is to add the new feature to our system...'); structural-analysis.json interface-inventory (authentication: none; human_facing: true; kind left 'unknown' because no closed vocabulary value fits an interactive-but-unscheduled console entry point). Evidence for the profile/scope doubt: catalog.json open_questions[0]-[1]; structural-analysis.json open_questions[0]; src/GildedRose.Console/Properties/AssemblyInfo.cs:11,13 (AssemblyCompany/Copyright = 'DSHS'/'DSHS 2015'); the repository holds exactly one git commit, dated 2017-03-28, with no remote and no FAA-related history.",
+      "evidence_refs": [
+        {
+          "name": "Program.cs Main()",
+          "detail": "The application's only entry point: no args parsed, no authentication, blocks on Console.ReadKey() before exit",
+          "artifact_path": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "name": "structural-analysis.json Pass 1 open_questions",
+          "detail": "Independently flagged the same FAA-profile/domain mismatch and the DSHS AssemblyInfo attribution before this pass ran",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "catalog.json open_questions",
+          "detail": "Pass 0 catalog entry recommends stakeholder confirmation of FAA ownership before this application_id is used downstream",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        },
+        {
+          "name": "README.md",
+          "detail": "Kata narrative and attribution to @TerryHughes/@NotMyself, MIT license, https://github.com/NotMyself/GildedRose",
+          "artifact_path": "README.md"
+        },
+        {
+          "name": "AssemblyInfo.cs",
+          "detail": "AssemblyCompany('DSHS'), Copyright 'DSHS 2015' — a third, non-FAA attribution embedded in shipped assembly metadata",
+          "artifact_path": "src/GildedRose.Console/Properties/AssemblyInfo.cs"
+        }
+      ]
+    }
+  ],
+  "ui_inventory": [
+    {
+      "surface_id": "console-entry-point",
+      "name": "GildedRose.Console.exe interactive console session",
+      "platform": "Windows character-mode console (.NET Framework 4.5)",
+      "technology": "System.Console.WriteLine (stdout) / System.Console.ReadKey (stdin); no GUI toolkit, no web framework, no markup of any kind",
+      "user_population": "Single local operator per invocation; no roles, no authentication, and no concurrent-user or multi-session concept exists anywhere in the code",
+      "screens_in_repo": 1,
+      "notes": "The application's only human-facing surface, and its only interface of any kind (Pass 1 interface-inventory counts: total 1, human_facing 1, machine_facing 0). It writes one banner line ('OMGHAI!') to stdout, then blocks indefinitely on System.Console.ReadKey() until any key is pressed, then exits. There is no page, form, menu, or navigable screen — six hard-coded inventory items are processed identically on every run. Evidence: src/GildedRose.Console/Program.cs:8-35; artifacts/discovery-structural-analysis/structural-analysis.json interface-inventory entry 'GildedRose.Console.exe command-line invocation'."
+    }
+  ],
+  "personas": [
+    {
+      "persona_id": "local-console-operator",
+      "name": "Local console operator (kata participant / build verifier)",
+      "estimated_headcount": "unknown — no telemetry, login system, or role model exists to count distinct users; every invocation is a single interactive process run by whoever executes the compiled EXE at a terminal",
+      "evidence": "src/GildedRose.Console/Program.cs:8-35 shows the only entry point is a console Main() with no argument parsing (the args parameter is declared but never read, Program.cs:8), no authentication or authorization of any kind (a grep for Authenticate|Login|Identity|Principal across all tracked files returned zero matches, per structural-analysis.json interface-inventory), and a blocking System.Console.ReadKey() (Program.cs:33) that requires one human physically present at an interactive terminal per run. README.md frames the whole repository as a coding-kata exercise ('Your task is to add the new feature to our system...') rather than describing an operational business role.",
+      "typical_workflow": "Clone the repository, run build.bat, execute the compiled GildedRose.Console.exe, observe the 'OMGHAI!' banner and (typically in a debugger/IDE, per the kata's intent) the six seeded Item values before and after UpdateQuality() runs exactly once, then press any key to exit. There is no repeat-usage session model, no menu navigation, and no data entry: the same hard-coded item list (Program.cs:14-27) is processed identically on every run."
+    }
+  ],
+  "adoption_baseline": {
+    "instrumentation_present": false,
+    "telemetry_source": "none — no logging framework, database, analytics call, or persisted state of any kind exists anywhere in the tracked source. structural-analysis.json summary_metrics records connection_strings: 0 and external_integration_points: 0, and its database-schema-summary confirms all state is an in-memory IList<Item> created at Program.cs:14-27 and lost at process exit.",
+    "local-console-operator_active_users_30d": "unmeasured, instrumentation gap — no login system, session log, or process-invocation record exists to count distinct operators or invocation counts over any window",
+    "local-console-operator_feature_usage_frequency": "unmeasured, instrumentation gap — the six seeded items and the single UpdateQuality() call are invoked identically on every run; nothing distinguishes one invocation from another because nothing is logged or persisted",
+    "local-console-operator_session_duration": "unmeasured, instrumentation gap — session length is bounded only by how long a human takes to press a key after the blocking Console.ReadKey() call (Program.cs:33); no start or end timestamp is recorded anywhere in the application"
+  },
+  "training_state": {
+    "user_guide_present": "true — README.md is the only user-facing documentation found; it doubles as both onboarding narrative and build instructions",
+    "user_guide_last_updated": "2017-03-28 (git commit 1daba2076d19795639fb41dfd275b338198ef9e6, 'Update README.md') — the repository contains exactly one commit in total (also noted independently in structural-analysis.json open_questions), so there is no revision history to compare against",
+    "lms_completion_data": "not applicable / instrumentation gap — no LMS, training curriculum, or completion-tracking reference exists anywhere in this repository or in any sibling Discovery artifact reviewed for this application (catalog.json, structural-analysis.json)",
+    "training_materials_catalog": [
+      "README.md — kata narrative plus build instructions, repository root",
+      "images/build_output.png — screenshot of expected build console output, embedded in README.md via markdown image link"
+    ],
+    "staleness_note": "README.md's business narrative (a fictional inn's nightly inventory system, run by 'a friendly innkeeper named Allison') and the AssemblyInfo.cs 'DSHS 2015' attribution both predate, and are unrelated to, the FAA governing profile this task runs under; there is no FAA-specific training or documentation artifact anywhere in scope against which to assess documentation debt for Rationalization scoring."
+  },
+  "accessibility_findings": {
+    "applicable_standards": [
+      "Section 508 (36 CFR Part 1194, ICT Final Rule)",
+      "WCAG 2.1 AA (as referenced by the Section 508 ICT Final Rule)"
+    ],
+    "findings": [],
+    "finding_counts": {
+      "total": 0
+    },
+    "gate_decision": "undetermined",
+    "gate_decision_note": "Composition with the accessibility-checker sub-skill per this skill's Methodology §4 could not be completed as specified: the methodology directs this agent to a 'Sub-Skill Output Contract' in its own system prompt naming the checker's exact output path and reproducing the checker's schema verbatim, but no such section (and no accessibility-checker schema of any kind) was present anywhere in the system prompt or dispatch bundle supplied for this run. Rather than fabricate a path or schema for a sub-skill this agent cannot correctly invoke, the findings above are empty by omission of a checker run, not a compliance verdict of zero defects, and this gap should be resolved (missing contract supplied, checker actually dispatched) before this field is relied on for a WCAG/508 gate decision. Separately, and independent of that gap: structural-analysis.json's Pass 1 interface-inventory already flagged that WCAG/Section 508 applicability to a character-mode console surface (one stdout line, one blocking keypress, no page/form/GUI) is itself undetermined and needs an accessibility-compliance reviewer's ruling, not a static walk's guess.",
+    "tool": "none — accessibility-checker composition unavailable this run; see gate_decision_note",
+    "surfaces_reviewed_of_total": "1 of 1 surface given a direct (non-checker) review; 0 of 1 given an actual accessibility-checker run",
+    "manual_review_required": [
+      "console-entry-point — needs (a) an accessibility-compliance reviewer's ruling on whether Section 508/WCAG 2.1 AA applies at all to a character-mode console interface with no page, form, or rendered GUI, and (b) a real accessibility-checker composition once the missing Sub-Skill Output Contract referenced in this skill's Methodology §4 is supplied to this agent."
+    ],
+    "verified_non_issues": [
+      "No images are rendered by this application (no image, icon, or graphic reference exists in any UI code path), so WCAG 1.1.1 (non-text content / text alternatives) has no rendered target to fail against.",
+      "No color is used to convey information — the surface is unstyled default-terminal monochrome text (a single 'OMGHAI!' banner), so WCAG 1.4.1 (use of color) has no applicable target.",
+      "No form controls, labels, or input fields exist (Program.cs never reads args or stdin except a single Console.ReadKey() call to exit), so the WCAG 1.3.1 / 4.1.2 label and name-role-value criteria have no applicable target.",
+      "No timing-based content, auto-refresh, or session timeout exists — the process blocks indefinitely on Console.ReadKey() with no timeout — so WCAG 2.2.1 (timing adjustable) has no applicable target."
+    ]
+  },
+  "open_questions": [
+    "GOVERNING-PROFILE / APPLICATION-SCOPE DISCREPANCY (recorded, not adopted — see scope_caveat and the personas-confirmed review ask): this application_id shows no FAA/aviation/NAS content in source, and carries a third, unrelated 'DSHS' attribution in AssemblyInfo.cs. Already flagged independently by catalog.json and structural-analysis.json; not re-litigated here beyond restating that every persona/adoption/training/accessibility figure in this artifact is conditional on that question being resolved.",
+    "MISSING SUB-SKILL OUTPUT CONTRACT: this skill's Methodology §4 requires composing with accessibility-checker via a 'Sub-Skill Output Contract' that is supposed to be folded into this agent's system prompt verbatim (exact output path + schema). That section was absent from the system prompt actually supplied for this run, so no accessibility-checker sub-agent could be correctly dispatched or given a defined output location this run. accessibility_findings above is this assessor's own direct read of the one UI surface, not checker output, pending that contract being supplied.",
+    "WCAG/SECTION 508 APPLICABILITY TO A CHARACTER-MODE CONSOLE SURFACE IS UNDETERMINED: carried forward from structural-analysis.json's Pass 1 interface-inventory open_questions — the interface is human-facing (which normally triggers the Section 508 obligation) but WCAG success criteria are written primarily for rendered web/GUI content, and this surface has no page, form, or report, only a single stdout line and a keypress wait. Needs an accessibility-compliance reviewer's ruling, not a static walk's guess.",
+    "ZERO INSTRUMENTATION, NOT ZERO USAGE: every adoption_baseline and most training_state figures above are explicitly labelled instrumentation gaps rather than measured zeros, because no logging, database, or session-tracking mechanism of any kind exists in this application (all state is an in-memory list lost at process exit, per structural-analysis.json's database-schema-summary). If a business owner has out-of-repo usage records for this application_id, they are invisible to this assessment and should be supplied before any adoption baseline here is used to anchor post-cutover analytics."
+  ]
+}
