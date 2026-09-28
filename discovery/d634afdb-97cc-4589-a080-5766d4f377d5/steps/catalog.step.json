@@ -1,0 +1,20 @@
+{
+  "step": "catalog",
+  "artifacts": [
+    "JSON is valid and matches the schema's flat shape. Both artifacts are written to the output directory:\n\n- `catalog.json`\n- `application-catalog-entry.md`\n\n**Summary of the catalog run for `d634afdb-97cc-4589-a080-5766d4f377d5`:**\n\nThe source tree turned out to be the classic **\"Gilded Rose Refactoring Kata\"** \u2014 a 172-LOC C# console app about an inn's inventory (SellIn/Quality rules for items like Aged Brie, Sulfuras, Backstage passes), not an FAA/aviation system. Key findings:\n\n- **Archetype:** `cli` \u2014 single console `Main()` entry point, no HTTP/scheduler/MQ listener.\n- **Tech stack:** C# 100%, .NET Framework 4.5/4.5.1, xUnit 2.0.0 (test-only), MSBuild/NuGet/psake/GitVersionTask build tooling, no database, no CI/CD config in-repo.\n- **Size:** 172 LOC, 2 modules, 22 files \u2192 **complexity_tier: simple**.\n- **safety_tier:** left `null` \u2014 no authoritative classification was supplied, and the FAA profile's `risk-classification.yaml` forbids inferring it from code alone.\n- **business_domain:** set to a generic `unclassified` placeholder rather than fabricated, since nothing in the repo maps to the FAA domain taxonomy (Air Traffic, Certification, Workforce, Finance, Admin, etc.).\n\nTwo things were escalated prominently in `open_questions` and the markdown narrative:\n1. **Profile/domain mismatch** \u2014 this repo has no discernible connection to FAA/NAS/aviation at all, so its mapping to this `application_id` under the `faa` profile should be confirmed by a human before downstream passes build on it.\n2. **A misleading fixture artifact** \u2014 `fixtures/default.json` in the repo self-identifies as a Discovery-skill test fixture and contains a *fabricated* catalog record for a completely different application (ASP.NET WebForms/SQL Server, ~68k LOC). I did not use it and flagged it explicitly so it isn't mistaken for real documentation.\n\nPer the strict output contract, I kept `null` only where the schema explicitly allows it (`safety_tier`), omitted `endpoint_count`/`table_count` as `null` since the schema allows null there too, and left every other optional field either populated with grounded data or omitted."
+  ],
+  "file_artifacts": [
+    "application-catalog-entry.md",
+    "catalog.json"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 227086,
+  "token_usage": {
+    "input": 1050,
+    "output": 16779
+  },
+  "cost_estimate_usd": 0.6965828000000001,
+  "timestamp": "2026-09-28T17:29:29.369421+00:00",
+  "pass": "catalog",
+  "skill_id": "catalog-application"
+}

@@ -1,0 +1,65 @@
+{
+  "$schema": "olympus:artifact:application-catalog-entry:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "description": "This repository is the widely used 'Gilded Rose Refactoring Kata': a small C#/.NET console application that models an inn's nightly inventory update, adjusting each item's SellIn and Quality values according to item-specific rules (normal goods, Aged Brie, Sulfuras, Backstage passes, and Conjured items). It has no HTTP listener, database, scheduler, or UI — it runs once from the command line and exits — and ships with an unwritten xUnit test scaffold. Its repository also contains a fixtures/default.json that self-identifies as a test fixture for the Discovery catalog-application skill, so whether this application_id corresponds to a genuine FAA production system is unconfirmed (see open_questions).",
+  "business_domain": "unclassified",
+  "tech_stack": {
+    "languages": [
+      {
+        "name": "C#",
+        "percent": 100
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "xUnit",
+        "version": "2.0.0",
+        "role": "test framework only; no application framework (MVC/WebForms/etc.) is present"
+      }
+    ],
+    "runtimes": [
+      ".NET Framework 4.5 (GildedRose.Console)",
+      ".NET Framework 4.5.1 (GildedRose.Tests)"
+    ],
+    "databases": [],
+    "build_tools": [
+      "MSBuild",
+      "NuGet",
+      "psake (PowerShell build automation via tasks.ps1/build.bat)",
+      "GitVersionTask (2.0.1 in .nuget, 3.4.1 in GildedRose.Tests) for semantic versioning"
+    ],
+    "ci_cd": []
+  },
+  "architecture": {
+    "archetype": "cli",
+    "archetype_rationale": "The only entry point is a console Main() (src/GildedRose.Console/Program.cs) that seeds a fixed in-memory item list, calls UpdateQuality() once, and exits after a keypress. No HTTP route/controller, no scheduler/cron/DBMS_SCHEDULER trigger, and no MQ listener exist anywhere in the tree, which rules out web-app, api, service, and batch/scheduled-job. 'cli' is the closest match in the schema's archetype vocabulary.",
+    "major_components_note": "Two components, matching the two Project entries in GildedRose.sln: GildedRose.Console (Program.cs — entry point, UpdateQuality business logic, and the Item model) and GildedRose.Tests (an xUnit project containing a single placeholder assertion, Assert.True(true), that exercises none of the business logic)."
+  },
+  "size_metrics": {
+    "loc_total": 172,
+    "loc_by_language": {
+      "C#": 172
+    },
+    "loc_excluded_vendor_note": "No vendor/generated code excluded; the only non-.cs files in the tree are build/project config (csproj, sln, packages.config), docs, and a fixture JSON.",
+    "module_count": 2,
+    "module_count_basis": "Two .csproj projects under src/ (GildedRose.Console, GildedRose.Tests), matching the two non-solution-folder Project entries in GildedRose.sln.",
+    "file_count": 22,
+    "endpoint_count": null,
+    "endpoint_count_basis": "No HTTP route or controller definitions found; the application's only entry point is a console Main().",
+    "table_count": null,
+    "table_count_note": "No connection strings, ORM configuration, or DB driver references found in any manifest or source file.",
+    "table_ddl_files_in_source": 0,
+    "stored_procedure_count": null
+  },
+  "complexity_tier": "simple",
+  "safety_tier": null,
+  "user_facing": false,
+  "open_questions": [
+    "Profile/domain mismatch: the source tree is the generic 'Gilded Rose Refactoring Kata' (a retail inn inventory exercise) with no discernible NAS, aviation, or FAA business-domain content. business_domain could not be grounded in the FAA taxonomy (Air Traffic, Flight Safety, Certification, Workforce, Finance, Logistics, Admin/Travel/Timesheet/Internal) referenced by profiles/faa/risk-classification.yaml and was set to the most general placeholder ('unclassified'). Recommend stakeholder confirmation of whether this application_id genuinely maps to an FAA-owned system before this catalog entry is used downstream.",
+    "This repository's fixtures/default.json describes a different, fabricated application (an 'ASP.NET WebForms 4.8' / SQL Server 2016 system, ~68,400 LOC, business_domain 'eligibility-certification') that does not match the actual repository contents analyzed here (a 172-LOC C# console kata with no database or web framework). That file appears to be a Discovery-skill test fixture left in the repo rather than documentation of the real application, and was NOT used to populate this catalog entry — flagged here so a reviewer can confirm it should keep being disregarded.",
+    "safety_tier could not be determined: no authoritative safety classification was supplied at onboarding, and profiles/faa/risk-classification.yaml explicitly prohibits inferring safety tier from code patterns alone. Needs stakeholder/Safety Board confirmation per the override rules in that file.",
+    "No CI/CD pipeline configuration (GitHub Actions, Azure Pipelines, Jenkinsfile, etc.) was found in the repository; ci_cd was left empty. Confirm whether this application is built/deployed via an external, not-checked-in pipeline.",
+    "No CMDB export or existing architecture documentation was provided at onboarding, so business owner and criticality could not be independently confirmed."
+  ]
+}
