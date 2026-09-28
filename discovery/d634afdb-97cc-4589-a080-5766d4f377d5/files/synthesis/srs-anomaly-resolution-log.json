@@ -1,0 +1,994 @@
+{
+  "$schema": "olympus:artifact:srs-anomaly-resolution-log:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "governing_profile": "faa",
+  "generated_date": "2026-09-28",
+  "description": "Every anomaly that Discovery recorded against this application — unimplemented documented rules, self-contradicting documentation, obfuscated idioms, ordering dependencies, absent validation, absent output, absent audit, absent access control, an end-of-support runtime, a non-hermetic build, and the two explicitly UNMEASURED postures (dependency vulnerabilities and accessibility) — is listed here with a documented resolution action, so that no legacy defect, no emergent-but-unstated behaviour and no security or compliance violation is silently carried forward into the SRS as if it were a specified requirement; each entry states the legacy behaviour observed in source, the behaviour the SRS must prescribe instead, the justification, the Discovery finding it came from, and whether an SME must confirm the prescription before it is written as a requirement.",
+  "total": 25,
+  "by_action": {
+    "FIX": 19,
+    "OMIT": 1,
+    "CONSOLIDATE": 1,
+    "DEFER": 4
+  },
+  "by_source": {
+    "business-logic": 18,
+    "structural": 4,
+    "quality-risk": 1,
+    "ux-accessibility": 1,
+    "catalog": 1
+  },
+  "sme_confirmation_required": [
+    "ANOM-001",
+    "ANOM-002",
+    "ANOM-004",
+    "ANOM-005",
+    "ANOM-006",
+    "ANOM-008",
+    "ANOM-010",
+    "ANOM-013",
+    "ANOM-014",
+    "ANOM-017",
+    "ANOM-020",
+    "ANOM-021",
+    "ANOM-022",
+    "ANOM-024",
+    "ANOM-025"
+  ],
+  "anomalies": [
+    {
+      "anomaly_id": "ANOM-001",
+      "type": "specified-but-not-implemented",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "README.md:34 requires that \"Conjured\" items degrade in Quality twice as fast as normal items, and a \"Conjured Mana Cake\" is seeded into the live inventory at src/GildedRose.Console/Program.cs:26 — but the string \"Conjured\" appears nowhere in UpdateQuality (Program.cs:37-111) and no branch matches it. The item is therefore priced as ordinary goods on every single run: -1 per day before the sell-by date and -2 after, instead of the required -2 and -4.",
+      "prescribed_behavior": "The SRS must state the Conjured rule as a first-class, implemented requirement: a Conjured item's Quality decreases by 2 per day before the sell-by date and by 4 per day after it, floored at 0 (never negative). Because this introduces the first multi-step degradation in the system, the SRS must also prescribe the zero bound as a CLAMP rather than the legacy pre-decrement `Quality > 0` guard, at every degradation site, so that Quality 1 with a -2 step lands on 0 and Quality 3 expired with a -4 step lands on 0.",
+      "justification": "This is a live mispricing of stock on every run, not a cosmetic gap, and it is the one anomaly a characterisation test would otherwise lock in permanently as correct behaviour. Recording it as 'as-built' would write the defect into the SRS. Three independent Discovery passes found it by three different routes (the rule catalogue, the implicit-logic walk, and the data-domain boundary check), so the gap is confirmed rather than inferred.",
+      "affected_requirements": [
+        "FR-GR (BR-MISSING-001)",
+        "FR-GR (BR-017)",
+        "FR-GR (BR-002)",
+        "FR-GR (BR-003)",
+        "FR-GR (BR-013)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Is the unimplemented Conjured rule the intended unfinished state of a refactoring exercise, or a live production defect to be fixed in the target state? And does the rule match by \"Conjured\" prefix, by substring, or only the exact name \"Conjured Mana Cake\"? The code gives no answer and the codebase has no prefix-matching precedent.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-MISSING-001",
+        "citation": "src/GildedRose.Console/Program.cs:37-111 (no Conjured branch); README.md:34 (the requirement); src/GildedRose.Console/Program.cs:26 (the seeded item)",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-024",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "BV-GRK-002",
+          "artifact": "data-domains.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "open_questions:UNIMPLEMENTED DOCUMENTED RULE",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-002",
+      "type": "documentation-self-contradiction-and-unenforced-invariant",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "The legendary Quality of 80 exists ONLY as a seed literal at src/GildedRose.Console/Program.cs:19. No code asserts it, defaults to it, restores it or constrains it, so the value survives purely because nothing in UpdateQuality touches Sulfuras. It also sits 30 above the documented maximum Quality of 50, which makes README.md:23 (Quality is never more than 50) and README.md:44-45 (Sulfuras is 80 and never alters) mutually inconsistent as written.",
+      "prescribed_behavior": "The SRS must state the 0..50 band and the legendary fixed value as ONE reconciled rule set: the 50 ceiling applies to all non-legendary categories, and legendary items are exempt from the ceiling and hold an invariant Quality (80 for Sulfuras) that the system asserts and restores rather than merely inherits from seed data. The invariant must be enforced by the domain, not left to the absence of a code path.",
+      "justification": "An invariant that exists only in seed data is not an invariant; a single change to the item list silently breaks it with nothing to detect the break. Carrying two mutually inconsistent documented statements into an SRS forces every downstream implementer to guess which one governs, and the two guesses produce different valuations.",
+      "affected_requirements": [
+        "FR-GR (BR-008)",
+        "FR-GR (BR-007)",
+        "FR-GR (BR-004)",
+        "NFR-GR (data integrity / invariant enforcement)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Which documented statement governs: is 50 an absolute ceiling for all stock with legendary items as a stated exception, or is 80 a legitimate value in the same band? And must the system restore 80 if an item arrives with a different value?",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-008",
+        "citation": "src/GildedRose.Console/Program.cs:19; README.md:23; README.md:44-45",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-005",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "DD-GRK-002:QualityBounds",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-003",
+      "type": "obfuscated-idiom",
+      "action": "FIX",
+      "severity": "medium",
+      "legacy_behavior": "Expired backstage passes are zeroed by the self-cancelling expression `Items[i].Quality = Items[i].Quality - Items[i].Quality` at src/GildedRose.Console/Program.cs:99 rather than by `= 0`. Any reader — or any tool searching for an assignment of literal zero — misses the rule entirely, and the line reads as arithmetic rather than as a business cliff.",
+      "prescribed_behavior": "The SRS must state the rule in business terms — once the concert date has passed, a backstage pass's Quality becomes 0 and stays 0 — and prescribe a direct assignment of zero. The self-subtraction idiom must not be reproduced.",
+      "justification": "The observable behaviour is unchanged, so this is a faithfulness-of-expression fix, not a behaviour change. It is included because the idiom is the single most likely rule in the method to be overlooked during re-implementation: it is invisible to a search for the value it actually sets.",
+      "affected_requirements": [
+        "FR-GR (BR-015)",
+        "NFR-GR (maintainability / rule legibility)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-015",
+        "citation": "src/GildedRose.Console/Program.cs:99",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-010",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "coupling_indicators.deep_conditional_nesting",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-004",
+      "type": "ordering-dependency",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "Within a single loop iteration, SellIn means days-remaining-at-the-START-of-day for the backstage-pass thresholds (read at src/GildedRose.Console/Program.cs:59 and :67, before the decrement at :80) and days-remaining-at-the-END-of-day for the expiry test (read at :83, after it). One field therefore carries two different meanings in one iteration. The literals 11 and 6 correctly encode the documented '10 days or less' and '5 days or less' ONLY under that ordering. Hoisting the decrement — the most natural cleanup a developer would make — silently shifts outcomes on the boundary days SellIn 11, 6 and 0, and no test detects it because the only test asserts Assert.True(true).",
+      "prescribed_behavior": "The SRS must prescribe two explicitly named phases with a stated evaluation order — an appraisal phase that evaluates every Quality rule against the sell-in value as it stood at the start of the business day, followed by an age-advance phase that decrements sell-in, followed by an expiry phase that evaluates the post-decrement value — and must define each demand threshold in business terms ('10 days or less remaining', '5 days or less remaining') bound to the START-of-day reading. The thresholds must NOT be renumbered: 11 and 6 are correct against the start-of-day value and rewriting them to 10 and 5 while also moving the decrement changes pricing on the boundary days.",
+      "justification": "This is the highest-risk implicit behaviour in the application. The requirement text must make the phase order explicit so that fidelity does not depend on a reader inferring it from statement sequence, and must warn explicitly against the off-by-one 'correction' that looks like a bug fix and is actually a pricing change.",
+      "affected_requirements": [
+        "FR-GR (BR-016)",
+        "FR-GR (BR-010)",
+        "FR-GR (BR-011)",
+        "FR-GR (BR-012)",
+        "FR-GR (BR-013)",
+        "NFR-GR (testability / characterisation baseline)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Confirm that the documented thresholds ('10 days or less', '5 days or less') are intended to be measured against the sell-in value at the start of the business day, i.e. that today's boundary-day outcomes at SellIn 11, 6 and 0 are the correct business behaviour and must be preserved exactly.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-016",
+        "citation": "src/GildedRose.Console/Program.cs:59, :67, :80, :83",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-009",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-003",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-004",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "hub_entities_and_coupling_hotspots:Item.SellIn",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-005",
+      "type": "dead-computation",
+      "action": "OMIT",
+      "severity": "medium",
+      "legacy_behavior": "On the concert day a backstage pass earns up to +3 at src/GildedRose.Console/Program.cs:55, :63 and :71 and is then zeroed at :99 within the same iteration. The churn repeats on every later day too: an already-worthless pass climbs 0 -> 3 and is reset to 0 on every run. Net observable behaviour is unchanged, but any re-implementation that logs, audits, publishes events or commits between phases would expose the non-zero intermediate as a real value.",
+      "prescribed_behavior": "OMIT the dead computation from the SRS: for a backstage pass whose concert date has passed, the prescribed behaviour is simply that Quality is 0 — no appreciation step is computed and then discarded. The SRS must additionally state as a constraint that no intermediate valuation produced within a single business day's revaluation is ever externally observable: audit records, emitted events and any commit boundary reflect only the end-of-day value.",
+      "justification": "Omitted rather than fixed because there is no business rule here to preserve — the computation has no effect on any observable outcome today. It is recorded rather than dropped silently because the anomaly becomes a real defect the moment the audit trail, persistence and eventing prescribed elsewhere in this log are added: without the stated constraint, a faithful re-implementation would publish a phantom valuation of 3 for a worthless pass.",
+      "affected_requirements": [
+        "FR-GR (BR-015)",
+        "FR-GR (BR-009)",
+        "FR-GR (BR-010)",
+        "FR-GR (BR-011)",
+        "NFR-GR (auditability / no observable intermediate state)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Confirm that the intermediate appreciation of an expired backstage pass carries no business meaning and may be omitted, and that only the end-of-day valuation should ever be recorded, audited or published.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-012",
+        "citation": "src/GildedRose.Console/Program.cs:53-73, :99",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "quality-risk",
+          "finding_id": "QR-007",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-006",
+      "type": "missing-validation",
+      "action": "FIX",
+      "severity": "medium",
+      "legacy_behavior": "A null, empty or unrecognised Name satisfies every 'is not a special item' test and falls through to standard-goods depreciation with no exception, no log entry and no validation error. C# string equality is null-safe, so a null Name does not even raise at any of the eight comparison sites (src/GildedRose.Console/Program.cs:41, :45, :85, :87, :91) — a default-constructed Item (Name null, SellIn 0, Quality 0) is processed as ordinary merchandise. Mis-typed or newly introduced stock is therefore mispriced with no trace whatsoever, because the application has no logging at all.",
+      "prescribed_behavior": "The SRS must prescribe an explicit default arm for the category dispatch that either (a) applies the ordinary-goods rules AND emits a diagnostic naming the unrecognised category so the mispricing is visible, or (b) rejects the item as invalid input. A null or empty Name must in either case be a validation failure rather than a silent fall-through.",
+      "justification": "Absence of an else arm is not a business rule; today's silence is a defect that makes every future item-naming error invisible. Prescribing a diagnostic converts an undetectable mispricing into a detected one. Which of the two options applies is a business decision, not an implementation choice.",
+      "affected_requirements": [
+        "FR-GR (BR-023)",
+        "FR-GR (BR-017)",
+        "FR-GR (BR-018)",
+        "NFR-GR (input validation)",
+        "NFR-GR (observability / diagnostics)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Should unknown or unnamed merchandise depreciate as ordinary goods with a warning, or be rejected outright as invalid inventory?",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-023",
+        "citation": "src/GildedRose.Console/Program.cs:41-50, :85-95, :117",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-021",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-008",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-007",
+      "type": "unguarded-domain-model",
+      "action": "FIX",
+      "severity": "medium",
+      "legacy_behavior": "Item is a three-property POCO (Name, SellIn, Quality) with public setters and no constructor, no guard, no range check and no clamp (src/GildedRose.Console/Program.cs:115-122). Quality -100 or 9999 constructs cleanly and is never normalised. Every business constraint — the 0 floor, the 50 ceiling, the legendary exemption — lives inside the update loop rather than in the type, so no future consumer of the model can trust it.",
+      "prescribed_behavior": "The SRS must state the Quality band (0..50, with the legendary exemption of ANOM-002) and the Name requirement as validated invariants of the inventory item itself, enforced at construction and on every mutation, so that an out-of-range item cannot exist. Note the constraint from README.md:36-40, which forbids altering the Item class: the validation must therefore be prescribed OUTSIDE the Item type — at the domain-service or repository boundary that admits items into a revaluation run — rather than as constructor guards on Item.",
+      "justification": "Invariants enforced only by the conditionals of one loop are violated undetectably by any second writer or by any reordering of that loop. Stating them as model-level requirements is what makes the valuation trustworthy to the persistence and audit capabilities prescribed elsewhere in this log. The README's do-not-modify-Item constraint is recorded here so the SRS does not prescribe a fix that the exercise's own rules forbid.",
+      "affected_requirements": [
+        "FR-GR (BR-018)",
+        "FR-GR (BR-007)",
+        "FR-GR (BR-003)",
+        "FR-GR (BR-008)",
+        "NFR-GR (data integrity / invariant enforcement)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-018",
+        "citation": "src/GildedRose.Console/Program.cs:115-122, :119, :121; README.md:36-40",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-019",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "coupling_indicators.shared_mutable_state_through_public_setters",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "QR-008",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-008",
+      "type": "unbounded-value",
+      "action": "FIX",
+      "severity": "low",
+      "legacy_behavior": "SellIn decrements without a floor (src/GildedRose.Console/Program.cs:80); only its sign is ever tested (:83), never its magnitude, so it falls indefinitely: -1, -2, -365. Nothing archives, writes off or removes a long-expired item, and no overflow guard exists — the only theoretical limit is int.MinValue.",
+      "prescribed_behavior": "The SRS must prescribe a defined end state for long-expired stock — either a floor on the age-past-sell-by value or an explicit write-off/archival transition that removes the item from the active revaluation set — together with a stated numeric range for the sell-in value so that any downstream store using a narrower type cannot overflow where this code does not.",
+      "justification": "Indefinite decrement is an artefact of an unguarded statement, not a business policy: no business intends to carry an item 365 days past its sell-by date in the active valuation set forever. The requirement is low severity because no current outcome depends on the magnitude, but it must be stated rather than inherited, because the target state adds persistence where the legacy has none.",
+      "affected_requirements": [
+        "FR-GR (BR-022)",
+        "FR-GR (BR-012)",
+        "NFR-GR (data retention / archival)",
+        "NFR-GR (numeric range constraints)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "What should happen to stock that is long past its sell-by date — is there a write-off, archival or removal point, and if so at what age? No such policy exists in code or documentation today.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-022",
+        "citation": "src/GildedRose.Console/Program.cs:80, :83, :119",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-020",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "DD-GRK-002:QualityBounds",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-009",
+      "type": "operational-blocker",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "After the revaluation returns, Main calls System.Console.ReadKey() at src/GildedRose.Console/Program.cs:33 and blocks until a human presses a key. A nightly inventory process therefore cannot complete unattended: under a scheduler or in a container it either blocks indefinitely on a console that will never receive input, or throws InvalidOperationException, depending on host. The calculation itself has already finished, so the hang prevents a clean exit code rather than corrupting the result.",
+      "prescribed_behavior": "The SRS must prescribe the nightly revaluation as a non-interactive, unattended batch operation that terminates on its own with a meaningful exit status and requires no console, no keystroke and no attached terminal. No blocking wait for human input may appear on the completion path.",
+      "justification": "An unattended nightly process that cannot run unattended is a defect, not a requirement, and it is a hard blocker for any scheduled or containerised target deployment: the substrate cannot distinguish a blocked process from a slow one. The fix is structurally a host concern rather than a domain concern, which is where the SRS must site it.",
+      "affected_requirements": [
+        "FR-GR (BR-021)",
+        "FR-GR (BR-020)",
+        "NFR-GR (unattended operability)",
+        "NFR-GR (deployability / container substrate)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-021",
+        "citation": "src/GildedRose.Console/Program.cs:33, :8-35",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "structural",
+          "finding_id": "recommended_decomposition_boundaries:inventory-run-host",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "primary_technology.runtimes:Windows-only runtime dependency",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-010",
+      "type": "non-idempotent-unguarded-operation",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "Running the revaluation twice advances the inventory two business days. There is no run-date record, no already-processed check, no run identifier and no lock (src/GildedRose.Console/Program.cs:31), and 'a day' is defined purely as one call to UpdateQuality with no clock, calendar or date parameter anywhere in the application. A retry after a partial failure would therefore double-apply a day's depreciation with no way to detect that it had happened.",
+      "prescribed_behavior": "The SRS must prescribe the revaluation as an idempotent operation keyed to an explicit business date: each run records the business day it applied, a repeat run for a day already applied is detected and rejected (or is a no-op), a run is atomic with respect to the whole inventory so a mid-run failure does not leave the set half-advanced, and concurrent runs are mutually excluded.",
+      "justification": "Non-idempotence is invisible today only because nothing is persisted; the target state adds persistence (see ANOM-011), at which point an unguarded retry silently corrupts every valuation. Idempotence and a business-date anchor are capabilities the legacy never had and must be stated as new requirements, not inferred.",
+      "affected_requirements": [
+        "FR-GR (BR-020)",
+        "FR-GR (BR-001)",
+        "NFR-GR (idempotency / retry safety)",
+        "NFR-GR (transactional integrity)",
+        "NFR-GR (concurrency control)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "What is the authoritative business date for a revaluation run, and what should happen if a run is re-submitted for a day already processed — reject, no-op, or reprocess from a stored pre-image?",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-020",
+        "citation": "src/GildedRose.Console/Program.cs:31",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-017",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-016",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "DD-GRK-001:transaction_boundary",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-011",
+      "type": "missing-output",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "The only console output in the whole application is the literal \"OMGHAI!\" at src/GildedRose.Console/Program.cs:10, printed BEFORE the calculation runs. No computed value is ever printed, returned, written or persisted, and the in-memory IList<Item> dies with the process (Program.cs:33-35). The business output of the nightly revaluation is, today, entirely unobservable.",
+      "prescribed_behavior": "The SRS must prescribe an explicit output contract for the revaluation: the end-of-day valuation of every item in the run is emitted to a defined durable destination (persisted store and/or machine-readable report), with the run's business date and outcome status, and the operation reports success or failure to its caller. The banner is not an output of the calculation and must not be mistaken for one.",
+      "justification": "A nightly revaluation whose results are discarded delivers no business value at all; this is the most fundamental defect in the application. The target design must ADD the persistence and egress the legacy never had — a build activity, not a data migration — and the SRS must say so explicitly so that no downstream line assumes an output format or retention rule exists to be preserved.",
+      "affected_requirements": [
+        "FR-GR (BR-020)",
+        "NFR-GR (durability / persistence)",
+        "NFR-GR (observability / reporting)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-018",
+        "citation": "src/GildedRose.Console/Program.cs:10, :33-35",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "data-domains",
+          "finding_id": "BV-GRK-003",
+          "artifact": "data-domains.json"
+        },
+        {
+          "pass": "shared-database",
+          "finding_id": "cross_application_sharing_summary.only_state_store",
+          "artifact": "shared-db-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-012",
+      "type": "missing-audit-trail",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "The revaluation mutates Quality at 13 sites and SellIn at 1 site across src/GildedRose.Console/Program.cs:37-111 with no before/after capture, no logging framework, no emitted event and no versioning. Once a day is applied, the previous valuation is unrecoverable: there is no way to answer why an item is worth what it is worth.",
+      "prescribed_behavior": "The SRS must prescribe a valuation audit trail: every change to an item's quality or sell-in is recorded with the item identity, the business date of the run, the rule (category and clause) that caused the change, and the before and after values, retained so that any valuation can be explained and reconstructed after the fact. Consistent with ANOM-005, only end-of-day values are recorded — no discarded intermediate is audited.",
+      "justification": "Explainability of a valuation is a business capability, and its total absence is a defect rather than a design choice. Adding it is new construction, so it must appear in the SRS as a stated requirement; inherited silently it would be omitted from the target state exactly as it is absent from the legacy.",
+      "affected_requirements": [
+        "FR-GR (BR-024)",
+        "FR-GR (BR-020)",
+        "NFR-GR (auditability)",
+        "NFR-GR (traceability of valuation changes)",
+        "NFR-GR (logging)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-025",
+        "citation": "src/GildedRose.Console/Program.cs:37-111",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "BR-024",
+          "artifact": "business-logic.json"
+        },
+        {
+          "pass": "ux-accessibility",
+          "finding_id": "adoption_baseline.instrumentation_present",
+          "artifact": "ux-accessibility.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-013",
+      "type": "missing-access-control",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "No authentication, authorization, role, permission check, approval step or audit trail governs the revaluation of the entire inventory (src/GildedRose.Console/Program.cs:37-111). A workspace-wide search for Authenticate, Login, Identity and Principal returned nothing. The effective rule is that any caller within the assembly may revalue every item; the only access limit is the accidental one that UpdateQuality is public on an INTERNAL class reading a private field (Program.cs:5, :7, :37) — and that limit disappears the moment the rules are made reachable, as ANOM-015 requires.",
+      "prescribed_behavior": "The SRS must prescribe explicit authorisation on the revaluation operation itself: an identified principal, a permission required to initiate a run, and an authorisation decision recorded in the audit trail of ANOM-012. For any newly exposed invocation surface (API, scheduled trigger, operator console) the requirement must inherit the portfolio's federated-identity decision and require phishing-resistant authentication at AAL2 or above, rather than defining a bespoke local mechanism.",
+      "justification": "Accidental accessibility is not access control, and the modernisation prescribed elsewhere in this log removes it: widening the rules engine to a referencable surface (ANOM-015) widens an entirely unguarded mutation surface unless authorisation is added in the same step. Adding an authorisation requirement means adding a capability that does not exist today, so it must be stated, not inherited. Absence of an identity model in the legacy is not evidence that none is required.",
+      "affected_requirements": [
+        "FR-GR (BR-024)",
+        "NFR-GR (authentication / federated identity)",
+        "NFR-GR (authorization)",
+        "NFR-GR (auditability)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Who is permitted to initiate an inventory revaluation, does the run require an approval step, and is there an out-of-repository operational control today (e.g. OS-level permission on a shared host) that the SRS should reflect?",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-024",
+        "citation": "src/GildedRose.Console/Program.cs:37-111, :5, :7",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "identity",
+          "finding_id": "no-identity-proofing",
+          "artifact": "identity-landscape.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "interface-inventory:GildedRose.Console.exe command-line invocation (authentication: none)",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "open_questions:No identity, authentication or authorization mechanism exists",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-014",
+      "type": "data-value-coupling",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "Item category is derived from exact, case-sensitive, culture-insensitive whole-string equality against three hardcoded display names at 8 comparison sites (src/GildedRose.Console/Program.cs:41, :45, :57, :78, :85, :87, :91). There is no category, type, SKU field, enum or lookup table anywhere. The business taxonomy is therefore coupled to marketing copy: renaming the concert in the catalogue silently deletes its demand pricing, and 'aged brie', 'Aged Brie ' and 'AGED BRIE' are all ordinary goods because there is no Trim, case-folding or comparer.",
+      "prescribed_behavior": "The SRS must prescribe a stable category identifier, distinct from the display name, as the sole basis for rule selection, with referential integrity between an item and its category: an item carries a category identifier, the rule set owns the category-to-rule mapping and exposes resolution by identifier, and renaming an item's display label has no effect on its valuation. Unresolvable category identifiers are handled by the explicit default of ANOM-006.",
+      "justification": "The fragility is high and silent: the coupling is by mutable display string with no referential integrity of any kind, so an ordinary catalogue rename is an undetected pricing change. Two passes reached the same conclusion independently — the rule catalogue and the data-domain cross-reference map, which classified this as the single point where the two data domains touch.",
+      "affected_requirements": [
+        "FR-GR (BR-017)",
+        "FR-GR (BR-023)",
+        "FR-GR (BR-MISSING-001)",
+        "NFR-GR (referential integrity)",
+        "NFR-GR (maintainability / rule configurability)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Confirm the authoritative category list and the identifier scheme for it, and whether category assignment is item-level reference data owned by merchandising (separate from inventory operations) or an attribute of the stock item itself.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-017",
+        "citation": "src/GildedRose.Console/Program.cs:41, :45, :57, :78, :85, :87, :91",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-007",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-008",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "CDR-GRK-001",
+          "artifact": "data-domains.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "coupling_indicators.magic_string_dispatch",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "QR-005",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-015",
+      "type": "accessibility-constraint",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "UpdateQuality is declared public but sits on the INTERNAL class Program and operates on the private instance field Items (src/GildedRose.Console/Program.cs:5, :7, :37), so its effective accessibility is assembly-internal and it takes no parameters. The business rules cannot be invoked, tested or reused from any other assembly — which is the mechanical reason the test project, though present, cannot exercise them.",
+      "prescribed_behavior": "The SRS must prescribe the inventory revaluation rules as an independently invocable capability with a public, parameterised entry point that accepts the set of items to revalue and is reachable from outside its own deployable — a precondition for the test coverage of ANOM-016, for the output contract of ANOM-011, and for the authorisation of ANOM-013 to have a surface to protect.",
+      "justification": "Unreachability is not a security control (see ANOM-013) and it is not a requirement; it is the structural reason this application has no verifiable behaviour at all. It must be resolved first because every other prescription in this log depends on the rules being callable.",
+      "affected_requirements": [
+        "FR-GR (BR-024)",
+        "NFR-GR (testability)",
+        "NFR-GR (modularity / reusable rules engine)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-022",
+        "citation": "src/GildedRose.Console/Program.cs:5, :7, :37",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "shared-database",
+          "finding_id": "RISK-02",
+          "artifact": "shared-db-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "recommended_decomposition_boundaries:inventory-rules-domain",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-016",
+      "type": "coverage-gap",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "src/GildedRose.Tests/GildedRose.Tests.csproj declares NO <ProjectReference> to GildedRose.Console — a repository-wide search for ProjectReference returns nothing — and its single test method asserts Assert.True(true) (src/GildedRose.Tests/TestAssemblyTests.cs:7-11). Behavioural coverage of the 75-line rules engine is therefore a structurally proven 0%, not an unmeasured gap: the test is mechanically incapable of executing any statement in the production assembly. A reader who counts two projects and an xUnit reference would reasonably assume a regression safety net exists. It does not.",
+      "prescribed_behavior": "The SRS must require an executable behavioural baseline as a precondition for any transformation: the test assembly is wired to the rules library by a real project reference, and characterisation tests pin today's OBSERVED behaviour across the seeded inventory and every boundary day — explicitly including the sell-in ordering boundaries at 11, 6 and 0 (ANOM-004), the zeroing branch (ANOM-003), and the current, incorrect Conjured behaviour (ANOM-001) recorded as a known defect rather than as expected output. A coverage threshold must be stated for the rules engine.",
+      "justification": "Zero coverage is what makes every implicit behaviour in this application dangerous rather than merely untidy: nothing would fail if a re-implementation changed any of them. The 0% here is a provable zero rather than a measurement gap, which is why it is a FIX and not a DEFER — contrast ANOM-019 and ANOM-021.",
+      "affected_requirements": [
+        "NFR-GR (testability)",
+        "NFR-GR (regression safety / characterisation baseline)",
+        "FR-GR (BR-016)"
+      ],
+      "sme_confirmation_required": false,
+      "open_dependency": "Requires ANOM-015 to be resolved first: the rules must be made reachable before any test can call them.",
+      "discovery_source": {
+        "pass": "structural",
+        "finding_id": "coupling_indicators.test_assembly_not_wired_to_production_code",
+        "citation": "src/GildedRose.Tests/GildedRose.Tests.csproj:42-58; src/GildedRose.Tests/TestAssemblyTests.cs:7-11",
+        "artifact": "structural-analysis.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-026",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "test_coverage.gap_to_baseline_pct",
+          "artifact": "quality-risk.json"
+        },
+        {
+          "pass": "shared-database",
+          "finding_id": "RISK-02",
+          "artifact": "shared-db-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-017",
+      "type": "end-of-support-runtime",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "Both projects target .NET Framework 4.5 / 4.5.1 — Windows-only and past Microsoft end of support — with cross-module skew: the test assembly targets 4.5.1 (src/GildedRose.Tests/GildedRose.Tests.csproj:15) while the code it is meant to test targets 4.5 (src/GildedRose.Console/GildedRose.Console.csproj:12, src/GildedRose.Console/app.config:4), and every NuGet package in both projects is marked targetFramework=net451 including the console project's, which does not target net451. System.Console.ReadKey() additionally requires an interactive Windows console. There is no in-place path onto the governing profile's container substrate.",
+      "prescribed_behavior": "The SRS must state the target runtime explicitly as a supported, cross-platform .NET version, uniform across the rules library, the host and the test assembly, with package target frameworks consistent with the projects that declare them, and must record that reaching it requires a runtime port plus removal of the blocking console wait (ANOM-009) rather than an in-place upgrade. Runtime currency must be stated as a maintained NFR, not a one-time migration step.",
+      "justification": "An out-of-support, Windows-only runtime receives no security fixes and cannot be deployed on the profile's substrate, so it cannot be carried into a target state on any reading. The framework skew between the two projects is separately a correctness hazard: the assembly under test and the assembly testing it do not agree on their platform. Whether the port is in scope at all is a portfolio disposition question, not a technical one.",
+      "affected_requirements": [
+        "NFR-GR (runtime currency / supported platform)",
+        "NFR-GR (portability / cross-platform)",
+        "NFR-GR (deployability / container substrate)",
+        "NFR-GR (security patching)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Is porting this application to a supported, cross-platform runtime in scope, or is it a retire/replace candidate? The answer decides whether this SRS describes a target state at all.",
+      "discovery_source": {
+        "pass": "structural",
+        "finding_id": "primary_technology.runtimes",
+        "citation": "src/GildedRose.Console/GildedRose.Console.csproj:12; src/GildedRose.Tests/GildedRose.Tests.csproj:15; src/GildedRose.Console/app.config:4; src/GildedRose.Console/packages.config:3",
+        "artifact": "structural-analysis.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "structural",
+          "finding_id": "modules[gildedrose-tests].coupling_signals:Cross-module runtime skew",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "open_questions:TARGET-RUNTIME GAP for the governing profile",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-018",
+      "type": "non-hermetic-build",
+      "action": "FIX",
+      "severity": "high",
+      "legacy_behavior": "The build is neither hermetic nor self-describing. build.bat downloads an unpinned NuGet.exe from the public internet when absent (build.bat:24-28) and restores from the deprecated nuget.org v2 feed (NuGet.config:7); it hard-requires cmd plus Windows PowerShell >= 3.0 (build.bat:10) and shells out to GitVersion.exe (build.bat:42). tasks.ps1 defines no task bodies at all — it imports Version/Clean/Build/Test from the out-of-repo psake.net 0.1.3 package (tasks.ps1:5, :11) — so what Build and Test actually DO is invisible in the repository and was unreadable in the structural walk because packages/ is not restored. A NuGet.exe binary is additionally vendored into source control.",
+      "prescribed_behavior": "The SRS must require a hermetic, self-describing build: all build and test steps defined inside the repository, all tool and package versions pinned to explicit versions from an approved internal feed with integrity verification, no build-time download from the public internet, no dependence on an out-of-repository convention package for step definitions, no vendored tool binaries in source control, and a build reproducible on the target platform without an interactive Windows shell.",
+      "justification": "An unpinned executable fetched over the network at build time and a deprecated feed are a supply-chain exposure, and task bodies that live outside the repository mean the build cannot be reviewed, reproduced or attested — the structural walk could not even read what 'Test' executes, so it is unverified whether any test runner is invoked at all. None of this is a requirement of the application; it is inherited toolchain debt that must not be reproduced.",
+      "affected_requirements": [
+        "NFR-GR (build reproducibility / hermeticity)",
+        "NFR-GR (supply-chain integrity)",
+        "NFR-GR (dependency pinning)",
+        "NFR-GR (CI/CD)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "structural",
+        "finding_id": "coupling_indicators.build_chain_depends_on_out_of_repo_conventions_and_the_public_internet",
+        "citation": "build.bat:24-28, build.bat:30, build.bat:42, build.bat:10; NuGet.config:7; tasks.ps1:5, tasks.ps1:11",
+        "artifact": "structural-analysis.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "structural",
+          "finding_id": "duplication_map.vendored_binary_in_source_control",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "open_questions:BUILD CONTENT NOT REACHABLE IN THIS WALK",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-019",
+      "type": "unmeasured-vulnerability-exposure",
+      "action": "DEFER",
+      "severity": "high",
+      "legacy_behavior": "The application carries 12 distinct NuGet package dependencies (13 declarations), several pinned to 2014-era versions, and they are UNASSESSED for known CVEs. No SCA tool output and no vulnerability-database output was supplied as an input to the quality-risk pass, which therefore EXCLUDED vulnerability_count from its weighted technical-debt score rather than defaulting it to zero, precisely so that an unmeasured input would not be reported as a clean result. The vulnerabilities array in quality-risk.json is empty because nothing was measured — this is a MEASUREMENT GAP and MUST NOT be read as 'no vulnerabilities found'.",
+      "prescribed_behavior": "DEFER the security posture of the dependency set to a software-composition-analysis run, and make that run a gate precondition: the SRS must state that no vulnerability conclusion may be drawn for this application until SCA has executed against a restored dependency graph, that the target state requires all dependencies to be free of known high or critical vulnerabilities at cutover, and that dependency scanning is a continuing NFR in the build pipeline prescribed by ANOM-018.",
+      "justification": "Deferred rather than fixed because there is nothing yet to fix: no finding exists, only an unrun measurement. Recorded at high severity because the risk is unbounded, not because it is known — 2014-era packages restored from a deprecated feed are exactly the population where unpatched CVEs concentrate. The explicit exclusion from the debt score is the upstream pass's own guard against this being silently converted into a zero, and that guard must survive into the SRS.",
+      "affected_requirements": [
+        "NFR-GR (dependency vulnerability management)",
+        "NFR-GR (supply-chain integrity)",
+        "NFR-GR (security gate preconditions)"
+      ],
+      "sme_confirmation_required": false,
+      "measurement_status": "UNMEASURED — no SCA tool or vulnerability-database output was supplied as an input. Absence of findings is absence of measurement, not compliance.",
+      "discovery_source": {
+        "pass": "quality-risk",
+        "finding_id": "technical_debt_score.contributing_factors.vulnerability_count",
+        "citation": "quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count; quality-risk.json:vulnerabilities (empty); src/GildedRose.Console/packages.config:3, src/GildedRose.Tests/packages.config:1-10, .nuget/packages.config:3-6",
+        "artifact": "quality-risk.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "quality-risk",
+          "finding_id": "risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "summary_metrics.distinct_nuget_package_ids",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-020",
+      "type": "domain-model-gap",
+      "action": "DEFER",
+      "severity": "medium",
+      "legacy_behavior": "An 'inventory system' with no quantity or stock-count field. Each Item instance (src/GildedRose.Console/Program.cs:115-122) represents exactly one unit, duplicates are not aggregated, two identical goods with different quality must exist as two list entries, and nothing in the code can express 'twelve wheels of Aged Brie'.",
+      "prescribed_behavior": "DEFER to the business owner as a target-scope question: does the target inventory model carry quantity or stock count, and if so, how do quality and sell-in relate to a quantity greater than one (per-unit valuation, per-lot valuation, or aggregated)? Until answered, the SRS must record the legacy one-instance-equals-one-unit semantics as the as-built model and must NOT silently introduce quantity as though it existed.",
+      "justification": "Deferred rather than fixed because adding quantity is a scope expansion with real modelling consequences — it changes the aggregate boundary, the valuation unit and the audit grain — not a defect correction. The gap is recorded so that no downstream line assumes an inventory system necessarily tracks stock levels; on the evidence, this one does not.",
+      "affected_requirements": [
+        "FR-GR (BR-018)",
+        "FR-GR (BR-019)",
+        "NFR-GR (domain model completeness)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Should the target inventory model carry a quantity or stock count per item, and if so is quality assessed per unit, per lot, or in aggregate?",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-023",
+        "citation": "src/GildedRose.Console/Program.cs:115-122",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "data-domains",
+          "finding_id": "DD-GRK-001:Item",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-021",
+      "type": "unmeasured-accessibility-posture",
+      "action": "DEFER",
+      "severity": "medium",
+      "legacy_behavior": "Accessibility posture is UNDETERMINED, not compliant. The UX pass could not compose with the accessibility-checker sub-skill as its methodology directs, because the required Sub-Skill Output Contract (the checker's exact output path and schema) was absent from the dispatch actually supplied — so accessibility_findings is an empty list BY OMISSION OF A CHECKER RUN, with gate_decision recorded as 'undetermined' and tool recorded as 'none'. Separately, whether WCAG 2.1 AA / Section 508 applies at all to a character-mode console surface (one stdout line, one blocking keypress, no page, form, GUI or rendered content) is itself unruled and needs an accessibility-compliance reviewer's determination rather than a static walk's guess.",
+      "prescribed_behavior": "DEFER the accessibility gate: the SRS must record the posture as undetermined and require two things before any accessibility conclusion is drawn — (a) a real accessibility-checker composition once the missing Sub-Skill Output Contract is supplied, and (b) a compliance reviewer's ruling on Section 508 / WCAG applicability to a character-mode surface. Any target state that introduces a rendered UI inherits the full obligation and must be assessed afresh.",
+      "justification": "Deferred because neither the applicability question nor the measurement can be settled by this line. Recorded explicitly because an empty findings list with a zero total is exactly the shape a clean result would take, and it must not be read that way: zero findings here means zero checks were run, and the surface's own reviewed non-issues were the assessor's direct read, not checker output.",
+      "affected_requirements": [
+        "NFR-GR (accessibility / Section 508)",
+        "NFR-GR (accessibility / WCAG 2.1 AA)",
+        "NFR-GR (compliance gate preconditions)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Does Section 508 / WCAG 2.1 AA apply to a character-mode console interface with no page, form or rendered GUI, and who owns the accessibility determination for this application?",
+      "measurement_status": "UNMEASURED — no accessibility-checker was dispatched (0 of 1 surface given an actual checker run). Empty findings are absence of measurement, not compliance.",
+      "discovery_source": {
+        "pass": "ux-accessibility",
+        "finding_id": "accessibility_findings.gate_decision_note",
+        "citation": "ux-accessibility.json:accessibility_findings.gate_decision_note; ux-accessibility.json:accessibility_findings.gate_decision (undetermined); src/GildedRose.Console/Program.cs:10, :33",
+        "artifact": "ux-accessibility.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "ux-accessibility",
+          "finding_id": "open_questions:MISSING SUB-SKILL OUTPUT CONTRACT",
+          "artifact": "ux-accessibility.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "interface-inventory.open_questions:Section 508 / WCAG 2.1 AA applicability is UNDETERMINED",
+          "artifact": "structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-022",
+      "type": "governing-profile-application-identity-discrepancy",
+      "action": "DEFER",
+      "severity": "high",
+      "legacy_behavior": "The authoritative governing profile for this work is `faa`, but the source tree is the publicly published, MIT-licensed Gilded Rose Refactoring Kata — a fictional retail inn's inventory exercise attributed to @TerryHughes/@NotMyself — with no aviation, NAS, air-traffic or certification content of any kind, and a business_domain that could not be grounded in the FAA taxonomy (recorded as 'unclassified'). Separately, src/GildedRose.Console/Properties/AssemblyInfo.cs:11 and :13 assert AssemblyCompany \"DSHS\" and Copyright \"DSHS 2015\" — a third, non-FAA agency attribution embedded in the shipped assembly metadata. Four Discovery passes flagged the same discrepancy independently.",
+      "prescribed_behavior": "RECORD the discrepancy and DEFER it to stakeholder confirmation before any downstream line consumes this SRS. The SRS is written under the `faa` profile as directed; it must NOT adopt the profile implied by the artifact's own content or metadata, and must NOT restate either the kata provenance or the DSHS attribution as established fact about the application's ownership. Confirmation that application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system is a precondition on every profile-derived requirement in this SRS — including the substrate, identity and safety-tier prescriptions.",
+      "justification": "Every profile-derived requirement inherits this question: if the mapping is wrong, an entire SRS is attributed to a system that was never meant to own it, and the FAA-specific weighting applied by the risk pass is the wrong lens altogether. Deferred rather than fixed because no amount of further static analysis can settle portfolio membership — only a stakeholder can. Recorded rather than dropped because the mismatch is directly verifiable and consistently reported, and silence would let a phantom application propagate through the whole plan.",
+      "affected_requirements": [
+        "NFR-GR (governing profile applicability)",
+        "NFR-GR (portfolio scope / application identity)",
+        "NFR-GR (safety tier determination)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Does application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely map to an FAA-owned system? If not, is this record a fixture or a mis-mapping, and what is the correct governing profile? Separately, what is the authoritative safety tier — it could not be determined and may not be inferred from code patterns.",
+      "discovery_source": {
+        "pass": "catalog",
+        "finding_id": "open_questions:Profile/domain mismatch",
+        "citation": "catalog.json:open_questions; structural-analysis.json:open_questions (GOVERNING-PROFILE DISCREPANCY); src/GildedRose.Console/Properties/AssemblyInfo.cs:11, :13; README.md",
+        "artifact": "catalog.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "structural",
+          "finding_id": "open_questions:GOVERNING-PROFILE DISCREPANCY (recorded, not adopted)",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json"
+        },
+        {
+          "pass": "ux-accessibility",
+          "finding_id": "scope_caveat",
+          "artifact": "ux-accessibility.json"
+        },
+        {
+          "pass": "shared-database",
+          "finding_id": "review_asks:governing-profile-mismatch",
+          "artifact": "shared-db-analysis.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "review_asks:target-binding-unassigned",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-023",
+      "type": "toolchain-inconsistency-and-dead-dependencies",
+      "action": "FIX",
+      "severity": "low",
+      "legacy_behavior": "Three GitVersion components at three versions participate in one solution build: GitVersionTask 2.0.1 declared by the console project but never imported (src/GildedRose.Console/packages.config:3), GitVersionTask 3.4.1 imported as a target by the tests project (src/GildedRose.Tests/GildedRose.Tests.csproj:80, src/GildedRose.Tests/packages.config:3), and GitVersion.CommandLine 2.0.0 invoked by build.bat (.nuget/packages.config:3). The console assembly consequently ships the hard-coded AssemblyVersion 1.0.0.0 while the test assembly is version-stamped by GitVersion. NUnit.Runners 2.6.4 is restored at solution level (.nuget/packages.config:4) although no project references NUnit. Four assembly references — System.Data, System.Data.DataSetExtensions, System.Xml, System.Xml.Linq (src/GildedRose.Console/GildedRose.Console.csproj:37-41) — are unused Visual Studio template defaults with no matching using or type usage. And src/GildedRose.Tests/Properties/AssemblyInfo.cs is an EMPTY file yet is listed as a <Compile> item, so the test assembly carries no title, version or company metadata of its own.",
+      "prescribed_behavior": "The SRS must require one versioning mechanism applied uniformly to every assembly in the solution, with a single pinned version of the versioning tool; removal of restored-but-unreferenced packages and of unused assembly references; and either populated assembly metadata or removal of the empty metadata file from the compile set. Declared dependencies must correspond to used dependencies.",
+      "justification": "Low severity because no runtime behaviour depends on any of it, but it is included rather than dropped for two reasons: the unused System.Data and System.Xml references are the one signal in the tree that superficially suggests a data tier this application does not have — a downstream reader could re-derive a phantom database from them — and divergent version stamping across two assemblies of one deployable undermines the traceability that release and audit both rely on.",
+      "affected_requirements": [
+        "NFR-GR (dependency hygiene)",
+        "NFR-GR (build reproducibility / versioning)",
+        "NFR-GR (release traceability)"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "pass": "structural",
+        "finding_id": "coupling_indicators.divergent_versioning_of_one_build",
+        "citation": "src/GildedRose.Console/packages.config:3; src/GildedRose.Tests/packages.config:3; src/GildedRose.Tests/GildedRose.Tests.csproj:80; .nuget/packages.config:3-4; src/GildedRose.Console/Properties/AssemblyInfo.cs:35; src/GildedRose.Console/GildedRose.Console.csproj:37-41; src/GildedRose.Tests/GildedRose.Tests.csproj:60",
+        "artifact": "structural-analysis.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "structural",
+          "finding_id": "duplication_map.dead_build_dependencies",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "structural",
+          "finding_id": "modules[gildedrose-tests].config:empty AssemblyInfo.cs listed as a Compile item",
+          "artifact": "structural-analysis.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "evidence_provenance.sibling_artifacts_relied_on:sqlserver-object-inventory",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-024",
+      "type": "emergent-undocumented-rate",
+      "action": "CONSOLIDATE",
+      "severity": "medium",
+      "legacy_behavior": "Aged Brie appreciates +2 per day once past its sell-by date, but this is EMERGENT rather than stated: nothing in the code or in README.md says it improves faster after the sell-by date. The rate arises because the generic appreciation at src/GildedRose.Console/Program.cs:55 and the expiry-branch appreciation at :106 both fire within the same iteration. A reader checking the documentation alone would never predict it, and a reader checking either line alone would see only +1.",
+      "prescribed_behavior": "CONSOLIDATE the two increments into a single prescribed rule stated explicitly: an appreciating good's Quality increases by 1 per day up to and including its sell-by date and by 2 per day after it, subject to the 50 ceiling. One rule, one stated rate per phase — not a base rule plus an unstated second application that a reader must discover by summing two branches.",
+      "justification": "Consolidated rather than fixed because the observable outcome is correct and must be preserved exactly; what is wrong is that it is nowhere stated, so no requirement captures it and any re-implementation that separates the phases produces +1 and believes itself faithful. The same double-application pattern governs standard-goods degradation, so stating it once as an explicit per-phase rate also removes the ambiguity there.",
+      "affected_requirements": [
+        "FR-GR (BR-014)",
+        "FR-GR (BR-006)",
+        "FR-GR (BR-007)",
+        "FR-GR (BR-016)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Confirm that an appreciating good is intended to improve at twice the rate after its sell-by date — this behaviour is in the code but appears in no documentation, so it may be an accident of implementation rather than policy.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "BR-014",
+        "citation": "src/GildedRose.Console/Program.cs:55, :106",
+        "artifact": "business-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-013",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-006",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "data-domains",
+          "finding_id": "DD-GRK-002:QualityDegradationRule",
+          "artifact": "data-domains.json"
+        }
+      ]
+    },
+    {
+      "anomaly_id": "ANOM-025",
+      "type": "data-dependent-dead-code",
+      "action": "FIX",
+      "severity": "medium",
+      "legacy_behavior": "The Sulfuras guard at src/GildedRose.Console/Program.cs:91 is never evaluated for the seeded inventory — Sulfuras is seeded at SellIn 0 (Program.cs:19) and its SellIn is never decremented (Program.cs:78-81), so it never reaches the expiry branch (Program.cs:83) — which makes the line LOOK removable. It is not: a Sulfuras seeded with a negative SellIn reaches that guard every single day, and the guard is then the only thing preventing its quality from degrading. Whether the line is dead depends entirely on seed data — an invisible coupling between the rules engine and the item list.",
+      "prescribed_behavior": "The SRS must prescribe the legendary exemption as ONE explicit, stated rule evaluated before any other rule applies: a legendary item's Quality and sell-in are never altered by the revaluation, regardless of its sell-in value, expressed as a single early exit from the per-item rule chain rather than as a negated name guard repeated inside nested branches. The exemption must hold for every possible input, not only for the currently seeded one.",
+      "justification": "The guard's apparent deadness is an artefact of the seed list, and a cleanup that trusts the appearance silently removes the only protection of the legendary invariant for any item not seeded at SellIn 0. Stating the exemption once as an early exit eliminates both the data dependency and the repeated negated guards that make it four levels deep and easy to drop, and it is the same invariant ANOM-002 requires the domain to enforce.",
+      "affected_requirements": [
+        "FR-GR (BR-004)",
+        "FR-GR (BR-005)",
+        "FR-GR (BR-008)",
+        "NFR-GR (rule legibility / no data-dependent control flow)"
+      ],
+      "sme_confirmation_required": true,
+      "sme_question": "Confirm that the legendary exemption is unconditional — never degrading and never ageing regardless of the sell-in value it arrives with — rather than being conditional on legendary stock always being seeded at sell-in 0.",
+      "discovery_source": {
+        "pass": "business-logic",
+        "finding_id": "IL-015",
+        "citation": "src/GildedRose.Console/Program.cs:91",
+        "artifact": "files/business-logic-extraction/implicit-logic.json"
+      },
+      "corroborating_findings": [
+        {
+          "pass": "business-logic",
+          "finding_id": "IL-014",
+          "artifact": "files/business-logic-extraction/implicit-logic.json"
+        },
+        {
+          "pass": "business-logic",
+          "finding_id": "BR-004",
+          "artifact": "business-logic.json"
+        },
+        {
+          "pass": "quality-risk",
+          "finding_id": "QR-007",
+          "artifact": "quality-risk.json"
+        }
+      ]
+    }
+  ],
+  "resolution_notes": [
+    "ANOM-019 and ANOM-021 are UNMEASURED, not clean. In both cases an empty findings set exists because the measuring tool was never run — no SCA output was supplied to the quality-risk pass, and no accessibility-checker was dispatched by the UX pass. Neither may be read as a compliance result, and both carry an explicit measurement_status field saying so.",
+    "ANOM-016 is the one coverage-shaped anomaly that is NOT a measurement gap: 0% is a structural proof (no project reference exists, so the test cannot execute production code), which is why it is a FIX rather than a DEFER.",
+    "Resolution order matters. ANOM-015 (make the rules reachable) is a precondition for ANOM-016 (test them), ANOM-011 (emit their output), ANOM-012 (audit their changes) and ANOM-013 (authorise the operation). ANOM-016 in turn is a precondition for safely applying ANOM-001, ANOM-003, ANOM-004, ANOM-005, ANOM-024 and ANOM-025, all of which touch the rules themselves.",
+    "ANOM-022 is a precondition on the whole artifact, not an item within it: every profile-derived requirement in this SRS is conditional on confirmation that this application_id maps to an FAA-owned system. The discrepancy is recorded, not resolved, and the profile implied by the source tree and by the AssemblyInfo attribution was not adopted."
+  ]
+}

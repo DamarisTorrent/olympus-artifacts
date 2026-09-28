@@ -1,0 +1,580 @@
+{
+  "$schema": "olympus:artifact:srs-data-model:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "governing_profile": "faa",
+  "description": "Target-state logical data model for the Gilded Rose inventory revaluation capability. It combines the one declared legacy type (Item) and the four IMPLICIT legacy logical entities recovered from source with two entities that have NO legacy counterpart at all (RevaluationRun, RevaluationAuditEntry), added because the legacy application keeps no record of a run and no before/after trace of a valuation change. Module assignment follows the SRS decomposition: SRS-M-01 rules domain, SRS-M-02 stock item and persistence, SRS-M-03 revaluation run host.",
+  "schema_limitation": "NO persistent schema exists to derive this model from. The legacy application has zero database tables, zero connection strings, zero DDL or migration files, zero ORM packages and zero stored procedures or triggers; app.config contains only a <startup>/<supportedRuntime> element and no <connectionStrings> section. That negative was verified INDEPENDENTLY by four Discovery passes — db-archaeology (database_engine 'none (no database engine present)'), sqlserver-object-inventory (server_version 'none-detected', every inventory array empty), data-flow-trace (every flow's persistence points resolve only to the Git source repository and process memory) and shared-db-analysis (a first-hand case-insensitive sweep of all 22 git-tracked files for connection strings, SQL client types, ORMs, DDL keywords and DB-LINKs returning ZERO matches). The model below is therefore PRESCRIBED — derived from the in-memory object model in src/GildedRose.Console/Program.cs plus the two derived data domains (DD-GRK-001 Inventory Stock Item, DD-GRK-002 Item Quality Rule Set) — and is NOT reverse-engineered from a database. Of the five legacy logical entities, only ONE (Item) is declared in code; the other FOUR (InventoryWorkingSet, ItemCategory, QualityDegradationRule, QualityBounds) are implicit, never declared as a type, enum, table or configuration value, and exist only as a field declaration, literal string comparisons, branch bodies and inline guard conditions. Zero legacy entities are persistent, so there is nothing to migrate and everything to build; the two SRS-M-03 entities below are marked as new construction with no legacy counterpart.",
+  "entities": [
+    {
+      "entity": "Item",
+      "module": "SRS-M-02",
+      "description": "Aggregate root of the Inventory Stock Item domain and the ONLY type declared anywhere in the legacy application — a three-property POCO with public setters and no validation, invariants or persistence mapping. 100% of legacy data coupling passes through it, so there is no entity-level decomposition seam in the legacy code. It represents exactly one unit of stock: there is no quantity or stock-count field, duplicates are not aggregated, and two identical goods of differing quality must exist as two separate entries.",
+      "legacy_status": "declared — the only declared type in the application",
+      "domain_ref": "DD-GRK-001 Inventory Stock Item",
+      "attributes": [
+        {
+          "name": "Name",
+          "type": "string",
+          "legacy_semantics": "OVERLOADED ATTRIBUTE HOTSPOT. Name simultaneously serves three roles today: display label, de facto natural key, and classification discriminator carrying the entire business taxonomy across eight string-comparison sites. It is read-only control data after seeding — never written by the rules — and the data-flow trace independently classified it as control/reference data rather than transactional data.",
+          "prescribed": "MUST be reduced to a display label only. Classification MUST move to a separate category identifier (see ItemCategory and the Item -> ItemCategory relationship), and item identity MUST be carried by a stable identifier rather than by the display name.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:117",
+            "src/GildedRose.Console/Program.cs:41",
+            "src/GildedRose.Console/Program.cs:45",
+            "src/GildedRose.Console/Program.cs:57",
+            "src/GildedRose.Console/Program.cs:85",
+            "src/GildedRose.Console/Program.cs:87",
+            "src/GildedRose.Console/Program.cs:91"
+          ]
+        },
+        {
+          "name": "SellIn",
+          "type": "int",
+          "legacy_semantics": "Days left to sell. Both written (decremented once per run) and read as the gate selecting which quality rule applies — and read BOTH before and after its own decrement within a single iteration, so one field means two different things inside one pass. A plain System.Int32 auto-property with a public setter and no range attribute or clamp.",
+          "prescribed": "The read-before-decrement and read-after-decrement semantics MUST be made explicit (e.g. distinct pre- and post-advance values) so that a re-implementation cannot silently shift outcomes on the boundary days 11, 6 and 0.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:119",
+            "src/GildedRose.Console/Program.cs:59",
+            "src/GildedRose.Console/Program.cs:67",
+            "src/GildedRose.Console/Program.cs:80",
+            "src/GildedRose.Console/Program.cs:83"
+          ]
+        },
+        {
+          "name": "Quality",
+          "type": "int",
+          "legacy_semantics": "Saleable quality score — the only true output of the application, and today it is never emitted anywhere. Mutated at 13 sites inside one loop through a public unguarded setter; a plain System.Int32 with no range attribute or clamp, so Quality -100 or 9999 constructs cleanly and is never normalized.",
+          "prescribed": "MUST be range-constrained by the model itself rather than only by the conditionals in the update loop.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:121",
+            "src/GildedRose.Console/Program.cs:37-111"
+          ]
+        }
+      ],
+      "relationships": [
+        "Item -> ItemCategory (classification; see relationships section, CDR-GRK-001)",
+        "InventoryWorkingSet contains Item (1..n)"
+      ],
+      "constraints": [
+        "PRESCRIBED: Quality MUST be clamped to the inclusive range 0..50 for all non-legendary categories, and the clamp MUST be enforced by the model, not only by guards inside the update loop.",
+        "PRESCRIBED: legendary items MUST be exempt from the 0..50 band and MUST hold a fixed quality value; the legacy legendary value of 80 exists ONLY as a seed literal with no assertion, default or constraint that would restore it, and it sits 30 above the documented maximum of 50.",
+        "PRESCRIBED: the item's business category MUST be carried by a separate category identifier and MUST NOT be derived from the display name; renaming an item MUST NOT change the rules applied to it.",
+        "PRESCRIBED: all invariants MUST live in the model (constructor/factory plus guarded mutators or an immutable value type), so that no second writer and no reordering of the update loop can violate them undetectably. Today the 0 floor, the 50 ceiling and the legendary fixed value are enforced nowhere but inside one loop, via ~25 repeated collection-indexer accesses.",
+        "PRESCRIBED: a missing, empty or unresolvable category MUST be rejected or routed to an explicit, logged default. Legacy C# string equality is null-safe, so a null Name silently satisfies every 'not a special item' test and is priced as ordinary merchandise with no exception, log or validation error.",
+        "OPEN (carried forward, not resolved here): the legacy model has no quantity or stock-count field, so 'twelve wheels of Aged Brie' is inexpressible. Whether the target model adds quantity is a business decision, recorded as a gap rather than prescribed."
+      ],
+      "citations": [
+        "src/GildedRose.Console/Program.cs:115-122",
+        "src/GildedRose.Console/Program.cs:117",
+        "src/GildedRose.Console/Program.cs:119",
+        "src/GildedRose.Console/Program.cs:121",
+        "data-domains.json:hub_entities_and_coupling_hotspots (Item 'sole hub'; Item.Name 'overloaded attribute')"
+      ]
+    },
+    {
+      "entity": "InventoryWorkingSet",
+      "module": "SRS-M-02",
+      "description": "The full set of stock advanced by a single revaluation run. IMPLICIT today: it is materialized only as an IList<Item> field declared on the Program class and seeded from six compiled-in literals, then discarded at process exit. It has no identity, no run id, no as-of date and no version, and the loop re-evaluates the collection count every iteration with no lock, snapshot or copy, so concurrent modification is unsupported.",
+      "legacy_status": "implicit — only an IList<Item> field, never a declared type",
+      "domain_ref": "DD-GRK-001 Inventory Stock Item",
+      "attributes": [
+        {
+          "name": "Items",
+          "type": "collection of Item",
+          "legacy_semantics": "The six seeded items processed identically on every run; the collection is mutated in place through the list indexer.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:7",
+            "src/GildedRose.Console/Program.cs:14-29"
+          ]
+        },
+        {
+          "name": "RunIdentity",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — the legacy working set has no identity of any kind. MUST identify which run advanced this set, linking it to RevaluationRun.",
+          "citations": [
+            "prescribed — no legacy counterpart"
+          ]
+        },
+        {
+          "name": "AsOfDate",
+          "type": "date",
+          "prescribed": "PRESCRIBED — the legacy working set has no as-of date. 'A day' is defined purely as one call to the update method: no DateTime, timer, scheduler or date parameter exists anywhere in the application, and the sell-by countdown has no calendar anchor, so nothing can answer which real-world date an item expires on.",
+          "citations": [
+            "prescribed — no legacy counterpart"
+          ]
+        },
+        {
+          "name": "Version",
+          "type": "integer or revision token",
+          "prescribed": "PRESCRIBED — the legacy working set has no version. MUST carry a version/revision so that a repeated or retried run can be detected; the legacy revaluation is not idempotent and is unguarded, with no run-date record, no already-processed check and no lock.",
+          "citations": [
+            "prescribed — no legacy counterpart"
+          ]
+        }
+      ],
+      "relationships": [
+        "InventoryWorkingSet contains Item (1..n)",
+        "InventoryWorkingSet is advanced by exactly one RevaluationRun"
+      ],
+      "constraints": [
+        "PRESCRIBED: the working set MUST be durably persisted. Legacy state is in-memory only and lost at process exit, so no nightly result, retention rule or archival schedule exists to preserve.",
+        "PRESCRIBED: a run MUST advance the working set atomically or compensate on failure. In the legacy code a mid-loop failure leaves the working set half-advanced, with no pre-image and no rollback.",
+        "PRESCRIBED: concurrent advancement of the same working set MUST be prevented, since the legacy loop re-evaluates the collection count each iteration with no lock or snapshot."
+      ],
+      "citations": [
+        "src/GildedRose.Console/Program.cs:7",
+        "src/GildedRose.Console/Program.cs:14-29",
+        "src/GildedRose.Console/Program.cs:39-110",
+        "data-domains.json:domains.DD-GRK-001.physical_footprint"
+      ]
+    },
+    {
+      "entity": "ItemCategory",
+      "module": "SRS-M-01",
+      "description": "The item classification that selects which degradation rules apply. IMPLICIT today: it is encoded ONLY as magic-string equality tests against display-name literals — there is no class, enum, lookup table or configuration file for it anywhere, and the Item model has no category, type or SKU field. It is the aggregate root of the Item Quality Rule Set domain, which the data-domain pass recorded at materially lower confidence (0.58) precisely because the domain is latent: it has no declared entity in the source at all.",
+      "legacy_status": "implicit — encoded as magic-string equality only, never declared",
+      "domain_ref": "DD-GRK-002 Item Quality Rule Set",
+      "members_observed": [
+        "'Aged Brie' — appreciating good (Program.cs:41, :85)",
+        "'Sulfuras, Hand of Ragnaros' — legendary, immutable (Program.cs:45, :78, :91)",
+        "'Backstage passes to a TAFKAL80ETC concert' — accelerating then worthless (Program.cs:41, :57, :87)",
+        "ordinary goods — an UNNAMED default class with no literal of its own, reached only by negation of the three named tests; it covers '+5 Dexterity Vest', 'Elixir of the Mongoose' and (unintentionally) 'Conjured Mana Cake'",
+        "'Conjured' — DOCUMENTED IN README.md BUT ABSENT FROM CODE: the string appears in the seed list (Program.cs:26) and in README.md:34 but nowhere in the rules, so the seeded 'Conjured Mana Cake' falls through to the ordinary-goods rules and the documented doubled degradation is simply not happening. Recorded as a specified-but-absent member, NOT as an implemented one."
+      ],
+      "attributes": [
+        {
+          "name": "CategoryId",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — MUST be a stable identifier used for rule dispatch, replacing display-name string equality. Legacy comparisons use C# ordinal, case-sensitive, culture-insensitive whole-string equality with no Trim, ToLower, StartsWith, Contains or comparer, so 'aged brie', 'Aged Brie ' and 'AGED BRIE' are all ordinary goods.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:41",
+            "src/GildedRose.Console/Program.cs:45",
+            "src/GildedRose.Console/Program.cs:57",
+            "src/GildedRose.Console/Program.cs:85",
+            "src/GildedRose.Console/Program.cs:87",
+            "src/GildedRose.Console/Program.cs:91"
+          ]
+        },
+        {
+          "name": "DisplayName",
+          "type": "string",
+          "prescribed": "PRESCRIBED — the human-readable label for the category, decoupled from the identifier so that marketing copy can change without changing valuation.",
+          "citations": [
+            "prescribed — no legacy counterpart as a separate attribute"
+          ]
+        },
+        {
+          "name": "IsLegendary",
+          "type": "boolean",
+          "prescribed": "PRESCRIBED — makes explicit the exemption that today is expressed only as negated name comparisons nested inside each other.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:45",
+            "src/GildedRose.Console/Program.cs:78",
+            "src/GildedRose.Console/Program.cs:91"
+          ]
+        }
+      ],
+      "relationships": [
+        "Item -> ItemCategory (many items to one category; today an inline case-sensitive string equality with no referential integrity)",
+        "ItemCategory -> QualityDegradationRule (one category to one or more rules)",
+        "ItemCategory -> QualityBounds (a category resolves to the bounds that apply to it)"
+      ],
+      "constraints": [
+        "PRESCRIBED: ItemCategory MUST become first-class reference data — a declared entity with its own store, owner and change path — so that merchandising policy can change without a source edit and a rebuild. The legacy effective write path for this entity is a source-code edit plus a rebuild.",
+        "PRESCRIBED: the default/ordinary-goods class MUST be explicitly named and declared rather than reached by negation.",
+        "PRESCRIBED: the category set MUST be closed and validated, so an item cannot reference a category that does not exist.",
+        "OPEN (routed to the business owner, not resolved here): whether 'Conjured' is admitted as a target-state category with the documented doubled degradation, or recorded as stale documentation. Note that the legacy design expresses 'twice as fast' by executing a second separate +/-1 statement rather than by multiplying a rate, so the rule cannot be added as a simple multiplier.",
+        "OPEN (routed to the G-DT reviewer, not resolved here): whether the Item Quality Rule Set is a data domain in its own right or behaviour belonging to the stock-item domain. The recorded two-domain shape carries confidence 0.58 and the reviewer may collapse it."
+      ],
+      "citations": [
+        "src/GildedRose.Console/Program.cs:41",
+        "src/GildedRose.Console/Program.cs:45",
+        "src/GildedRose.Console/Program.cs:57",
+        "src/GildedRose.Console/Program.cs:78",
+        "src/GildedRose.Console/Program.cs:85",
+        "src/GildedRose.Console/Program.cs:87",
+        "src/GildedRose.Console/Program.cs:91",
+        "src/GildedRose.Console/Program.cs:26 (seeded 'Conjured Mana Cake', matched by no branch)"
+      ]
+    },
+    {
+      "entity": "QualityDegradationRule",
+      "module": "SRS-M-01",
+      "description": "The policy rows that state how an item's quality and sell-in advance over time. IMPLICIT today in the strongest sense: the branch bodies themselves ARE the rule rows. There is no rate variable anywhere — every adjustment is literally 1, and 'twice as fast' is expressed by executing a second separate statement in the same iteration. The rule set has no representation in the code at which it could be given a separate owner, tested independently, or changed without a rebuild.",
+      "legacy_status": "implicit — the branch bodies are the rule rows; never declared as data",
+      "domain_ref": "DD-GRK-002 Item Quality Rule Set",
+      "rules_observed": [
+        "ordinary goods: Quality -1 per run (Program.cs:47), and a second -1 once SellIn < 0 (Program.cs:93)",
+        "Aged Brie: Quality +1 per run (Program.cs:55), and a second +1 once SellIn < 0 (Program.cs:106) — the resulting +2/day after expiry is EMERGENT and stated nowhere in code or documentation",
+        "Backstage passes: +1, +2 when SellIn < 11, +3 when SellIn < 6 (Program.cs:55, :63, :71), zeroed once SellIn < 0 (Program.cs:99, written as a self-subtraction idiom rather than an assignment of 0)",
+        "Sulfuras (legendary): exempt from both the Quality change and the SellIn decrement (Program.cs:45, :78, :91)"
+      ],
+      "attributes": [
+        {
+          "name": "RuleId",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — each rule row MUST be individually identifiable so it can be cited on an audit entry (see RevaluationAuditEntry.RulesApplied).",
+          "citations": [
+            "prescribed — no legacy counterpart"
+          ]
+        },
+        {
+          "name": "CategoryId",
+          "type": "identifier (FK to ItemCategory)",
+          "prescribed": "PRESCRIBED — every rule is selected today by the same category test as the item it applies to, so rule and category are inseparable; the link MUST become an explicit reference.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:41-109"
+          ]
+        },
+        {
+          "name": "SellInThreshold",
+          "type": "int (nullable / optional)",
+          "legacy_semantics": "Inline literals 11 and 6, which encode the documented '10 days or less' and '5 days or less' correctly ONLY because they are evaluated before the SellIn decrement. Read in isolation they look like off-by-one bugs; 'fixing' 11 to 10 would change pricing on the boundary day. Recorded by the implicit-logic pass as the single most likely mis-transcription in any re-implementation.",
+          "prescribed": "MUST be expressed as named threshold data with its evaluation point (pre- or post-advance) stated explicitly.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:59",
+            "src/GildedRose.Console/Program.cs:67"
+          ]
+        },
+        {
+          "name": "QualityDelta",
+          "type": "int",
+          "legacy_semantics": "Always literally 1 per statement; multiple statements in one iteration produce the compound rates (+2 Brie after expiry, +3 backstage, -2 expired ordinary goods).",
+          "prescribed": "MUST be a declared rate value so that rate changes are data changes, not code edits.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:47",
+            "src/GildedRose.Console/Program.cs:55",
+            "src/GildedRose.Console/Program.cs:63",
+            "src/GildedRose.Console/Program.cs:71",
+            "src/GildedRose.Console/Program.cs:93",
+            "src/GildedRose.Console/Program.cs:106"
+          ]
+        },
+        {
+          "name": "SetToZeroOnExpiry",
+          "type": "boolean",
+          "legacy_semantics": "The backstage cliff, written as `Items[i].Quality = Items[i].Quality - Items[i].Quality` rather than `= 0`. Any reader or tool searching for an assignment of literal zero misses the rule entirely.",
+          "prescribed": "MUST be expressed as an explicit rule attribute, not as an arithmetic idiom.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:99"
+          ]
+        },
+        {
+          "name": "ExemptFromSellInDecrement",
+          "type": "boolean",
+          "legacy_semantics": "The legendary exemption from the SellIn decrement, expressed only as a negated name comparison.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:78",
+            "src/GildedRose.Console/Program.cs:80"
+          ]
+        }
+      ],
+      "relationships": [
+        "ItemCategory -> QualityDegradationRule (one to many)",
+        "QualityDegradationRule is cited by RevaluationAuditEntry.RulesApplied"
+      ],
+      "constraints": [
+        "PRESCRIBED: the degradation rules MUST be modelled and stored as DATA (rule rows with identifiers, thresholds and deltas), not as control flow. Materializing them as first-class data is the precondition for treating the rule set as a domain at all.",
+        "PRESCRIBED: each rule MUST state its evaluation point relative to the SellIn advance, so the legacy ordering dependency cannot be silently altered by hoisting the decrement.",
+        "PRESCRIBED: rule application MUST NOT compute a value it then discards within the same run. In the legacy code a concert-day pass earns up to +3 and is zeroed in the same iteration, and an already-worthless pass climbs to 3 and resets to 0 on every later run — harmless while nothing is logged or persisted, but a real intermediate value once the run audits, publishes events or commits between phases.",
+        "PRESCRIBED: rules that are unreachable for the current data set MUST NOT be removed as dead code without an explicit decision. The legendary guard in the expiry branch is never evaluated for the seeded inventory only because that item is seeded at SellIn 0 and never decremented; a legendary item seeded with a negative SellIn reaches that guard every run and it is the only thing preventing degradation. Whether the line is dead depends entirely on seed data."
+      ],
+      "citations": [
+        "src/GildedRose.Console/Program.cs:41-109",
+        "src/GildedRose.Console/Program.cs:99",
+        "src/GildedRose.Console/Program.cs:91"
+      ]
+    },
+    {
+      "entity": "QualityBounds",
+      "module": "SRS-M-01",
+      "description": "The invariant band that quality must stay within, plus the legendary exception. IMPLICIT today: guard conditions and one seeded literal, with no named constant and no configuration value anywhere in the application.",
+      "legacy_status": "implicit — guard conditions plus one seed literal, never declared",
+      "domain_ref": "DD-GRK-002 Item Quality Rule Set",
+      "bounds_observed": [
+        "upper bound 50 — an inline literal repeated at FOUR comparison sites (Program.cs:53, :61, :69, :104), expressed as a pre-increment guard (Quality < 50) rather than a post-increment clamp; because the test is repeated before each of the three backstage increments, a pass gaining +3 saturates at exactly 50 and can never reach 51 or 52",
+        "lower bound 0 — an inline literal in TWO guards (Quality > 0) at Program.cs:43 and :89, again a guard rather than a clamp; it is correct only because every decrement step happens to be exactly 1, and because it tests > 0 rather than != 0 a negative seeded Quality is never corrected upward",
+        "legendary exception fixed at 80 — present ONLY as a seed literal at Program.cs:19 and upheld indirectly by the name exclusions; no code asserts it, defaults to it or restores it, and it sits 30 above the documented maximum of 50",
+        "SellIn has NO lower bound — only its sign is ever tested, never its magnitude, so it falls indefinitely (-1, -2, -365) with no floor, no overflow guard and no expiry or archival path (Program.cs:80, :83)"
+      ],
+      "attributes": [
+        {
+          "name": "UpperBound",
+          "type": "int",
+          "legacy_semantics": "50, repeated at four sites with no named constant — changing the cap means finding all four.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:53",
+            "src/GildedRose.Console/Program.cs:61",
+            "src/GildedRose.Console/Program.cs:69",
+            "src/GildedRose.Console/Program.cs:104"
+          ]
+        },
+        {
+          "name": "LowerBound",
+          "type": "int",
+          "legacy_semantics": "0, in two guards.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:43",
+            "src/GildedRose.Console/Program.cs:89"
+          ]
+        },
+        {
+          "name": "LegendaryFixedValue",
+          "type": "int",
+          "legacy_semantics": "80, present only as a seed literal with no assertion, default or constraint restoring it.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:19"
+          ]
+        },
+        {
+          "name": "SellInLowerBound",
+          "type": "int (optional)",
+          "prescribed": "PRESCRIBED — the legacy model has NO SellIn lower bound. A floor, an expiry state or an archival path MUST be decided, because a downstream store using a narrower integer type would overflow where the legacy code does not.",
+          "citations": [
+            "src/GildedRose.Console/Program.cs:80",
+            "src/GildedRose.Console/Program.cs:83"
+          ]
+        }
+      ],
+      "relationships": [
+        "ItemCategory -> QualityBounds (a category resolves to the bounds that apply to it, including the legendary exception)",
+        "QualityBounds constrains Item.Quality and Item.SellIn"
+      ],
+      "constraints": [
+        "PRESCRIBED: the bounds MUST be declared once as named reference data and enforced as a clamp on the model, not re-tested as inline guards at six separate sites.",
+        "PRESCRIBED: the legendary fixed value MUST be asserted and restorable, not merely survive because nothing touches the item.",
+        "PRESCRIBED: a value arriving outside the band (including a negative seeded quality) MUST be rejected or normalized with a recorded reason; the legacy > 0 guard never corrects a negative upward.",
+        "NOTED (unresolved in Discovery, carried forward): the two documented statements — a maximum of 50 and a legendary value of 80 — are mutually inconsistent as written, and whether the 50 ceiling is intended to apply to the second and third backstage-pass increments needs business sign-off."
+      ],
+      "citations": [
+        "src/GildedRose.Console/Program.cs:19",
+        "src/GildedRose.Console/Program.cs:43",
+        "src/GildedRose.Console/Program.cs:53",
+        "src/GildedRose.Console/Program.cs:61",
+        "src/GildedRose.Console/Program.cs:69",
+        "src/GildedRose.Console/Program.cs:89",
+        "src/GildedRose.Console/Program.cs:104"
+      ]
+    },
+    {
+      "entity": "RevaluationRun",
+      "module": "SRS-M-03",
+      "description": "PRESCRIBED — NO LEGACY COUNTERPART. A record of one execution of the nightly revaluation. The legacy application has nothing of the kind: 'a day' is defined purely as one call to the update method, no DateTime, timer, scheduler or date parameter exists anywhere, there is no run-date record, no already-processed check and no lock, and running the revaluation twice simply advances the inventory two days with no way to detect it. This entity is new construction.",
+      "legacy_status": "prescribed — no legacy counterpart",
+      "attributes": [
+        {
+          "name": "RunId",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — uniquely identifies the run and is stamped on every audit entry and log event it produces."
+        },
+        {
+          "name": "BusinessDate",
+          "type": "date",
+          "prescribed": "PRESCRIBED — the calendar date the run represents, supplying the anchor the legacy countdown integer lacks so that 'which real-world date does this item expire on' becomes answerable."
+        },
+        {
+          "name": "IdempotenceKey",
+          "type": "string or composite (e.g. working-set identity + business date)",
+          "prescribed": "PRESCRIBED — MUST make a repeated or retried run detectable and rejectable. The legacy revaluation is not idempotent and is unguarded, so a retry after a partial failure would double-apply a day of depreciation undetectably in any variant that persisted its results."
+        },
+        {
+          "name": "Outcome",
+          "type": "enumeration (e.g. succeeded / failed / rejected-duplicate) plus timestamps and an item-count",
+          "prescribed": "PRESCRIBED — the run's terminal state, so success, failure and a refused duplicate are distinguishable. The legacy run produces no outcome signal of any kind: it prints one banner before the calculation and exits."
+        },
+        {
+          "name": "InitiatingPrincipal",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — who or what triggered the run. The legacy application has no identity, credential or session concept at all, so the actor is unrecorded."
+        }
+      ],
+      "relationships": [
+        "RevaluationRun advances exactly one InventoryWorkingSet",
+        "RevaluationRun produces RevaluationAuditEntry (1..n)"
+      ],
+      "constraints": [
+        "PRESCRIBED: a second run carrying the same idempotence key MUST be rejected rather than applied.",
+        "PRESCRIBED: the run MUST terminate with a recorded outcome and a deterministic process exit status, and MUST NOT depend on interactive input to complete.",
+        "PRESCRIBED: a failed run MUST leave the working set either fully advanced or fully unadvanced; the legacy loop has no pre-image and no rollback."
+      ],
+      "citations": [
+        "prescribed — no legacy counterpart",
+        "src/GildedRose.Console/Program.cs:31 (the single unguarded, non-idempotent, clockless invocation this entity replaces)",
+        "src/GildedRose.Console/Program.cs:33 (blocking keypress; no run outcome is recorded or returned)"
+      ]
+    },
+    {
+      "entity": "RevaluationAuditEntry",
+      "module": "SRS-M-03",
+      "description": "PRESCRIBED — NO LEGACY COUNTERPART. An immutable per-item record of what one run did to one item. The legacy revaluation mutates Quality at 13 sites and SellIn at 1 site with no before/after capture, no logging framework, no event and no versioning, so once a day is applied the previous valuation is unrecoverable and there is no way to answer why an item is worth what it is worth. This entity is new construction.",
+      "legacy_status": "prescribed — no legacy counterpart",
+      "attributes": [
+        {
+          "name": "AuditEntryId",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — identifies the entry."
+        },
+        {
+          "name": "RunId",
+          "type": "identifier (FK to RevaluationRun)",
+          "prescribed": "PRESCRIBED — links the entry to the run that produced it."
+        },
+        {
+          "name": "ItemRef",
+          "type": "identifier (FK to Item)",
+          "prescribed": "PRESCRIBED — identifies the item by a stable identifier, NOT by display name."
+        },
+        {
+          "name": "QualityBefore",
+          "type": "int",
+          "prescribed": "PRESCRIBED — the pre-run quality. No before-image exists anywhere in the legacy code."
+        },
+        {
+          "name": "QualityAfter",
+          "type": "int",
+          "prescribed": "PRESCRIBED — the post-run quality."
+        },
+        {
+          "name": "SellInBefore",
+          "type": "int",
+          "prescribed": "PRESCRIBED — the pre-run sell-in."
+        },
+        {
+          "name": "SellInAfter",
+          "type": "int",
+          "prescribed": "PRESCRIBED — the post-run sell-in."
+        },
+        {
+          "name": "RulesApplied",
+          "type": "collection of RuleId (FK to QualityDegradationRule)",
+          "prescribed": "PRESCRIBED — the identifiers of every rule row that fired for this item in this run, so a valuation is explainable rather than merely observable."
+        },
+        {
+          "name": "Actor",
+          "type": "identifier",
+          "prescribed": "PRESCRIBED — the authorised principal on whose behalf the change was applied."
+        },
+        {
+          "name": "Timestamp",
+          "type": "timestamp",
+          "prescribed": "PRESCRIBED — when the change was applied. No timestamp is recorded anywhere in the legacy application."
+        }
+      ],
+      "relationships": [
+        "RevaluationRun produces RevaluationAuditEntry (1..n)",
+        "RevaluationAuditEntry references Item (the item revalued)",
+        "RevaluationAuditEntry references QualityDegradationRule (the rules applied)"
+      ],
+      "constraints": [
+        "PRESCRIBED: entries MUST be append-only and immutable — no update or delete path through the application's own interfaces.",
+        "PRESCRIBED: an entry MUST be written for every item processed, including legendary/exempt items where no change was applied, so 'no change' is distinguishable from 'not processed'.",
+        "PRESCRIBED: the prior valuation of any item MUST be reconstructable from the audit store alone, given a run identifier and an item identifier.",
+        "PRESCRIBED: a retention and archival rule MUST be stated for audit entries; the legacy application has no retention concept because it retains nothing."
+      ],
+      "citations": [
+        "prescribed — no legacy counterpart",
+        "src/GildedRose.Console/Program.cs:37-111 (the 13 Quality mutation sites and 1 SellIn mutation site this entity records, today with no before/after capture)"
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "Item",
+      "to": "ItemCategory",
+      "cardinality": "many-to-one",
+      "legacy_mechanism": "Inline case-sensitive whole-string equality against hardcoded display-name literals. There is no lookup, no join, no interface and NO REFERENTIAL INTEGRITY of any kind.",
+      "fragility": "HIGH — the reference is by mutable display string, so renaming an item silently reclassifies it and changes its valuation. The comparisons are ordinal, case-sensitive and whitespace-sensitive with no normalisation, and a null name satisfies every negated test and is priced as ordinary goods.",
+      "prescribed": "Item MUST carry a category identifier with enforced referential integrity to ItemCategory, and the rule-set domain MUST own the category-to-rule mapping and expose resolution by category. The display name MUST NOT participate in rule selection.",
+      "domain_reference": "CDR-GRK-001 (Inventory Stock Item consumes; Item Quality Rule Set owns)",
+      "citations": [
+        "src/GildedRose.Console/Program.cs:41",
+        "src/GildedRose.Console/Program.cs:45",
+        "src/GildedRose.Console/Program.cs:57",
+        "src/GildedRose.Console/Program.cs:85",
+        "src/GildedRose.Console/Program.cs:87",
+        "src/GildedRose.Console/Program.cs:91",
+        "src/GildedRose.Console/Program.cs:117"
+      ]
+    },
+    {
+      "from": "InventoryWorkingSet",
+      "to": "Item",
+      "cardinality": "one-to-many (contains)",
+      "legacy_mechanism": "An IList<Item> field on the Program class, seeded from six compiled-in literals and mutated in place through the list indexer; the collection has no identity, no as-of date and no version.",
+      "prescribed": "The working set MUST be a durable, identified aggregate with a run identity, an as-of date and a version, containing the items it advanced.",
+      "citations": [
+        "src/GildedRose.Console/Program.cs:7",
+        "src/GildedRose.Console/Program.cs:14-29",
+        "src/GildedRose.Console/Program.cs:115-122"
+      ]
+    },
+    {
+      "from": "ItemCategory",
+      "to": "QualityDegradationRule",
+      "cardinality": "one-to-many",
+      "legacy_mechanism": "None as data — the category test and the rule body are the same nested conditional, so rule and category are inseparable in the legacy code.",
+      "prescribed": "An explicit reference from each rule row to the category it applies to.",
+      "citations": [
+        "src/GildedRose.Console/Program.cs:41-109"
+      ]
+    },
+    {
+      "from": "ItemCategory",
+      "to": "QualityBounds",
+      "cardinality": "one-to-one (resolves to)",
+      "legacy_mechanism": "None as data — the bounds are inline guard literals repeated at six sites, and the legendary exception exists only as a seed literal upheld indirectly by name exclusions.",
+      "prescribed": "Each category MUST resolve to a declared bounds row, including the legendary exemption.",
+      "citations": [
+        "src/GildedRose.Console/Program.cs:19",
+        "src/GildedRose.Console/Program.cs:43",
+        "src/GildedRose.Console/Program.cs:53",
+        "src/GildedRose.Console/Program.cs:61",
+        "src/GildedRose.Console/Program.cs:69",
+        "src/GildedRose.Console/Program.cs:89",
+        "src/GildedRose.Console/Program.cs:104"
+      ]
+    },
+    {
+      "from": "RevaluationRun",
+      "to": "RevaluationAuditEntry",
+      "cardinality": "one-to-many (produces)",
+      "legacy_mechanism": "none — both entities are prescribed and have no legacy counterpart",
+      "prescribed": "Each run MUST produce exactly one immutable audit entry per item processed, each carrying the run identifier.",
+      "citations": [
+        "prescribed — no legacy counterpart"
+      ]
+    },
+    {
+      "from": "RevaluationRun",
+      "to": "InventoryWorkingSet",
+      "cardinality": "one-to-one (advances)",
+      "legacy_mechanism": "none — RevaluationRun is prescribed; the legacy invocation advances the in-memory list with no run record at all",
+      "prescribed": "A run MUST be bound to the working set it advanced, and MUST advance it atomically or compensate on failure.",
+      "citations": [
+        "prescribed — no legacy counterpart",
+        "src/GildedRose.Console/Program.cs:31"
+      ]
+    }
+  ],
+  "entity_counts": {
+    "total": 7,
+    "legacy_declared": 1,
+    "legacy_implicit": 4,
+    "prescribed_no_legacy_counterpart": 2,
+    "legacy_persistent": 0,
+    "by_module": {
+      "SRS-M-01": 3,
+      "SRS-M-02": 2,
+      "SRS-M-03": 2
+    }
+  },
+  "open_questions": [
+    "Is the Item Quality Rule Set a data domain in its own right (SRS-M-01 as modelled here) or behaviour belonging to the stock-item domain? The data-domain pass recorded the two-domain shape at confidence 0.58 and escalated the decision rather than settling it; collapsing it would move ItemCategory, QualityDegradationRule and QualityBounds into SRS-M-02.",
+    "Which organizational unit owns each domain? No owner could be evidenced for either, so none is asserted here.",
+    "Is the 'Conjured' category admitted as target-state reference data with the documented doubled degradation, or recorded as stale documentation? Routed to the business owner.",
+    "Does a persistent store exist outside this repository? If one does, this prescribed model must be reconciled against it and the documented invariants re-checked as data constraints rather than code conditionals.",
+    "Does the target model add a quantity/stock-count attribute to Item? The legacy model has none, so 'twelve wheels of Aged Brie' is inexpressible; recorded as a gap rather than prescribed.",
+    "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY (recorded, not adopted): the governing profile is `faa`, but no entity, domain or capability in this model could be grounded in an FAA business taxonomy — the source tree is the publicly published Gilded Rose retail-inventory kata, and the shipped assembly metadata asserts a different agency attribution. The entities are named from the application's own vocabulary; stakeholder confirmation of the portfolio mapping is outstanding."
+  ]
+}

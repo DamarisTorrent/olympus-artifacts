@@ -1,0 +1,510 @@
+{
+  "$schema": "olympus:artifact:srs-data-model:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "The entity model the SRS prescribes for the modernized inventory revaluation system. Derived from data-domains.json (2 domains, 5 logical entities), from the Item POCO at src/GildedRose.Console/Program.cs:115-122, and from the persistence, idempotence and audit requirements this SRS introduces. Four of the five legacy logical entities were IMPLICIT — they existed as inline conditionals and string literals rather than as declared types — so this document is substantially a prescription of structure that does not exist yet, and each such entity says so in its own description.",
+  "schema_limitation": "THIS APPLICATION HAS NO PERSISTENT DATA STORE, AND THE ABSENCE IS A MEASURED RESULT RATHER THAN AN UNFINISHED WALK. structural-analysis.json database-schema-summary returns empty tables, relationships, stored_procedures, triggers, views and database_links, on the basis that a case-insensitive grep of all 22 tracked files for connectionstring, 'Data Source=', 'Initial Catalog', SqlConnection, OleDb, Odbc, EntityFramework and System.Data.SqlClient returned zero matches; app.config contains no connectionStrings element; there are no .sql, DDL or migration files; and no ORM package appears in any packages.config. data-domains.json records persistent_entity_count: 0 and pii_bearing_entities: 0. shared-db-analysis.json records databases_of_any_kind_identified: 0 with result_type 'measured-null-result'. All legacy state is an in-memory IList<Item> constructed from six compiled-in literals at Program.cs:14-27 and lost at process exit. CONSEQUENCES FOR THIS DOCUMENT: (1) no attribute below has a traces_to_column value, because no column exists anywhere to trace to — attributes trace to source file and line instead; (2) there is no legacy data to migrate, which data-domains.json records as violation BV-GRK-003; (3) the physical storage technology, column types and key strategy are NOT prescribed here, because that is an Architecture decision and this SRS must not pre-empt it — the types below are logical; (4) structural-analysis.json open_questions warns that if a persistent store is later identified outside this repository, the quality bounds and the legendary quality invariant must be re-checked as data constraints, and every entity below re-validated against it.",
+  "entities": [
+    {
+      "entity": "InventoryItem",
+      "module": "MOD-002",
+      "description": "A single unit of stock subject to nightly revaluation. The prescribed successor to the legacy Item POCO (src/GildedRose.Console/Program.cs:115-122), which data-domains.json records as aggregate root of domain DD-GRK-001 'Inventory Stock Item' with confidence 0.86 and physical_footprint 'NONE. This domain has no table, file, queue or blob behind it.' Two attributes are prescribed additions that have no legacy counterpart: `category`, which replaces name-based dispatch per REQ-017, and `archival_eligible`, which REQ-021 introduces. Security classification is unclassified: data-domains.json records zero PII, PHI or FTI, corroborated by the data-flow trace (pii_classification 'none' on both traced elements) and by identity-landscape.json (no user, credential or session concept exists in the tree).",
+      "attributes": [
+        {
+          "name": "item_id",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["primary identifier", "immutable once assigned", "system-generated"],
+          "traces_to_source": "PRESCRIBED ADDITION — no legacy counterpart. data-domains.json records Item.Name as 'de facto natural key AND FK into rule set' (Program.cs:117), an overloaded-attribute hotspot. REQ-017 severs the two roles, which requires a surrogate identity distinct from the display name.",
+          "governed_by": ["REQ-017", "REQ-027"]
+        },
+        {
+          "name": "display_name",
+          "logical_type": "text",
+          "nullable": false,
+          "constraints": ["required", "non-empty after trimming"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:117 (Item.Name, a plain settable string with no non-null guarantee)",
+          "prescribed_change": "Retains its presentation role and LOSES its classification role. Per REQ-017 no pricing decision may read this attribute. Per REQ-019 and REQ-020 a null or empty value is rejected at the boundary rather than silently depreciating as standard goods.",
+          "governed_by": ["REQ-017", "REQ-019", "REQ-020"]
+        },
+        {
+          "name": "category",
+          "logical_type": "enumeration",
+          "nullable": false,
+          "constraints": ["required", "one of: STANDARD, APPRECIATING, BACKSTAGE_PASS, LEGENDARY, CONJURED", "rejected if absent or unrecognised"],
+          "traces_to_source": "PRESCRIBED ADDITION replacing implicit derivation. data-domains.json records ItemCategory as the aggregate root of latent domain DD-GRK-002 with physical_footprint 'NONE, and not even a data structure. This domain is currently LATENT', evidenced at Program.cs:41, :45, :57, :78, :85, :87, :91. Cross-domain reference CDR-GRK-001 records the legacy binding Item.Name -> ItemCategory by 'inline string equality against hardcoded literals' with fragility 'HIGH'.",
+          "governed_by": ["REQ-017", "REQ-018", "REQ-020"]
+        },
+        {
+          "name": "sell_in",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["bounded below by the configured sell_in floor per REQ-021", "frozen for category LEGENDARY per REQ-005", "decremented by exactly 1 per cycle otherwise per REQ-012"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:119 (plain System.Int32 auto-property with a public setter, no range attribute and no clamp)",
+          "prescribed_change": "Gains a lower bound. data-domains.json records under QualityBounds that 'SellIn has NO lower bound' (Program.cs:80, :83) and IL-020 records that only the sign is ever tested, never the magnitude, with no overflow guard. A cycle MUST expose this attribute as the two distinct named values sell_in_at_cycle_start and sell_in_after_decrement per REQ-016; data-domains.json records the legacy single mutable field as the read-write ordering-coupling hotspot at Program.cs:59, :67, :80, :83, noting 'no test detects it — the only test method asserts Assert.True(true)'.",
+          "governed_by": ["REQ-005", "REQ-012", "REQ-016", "REQ-019", "REQ-021"]
+        },
+        {
+          "name": "quality",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["0 <= quality <= 50 for every category except LEGENDARY", "exactly 80 for category LEGENDARY per REQ-008", "clamped, not guarded, per REQ-003 and REQ-007"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:121 (plain System.Int32 auto-property with a public setter, no range attribute and no clamp)",
+          "prescribed_change": "The bounds move from the update loop into the model. data-domains.json records QualityBounds as an implicit entity with upper bound 50 at Program.cs:53, :61, :69, :104 and lower bound 0 at :43, :89, and the legendary 80 as a 'seed-literal only' at :19. BR-018, IL-019 and QR-008 record that the legacy type admits quality -100 or 9999 cleanly and never normalizes it. REQ-019 makes the bounds enforceable invariants of the model rather than conditionals in one loop.",
+          "governed_by": ["REQ-003", "REQ-007", "REQ-008", "REQ-019"]
+        },
+        {
+          "name": "archival_eligible",
+          "logical_type": "boolean",
+          "nullable": false,
+          "default_value": "false",
+          "constraints": ["set true only when the item has been past its sell-by date at quality 0 for the configured number of consecutive cycles"],
+          "traces_to_source": "PRESCRIBED ADDITION. BR-022 and IL-020 record that 'nothing removes, archives or flags a long-expired item' and that there is no archival path of any kind (Program.cs:80, :83).",
+          "governed_by": ["REQ-021"]
+        }
+      ],
+      "relationships": [
+        {
+          "type": "many-to-one",
+          "target_entity": "ItemCategoryDefinition",
+          "via_attribute": "category",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "Replaces cross-domain reference CDR-GRK-001 (data-domains.json), whose legacy mechanism was 'inline string equality against hardcoded literals' at Program.cs:41, :45, :57, :85, :87, :91 with fragility HIGH. Prescribed as an explicit, validated reference per REQ-017."
+        },
+        {
+          "type": "one-to-many",
+          "target_entity": "ValuationAuditEntry",
+          "via_attribute": "item_id",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "PRESCRIBED per REQ-027. An audit entry MUST NOT be deleted when its item is removed, which is why the behaviour is restrict rather than cascade."
+        }
+      ],
+      "constraints": [
+        {
+          "description": "An item of category LEGENDARY MUST have quality exactly equal to the legendary quality constant (80), and MUST be rejected at the boundary otherwise.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "BR-008", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 19 },
+          "governed_by": ["REQ-008"]
+        },
+        {
+          "description": "An item of any category other than LEGENDARY MUST have quality within 0..50 inclusive at rest.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "BR-003", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 43, "secondary_sources": ["src/GildedRose.Console/Program.cs:53"] },
+          "governed_by": ["REQ-003", "REQ-007", "REQ-019"]
+        },
+        {
+          "description": "An item MUST have a category drawn from the closed set; an item whose category cannot be determined MUST be rejected with a recorded diagnostic rather than defaulted to STANDARD.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "BR-023", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 41 },
+          "governed_by": ["REQ-017", "REQ-020"]
+        },
+        {
+          "description": "An item MUST NOT be mutated in place by a revaluation cycle; the pre-cycle state MUST remain available for audit and rollback.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "IL-027", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 39, "line_range": "39-110" },
+          "governed_by": ["NFR-010"]
+        },
+        {
+          "description": "NOT PRESCRIBED, RECORDED AS AN OPEN ITEM: the model carries no quantity or stock-count attribute, so each item instance represents exactly one unit and duplicates are not aggregated. IL-023 records this as a domain-model gap requiring SME review ('nothing in the code can express twelve wheels of Aged Brie'). No quantity attribute is prescribed here, because adding one would be an invented feature with no discovery evidence that it is wanted. Tracked as ANOM-025 (DEFER).",
+          "type": "business-rule",
+          "enforcement": "deferred",
+          "traces_to": { "discovery_finding": "IL-023", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 115, "line_range": "115-122" },
+          "governed_by": []
+        }
+      ]
+    },
+    {
+      "entity": "ItemCategoryDefinition",
+      "module": "MOD-002",
+      "description": "The closed set of item categories and the rule set each selects. PRESCRIBED STRUCTURE: data-domains.json records this as domain DD-GRK-002 'Item Quality Rule Set', aggregate root ItemCategory, confidence 0.58, physical_footprint 'NONE, and not even a data structure. This domain is currently LATENT' — the taxonomy exists in the legacy system only as eight inline string comparisons. data-domains.json records violation BV-GRK-001 (severity high, Program.cs:39-110): the rule set has no code representation at all. Making it a first-class entity is the substance of REQ-017.",
+      "attributes": [
+        {
+          "name": "category_code",
+          "logical_type": "enumeration",
+          "nullable": false,
+          "constraints": ["primary identifier", "one of: STANDARD, APPRECIATING, BACKSTAGE_PASS, LEGENDARY, CONJURED"],
+          "traces_to_source": "Program.cs:41, :45, :57, :78, :85, :87, :91 (the eight legacy name comparisons that encoded the taxonomy). data-domains.json enumerates the members as 'Aged Brie' (:41, :85), 'Sulfuras, Hand of Ragnaros' (:45, :78, :91), 'Backstage passes to a TAFKAL80ETC concert' (:41, :57, :87), an unnamed ordinary-goods default, and 'Conjured' — recorded as 'DOCUMENTED IN README BUT ABSENT FROM CODE', seeded at Program.cs:26.",
+          "governed_by": ["REQ-017", "REQ-018"]
+        },
+        {
+          "name": "quality_direction",
+          "logical_type": "enumeration",
+          "nullable": false,
+          "constraints": ["one of: DEGRADES, APPRECIATES, IMMUTABLE, EXPIRES_WORTHLESS"],
+          "traces_to_source": "Derived from data-domains.json entity QualityDegradationRule (Program.cs:41-109): ordinary goods -1 at :47 with a second -1 at :93; Aged Brie +1 at :55 with a second +1 at :106; Backstage +1/+2/+3 at :55, :63, :71 zeroed at :99; Sulfuras exempt at :45, :78, :91.",
+          "governed_by": ["REQ-002", "REQ-004", "REQ-006", "REQ-009", "REQ-015", "REQ-018"]
+        },
+        {
+          "name": "base_rate_per_cycle",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["magnitude of the quality adjustment applied within the sell-by window"],
+          "traces_to_source": "IL-006 records that there is no rate variable anywhere in the legacy system — 'every adjustment is literally 1, and twice as fast is expressed by executing a second separate plus-or-minus-1 statement in the same iteration rather than by multiplying a rate' (Program.cs:47, :55, :63, :71, :93, :106). Prescribed as a named value per NFR-009. IL-006 records that the legacy design 'is why the Conjured requirement cannot be added as a simple multiplier'.",
+          "governed_by": ["REQ-002", "REQ-006", "REQ-018", "NFR-009"]
+        },
+        {
+          "name": "expired_rate_per_cycle",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["magnitude of the quality adjustment applied once sell_in_after_decrement is below 0"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:93 (standard second decrement), :106 (appreciating second increment), :99 (backstage zeroing). Prescribed as an explicit per-category rate rather than an emergent consequence of a second statement firing — the correction ANOM-009 applies for APPRECIATING, whose doubled rate IL-013 records as 'emergent, not stated'.",
+          "governed_by": ["REQ-013", "REQ-014", "REQ-015", "REQ-018"]
+        },
+        {
+          "name": "exempt_from_quality_bounds",
+          "logical_type": "boolean",
+          "nullable": false,
+          "default_value": "false",
+          "constraints": ["true only for LEGENDARY"],
+          "traces_to_source": "Prescribed from BR-008 and IL-005. The legacy exemption was emergent rather than declared: the 50 ceiling binds only items that pass through an appreciation branch, and Sulfuras never does, so its seeded 80 persists 30 above the documented maximum with no clamp or warning (Program.cs:19).",
+          "governed_by": ["REQ-004", "REQ-007", "REQ-008"]
+        },
+        {
+          "name": "exempt_from_sell_in_decrement",
+          "logical_type": "boolean",
+          "nullable": false,
+          "default_value": "false",
+          "constraints": ["true only for LEGENDARY"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:78 (the negated legendary guard in front of the sell_in decrement)",
+          "governed_by": ["REQ-005"]
+        },
+        {
+          "name": "proximity_bonus_tiers",
+          "logical_type": "ordered collection of (threshold, additional_rate) pairs",
+          "nullable": true,
+          "constraints": ["populated only for BACKSTAGE_PASS", "thresholds evaluated against sell_in_at_cycle_start per REQ-016", "for BACKSTAGE_PASS: (10, +1) and (5, +1) stacking on the base +1"],
+          "traces_to_source": "src/GildedRose.Console/Program.cs:59 (the literal 11) and :67 (the literal 6). IL-003 and IL-004 record both as off-by-one-threshold traps: the literals correctly express the documented '10 days or less' and '5 days or less' ONLY under the pre-decrement reading of sell_in, and IL-003 names the 11 'the single most likely mis-transcription in any re-implementation'. Prescribed as inclusive thresholds against the named cycle-start value, which is why they read 10 and 5 here rather than 11 and 6.",
+          "governed_by": ["REQ-010", "REQ-011", "REQ-016", "NFR-009"]
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "InventoryItem",
+          "via_attribute": "category",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "The explicit successor to cross-domain reference CDR-GRK-001 (data-domains.json). A category definition MUST NOT be removed while any item references it."
+        }
+      ],
+      "constraints": [
+        {
+          "description": "The category set MUST be closed: exactly five categories are defined, and an item referencing any other value MUST be rejected.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "BR-017", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 41, "line_range": "41-91" },
+          "governed_by": ["REQ-017", "REQ-020"]
+        },
+        {
+          "description": "The CONJURED category MUST be defined with base_rate_per_cycle 2 and expired_rate_per_cycle 4. It is the one category with no legacy implementation.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "BR-MISSING-001", "source_file": "README.md", "source_line": 34, "secondary_sources": ["src/GildedRose.Console/Program.cs:26"] },
+          "governed_by": ["REQ-018"]
+        },
+        {
+          "description": "Category MUST NOT be derivable from, or coupled to, an item's display name. Renaming an item MUST NOT change its category.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "BR-017", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 117 },
+          "governed_by": ["REQ-017"]
+        }
+      ]
+    },
+    {
+      "entity": "RevaluationRun",
+      "module": "MOD-003",
+      "description": "One executed revaluation cycle, bound to exactly one business date. PRESCRIBED ENTITY WITH NO LEGACY COUNTERPART, and its absence is the finding it answers: data-domains.json records the legacy InventoryWorkingSet as an implicit run-scoped aggregate that 'has no identity, no run id, no as-of date and no version' (Program.cs:7 declaration, :14-29 seeding). BR-020, IL-016 and IL-017 record that there is no clock, no run-date record, no already-processed check and no lock anywhere. This entity is what makes REQ-023 enforceable.",
+      "attributes": [
+        {
+          "name": "run_id",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["primary identifier", "system-generated", "immutable"],
+          "traces_to_source": "PRESCRIBED. data-domains.json records the legacy working set as having 'no identity, no run id'.",
+          "governed_by": ["REQ-023", "NFR-008"]
+        },
+        {
+          "name": "business_date",
+          "logical_type": "date",
+          "nullable": false,
+          "constraints": ["required", "supplied at invocation, not read from a system clock", "unique together with override_sequence"],
+          "traces_to_source": "PRESCRIBED. IL-016 records that no DateTime, timer, scheduler or date parameter exists anywhere: 'a day is defined purely as one call to UpdateQuality, and the sell-by date is a countdown integer with no calendar anchor. Nothing can answer which real-world date an item expires on.'",
+          "governed_by": ["REQ-023"]
+        },
+        {
+          "name": "status",
+          "logical_type": "enumeration",
+          "nullable": false,
+          "constraints": ["one of: PENDING, IN_PROGRESS, COMPLETED, FAILED, REFUSED"],
+          "traces_to_source": "PRESCRIBED. No status, state or phase value exists anywhere in the legacy application; state-machines.json records that 'the application has no status field, no enum, no state column and no transition table'.",
+          "governed_by": ["REQ-023", "REQ-025"]
+        },
+        {
+          "name": "invoked_by_identity",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["required", "the authenticated identity per REQ-026"],
+          "traces_to_source": "PRESCRIBED. identity-landscape.json records model_name 'None — unauthenticated local console execution', provider 'none', nist_aal 'below-AAL1', and confirms by negative grep across all 22 tracked files that 'there is no authentication code, no authorization check, no session, no user record, no credential store and no directory or IdP integration of any kind'.",
+          "governed_by": ["REQ-026", "REQ-027"]
+        },
+        {
+          "name": "override",
+          "logical_type": "boolean",
+          "nullable": false,
+          "default_value": "false",
+          "constraints": ["true only when a completed business date is deliberately re-run", "requires the override permission per REQ-026", "requires a recorded justification"],
+          "traces_to_source": "PRESCRIBED. IL-017 records that repeat execution 'is not idempotent and is unguarded': 'there is no run-date record, no already-processed check and no lock, so in any variant of this system that did persist its results, a retry after a partial failure would double-apply a day of depreciation with no way to detect it.'",
+          "governed_by": ["REQ-023", "REQ-026"]
+        },
+        {
+          "name": "items_read",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["count of items obtained from the inventory source"],
+          "traces_to_source": "PRESCRIBED per REQ-022 and REQ-025. IL-018 records that no value is ever printed, returned, written or persisted.",
+          "governed_by": ["REQ-022", "REQ-025"]
+        },
+        {
+          "name": "items_revalued",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["count of items successfully revalued"],
+          "traces_to_source": "PRESCRIBED per REQ-025.",
+          "governed_by": ["REQ-025"]
+        },
+        {
+          "name": "items_rejected",
+          "logical_type": "integer",
+          "nullable": false,
+          "default_value": "0",
+          "constraints": ["count of items rejected at the validation boundary per REQ-019 and REQ-020"],
+          "traces_to_source": "PRESCRIBED. BR-023 and IL-021 record that the legacy system rejects nothing and logs nothing, so 'a mispriced item leaves no trace'.",
+          "governed_by": ["REQ-019", "REQ-020", "REQ-025"]
+        },
+        {
+          "name": "inventory_source_reference",
+          "logical_type": "text",
+          "nullable": false,
+          "constraints": ["identifies the external inventory source used"],
+          "traces_to_source": "PRESCRIBED per REQ-022. BR-019 records the legacy inventory as six items constructed inline in Main with no file, database, argument or stdin input (Program.cs:14-29).",
+          "governed_by": ["REQ-022"]
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "ValuationAuditEntry",
+          "via_attribute": "run_id",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "PRESCRIBED per REQ-027. Audit entries MUST survive independently of the run record."
+        }
+      ],
+      "constraints": [
+        {
+          "description": "At most one RevaluationRun with status COMPLETED and override = false may exist per business_date. A second cycle for a completed business date MUST be refused unless an explicit recorded override is supplied.",
+          "type": "unique",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "BR-020", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 31, "secondary_sources": ["IL-017"] },
+          "governed_by": ["REQ-023"]
+        },
+        {
+          "description": "A run MUST be atomic: on failure no item may show a partially applied cycle.",
+          "type": "business-rule",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "IL-017", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 31 },
+          "governed_by": ["REQ-025", "NFR-010"]
+        },
+        {
+          "description": "items_read MUST equal items_revalued plus items_rejected.",
+          "type": "check",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "IL-018", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 10 },
+          "governed_by": ["REQ-025"]
+        }
+      ]
+    },
+    {
+      "entity": "ValuationAuditEntry",
+      "module": "MOD-004",
+      "description": "An immutable record of one change to one item's sell_in or quality, attributed to the rule that caused it. PRESCRIBED ENTITY WITH NO LEGACY COUNTERPART. IL-025 records that the legacy revaluation 'mutates Quality at 13 sites and SellIn at 1 site with no before/after capture, no logging framework, no event and no versioning. Once a day is applied, the previous valuation is unrecoverable — there is no way to answer why an item is worth what it is worth.' BR-024 records the same absence and its regulatory note flags the missing NIST 800-53 AU-2/AU-12 audit generation. This entity is what makes REQ-027 enforceable.",
+      "attributes": [
+        {
+          "name": "audit_entry_id",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["primary identifier", "system-generated", "immutable"],
+          "traces_to_source": "PRESCRIBED per REQ-027.",
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "name": "run_id",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["references RevaluationRun.run_id"],
+          "traces_to_source": "PRESCRIBED per REQ-027.",
+          "governed_by": ["REQ-023", "REQ-027"]
+        },
+        {
+          "name": "item_id",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["references InventoryItem.item_id"],
+          "traces_to_source": "PRESCRIBED per REQ-027.",
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "name": "business_date",
+          "logical_type": "date",
+          "nullable": false,
+          "constraints": ["required", "equal to the run's business_date"],
+          "traces_to_source": "PRESCRIBED. IL-016 records there is no calendar anchor of any kind in the legacy system.",
+          "governed_by": ["REQ-023", "REQ-027"]
+        },
+        {
+          "name": "attributed_requirement_ids",
+          "logical_type": "collection of text",
+          "nullable": false,
+          "constraints": ["non-empty", "each value a requirement identifier from this SRS"],
+          "traces_to_source": "PRESCRIBED per REQ-027. This is the attribute that answers IL-025's 'no way to answer why an item is worth what it is worth'.",
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "name": "sell_in_before",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["the value at the start of the cycle"],
+          "traces_to_source": "PRESCRIBED. IL-025 records no before/after capture of any kind.",
+          "governed_by": ["REQ-016", "REQ-027"]
+        },
+        {
+          "name": "sell_in_after",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["the value at the end of the cycle"],
+          "traces_to_source": "PRESCRIBED per REQ-027.",
+          "governed_by": ["REQ-016", "REQ-027"]
+        },
+        {
+          "name": "quality_before",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["the value at the start of the cycle"],
+          "traces_to_source": "PRESCRIBED per REQ-027.",
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "name": "quality_after",
+          "logical_type": "integer",
+          "nullable": false,
+          "constraints": ["the value at the end of the cycle", "MUST be the net result; no discarded intermediate may be recorded"],
+          "traces_to_source": "PRESCRIBED per REQ-027, with the no-intermediate clause resolving IL-012, which warns that 'any re-implementation that logs, audits, publishes events or commits between phases would expose the non-zero intermediate as a real value'.",
+          "governed_by": ["REQ-015", "REQ-027"]
+        },
+        {
+          "name": "entry_kind",
+          "logical_type": "enumeration",
+          "nullable": false,
+          "constraints": ["one of: VALUATION_CHANGE, ITEM_REJECTED, AUTHORIZATION_REFUSED, OVERRIDE_APPLIED, AUDIT_TAMPER_ATTEMPT"],
+          "traces_to_source": "PRESCRIBED per REQ-020, REQ-026 and REQ-027, which require that rejections and refusals be audited and not only successes.",
+          "governed_by": ["REQ-020", "REQ-023", "REQ-026", "REQ-027"]
+        },
+        {
+          "name": "recorded_by_identity",
+          "logical_type": "identifier",
+          "nullable": false,
+          "constraints": ["the authenticated identity that invoked the cycle"],
+          "traces_to_source": "PRESCRIBED. identity-landscape.json records the sole legacy actor as 'local-interactive-operator (whoever holds an interactive Windows session on the host; identified and authorised solely by the OS login, which this application never reads)'.",
+          "governed_by": ["REQ-026", "REQ-027"]
+        }
+      ],
+      "relationships": [
+        {
+          "type": "many-to-one",
+          "target_entity": "InventoryItem",
+          "via_attribute": "item_id",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "PRESCRIBED per REQ-027. An audit entry MUST NOT be deleted when its item is removed."
+        },
+        {
+          "type": "many-to-one",
+          "target_entity": "RevaluationRun",
+          "via_attribute": "run_id",
+          "cascade_behavior": "restrict",
+          "traces_to_source": "PRESCRIBED per REQ-027."
+        }
+      ],
+      "constraints": [
+        {
+          "description": "An audit entry MUST be immutable once written. Any attempt to modify or delete it MUST be refused, and the refusal MUST itself be recorded as an AUDIT_TAMPER_ATTEMPT entry.",
+          "type": "business-rule",
+          "enforcement": "both",
+          "traces_to": { "discovery_finding": "IL-025", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 37, "line_range": "37-111" },
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "description": "Every change to sell_in or quality MUST produce exactly one audit entry. A cycle that changes an item without producing an entry is a defect.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "BR-024", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 37, "line_range": "37-111" },
+          "governed_by": ["REQ-027"]
+        },
+        {
+          "description": "No audit entry may record a quality value that was computed and then discarded within the same cycle.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": { "discovery_finding": "IL-012", "source_file": "src/GildedRose.Console/Program.cs", "source_line": 99, "secondary_sources": ["src/GildedRose.Console/Program.cs:53-73"] },
+          "governed_by": ["REQ-015", "REQ-027"]
+        }
+      ]
+    }
+  ],
+  "legacy_entities_not_carried_forward": [
+    {
+      "legacy_entity": "InventoryWorkingSet",
+      "legacy_evidence": "src/GildedRose.Console/Program.cs:7 (private IList<Item> field declaration), src/GildedRose.Console/Program.cs:14-29 (inline seeding)",
+      "data_domain_id": "DD-GRK-001",
+      "disposition": "SUPERSEDED, not omitted",
+      "justification": "data-domains.json records this implicit collection entity as a 'collection / run-scoped aggregate' that 'has no identity, no run id, no as-of date and no version'. Its two responsibilities are split in the prescribed model: run identity, business date and counts become RevaluationRun (REQ-023), and the inventory itself becomes an externally supplied collection rather than a compiled-in field (REQ-022). No behaviour is lost; the entity disappears because both of its jobs are now explicit."
+    },
+    {
+      "legacy_entity": "QualityDegradationRule",
+      "legacy_evidence": "src/GildedRose.Console/Program.cs:41-109",
+      "data_domain_id": "DD-GRK-002",
+      "disposition": "SUPERSEDED by ItemCategoryDefinition attributes",
+      "justification": "data-domains.json records this as an implicit entity with no code representation at all — violation BV-GRK-001, severity high. In the prescribed model the rule set becomes data on ItemCategoryDefinition (quality_direction, base_rate_per_cycle, expired_rate_per_cycle, proximity_bonus_tiers) rather than a separate entity, per REQ-017."
+    },
+    {
+      "legacy_entity": "QualityBounds",
+      "legacy_evidence": "src/GildedRose.Console/Program.cs:19, :43, :53, :61, :69, :89, :104",
+      "data_domain_id": "DD-GRK-002",
+      "disposition": "SUPERSEDED by InventoryItem constraints and named constants",
+      "justification": "data-domains.json records the bounds as an implicit entity scattered across seven lines. In the prescribed model they become enforced invariants on InventoryItem (REQ-019) plus single named constants (NFR-009), so there is no separate bounds entity to carry forward. The legendary exemption that made the bounds non-uniform becomes the explicit exempt_from_quality_bounds attribute (REQ-008)."
+    },
+    {
+      "legacy_entity": "cert.* fixture entities",
+      "legacy_evidence": "fixtures/default.json:1",
+      "disposition": "EXCLUDED",
+      "justification": "data-domains.json explicitly excludes these as ARB-GRK-003, and structural-analysis.json duplication_map records fixtures/default.json as untracked Discovery-skill fixture material describing a fabricated application, 'NOT documentation of this application'. structural-analysis.json open_questions[1] further records that the file's contents vary between dispatches, and that 'nothing downstream should cite fixtures/default.json as evidence about this application'. No entity from it appears in this data model."
+    }
+  ],
+  "summary": {
+    "total_entities_prescribed": 4,
+    "entities_with_a_legacy_counterpart": 1,
+    "entities_prescribed_without_a_legacy_counterpart": 2,
+    "entities_superseding_an_implicit_legacy_entity": 1,
+    "legacy_logical_entities_in_discovery": 5,
+    "legacy_persistent_entities_in_discovery": 0,
+    "legacy_entities_not_carried_forward": 4,
+    "total_attributes_prescribed": 33,
+    "attributes_derived_from_a_legacy_source_line": 10,
+    "attributes_prescribed_without_a_legacy_counterpart": 23,
+    "attribute_provenance_basis": "An attribute is counted as legacy-derived when its traces_to_source names a concrete src/GildedRose.Console/Program.cs line as the ORIGIN of the attribute, even where the prescribed form differs substantially from the legacy one. The 10 are: InventoryItem.display_name (:117), .sell_in (:119), .quality (:121); ItemCategoryDefinition.category_code (:41,:45,:57,:78,:85,:87,:91), .quality_direction (:41-109), .base_rate_per_cycle (:47,:55,:63,:71,:93,:106), .expired_rate_per_cycle (:93,:99,:106), .exempt_from_quality_bounds (:19), .exempt_from_sell_in_decrement (:78), .proximity_bonus_tiers (:59,:67). The remaining 23 are InventoryItem.item_id, .category and .archival_eligible plus all 9 RevaluationRun and all 11 ValuationAuditEntry attributes, none of which has any legacy counterpart. ONE BORDERLINE CASE, stated rather than hidden: exempt_from_quality_bounds is counted as legacy-derived because the legendary quality 80 sits at Program.cs:19, but BR-008 and IL-005 record the exemption itself as EMERGENT FROM THE ABSENCE OF CODE — the ceiling binds only items that reach an appreciation branch, and a legendary item never does. Counted either way the totals still sum to 33.",
+    "total_constraints": 14,
+    "total_constraints_basis": "Counts entity-level constraints arrays only (InventoryItem 5, ItemCategoryDefinition 3, RevaluationRun 3, ValuationAuditEntry 3). The per-attribute `constraints` string lists are a different and narrower thing and are not included in this figure.",
+    "pii_bearing_entities": 0,
+    "counting_note": "InventoryItem is the one entity with a direct legacy counterpart (the Item POCO). ItemCategoryDefinition supersedes the implicit ItemCategory/QualityDegradationRule/QualityBounds cluster. RevaluationRun and ValuationAuditEntry have no legacy counterpart of any kind — they exist to make REQ-023 and REQ-027 enforceable, and both are consequences of anomaly FIXes rather than carried-forward structure. The high ratio of prescribed to carried-forward attributes is the expected shape for this application: data-domains.json records 4 of 5 legacy logical entities as IMPLICIT and 0 of 5 as persistent."
+  }
+}

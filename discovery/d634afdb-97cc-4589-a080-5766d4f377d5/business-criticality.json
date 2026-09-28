@@ -1,0 +1,144 @@
+{
+  "$schema": "olympus:artifact:business-criticality:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "produced_by": "discovery-synthesizer",
+  "generated": "2026-09-28T19:05:00Z",
+  "business_criticality": {
+    "rating": null,
+    "assessment": "insufficient_evidence",
+    "confidence": "low",
+    "rationale": "We cannot say what breaks if this application stops, because we cannot establish what this application IS. The criticality question is 'what stops, for whom, and is there a fallback' — and two prerequisites for answering it are both unconfirmed. First, IDENTITY: all eight substantive Discovery passes independently observed that the analysed source tree is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata' — a 172-line programming exercise about a fictional inn's stock revaluation — with no aviation, NAS or certification content, while its shipped assembly metadata credits a different agency ('DSHS'), and the business domain could not be grounded in the FAA taxonomy at all. Second, BOUNDARY: the shared-database pass records as a high-severity risk that if this application_id denotes a production system whose inventory state persists in a store owned by a DIFFERENT application, that store is entirely invisible to a static walk — and it notes that an application with no durability and no audit trail of its nightly run is an odd thing to find under portfolio management. No CMDB export, business-owner record or architecture documentation was supplied at onboarding, and the catalog pass states explicitly that business owner and criticality 'could not be independently confirmed'. THIS IS NOT A RATING OF 1. On the repository's own evidence the observable consequence of this application stopping is nil — it produces no output at all, persists nothing, integrates with nothing, and its computed values are discarded at process exit — and that reading would anchor to the rating-1 anchor. But 'nothing breaks if this stops' and 'we could not tell what breaks' are opposite findings, and emitting 1 here would route a system to the back of the modernization queue on the strength of a repository that three passes independently flagged may not be the system at all. What is needed to close this is a human fact, not more static analysis: confirm the application record maps to a real owned system, name its business owner, and state whether any out-of-repository data store or downstream consumer depends on its nightly run.",
+    "evidence_refs": [
+      {
+        "citation": "structural-analysis.json:database-schema-summary",
+        "pass": "structural",
+        "statement": "The application has no database, no file output and no persistence of any kind; all state is an in-memory list built at Program.cs:14-27 and lost at process exit, so it has no audit trail, no durability and no record of a night's inventory run.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "IL-018",
+        "pass": "business-logic",
+        "statement": "The only console output in the entire application is the literal 'OMGHAI!', printed BEFORE the calculation runs. No computed quality value is ever printed, returned, written or persisted, so the business output of the nightly revaluation is today unobservable — nothing downstream could be consuming it.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "structural-analysis.json:summary_metrics.external_integration_points",
+        "pass": "structural",
+        "statement": "Zero external integration points, zero HTTP endpoints, zero machine-facing interfaces, zero connection strings and zero outbound calls — no other system can be depending on this one through any interface this repository contains.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "compliance-citations.json:summary.total_citations",
+        "pass": "compliance-citations",
+        "statement": "Zero statutory or regulatory citations across all 22 git-tracked application files, and zero of the 25 extracted business rules map to any regulation — so no statutory deadline or legal exposure attaches to an outage.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "data-domains.json:entity_assignment_summary.pii_note",
+        "pass": "data-domains",
+        "statement": "Zero PII-, PHI- or FTI-bearing entities; the only values handled are fictional retail item names and two integers. No data-protection consequence attaches to loss of this system.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "RISK-01",
+        "pass": "shared-database",
+        "statement": "HIGH-severity scope-validity risk: the zero-shared-database finding is bounded by this repository. If this application_id actually denotes a production system whose inventory state persists in a store owned by a different application, that store and any cluster it sits on are invisible to a static walk and the coupling finding would be understated to zero. Until confirmed, this application must not be treated as unconstrained.",
+        "supports": "raises"
+      },
+      {
+        "citation": "ux-accessibility.json:open_questions",
+        "pass": "ux-accessibility",
+        "statement": "ZERO INSTRUMENTATION, NOT ZERO USAGE: every adoption figure is an explicit instrumentation gap rather than a measured zero, because no logging, login, session or telemetry mechanism exists. If a business owner holds out-of-repository usage records for this application_id they are invisible to this assessment and must be supplied before any baseline is trusted.",
+        "supports": "raises"
+      },
+      {
+        "citation": "catalog.json:open_questions",
+        "pass": "catalog",
+        "statement": "No CMDB export or existing architecture documentation was provided at onboarding, so business owner and criticality could not be independently confirmed. The catalog pass also could not ground business_domain in the FAA taxonomy and set it to 'unclassified'.",
+        "supports": "raises"
+      },
+      {
+        "citation": "structural-analysis.json:open_questions",
+        "pass": "structural",
+        "statement": "Governing-profile discrepancy: the source tree is the publicly published Gilded Rose Refactoring Kata with no FAA content, and AssemblyInfo.cs:11 and :13 assert a different agency attribution ('DSHS', 'DSHS 2015'). A stakeholder must confirm whether this application_id genuinely maps to an FAA-owned system before any downstream line consumes the analysis.",
+        "supports": "raises"
+      },
+      {
+        "citation": "capability-catalog.json:legacy_system",
+        "pass": "capability",
+        "statement": "The application could not be confidently bound to any strategy-of-record legacy system family and is carried as its own unclassified system pending stakeholder confirmation, with legacy_system.external_id null because no reference catalog was available to bind against.",
+        "supports": "context"
+      },
+      {
+        "citation": "quality-risk.json:risk_summary.overall_risk_tier",
+        "pass": "quality-risk",
+        "statement": "Overall technical risk is rated HIGH (proven zero test coverage, an unseamed 75-line rules engine, an end-of-support runtime, a non-hermetic build chain). Recorded as CONTEXT only: this is a measure of how hard and how dangerous the application is to CHANGE, which is a different question from what breaks if it STOPS, and it must not be read as a criticality signal.",
+        "supports": "context"
+      }
+    ],
+    "scale_anchor": "No anchor was matched, because the assessment is 'insufficient_evidence' rather than 'rated'. For the reviewer's reference, the two anchors the evidence points between are: rating 1 — 'Negligible operational consequence — internal tooling, a reporting convenience, a decommissioned-in-practice surface', which is where the repository's own evidence would land it; and an indeterminate higher rating, which is where it could land if the application record denotes a real owned system with an out-of-repository data store or downstream consumer that this static walk cannot see. Choosing between those two requires the human facts named in missing_inputs, not a further reading of the code.",
+    "missing_inputs": [
+      "Stakeholder confirmation that application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system, and that this repository is the whole of it (open question OQ-001; flagged independently by all eight substantive Discovery passes)",
+      "A named business owner for the application. No CMDB export, ownership document or architecture documentation was supplied at onboarding, and the source tree contains no ownership metadata of any kind (catalog.json:open_questions; BV-GRK-004)",
+      "Confirmation of whether any persistent data store exists OUTSIDE this repository — for example one owned by another application — on which this application's inventory state depends (RISK-01; open question OQ-005)",
+      "Any out-of-repository usage or invocation records. The application has zero instrumentation, so Discovery can distinguish 'no usage' from 'unmeasured usage' only with records the business owner holds (ux-accessibility.json:adoption_baseline)",
+      "Identification of any downstream consumer of the nightly revaluation's results. The application emits no output at all, so no consumer is detectable from the code (IL-018; BV-GRK-003)",
+      "A statement of what business function, if any, depends on this application's nightly run completing — the direct consequence question that none of the ten Discovery passes could answer from static evidence"
+    ]
+  },
+  "complexity_tier": "simple",
+  "safety_tier": null,
+  "review_asks": [
+    {
+      "ask_slug": "business-criticality-confirmed",
+      "action": "verify",
+      "title": "We could not determine how critical this application is — confirm that, or tell us its criticality",
+      "why": "A criticality rating drives where this application sits in the modernization queue, so a guessed number is worse than an admitted gap: inventing a low rating would send a possibly-important system to the back of the queue, and inventing a high one would displace something that matters more.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "confidence": {
+        "level": "low",
+        "score": 0.35,
+        "rationale": "We are highly confident about what the repository contains and highly confident that it shows no observable consequence of failure — it produces no output, stores nothing and connects to nothing. We have low confidence that the repository is the whole system, or that this record denotes a real owned system at all, and those are precisely the facts a criticality rating depends on. Confidence is therefore low in the RATING, not in the evidence."
+      },
+      "assessment": "We are NOT giving this application a criticality rating, and that is a deliberate answer rather than an omission. On the evidence in the repository, nothing observable would break if this application stopped: it computes six inventory values in memory, prints nothing, saves nothing, and discards everything when it exits, and no other system connects to it. That reading would make it the least critical class of application. But we are not willing to record that number, for two reasons. First, we cannot confirm this record is the system you meant: the code is a publicly published programming exercise about an inn's stock, with no aviation or certification content, and its compiled metadata credits a different agency. Second, if a real production data store sits outside this repository — one owned by another application — then this application's actual importance is entirely invisible to us and could be considerable. No CMDB record, business owner or usage data was supplied that would settle either point. Please either confirm that we were right to decline, or give us the criticality rating and the business owner directly. Please also note that this rating is about CONSEQUENCE and is deliberately independent of the separate technical finding that the application is HIGH risk to change; a simple application can be critical, and a risky one can be trivial.",
+      "reasoning": "We asked the consequence question rather than the size question: what stops, for whom, and is there a fallback. Five pieces of evidence point toward negligible consequence — no persistence, no output, no integrations, no regulated data, no statutory exposure — and we have recorded all five even though they argue against the cautious position we took. Five point the other way, and they are about the boundary of the analysis rather than the code: the shared-database pass raised as a high-severity risk that an out-of-repository store would invert its findings and noted that a system with no audit trail is an odd thing to find under portfolio management; the UX pass was explicit that its zero adoption figures are an instrumentation gap and not a measured zero; the catalog pass recorded that business owner and criticality could not be confirmed; and every pass flagged that the application's identity is unconfirmed. Where the evidence for a consequence is that evenly split and the subject itself is in doubt, the honest output is a declared gap with the missing facts named. We deliberately did not look at the application's complexity when forming this view, and we did not derive the rating from it.",
+      "evidence_refs": [
+        {
+          "name": "Nothing is persisted, emitted or integrated",
+          "detail": "No database, file, queue or log; all state is an in-memory list discarded at process exit. The only console output is a banner printed BEFORE the calculation. Zero integration points, zero endpoints, zero outbound calls — so no downstream dependency is detectable.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+        },
+        {
+          "name": "No regulated or sensitive data, and no statutory exposure",
+          "detail": "Zero statutory citations in the application's own files, zero of 25 business rules mapped to any regulation, zero PII/PHI/FTI-bearing entities.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/compliance-citations.json"
+        },
+        {
+          "name": "An out-of-repository data store cannot be ruled out",
+          "detail": "High-severity scope-validity risk: if this application's inventory persists in a store owned by another application, that store is invisible to a static walk and every no-coupling conclusion would invert. Until confirmed, the application must not be treated as unconstrained for wave sequencing.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json"
+        },
+        {
+          "name": "Zero instrumentation is not zero usage",
+          "detail": "No logging, login, session or telemetry mechanism exists, so every adoption figure is an explicit instrumentation gap. Any usage records the business owner holds are invisible to Discovery.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/ux-accessibility.json"
+        },
+        {
+          "name": "Business owner and criticality were never supplied, and the identity is disputed",
+          "detail": "No CMDB export or architecture documentation at onboarding; business_domain could not be grounded in the FAA taxonomy and was set to 'unclassified'; the shipped assembly metadata credits a different agency.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json"
+        },
+        {
+          "name": "Complexity tier, shown alongside and deliberately not combined",
+          "detail": "Catalog records complexity_tier 'simple' (172 LOC, 2 modules, 0 tables). Copied verbatim for side-by-side reading only: criticality asks what breaks if this stops, complexity asks how hard it is to change, and this rating was formed without reference to it.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json"
+        }
+      ]
+    }
+  ]
+}

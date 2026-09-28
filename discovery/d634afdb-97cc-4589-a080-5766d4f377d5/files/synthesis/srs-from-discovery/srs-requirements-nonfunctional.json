@@ -1,0 +1,490 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "Non-functional requirements prescribed for the modernized inventory revaluation system. Every NFR below traces to a measured Discovery finding — a measured test-coverage figure, a named runtime end-of-support date, a counted code smell, an observed algorithmic shape, or a recorded measurement gap. No performance threshold, availability target or throughput figure has been invented: where Discovery could not measure a baseline, the NFR prescribes that the baseline be established rather than asserting a number nobody observed. This distinction is stated explicitly on each affected requirement.",
+  "requirements": [
+    {
+      "id": "NFR-001",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system MUST be covered by an automated test suite that exercises every prescribed business rule, and that suite MUST achieve at least 80% line and 80% branch coverage of the rules module. Characterization tests pinning the legacy observed behaviour MUST exist and pass BEFORE any behaviour-changing requirement in this SRS is implemented, and each characterization test MUST name the requirement that supersedes it where the prescribed behaviour deliberately differs.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Coverage meets the prescribed baseline",
+          "given": "The implemented rules module and its test suite",
+          "when": "Coverage is measured by the build pipeline",
+          "then": "Line coverage of the rules module is at least 80% and branch coverage is at least 80%, and the build fails if either falls below"
+        },
+        {
+          "criterion": "Every prescribed rule has at least one test",
+          "given": "The 28 functional and constraint requirements in srs-requirements-functional.json",
+          "when": "The test suite is mapped to requirement identifiers",
+          "then": "Every requirement identifier appears in at least one test, and every acceptance criterion is realised as an executable assertion"
+        },
+        {
+          "criterion": "The ordering invariant is pinned before any refactor",
+          "given": "A characterization suite covering the 6 legacy seeded items across at least 20 consecutive cycles",
+          "when": "The sell-in decrement is relocated within the cycle",
+          "then": "The suite fails on the boundary cases sell_in 11, 6 and 0, as required by REQ-016"
+        },
+        {
+          "criterion": "Deliberate behaviour changes are declared, not silently absorbed",
+          "given": "The characterization suite",
+          "when": "A test encodes legacy behaviour that this SRS corrects — the Conjured mispricing per REQ-018, the silent unknown-name depreciation per REQ-020, the legendary quality tolerance per REQ-008",
+          "then": "Each such test is explicitly marked as superseded and names the correcting requirement; none is left asserting the legacy defect as expected behaviour"
+        },
+        {
+          "criterion": "The test module is actually wired to the code under test",
+          "given": "The implemented solution",
+          "when": "The module dependency graph is inspected",
+          "then": "The test module declares an explicit dependency on the rules module; no tautological placeholder assertion remains"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "quality-risk.test_coverage",
+        "source_file": "src/GildedRose.Tests/TestAssemblyTests.cs",
+        "source_line": 10,
+        "line_range": "7-11",
+        "secondary_sources": ["src/GildedRose.Tests/GildedRose.Tests.csproj:42-58", "IL-026", "BR-016"],
+        "discovery_artifact": "quality-risk",
+        "measured_baseline": "line_pct 0, branch_pct 0, overall 0, gap_to_baseline_pct 80, measurement.confidence 'high'"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-024",
+      "anomaly_details": "Legacy: quality-risk.json records line and branch coverage of 0% for gildedrose-console, and states this is a PROVABLE zero rather than an unmeasured gap — GildedRose.Tests.csproj declares zero ProjectReference to GildedRose.Console, so the single test method at TestAssemblyTests.cs:7-11 (Assert.True(true)) is 'mechanically incapable of executing any statement in the production assembly'. quality-risk.json names this the first of its top risk drivers and records the test module's risk as 'the false impression of a safety net where none exists'. IL-026 adds that this is what makes every implicit behaviour dangerous rather than merely untidy: 'nothing would fail if a re-implementation changed any of them'. shared-db-analysis.json RISK-02 records the same absence at high severity. The 80% baseline is the figure quality-risk.json used as its gap denominator, selected because this application's safety tier is unconfirmed and the tier-specific baselines could not be chosen between; it is therefore the profile default rather than a tier-specific target — see the open question on safety tier.",
+      "related_requirements": ["REQ-016", "REQ-018", "REQ-020", "REQ-028"]
+    },
+    {
+      "id": "NFR-002",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system MUST run on a currently supported runtime and MUST NOT depend on any component past its vendor end-of-support date. The system MUST execute on a Linux container without an interactive console and MUST NOT depend on a Windows-only runtime facility.",
+      "acceptance_criteria": [
+        {
+          "criterion": "No end-of-support runtime remains",
+          "given": "The implemented system's manifests",
+          "when": "Every declared target runtime is checked against its vendor lifecycle policy",
+          "then": "Every runtime is within its supported window; no component targets .NET Framework 4.5 or 4.5.1"
+        },
+        {
+          "criterion": "The system runs in a Linux container",
+          "given": "The system packaged as a Linux container image",
+          "when": "A revaluation cycle is invoked in that container with no interactive console attached",
+          "then": "The cycle completes and the process exits with status 0, per REQ-024"
+        },
+        {
+          "criterion": "No Windows-only facility is required",
+          "given": "The implemented system",
+          "when": "The source is inspected for platform-specific console and host dependencies",
+          "then": "No blocking interactive console call and no Windows-only API is present on the revaluation execution path"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "structural-analysis.primary_technology.runtimes",
+        "source_file": "src/GildedRose.Console/GildedRose.Console.csproj",
+        "source_line": 12,
+        "secondary_sources": ["src/GildedRose.Tests/GildedRose.Tests.csproj:15", "src/GildedRose.Console/app.config:4", "src/GildedRose.Console/Program.cs:33", "build.bat:3", "build.bat:10"],
+        "discovery_artifact": "structural-analysis",
+        "measured_baseline": "GildedRose.Console targets .NET Framework 4.5, GildedRose.Tests targets 4.5.1; both recorded as 'past Microsoft end-of-support (reached end of support 2016-01-12)'"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-026",
+      "anomaly_details": "Legacy: structural-analysis.json records both projects on .NET Framework 4.5/4.5.1, past Microsoft end of support, plus an explicit 'Windows-only runtime dependency' entry noting that System.Console.ReadKey() requires an interactive console, the build chain is cmd plus Windows PowerShell >= 3.0, and 'nothing here runs on a Linux container without a port'. quality-risk.json names this its third top risk driver. structural-analysis.json open_questions[8] records the TARGET-RUNTIME GAP as having 'no in-place path': any target state requires a runtime port plus removal of the blocking Console.ReadKey(). NOTE ON THE TARGET VERSION: the specific target runtime version and container substrate are named in the client profile's configuration, which was NOT readable in this dispatch (see srs.json open_questions). This requirement therefore prescribes the PROPERTY — currently supported, Linux-container-capable — rather than asserting a version number this SRS cannot verify against the governing profile. Prior Discovery artifacts cite profiles/faa/config/code-generation-dotnet.yaml as targeting .NET 8 and profiles/faa/config/common.yaml as specifying Amazon ECS on Fargate in AWS GovCloud; those values must be re-read from the profile and bound before Modernization's Extract step consumes this requirement.",
+      "related_requirements": ["REQ-024", "NFR-003"]
+    },
+    {
+      "id": "NFR-003",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The build MUST be hermetic and reproducible: every dependency MUST be resolved from a pinned version against an authenticated, organisation-controlled feed, every build step MUST be defined within the repository, and the build MUST NOT download an unpinned executable from the public internet. No build-time step may depend on content that is not present in the repository or in a pinned, verified package.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The build succeeds with no public internet egress",
+          "given": "A clean build environment with egress restricted to the organisation-controlled package feed",
+          "when": "A full build and test run is executed",
+          "then": "The build completes successfully; no step attempts to reach a public package endpoint"
+        },
+        {
+          "criterion": "No unpinned executable is fetched",
+          "given": "The implemented build definition",
+          "when": "The build scripts are inspected",
+          "then": "No step downloads an executable whose version and integrity hash are not pinned in the repository"
+        },
+        {
+          "criterion": "Every build step is defined in the repository",
+          "given": "The implemented build definition",
+          "when": "The Clean, Build, Test and Version steps are traced",
+          "then": "Each step's body is defined in a repository-tracked file; no step body is imported from an out-of-repository convention package"
+        },
+        {
+          "criterion": "The build is reproducible",
+          "given": "The same commit built twice in clean environments",
+          "when": "The outputs are compared",
+          "then": "The dependency closure resolved is identical in both runs"
+        },
+        {
+          "criterion": "Dead build dependencies are removed",
+          "given": "The implemented build definition",
+          "when": "Declared dependencies are compared against actual usage",
+          "then": "No dependency is declared that no project consumes, and no duplicate or divergent version of a single build tool participates in one build"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "structural-analysis.coupling_indicators.build_chain_depends_on_out_of_repo_conventions_and_the_public_internet",
+        "source_file": "build.bat",
+        "source_line": 24,
+        "line_range": "24-28",
+        "secondary_sources": ["NuGet.config:7", "tasks.ps1:5", "tasks.ps1:11", "build.bat:30", "build.bat:42", ".nuget/packages.config:3-4", "src/GildedRose.Console/packages.config:3"],
+        "discovery_artifact": "structural-analysis",
+        "measured_baseline": "coupling severity 'high'; build.bat downloads NuGet.exe unpinned over HTTPS and restores from the deprecated nuget.org v2 feed; tasks.ps1 imports all task bodies from out-of-repo psake.net 0.1.3"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-026",
+      "anomaly_details": "Legacy: structural-analysis.json records the build chain as 'not self-describing or hermetic' at severity high. tasks.ps1 defines no task bodies — it calls Get-DefaultPropertiesFile and Import-DefaultTasks, all supplied by the out-of-repo psake.net 0.1.3 package, 'so what Build and Test actually DO is invisible in this repository (and was unreadable in this walk, since packages/ is not restored)'. build.bat downloads NuGet.exe from the public internet when absent, restores from the deprecated v2 feed, hard-requires cmd plus Windows PowerShell >= 3.0, and shells out to GitVersion.exe. structural-analysis.json states plainly that 'the v2 feed plus an unpinned nuget.exe download is also a supply-chain exposure', and quality-risk.json names it the fourth top risk driver. duplication_map additionally records a tracked NuGet.exe binary in source control, duplicate differently-cased NuGet config files, and three dead build dependencies (NUnit.Runners 2.6.4 with no NUnit reference anywhere, GitVersionTask 2.0.1 declared but never imported, and four unused BCL references) — the last acceptance criterion resolves those as OMIT per ANOM-020. structural-analysis.json open_questions[4] records that the actual build content could not be reached in the Discovery walk, so this requirement also closes a Discovery measurement gap.",
+      "related_requirements": ["NFR-002", "NFR-004"]
+    },
+    {
+      "id": "NFR-004",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system's dependency closure MUST be scanned for known vulnerabilities by an automated tool on every build, and the build MUST fail on any unwaived finding at or above the organisation's action threshold. A vulnerability baseline MUST be established before cutover, because no such baseline exists today.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A scan runs on every build",
+          "given": "The implemented build pipeline",
+          "when": "A build is executed",
+          "then": "A dependency vulnerability scan runs and emits a machine-readable report enumerating every resolved package and its findings"
+        },
+        {
+          "criterion": "The build fails on unwaived findings at the action threshold",
+          "given": "A dependency with a known vulnerability at or above the action threshold and no recorded waiver",
+          "when": "A build is executed",
+          "then": "The build fails and names the package, the version and the finding"
+        },
+        {
+          "criterion": "A baseline is established rather than assumed",
+          "given": "The state at Discovery, in which 12 distinct NuGet packages were UNASSESSED",
+          "when": "The first scan is run against the modernized dependency closure",
+          "then": "The report is recorded as the vulnerability baseline; the Discovery-era empty finding list is not treated as a clean baseline"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "quality-risk.vulnerabilities",
+        "source_file": "src/GildedRose.Console/packages.config",
+        "source_line": 3,
+        "secondary_sources": ["src/GildedRose.Tests/packages.config:1-10", ".nuget/packages.config:3-6", "quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count"],
+        "discovery_artifact": "quality-risk",
+        "measured_baseline": "vulnerabilities: [] with measurement.method 'unavailable' — an explicitly recorded MEASUREMENT GAP, not a clean result"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-027",
+      "anomaly_details": "Legacy: quality-risk.json emits an empty vulnerabilities array and states in its fifth top risk driver that 'No SCA tool output or vulnerability database was supplied as an input to this assessment, so the 12 distinct NuGet package dependencies (several pinned to 2014-era versions) are UNASSESSED for known CVEs — this is a measurement gap, not a clean bill of health, and must not be read as no vulnerabilities found.' Its technical-debt calculation deliberately EXCLUDED vulnerability_count from the weighted sum rather than defaulting it to zero, 'because treating an unmeasured input as 0 would misreport an unknown as a clean result'. This SRS carries that distinction forward rather than resolving it: the anomaly log records ANOM-027 as DEFER (the measurement cannot be performed from Discovery artifacts alone) while this requirement prescribes that the measurement become a standing build gate. The action threshold is deliberately not numbered here — it belongs to the client profile's security configuration, which was not readable in this dispatch.",
+      "related_requirements": ["NFR-003"]
+    },
+    {
+      "id": "NFR-005",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "Every human-facing surface the modernized system exposes MUST conform to WCAG 2.1 Level AA as incorporated by Section 508 of the Rehabilitation Act (36 CFR Part 1194, ICT Final Rule). Conformance MUST be verified by an automated accessibility check on every build plus a documented manual review of each surface, and MUST NOT be asserted on the basis of a surface having no rendered content.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Each human-facing surface is assessed",
+          "given": "The set of human-facing surfaces the modernized system exposes",
+          "when": "The accessibility verification is run",
+          "then": "Every surface has an assessment result recorded; no surface is unassessed"
+        },
+        {
+          "criterion": "Automated checking gates the build",
+          "given": "A surface with a WCAG 2.1 AA Level A or AA violation",
+          "when": "A build is executed",
+          "then": "The build fails and names the surface, the success criterion and the element"
+        },
+        {
+          "criterion": "A non-rendered surface is ruled on, not silently exempted",
+          "given": "A surface with no rendered graphical content — for example a command-line invocation surface",
+          "when": "Its accessibility obligation is determined",
+          "then": "A recorded determination by an accessibility reviewer exists stating which success criteria apply and which have no applicable target, with the reasoning; no surface is exempted by default"
+        },
+        {
+          "criterion": "The Discovery-era undetermined gate is closed",
+          "given": "The Discovery accessibility gate decision of 'undetermined' with 0 of 1 surfaces given an actual checker run",
+          "when": "The modernized system reaches its accessibility gate",
+          "then": "A real checker has been run against every surface and the gate decision is pass or fail, not undetermined"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "ux-accessibility.accessibility_findings",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 10,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:33", "structural-analysis.json:interface-inventory.open_questions[1]", "ux-accessibility.json:ui_inventory[0]"],
+        "discovery_artifact": "ux-accessibility",
+        "measured_baseline": "applicable_standards: Section 508 (36 CFR Part 1194, ICT Final Rule) and WCAG 2.1 AA; findings: [] with total 0; gate_decision: 'undetermined'; surfaces_reviewed_of_total: '1 of 1 given a direct (non-checker) review; 0 of 1 given an actual accessibility-checker run'"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-022",
+      "anomaly_details": "Legacy: ux-accessibility.json names the applicable standards as Section 508 (36 CFR Part 1194, ICT Final Rule) and WCAG 2.1 AA, and records exactly one human-facing surface — a Windows character-mode console session that writes one banner line and blocks on a keypress. Its findings list is EMPTY but its gate_decision is 'undetermined', and its gate_decision_note is explicit that the emptiness is 'empty by omission of a checker run, not a compliance verdict of zero defects': the accessibility-checker sub-skill could not be composed because the Sub-Skill Output Contract naming the checker's output path and schema was absent from that agent's dispatch. Separately, structural-analysis.json interface-inventory open_questions[1] and ux-accessibility.json both record that WCAG applicability to a character-mode console surface is itself UNDETERMINED and needs an accessibility reviewer's ruling. This SRS therefore prescribes the conformance target and the verification method, and records the unresolved applicability question as ANOM-022 (DEFER, SME confirmation required) rather than ruling on it. SOURCE CAVEAT: the conformance level is taken from ux-accessibility.json's applicable_standards, NOT from the client profile's compliance configuration, which was not readable in this dispatch — see srs-accessibility-compliance.json source_note.",
+      "related_requirements": ["REQ-024", "NFR-008"]
+    },
+    {
+      "id": "NFR-006",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST revalue an inventory in time linear in the number of items, performing exactly one evaluation pass per item per cycle, and MUST NOT perform a quality computation whose result is discarded within the same cycle. A throughput baseline MUST be established and recorded at cutover; no throughput target is prescribed here because none was ever measured.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Revaluation is linear in item count",
+          "given": "Inventories of 100, 1 000 and 10 000 items",
+          "when": "One revaluation cycle is executed against each and the elapsed time is measured",
+          "then": "Elapsed time scales approximately linearly with item count; no super-linear growth is observed"
+        },
+        {
+          "criterion": "Each item is evaluated once per cycle",
+          "given": "An inventory of 1 000 items",
+          "when": "One revaluation cycle is executed and rule evaluations are counted",
+          "then": "Each item was evaluated exactly once; no item was re-read or re-evaluated in a second pass"
+        },
+        {
+          "criterion": "No adjustment is computed and then discarded",
+          "given": "A BACKSTAGE_PASS item with sell_in = -5 and quality = 0",
+          "when": "One revaluation cycle is executed and the applied adjustments are counted",
+          "then": "Zero quality adjustments were computed for this item; the legacy pattern of accruing up to 3 points and then zeroing them does not occur"
+        },
+        {
+          "criterion": "A baseline is recorded rather than asserted",
+          "given": "The system at cutover",
+          "when": "The first production-representative revaluation cycle completes",
+          "then": "Its item count and elapsed time are recorded as the throughput baseline against which later regressions are judged"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-001",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 39,
+        "line_range": "39-110",
+        "secondary_sources": ["IL-012", "IL-027", "BR-015"],
+        "discovery_artifact": "business-logic",
+        "measured_baseline": "OBSERVED SHAPE ONLY: BR-001 records a single counted loop over an IList with no early exit, i.e. O(n) in item count. NO timing, throughput or SLA figure exists for this application — ux-accessibility.json records instrumentation_present: false and telemetry_source 'none', so no measured performance baseline of any kind was available."
+      },
+      "anomaly_resolution": "OPTIMIZE",
+      "proposed_anomaly": "ANOM-007",
+      "anomaly_details": "The algorithmic shape is carried forward from observation, not invented: BR-001 records 'a single counted loop over an IList with no early exit'. The discarded-computation clause resolves ANOM-007 (IL-012): on the concert day a pass earns up to +3 at Program.cs:55/63/71 and is zeroed at :99 in the same iteration, 'and it repeats on every later day too: an already-worthless pass climbs to 3 and is reset to 0 each run'. NO INVENTED THRESHOLD: this requirement deliberately prescribes no items-per-second figure, no latency budget and no availability target, because ux-accessibility.json records instrumentation_present false and telemetry_source 'none — no logging framework, database, analytics call, or persisted state of any kind exists anywhere in the tracked source', and there is no documented SLA anywhere in the Discovery corpus. Prescribing a number here would be exactly the 'invented thresholds' failure this SRS is required to avoid; the requirement instead prescribes that the baseline be established and recorded.",
+      "related_requirements": ["REQ-001", "REQ-015", "NFR-010"]
+    },
+    {
+      "id": "NFR-007",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The rules module MUST be structured so that each item category's rules can be read, tested and changed independently. No single method may exceed a cyclomatic complexity of 10 or a conditional nesting depth of 3, and the entry point, the rules engine and the domain model MUST reside in separate, independently referencable units.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Complexity is bounded and enforced",
+          "given": "The implemented rules module",
+          "when": "Static analysis measures every method",
+          "then": "No method exceeds cyclomatic complexity 10 or nesting depth 3, and the build fails if either is exceeded"
+        },
+        {
+          "criterion": "Responsibilities are separated",
+          "given": "The implemented system",
+          "when": "The unit containing the process entry point is inspected",
+          "then": "It contains no business rule and no domain-model definition; the rules engine and the domain model are in separate units"
+        },
+        {
+          "criterion": "A single category's rules can be changed in one place",
+          "given": "A requirement to change the BACKSTAGE_PASS proximity thresholds",
+          "when": "The change is made",
+          "then": "It is confined to a single cohesive unit; no edit is required in a unit governing another category"
+        },
+        {
+          "criterion": "Duplicated adjustment logic is eliminated",
+          "given": "The implemented rules module",
+          "when": "The quality-adjustment logic is inspected",
+          "then": "The ceiling clamp, the floor clamp and the legendary exemption each exist at exactly one site, per REQ-003, REQ-004 and REQ-007"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "quality-risk.code_smells",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 37,
+        "line_range": "37-111",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:83-95", "src/GildedRose.Console/Program.cs:115-122", "structural-analysis.json:coupling_indicators.god_type_single_file_application", "structural-analysis.json:coupling_indicators.deep_conditional_nesting"],
+        "discovery_artifact": "quality-risk",
+        "measured_baseline": "QR-001 long-method (1), QR-002 god-class (1), QR-003 deep-nesting (1), QR-004 duplicated-code (4), QR-006 cyclomatic-complexity-hotspot (1); business-logic.json measures UpdateQuality at 75 lines, max nested conditional depth 5, method-level cyclomatic complexity estimate 20; technical_debt_score 76/100 band 'high'"
+      },
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-023",
+      "anomaly_details": "Legacy: quality-risk.json names as its second top risk driver that 'the application's only business logic, UpdateQuality (Program.cs:37-111), is a single 75-line method with 5 levels of nested conditionals, 8 item-name magic-string comparisons, and 4 duplicated quality-increment blocks — no seam exists to test or safely modify it', and scores technical debt at 76/100 (band high) with all 18 weighted smell occurrences concentrated in this one module. business-logic.json measures the method-level cyclomatic complexity at 20 against 19 counted decision predicates. structural-analysis.json records coupling_indicators.god_type_single_file_application at severity high ('there is no layering to preserve and no seam to cut') and deep_conditional_nesting at medium. THRESHOLD PROVENANCE: the limits of 10 and 3 are conventional static-analysis defaults, not values read from the client profile's configuration, which was not readable in this dispatch. They are stated so the requirement is testable, and are flagged for ratification against the profile before Modernization consumes them — the measured legacy figures they must improve on (20 and 5) are the evidence-based part of this requirement.",
+      "related_requirements": ["REQ-003", "REQ-004", "REQ-007", "REQ-017", "REQ-028"]
+    },
+    {
+      "id": "NFR-008",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-004",
+      "description": "The system MUST emit structured, machine-parseable logs for the start and end of every revaluation cycle, every item rejection, every authorization refusal, and every error, each correlated to the cycle's business date and a cycle correlation identifier. The system MUST NOT be operable as a process whose only output is an unstructured banner.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Cycle boundaries are logged with correlation",
+          "given": "A revaluation cycle for business date 2026-10-01",
+          "when": "The cycle runs to completion",
+          "then": "A structured start event and a structured end event are emitted, both carrying the same correlation identifier and the business date, and the end event carries the item counts and the outcome"
+        },
+        {
+          "criterion": "Failures are diagnosable from logs alone",
+          "given": "A cycle that fails because the inventory source is unreachable",
+          "when": "The emitted logs are read without access to the running process",
+          "then": "The logs name the failing source, the error code and the correlation identifier, sufficient to diagnose the failure"
+        },
+        {
+          "criterion": "Rejections and refusals are logged, not silent",
+          "given": "A cycle in which 1 item was rejected per REQ-020 and 1 invocation was refused per REQ-026",
+          "when": "The emitted logs are read",
+          "then": "Both appear as discrete structured events with their reasons"
+        },
+        {
+          "criterion": "Logs are machine-parseable",
+          "given": "The emitted log stream",
+          "when": "It is parsed by a log aggregation tool",
+          "then": "Every event parses as a structured record with named fields; no event requires text scraping"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "IL-018",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 10,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:33-35", "IL-025", "BR-023", "ux-accessibility.json:adoption_baseline.instrumentation_present"],
+        "discovery_artifact": "business-logic",
+        "measured_baseline": "Zero logging of any kind. IL-018: the only console output in the entire application is the literal 'OMGHAI!', printed BEFORE the calculation. ux-accessibility.json: instrumentation_present false, telemetry_source 'none'."
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-015",
+      "anomaly_details": "Legacy: IL-018 records that the only output is the literal 'OMGHAI!' printed before the calculation runs, so 'the business output of the nightly revaluation is, today, unobservable'. IL-025 records no logging framework and no event anywhere. BR-023 and IL-021 record the consequence: 'because there is no logging anywhere in the application, a mispriced item leaves no trace'. ux-accessibility.json records instrumentation_present false and labels every adoption figure an instrumentation gap rather than a measured zero — it also notes 'ZERO INSTRUMENTATION, NOT ZERO USAGE' as an open question, warning that if out-of-repo usage records exist they are invisible to Discovery. This requirement is distinct from REQ-025 (which prescribes durable state and a cycle summary) and from REQ-027 (which prescribes an immutable business audit trail): NFR-008 prescribes operational observability.",
+      "related_requirements": ["REQ-020", "REQ-025", "REQ-026", "REQ-027"]
+    },
+    {
+      "id": "NFR-009",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "Every business threshold, rate and bound MUST be expressed as a single named, documented constant or configuration value, and MUST NOT appear as a bare inline literal at a comparison or assignment site. Each such value MUST be traceable to the requirement that governs it.",
+      "acceptance_criteria": [
+        {
+          "criterion": "No bare business literal remains at a decision site",
+          "given": "The implemented rules module",
+          "when": "The source is searched for the literals 0, 1, 6, 11, 50 and 80 at comparison and assignment sites",
+          "then": "None appears as a bare literal in a rule; each is referenced through a named constant or configuration value"
+        },
+        {
+          "criterion": "Each constant is defined once",
+          "given": "The implemented rules module",
+          "when": "The definitions of the quality maximum, the quality minimum, the legendary quality and the two proximity thresholds are located",
+          "then": "Each has exactly one definition site"
+        },
+        {
+          "criterion": "Each constant names its governing requirement",
+          "given": "The constant definitions",
+          "when": "They are inspected",
+          "then": "Each carries documentation naming the requirement identifier that governs it"
+        },
+        {
+          "criterion": "Changing a threshold requires one edit",
+          "given": "A requirement to change the quality maximum from 50 to 60",
+          "when": "The change is made",
+          "then": "Exactly one definition site is edited, and every rule observes the new value"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "implicit-logic.IL-001",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 53,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:43", "src/GildedRose.Console/Program.cs:59", "src/GildedRose.Console/Program.cs:67", "src/GildedRose.Console/Program.cs:19", "IL-002", "IL-003", "IL-004", "IL-005", "IL-006", "structural-analysis.json:modules[0].config"],
+        "discovery_artifact": "business-logic",
+        "measured_baseline": "Zero named constants and zero configuration values in the application. implicit-logic.json: 'the application contains zero comments, zero named constants and zero configuration values, so every threshold below is an inline literal'. structural-analysis.json: 'The six seeded items and every rule threshold (0, 1, 6, 11, 50) are hard-coded literals in Program.cs'; environment_variable_reads 0, config files carry zero environment-specific values."
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-004",
+      "anomaly_details": "Legacy: implicit-logic.json's own description states that the application 'contains zero comments, zero named constants and zero configuration values'. IL-001 (the 50 ceiling at four sites), IL-002 (the 0 floor at two sites), IL-003 (the literal 11), IL-004 (the literal 6), IL-005 (the 80 legendary quality existing only as seed data) and IL-006 (every adjustment literally 1, with no rate variable anywhere) are the five threshold families this requirement governs. implicit-logic.json states the stakes directly: 'because the quality ceiling, the zero floor and the demand thresholds exist only as inline literals inside one 75-line method, a re-implementation that does not reproduce them exactly changes what the inn charges for its stock'. IL-006 additionally explains why this is a precondition for REQ-018: 'there is no rate variable anywhere... That design is why the Conjured requirement cannot be added as a simple multiplier.'",
+      "related_requirements": ["REQ-003", "REQ-007", "REQ-008", "REQ-010", "REQ-011", "REQ-018"]
+    },
+    {
+      "id": "NFR-010",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-001",
+      "description": "The system MUST NOT mutate caller-owned inventory objects in place during revaluation. A revaluation cycle MUST operate on an explicit snapshot of the inventory and MUST produce its result as a distinct value, so that the pre-cycle state remains available for the audit record of REQ-027 and for rollback. Concurrent modification of the inventory during a cycle MUST be either prevented or detected and reported.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The caller's inventory is not mutated in place",
+          "given": "An inventory collection supplied by a caller",
+          "when": "One revaluation cycle is executed",
+          "then": "The supplied collection and its items are unchanged; the revalued state is returned as a distinct result"
+        },
+        {
+          "criterion": "Before and after states are both available",
+          "given": "A completed revaluation cycle",
+          "when": "The audit record of REQ-027 is written",
+          "then": "Both the pre-cycle and post-cycle values of every changed item are available to it"
+        },
+        {
+          "criterion": "Concurrent modification is detected, not silently tolerated",
+          "given": "A revaluation cycle in progress",
+          "when": "Another writer attempts to modify the same inventory",
+          "then": "Either the modification is prevented, or the cycle fails with error code CONCURRENT_MODIFICATION_DETECTED naming the conflict; the cycle does not complete against a partially changed inventory"
+        },
+        {
+          "criterion": "A failed cycle is rolled back cleanly",
+          "given": "A cycle that fails after revaluing part of the inventory",
+          "when": "The store is read",
+          "then": "The store is at the full pre-cycle state, per REQ-025"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "implicit-logic.IL-027",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 39,
+        "line_range": "39-110",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:117-121", "structural-analysis.json:coupling_indicators.shared_mutable_state_through_public_setters", "BR-001", "BR-018"],
+        "discovery_artifact": "business-logic",
+        "measured_baseline": "IL-027: the loop re-reads Items[i] on roughly 25 separate lines instead of binding a local, mutates the caller's list in place through public setters, re-evaluates Items.Count every iteration, and has no lock, snapshot or copy"
+      },
+      "anomaly_resolution": "OPTIMIZE",
+      "proposed_anomaly": "ANOM-023",
+      "anomaly_details": "Legacy: IL-027 records index-based in-place mutation of a shared list — 'the loop re-reads Items[i] on roughly 25 separate lines instead of binding a local, and mutates the caller's list in place through public setters. Items.Count is re-evaluated every iteration, so concurrent modification is unsupported, and there is no lock, snapshot or copy — a rule change must be applied consistently across all ~25 access sites.' structural-analysis.json records the same as coupling_indicators.shared_mutable_state_through_public_setters at severity medium, noting the documented invariants 'are enforced nowhere but inside this one loop, so any second writer — or any reordering of the loop — can violate them undetectably'. BR-001 test_hints record that 'mutating Items during the loop is unsupported: the count is re-read every iteration at Program.cs:39'. Priority is 'should' rather than 'must' because in the legacy single-threaded console process no concurrent writer can exist; the requirement becomes load-bearing only once REQ-025 introduces a durable shared store, which is why it is prescribed now rather than discovered later.",
+      "related_requirements": ["REQ-001", "REQ-019", "REQ-025", "REQ-027", "NFR-006"]
+    }
+  ],
+  "totals": {
+    "total": 10,
+    "by_type": {
+      "non-functional": 10,
+      "functional": 0,
+      "constraint": 0
+    },
+    "by_priority": {
+      "must": 9,
+      "should": 1,
+      "could": 0
+    },
+    "by_module": {
+      "MOD-001": 4,
+      "MOD-004": 1,
+      "MOD-005": 5
+    },
+    "with_anomaly_resolution": 10,
+    "by_anomaly_resolution": {
+      "FIX": 6,
+      "OPTIMIZE": 2,
+      "CONSOLIDATE": 1,
+      "MAKE_EXPLICIT": 1
+    },
+    "requirements_with_evidence": 10,
+    "requirements_without_evidence": 0,
+    "evidence_discipline_note": "Three NFRs carry a threshold that is NOT derived from a Discovery measurement, and each says so in its own anomaly_details rather than presenting the number as observed: NFR-002 (target runtime version and container substrate — belong to the client profile, which was unreadable in this dispatch), NFR-004 (vulnerability action threshold — same), and NFR-007 (cyclomatic complexity 10 and nesting depth 3 — conventional static-analysis defaults, stated to make the requirement testable and flagged for ratification; the measured legacy figures of 20 and 5 that they must improve on ARE evidence-based). NFR-006 deliberately prescribes NO throughput or latency figure, because no performance telemetry, SLA or usage measurement exists anywhere in the Discovery corpus — ux-accessibility.json records instrumentation_present false. NFR-001's 80% coverage baseline is the figure quality-risk.json itself used as its gap denominator."
+  }
+}

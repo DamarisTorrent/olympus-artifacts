@@ -1,0 +1,862 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "governing_profile": "faa",
+  "requirement_class": "non-functional",
+  "description": "Non-functional requirements and constraints for the modernized Gilded Rose inventory revaluation capability, derived from the Discovery structural, quality-risk, UX/accessibility, data-domain, shared-database, identity-landscape and implicit-logic artifacts. Priority vocabulary is must/should/may only. Where a Discovery pass measured nothing (CVEs, accessibility conformance, adoption, performance), the requirement states the measurement gap rather than asserting compliance.",
+  "module_map": {
+    "SRS-M-01": "Inventory rules domain (item classification, degradation rules, quality bounds) — today 75 lines inlined in Program.UpdateQuality",
+    "SRS-M-02": "Stock item model and persistence (Item, inventory working set, durability and egress)",
+    "SRS-M-03": "Revaluation run host (invocation, parameterisation, logging, audit, exit semantics)",
+    "SRS-XC": "Cross-cutting (build/supply chain, runtime target, identity, accessibility, coverage policy)"
+  },
+  "requirements": [
+    {
+      "id": "NFR-GR-001",
+      "type": "constraint",
+      "priority": "must",
+      "category": "testability",
+      "module_hint": "SRS-M-01",
+      "description": "The inventory quality rules MUST be reachable and invocable from a separate assembly. Today UpdateQuality is an instance method on the internal class Program reading the private Items field, so its effective accessibility is assembly-internal and no external test, service or replacement can call it; the target design MUST expose the rules through a public, parameterised entry point on a separately referencable library.",
+      "acceptance_criteria": [
+        "The rules component is built as its own assembly/package and is referenced by at least one other project via an explicit project reference; a repository-wide search for a production-to-test reference edge returns a non-zero result (today it returns zero).",
+        "The rules entry point accepts the inventory collection as a parameter rather than reading a private field, so a caller in a different assembly can execute it without reflection or InternalsVisibleTo.",
+        "A static check confirms no business rule statement remains inside the process entry-point type."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-022",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:5, :7, :37"
+        },
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.test_assembly_not_wired_to_production_code",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:coupling_indicators.test_assembly_not_wired_to_production_code"
+        },
+        {
+          "finding_id": "RISK-02",
+          "artifact": "shared-db-analysis.json",
+          "source": "shared-db-analysis.json:top_risks_for_decomposition.RISK-02"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-015"
+    },
+    {
+      "id": "NFR-GR-002",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "testability",
+      "module_hint": "SRS-M-01",
+      "description": "A characterization (golden-master) baseline over the six seeded items MUST exist and pass BEFORE any transformation of the rules is merged. The baseline MUST pin today's OBSERVED behaviour, including the behaviours that documentation does not predict: the unimplemented Conjured rule, the self-cancelling `Quality = Quality - Quality` zeroing, the emergent +2/day Aged Brie appreciation after expiry, and the SellIn read-before/read-after-decrement ordering at the boundary days 11, 6 and 0.",
+      "acceptance_criteria": [
+        "A golden-master suite executes the rules over the seeded inventory for multiple successive days and asserts the full Name/SellIn/Quality tuple of every item against recorded expected values.",
+        "Named cases exist for: 'Conjured Mana Cake' degrading at the ordinary single rate (documented double rate NOT applied), backstage passes zeroed once SellIn < 0, Aged Brie gaining 2 per run once SellIn < 0, and the SellIn 11 / 6 / 0 boundary days.",
+        "The suite is red/green demonstrable: deliberately hoisting the SellIn decrement above the threshold tests causes at least one assertion to fail.",
+        "The baseline is merged and green in the pipeline before the first behaviour-changing commit to the rules."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-026",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Tests/TestAssemblyTests.cs:7-11"
+        },
+        {
+          "finding_id": "IL-009",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:59, :67, :80, :83"
+        },
+        {
+          "finding_id": "IL-010",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:99"
+        },
+        {
+          "finding_id": "IL-013",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:55, :106"
+        },
+        {
+          "finding_id": "IL-024",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:26"
+        },
+        {
+          "finding_id": "RISK-02",
+          "artifact": "shared-db-analysis.json",
+          "source": "shared-db-analysis.json:top_risks_for_decomposition.RISK-02"
+        },
+        {
+          "finding_id": "data-domains.json:deployment_coupling_constraints",
+          "artifact": "data-domains.json",
+          "source": "data-domains.json:deployment_coupling_constraints"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-015"
+    },
+    {
+      "id": "NFR-GR-003",
+      "type": "constraint",
+      "priority": "must",
+      "category": "testability",
+      "module_hint": "SRS-XC",
+      "description": "The modernized codebase MUST meet the profile's 80% coverage baseline. Measured legacy coverage is 0% line and 0% branch by structural proof, giving a gap_to_baseline_pct of 80 against the 80% default baseline; the target MUST close that gap with an automatically emitted coverage report rather than an assertion.",
+      "acceptance_criteria": [
+        "An automated coverage tool emits a machine-readable report on every pipeline run for the rules and run-host components.",
+        "Reported line coverage of the rules component is >= 80%, and the build fails when it drops below that threshold.",
+        "Branch coverage is reported alongside line coverage (legacy branch coverage was 0%), so the deeply nested rule paths are demonstrably exercised rather than merely reached.",
+        "The coverage report is produced by the pipeline itself; no coverage figure is accepted from a manual assertion."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "quality-risk.json:test_coverage.measurement",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:test_coverage.measurement"
+        },
+        {
+          "finding_id": "quality-risk.json:test_coverage.gap_to_baseline_pct",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:test_coverage.gap_to_baseline_pct"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-004",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "testability",
+      "module_hint": "SRS-XC",
+      "description": "The orphaned test assembly MUST be wired to the code it is named for, or removed. GildedRose.Tests declares no project reference to GildedRose.Console and its only test asserts Assert.True(true), so the solution presents the appearance of a safety net where none exists; the target MUST NOT ship a test project that exercises no production code.",
+      "acceptance_criteria": [
+        "The test project declares an explicit reference to the rules component and at least one test invokes a production rule path.",
+        "No tautological assertion (a test whose body asserts a constant truth) remains in the suite.",
+        "A pipeline check fails the build if any test project in the solution has zero references to production assemblies.",
+        "The test assembly carries its own assembly metadata; the legacy empty Properties/AssemblyInfo.cs is either populated or the file is removed from the compile set."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.test_assembly_not_wired_to_production_code",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Tests/GildedRose.Tests.csproj:42-58"
+        },
+        {
+          "finding_id": "IL-026",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Tests/TestAssemblyTests.cs:7-11"
+        },
+        {
+          "finding_id": "quality-risk.json:risk_summary.highest_risk_modules",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:risk_summary.highest_risk_modules"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-016"
+    },
+    {
+      "id": "NFR-GR-005",
+      "type": "constraint",
+      "priority": "must",
+      "category": "runtime-portability",
+      "module_hint": "SRS-XC",
+      "description": "The target MUST run on a currently supported, cross-platform .NET runtime. Both legacy projects target .NET Framework 4.5 / 4.5.1 — Windows-only and past Microsoft end of support — while the governing profile's .NET code-generation target is .NET 8; there is no in-place path, so a runtime port MUST be treated as mandatory scope rather than an optional cleanup.",
+      "acceptance_criteria": [
+        "Every project file declares a single supported target framework matching the profile's .NET 8 code-generation target; no project declares TargetFrameworkVersion v4.5 or v4.5.1.",
+        "No package or reference is pinned to targetFramework=net451.",
+        "The full build and test suite completes on a Linux host, demonstrating removal of the Windows-only runtime dependency.",
+        "The runtime's support status is re-verified against the current Microsoft lifecycle policy at the gate, as the legacy support-status finding directs."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:primary_technology.runtimes",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/GildedRose.Console.csproj:12, src/GildedRose.Tests/GildedRose.Tests.csproj:15"
+        },
+        {
+          "finding_id": "quality-risk.json:risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:risk_summary.top_risk_drivers"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-017"
+    },
+    {
+      "id": "NFR-GR-006",
+      "type": "constraint",
+      "priority": "must",
+      "category": "runtime-portability",
+      "module_hint": "SRS-M-03",
+      "description": "The revaluation MUST execute as a containerised workload on the profile's substrate (Amazon ECS on Fargate in AWS GovCloud). The legacy build chain hard-requires cmd plus Windows PowerShell >= 3.0 and the executable requires an interactive Windows console, so nothing in the legacy tree runs on a Linux container without a port.",
+      "acceptance_criteria": [
+        "A container image is produced by the pipeline and the revaluation runs to completion inside it with no interactive console attached.",
+        "The workload is deployable as an ECS-on-Fargate task definition; no step of the runtime path requires cmd.exe or Windows PowerShell.",
+        "The image runs as a non-root user and contains no build-time-only tooling.",
+        "A container run is demonstrated end to end in the target account/partition before the gate."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:recommended_decomposition_boundaries.inventory-run-host",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:recommended_decomposition_boundaries.inventory-run-host"
+        },
+        {
+          "finding_id": "structural-analysis.json:primary_technology.runtimes",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:33, build.bat:3, build.bat:10"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-017"
+    },
+    {
+      "id": "NFR-GR-007",
+      "type": "non-functional",
+      "priority": "should",
+      "category": "runtime-portability",
+      "module_hint": "SRS-XC",
+      "description": "All modules SHOULD be built against one uniform target framework and one uniform versioning mechanism. The legacy solution carries cross-module framework skew (console 4.5, tests 4.5.1, every package marked net451 including the console project's) and versions its two assemblies by different mechanisms, so the artifact under test is not the artifact configured.",
+      "acceptance_criteria": [
+        "A single target framework value appears in every project file, verified by a build-time check across all project files.",
+        "One versioning mechanism stamps all assemblies; the legacy split of a hard-coded AssemblyVersion 1.0.0.0 on the executable versus a tool-stamped test assembly does not recur.",
+        "No two components of the same build tool participate at different versions (legacy: three GitVersion components at 2.0.0, 2.0.1 and 3.4.1 in one build)."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.divergent_versioning_of_one_build",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:coupling_indicators.divergent_versioning_of_one_build"
+        },
+        {
+          "finding_id": "structural-analysis.json:modules.gildedrose-tests.coupling_signals",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Tests/GildedRose.Tests.csproj:15, src/GildedRose.Console/packages.config:3"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-008",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "operability",
+      "module_hint": "SRS-M-03",
+      "description": "The revaluation MUST complete unattended and terminate on its own with a deterministic process exit code. The legacy process blocks indefinitely on System.Console.ReadKey() at Program.cs:33 and therefore never terminates under an orchestrator; the target MUST NOT require a human keypress, and MUST signal success and failure distinguishably to its scheduler.",
+      "acceptance_criteria": [
+        "No call that waits for interactive console input exists in any runtime code path; a source check for a blocking key-read returns zero hits.",
+        "A successful run returns exit code 0 and a failed run returns a non-zero exit code, asserted by an automated test that inspects the process exit status.",
+        "The process terminates without operator interaction when launched with stdin closed or not a TTY.",
+        "A scheduled/orchestrated invocation completes and is reaped by the orchestrator with no manual intervention."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:recommended_decomposition_boundaries.inventory-run-host",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        },
+        {
+          "finding_id": "structural-analysis.json:interface-inventory.open_questions",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:interface-inventory.open_questions"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-009"
+    },
+    {
+      "id": "NFR-GR-009",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "operability",
+      "module_hint": "SRS-M-03",
+      "description": "The inventory to be revalued MUST be supplied externally at invocation rather than compiled in. The legacy run is non-parameterisable: six items are hard-coded literals at Program.cs:16-26, every rule threshold (0, 1, 6, 11, 50) is an inline literal, the Main(string[] args) parameter is never read, and there are zero appSettings, connectionStrings, ConfigurationManager or environment-variable reads in the whole tree.",
+      "acceptance_criteria": [
+        "The run accepts its inventory from an external source (argument, configuration or datastore) and processes a set whose size and contents are not fixed at compile time; a run over a set other than the six seeded items is demonstrated.",
+        "Rule thresholds are supplied as named configuration or reference data, not as inline literals; a source check finds no bare numeric threshold literal inside a rule branch.",
+        "The run reads its environment binding through a documented configuration mechanism, closing the legacy count of 0 environment-variable reads and 0 appSettings entries.",
+        "Invocation arguments are parsed and validated, with an explicit failure exit code for malformed input."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:modules.gildedrose-console.config",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:16-26, :53, :59, :67"
+        },
+        {
+          "finding_id": "QR-007",
+          "artifact": "quality-risk.json",
+          "source": "src/GildedRose.Console/Program.cs:8"
+        },
+        {
+          "finding_id": "IL-006",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:47, :55, :63, :71, :93, :106"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-009"
+    },
+    {
+      "id": "NFR-GR-010",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "observability",
+      "module_hint": "SRS-M-03",
+      "description": "Every revaluation run MUST emit structured logs sufficient to determine that it ran, what it processed and how it ended. Nothing is logged, printed or persisted in the legacy application: the only stdout write is the literal \"OMGHAI!\" emitted BEFORE the calculation, no quality value is ever printed, returned or written, and the in-memory list dies with the process.",
+      "acceptance_criteria": [
+        "The run emits machine-parseable structured log events for start, per-item outcome (or a per-item count), and completion, each carrying the run identifier and the business date.",
+        "The computed result of the revaluation is observable outside the process (log, persisted record or emitted event) — the legacy state of 'business output unobservable' is demonstrably closed.",
+        "Failure paths emit an error event with a correlation identifier, distinguishable from a successful completion.",
+        "No business-meaningful output is written before the calculation it describes has run."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-018",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:10, :33-35"
+        },
+        {
+          "finding_id": "BV-GRK-003",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        },
+        {
+          "finding_id": "ux-accessibility.json:measurement_window",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:measurement_window"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-011",
+      "type": "non-functional",
+      "priority": "should",
+      "category": "observability",
+      "module_hint": "SRS-XC",
+      "description": "The target SHOULD establish an adoption baseline that can actually be measured after cutover. No usage telemetry, login system, session log or audit log exists anywhere in the legacy application, so every legacy adoption figure is recorded as an instrumentation gap rather than a measured zero; the target MUST NOT inherit that gap, and post-cutover analytics MUST NOT be anchored on the legacy figures.",
+      "acceptance_criteria": [
+        "Instrumentation is present and emitting: a named telemetry sink exists and records invocation counts, distinct actors and run duration, replacing the legacy telemetry_source value of 'none'.",
+        "The three legacy instrumentation gaps (active users over a window, feature-usage frequency, session duration) each have a defined, queryable target-state metric.",
+        "The artifact of record states that the legacy baseline is an instrumentation gap, so no post-cutover delta is computed against a legacy zero.",
+        "If a business owner supplies out-of-repo usage records for this application id, they are attached to the baseline before it is used."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "ux-accessibility.json:adoption_baseline",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:adoption_baseline"
+        },
+        {
+          "finding_id": "ux-accessibility.json:measurement_window",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:measurement_window"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-012",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "auditability",
+      "module_hint": "SRS-M-03",
+      "description": "Each revaluation run MUST produce an immutable per-item audit record capturing the before and after values. The legacy revaluation mutates Quality at 13 sites and SellIn at 1 site with no before/after capture, no logging framework, no event and no versioning, so once a day is applied the previous valuation is unrecoverable and the question 'why is this item worth what it is worth' cannot be answered.",
+      "acceptance_criteria": [
+        "For every item processed, an audit entry records prior Quality, new Quality, prior SellIn, new SellIn, the identifiers of the rules applied, the acting principal and a timestamp.",
+        "Audit entries are append-only: an automated test demonstrates that an existing entry cannot be updated or deleted through the application's own interfaces.",
+        "Given a run identifier and an item, the prior valuation is reconstructable from the audit store alone.",
+        "Audit entries are written for legendary/exempt items too, recording that no change was applied, so absence of change is distinguishable from absence of processing."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-025",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "IL-017",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        },
+        {
+          "finding_id": "shared-db-analysis.json:cross_application_sharing_summary.only_state_store",
+          "artifact": "shared-db-analysis.json",
+          "source": "shared-db-analysis.json:cross_application_sharing_summary.only_state_store"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-012"
+    },
+    {
+      "id": "NFR-GR-013",
+      "type": "constraint",
+      "priority": "must",
+      "category": "security",
+      "module_hint": "SRS-XC",
+      "description": "Any newly exposed surface of the modernized system MUST inherit the portfolio's federated-identity decision rather than invent a per-application identity model, and MUST require phishing-resistant AAL2+ authentication (PIV or FIDO2). No email- or SMS-code pattern MAY be carried forward. This is recorded as a target-state obligation, not a legacy defect: the legacy application has zero authentication, authorization, identity, credential and session concepts, its assurance level is recorded as below-AAL1, and its no-identity-proofing and no-mfa gaps are severity LOW precisely because authentication is absent by design in a local console executable, not missing from an authenticated application.",
+      "acceptance_criteria": [
+        "The design record names the portfolio federated-identity provider the new surface relies on; no application-local credential store, user table or session mechanism is introduced.",
+        "Authentication on the new surface is phishing-resistant (PIV or FIDO2) and satisfies AAL2 or above; the assurance level is stated and evidenced, replacing the legacy below-AAL1 record.",
+        "No email-code or SMS-code factor exists in any authentication path, verified by design review and by a source check for such flows.",
+        "If the target exposes no network-reachable or multi-user surface at all, that is stated explicitly and the obligation is recorded as not-yet-triggered rather than satisfied.",
+        "The broker decision for the new surface is made against a multi-application identity-landscape run, not against this single-application record whose 'keep-separate' recommendation applies only to the as-is console."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "identity-landscape.json:assurance_gaps",
+          "artifact": "identity-landscape.json",
+          "source": "identity-landscape.json:assurance_gaps"
+        },
+        {
+          "finding_id": "identity-landscape.json:identity_models.assurance_level",
+          "artifact": "identity-landscape.json",
+          "source": "src/GildedRose.Console/Program.cs:8, src/GildedRose.Console/app.config:1-6"
+        },
+        {
+          "finding_id": "identity-landscape.json:broker_recommendation",
+          "artifact": "identity-landscape.json",
+          "source": "identity-landscape.json:broker_recommendation"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-013"
+    },
+    {
+      "id": "NFR-GR-014",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "security",
+      "module_hint": "SRS-M-03",
+      "description": "The revaluation operation itself MUST be authorised. In the legacy system the only access control is OS-level permission to run the executable and no authorization check of any kind precedes the business logic, so any actor with an interactive session can advance the whole inventory's valuation; the target MUST gate the revaluation on an explicit, recorded permission and MUST record the acting principal on the run.",
+      "acceptance_criteria": [
+        "Invoking the revaluation without the required permission is refused and the refusal is logged with the attempted principal.",
+        "The authorised principal is captured on the run record and on every audit entry it produces (see NFR-GR-012).",
+        "An automated test asserts both the allowed and the denied path.",
+        "The permission required to trigger a revaluation is documented in the design record and mapped to a role, not implied by host access."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-025",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "structural-analysis.json:interface-inventory.interfaces.authentication",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:interface-inventory.interfaces.authentication"
+        },
+        {
+          "finding_id": "identity-landscape.json:identity_models.user_classes",
+          "artifact": "identity-landscape.json",
+          "source": "identity-landscape.json:identity_models.user_classes"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-013"
+    },
+    {
+      "id": "NFR-GR-015",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "supply-chain",
+      "module_hint": "SRS-XC",
+      "description": "The build MUST be hermetic and every build input MUST be pinned. build.bat downloads NuGet.exe from https://www.nuget.org over the network when absent — unpinned, unverified — and restores from the deprecated https://nuget.org/api/v2/ v2 feed; the target build MUST resolve all dependencies from a controlled, integrity-verified feed at pinned versions and MUST NOT fetch an unpinned executable at build time.",
+      "acceptance_criteria": [
+        "No build step downloads an executable from the public internet; a review of the build definition finds zero ad-hoc binary fetches.",
+        "All package sources are controlled internal or approved mirrors; the nuget.org v2 endpoint appears nowhere in build configuration.",
+        "Every dependency is pinned to an exact version with an integrity hash (lock file), and restore fails on hash mismatch.",
+        "A build executed with the network restricted to the approved feed succeeds, demonstrating hermeticity."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.build_chain_depends_on_out_of_repo_conventions_and_the_public_internet",
+          "artifact": "structural-analysis.json",
+          "source": "build.bat:24-28, build.bat:30, NuGet.config:7"
+        },
+        {
+          "finding_id": "quality-risk.json:risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:risk_summary.top_risk_drivers"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-018"
+    },
+    {
+      "id": "NFR-GR-016",
+      "type": "non-functional",
+      "priority": "should",
+      "category": "supply-chain",
+      "module_hint": "SRS-XC",
+      "description": "The build SHOULD be self-describing inside the repository, and MUST NOT carry vendored binaries or dead dependencies. tasks.ps1 defines no task bodies — it imports Version/Clean/Build/Test from the out-of-repo psake.net 0.1.3 package, so what Build and Test actually DO is invisible in the repository and was unreadable in Discovery because packages/ was never restored; separately a NuGet.exe binary is tracked in source control, NUnit.Runners 2.6.4 is restored although no project references NUnit, GitVersionTask 2.0.1 is declared but never imported, and four Visual Studio template assembly references have no matching usage.",
+      "acceptance_criteria": [
+        "Every build, test and versioning step is defined in a file inside the repository; no task body is supplied by an out-of-repository convention package.",
+        "Reading the repository alone is sufficient to state what the test step executes and whether a test runner is invoked at all — the Discovery gap 'build content not reachable' is closed.",
+        "No executable binary is tracked in source control.",
+        "Declared-but-unused dependencies are removed: no restored package without a referencing project, and no assembly reference without a corresponding usage in source; a dependency-hygiene check enforces this in the pipeline."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.build_chain_depends_on_out_of_repo_conventions_and_the_public_internet",
+          "artifact": "structural-analysis.json",
+          "source": "tasks.ps1:5, tasks.ps1:11"
+        },
+        {
+          "finding_id": "structural-analysis.json:duplication_map.vendored_binary_in_source_control",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:duplication_map.vendored_binary_in_source_control"
+        },
+        {
+          "finding_id": "structural-analysis.json:duplication_map.dead_build_dependencies",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:duplication_map.dead_build_dependencies"
+        },
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.divergent_versioning_of_one_build",
+          "artifact": "structural-analysis.json",
+          "source": ".nuget/packages.config:3-4, src/GildedRose.Console/packages.config:3"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-023"
+    },
+    {
+      "id": "NFR-GR-017",
+      "type": "constraint",
+      "priority": "must",
+      "category": "supply-chain",
+      "module_hint": "SRS-XC",
+      "description": "A software composition analysis (SCA) run against a current vulnerability database MUST be completed as a precondition of the gate. The 12 distinct NuGet package ids in this application — several pinned to 2014-era versions — are UNASSESSED for known CVEs because no SCA tool output and no vulnerability database was supplied as an input to Discovery. This is a MEASUREMENT GAP and MUST NOT be read as 'no vulnerabilities found': the empty vulnerability list and the exclusion of vulnerability_count from the technical-debt weighting both record an unmeasured input, not a clean result.",
+      "acceptance_criteria": [
+        "An SCA tool is run over the full dependency graph and its machine-readable report is attached to the gate package, naming the tool and the vulnerability-database snapshot date.",
+        "All 12 distinct package ids (and any transitive dependency) have an assessed status; no dependency remains in the 'unassessed' state at the gate.",
+        "Any finding at or above the profile's action threshold is remediated or has a recorded, time-bounded exception before the gate passes.",
+        "SCA runs on every subsequent pipeline execution and fails the build on a new finding above the threshold.",
+        "Until the SCA report exists, downstream artifacts state the dependency posture as 'unassessed', never as 'no vulnerabilities found'."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count"
+        },
+        {
+          "finding_id": "quality-risk.json:risk_summary.top_risk_drivers",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:risk_summary.top_risk_drivers"
+        },
+        {
+          "finding_id": "structural-analysis.json:summary_metrics.distinct_nuget_package_ids",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:summary_metrics.distinct_nuget_package_ids"
+        }
+      ],
+      "anomaly_resolution": "DEFER",
+      "proposed_anomaly": "ANOM-019"
+    },
+    {
+      "id": "NFR-GR-018",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "data-durability",
+      "module_hint": "SRS-M-02",
+      "description": "The target MUST ADD durable persistence, a retention rule and an egress path for the revaluation result. This is new construction, not a data migration: the legacy application has no database, no file, no queue and no blob — all state is an in-memory IList<Item> built from six compiled-in literals and discarded at process exit, with no egress and therefore no legacy data format, retention rule or archival schedule to preserve.",
+      "acceptance_criteria": [
+        "The post-run state of every item is written to a durable store and is readable after the process exits; a restart-and-read test demonstrates durability.",
+        "A stated retention period and an archival/expiry path exist for both the item state and the audit entries, closing the legacy absence of any archival path.",
+        "An egress path (query, export or event) exposes the revaluation result to a consumer outside the run process.",
+        "The migration plan records 'nothing to migrate, everything to build' rather than a data-migration scope, and no legacy extract is claimed as a source.",
+        "A mid-run failure does not leave the durable set half-advanced: the run is transactional or compensating, closing the legacy condition where a mid-loop failure leaves the working set partially updated."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BV-GRK-003",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        },
+        {
+          "finding_id": "IL-020",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:80, :83"
+        },
+        {
+          "finding_id": "shared-db-analysis.json:cross_application_sharing_summary.only_state_store",
+          "artifact": "shared-db-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:14-27"
+        },
+        {
+          "finding_id": "data-domains.json:domains.DD-GRK-001.transaction_boundary",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:39-110"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-019",
+      "type": "constraint",
+      "priority": "must",
+      "category": "data-durability",
+      "module_hint": "SRS-XC",
+      "description": "Business-owner confirmation that this repository is the whole system MUST be obtained before this application is treated as unconstrained for wave sequencing. The zero-shared-database, zero-persistence finding is bounded by this repository; if a production store owned by a DIFFERENT application holds this inventory state, the zero-sharing finding INVERTS and co-waving constraints appear after sequencing. Until confirmed, the application MUST NOT be scheduled as data-independent.",
+      "acceptance_criteria": [
+        "A named business owner confirms in writing either that no out-of-repository persistent store exists, or identifies the store and the application that owns it.",
+        "If a store is identified, the shared-database analysis is re-run against it and any resulting cluster and co-wave constraint is recorded before wave assignment.",
+        "If a store is identified, the documented invariants (Quality floor 0, ceiling 50, legendary fixed at 80) are re-checked as data constraints rather than as code conditionals.",
+        "The wave assignment for this application remains an explicit placeholder until the confirmation is recorded; no sequencing decision cites the zero-cluster result before then."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "RISK-01",
+          "artifact": "shared-db-analysis.json",
+          "source": "shared-db-analysis.json:top_risks_for_decomposition.RISK-01"
+        },
+        {
+          "finding_id": "shared-db-analysis.json:cross_application_sharing_summary.result_type",
+          "artifact": "shared-db-analysis.json",
+          "source": "shared-db-analysis.json:cross_application_sharing_summary.result_type"
+        },
+        {
+          "finding_id": "structural-analysis.json:database-schema-summary.open_questions",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:database-schema-summary.open_questions"
+        }
+      ],
+      "anomaly_resolution": "DEFER"
+    },
+    {
+      "id": "NFR-GR-020",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "maintainability",
+      "module_hint": "SRS-M-01",
+      "description": "The rules implementation MUST respect measurable structural ceilings on method length and nesting depth. Legacy technical debt is scored 76/100 (high band) from 18 weighted smell occurrences in a 160-LOC module, driven by one 75-line business-logic method (QR-001), the entry-point god class that also hosts the rules and the domain model (QR-002), five levels of conditional nesting inside the loop (QR-003) and a cyclomatic hotspot (QR-006).",
+      "acceptance_criteria": [
+        "No method in the rules component exceeds 25 executable lines; the legacy 75-line UpdateQuality has no successor of comparable size.",
+        "Maximum conditional nesting depth inside any rule path is 2; the legacy depth of 5 is not reproduced.",
+        "No type hosts more than one of {process entry point, rules evaluation, domain model} — the legacy single-file/single-namespace collapse of all three is broken.",
+        "A static-analysis tool enforces the method-length, nesting-depth and cyclomatic-complexity thresholds in the pipeline and fails the build on breach.",
+        "The recomputed weighted smell count for the successor component is materially below the legacy 18 occurrences, with the tool output attached."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "QR-001",
+          "artifact": "quality-risk.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "QR-002",
+          "artifact": "quality-risk.json",
+          "source": "src/GildedRose.Console/Program.cs:5-122"
+        },
+        {
+          "finding_id": "QR-003",
+          "artifact": "quality-risk.json",
+          "source": "src/GildedRose.Console/Program.cs:83-95"
+        },
+        {
+          "finding_id": "QR-006",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:code_smells.QR-006"
+        },
+        {
+          "finding_id": "quality-risk.json:technical_debt_score.contributing_factors.smell_density",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:technical_debt_score.contributing_factors.smell_density"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-021",
+      "type": "non-functional",
+      "priority": "must",
+      "category": "maintainability",
+      "module_hint": "SRS-M-01",
+      "description": "Rule selection MUST NOT dispatch on item display-name string literals. Eight literal name comparisons drive every legacy branch (QR-005), several negated and nested four levels deep, using ordinal case-sensitive whole-string equality with no Trim, ToLower or comparer — so renaming an inventory item silently changes its business rules and its valuation, and a null Name silently prices as ordinary goods with no exception, log or validation error.",
+      "acceptance_criteria": [
+        "Zero string-literal comparisons against an item's display name exist in any rule path; dispatch is by a category identifier, subtype or lookup, verified by a static check.",
+        "Renaming an item's display label does not change the rules applied to it — proven by a test that renames an item and asserts identical valuation output.",
+        "An item whose category cannot be resolved (including a missing or empty category) is rejected or routed to an explicit, logged default rather than silently falling through to ordinary goods.",
+        "Category comparison semantics are stated explicitly (identifier equality, not culture-sensitive text matching), so the legacy behaviour where 'aged brie', 'Aged Brie ' and 'AGED BRIE' are all ordinary goods cannot recur."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "QR-005",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:code_smells.QR-005"
+        },
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.magic_string_dispatch",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:coupling_indicators.magic_string_dispatch"
+        },
+        {
+          "finding_id": "IL-007",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91"
+        },
+        {
+          "finding_id": "IL-008",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91"
+        },
+        {
+          "finding_id": "IL-021",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :85, :87, :91"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-022",
+      "type": "non-functional",
+      "priority": "should",
+      "category": "maintainability",
+      "module_hint": "SRS-M-02",
+      "description": "Duplicated quality-adjustment blocks SHOULD be eliminated and the model's invariants MUST be enforced in the model rather than only inside the update loop. The legacy code carries four duplicated quality-increment blocks (QR-004), unguarded invariants (QR-008), public unguarded setters on all three Item properties, and roughly 25 separate Items[i] indexer accesses in one loop — so the 0/50 bounds and the legendary 80 value are enforced nowhere but inside that single loop and any second writer can violate them undetectably.",
+      "acceptance_criteria": [
+        "The number of distinct code sites that apply a quality adjustment is reduced to one parameterised path; the legacy four duplicated increment blocks do not recur.",
+        "Constructing or mutating an item outside the rules engine cannot produce an out-of-range Quality: a test that attempts to set Quality to -100 and to 9999 is rejected by the model itself.",
+        "Item state is not mutated through repeated collection-indexer access; a static check finds no rule path re-reading the collection element more than once per iteration.",
+        "A static-analysis duplication metric is reported in the pipeline with a stated ceiling."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "QR-004",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:code_smells.QR-004"
+        },
+        {
+          "finding_id": "QR-008",
+          "artifact": "quality-risk.json",
+          "source": "quality-risk.json:code_smells.QR-008"
+        },
+        {
+          "finding_id": "structural-analysis.json:coupling_indicators.shared_mutable_state_through_public_setters",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:117-121, :39-110"
+        },
+        {
+          "finding_id": "IL-019",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:119, :121"
+        },
+        {
+          "finding_id": "IL-027",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:39-110"
+        }
+      ]
+    },
+    {
+      "id": "NFR-GR-023",
+      "type": "constraint",
+      "priority": "must",
+      "category": "accessibility",
+      "module_hint": "SRS-XC",
+      "description": "Any human-facing surface of the modernized system MUST conform to Section 508 (36 CFR Part 1194, ICT Final Rule) at the WCAG 2.1 AA level, and MUST be verified by an accessibility checker before its gate. The legacy accessibility baseline is UNDETERMINED, not compliant: the UX pass could not compose with the accessibility-checker sub-skill because the required Sub-Skill Output Contract was absent from its dispatch, so 1 of 1 surface received a direct non-checker review and 0 of 1 received an actual checker run, and its empty findings list is empty by omission of a checker run rather than a verdict of zero defects.",
+      "acceptance_criteria": [
+        "An accessibility checker is run against every human-facing target surface and its machine-readable report is attached to the gate, naming the tool and ruleset version.",
+        "Zero WCAG 2.1 Level A or AA violations remain open at the gate, or each remaining item carries a recorded, time-bounded exception.",
+        "The gate record states the legacy baseline as 'not-assessed / undetermined' and does not compare target results against a legacy zero.",
+        "An accessibility-compliance reviewer rules on whether Section 508 / WCAG 2.1 AA applies to a character-mode console surface, so the applicability question is closed by a ruling rather than by a static walk's guess.",
+        "If the target introduces no human-facing surface, that is stated explicitly and the checker requirement is recorded as not-yet-triggered rather than satisfied."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "ux-accessibility.json:accessibility_findings.applicable_standards",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:accessibility_findings.applicable_standards"
+        },
+        {
+          "finding_id": "ux-accessibility.json:accessibility_findings.gate_decision_note",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:accessibility_findings.gate_decision_note"
+        },
+        {
+          "finding_id": "structural-analysis.json:interface-inventory.open_questions",
+          "artifact": "structural-analysis.json",
+          "source": "structural-analysis.json:interface-inventory.open_questions"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-021"
+    },
+    {
+      "id": "NFR-GR-024",
+      "type": "non-functional",
+      "priority": "should",
+      "category": "performance",
+      "module_hint": "SRS-M-03",
+      "description": "The revaluation SHOULD complete within its nightly operating window for a stated inventory size. No legacy performance baseline exists to regress against: the legacy run processes 6 hard-coded items in one in-process loop with no timing measurement, no clock and no scheduler anywhere in the application, and no performance measurement was supplied to any Discovery pass — so a target threshold MUST be stated as a new agreed figure, not derived from legacy observation.",
+      "acceptance_criteria": [
+        "An agreed inventory size and an agreed nightly window are recorded, and a measured run over that size completes inside that window.",
+        "Run duration is emitted as a structured metric on every execution (see NFR-GR-010), so the figure is observed rather than asserted.",
+        "The performance record states explicitly that no legacy baseline exists and that the threshold is a target-state agreement, not a regression comparison.",
+        "The run's scaling behaviour with inventory size is measured at least at the agreed size and one larger size, so the stated window is not validated only at the legacy 6-item scale."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "structural-analysis.json:architecture.major_components",
+          "artifact": "structural-analysis.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "IL-016",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        },
+        {
+          "finding_id": "ux-accessibility.json:measurement_window",
+          "artifact": "ux-accessibility.json",
+          "source": "ux-accessibility.json:measurement_window"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "by_category": {
+      "testability": 4,
+      "runtime-portability": 3,
+      "operability": 2,
+      "observability": 2,
+      "auditability": 1,
+      "security": 2,
+      "supply-chain": 3,
+      "data-durability": 2,
+      "maintainability": 3,
+      "accessibility": 1,
+      "performance": 1
+    },
+    "by_priority": {
+      "must": 19,
+      "should": 5,
+      "may": 0
+    },
+    "by_type": {
+      "non-functional": 16,
+      "constraint": 8
+    },
+    "by_module_hint": {
+      "SRS-M-01": 4,
+      "SRS-M-02": 2,
+      "SRS-M-03": 7,
+      "SRS-XC": 11
+    },
+    "total": 24
+  },
+  "measurement_gaps": [
+    "Dependency vulnerability posture is UNASSESSED (no SCA tool output or vulnerability database was supplied to Discovery); the empty legacy vulnerability list and the exclusion of vulnerability_count from the technical-debt weighting are both unmeasured inputs, not a clean result. See NFR-GR-017.",
+    "Accessibility conformance of the legacy surface is UNDETERMINED (no accessibility-checker run was dispatched, because the required Sub-Skill Output Contract was absent from the UX pass's dispatch); the empty findings list is empty by omission. See NFR-GR-023 and srs-accessibility-compliance.json.",
+    "Adoption and usage figures are instrumentation gaps, not measured zeros: no telemetry, login, session or audit log exists anywhere in the legacy application. See NFR-GR-011.",
+    "No legacy performance baseline exists: no timing, clock or scheduler is present and no performance measurement was supplied. See NFR-GR-024.",
+    "Code churn could not be measured (single-commit repository with no remote), so it was excluded from the technical-debt weighting rather than defaulted to zero."
+  ],
+  "open_questions": [
+    "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY (recorded, not adopted): the governing profile is `faa`, but the source tree is the publicly published Gilded Rose Refactoring Kata with no aviation, NAS or certification content, and the shipped assembly metadata asserts a different agency attribution ('DSHS'). Flagged independently by the catalog, structural-analysis, quality-risk, UX, data-domain and shared-database passes. Every profile-derived constraint above (ECS-on-Fargate substrate, .NET 8 target, federated identity, Section 508) is conditional on this mapping being confirmed by a stakeholder.",
+    "Is the unimplemented 'Conjured' rule in-scope target behaviour or stale documentation? The answer changes whether the characterization baseline in NFR-GR-002 pins the rule as specified-but-absent or the target implements it.",
+    "Who owns sign-off on the characterization tests that will define correct behaviour, particularly for the self-cancelling zeroing branch and whether the 50 ceiling is intended to apply to the second and third backstage-pass increments?",
+    "The 80% coverage baseline in NFR-GR-003 is the stated default, not a tier-specific figure: this application's risk tier is unconfirmed, so the tier-specific baselines could not be selected between. Re-derive the threshold once the tier is assigned.",
+    "What the legacy build and test steps actually execute is unverified: the task bodies live in an out-of-repository package that was never restored in the Discovery workspace. NFR-GR-016 requires this be made visible in the repository rather than re-investigated in the legacy tree."
+  ]
+}

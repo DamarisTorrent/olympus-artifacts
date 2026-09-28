@@ -1,0 +1,341 @@
+{
+  "$schema": "olympus:artifact:srs:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "srs": {
+    "version": "1.0.0",
+    "application": "Gilded Rose Refactoring Kata",
+    "generation_date": "2026-09-28",
+    "discovery_gate_date": "not-yet-gated",
+    "discovery_gate_note": "⚠️ THIS SRS IS DERIVED FROM UNGATED DISCOVERY FINDINGS AND MUST NOT BE CONSUMED UNTIL G-DC APPROVES THEM. It is produced in the same synthesis pass as discovery-synthesis.json and is emitted as part of the G-DC review package rather than after it, so no gate date exists to record. Three Discovery open questions are BLOCKING and each one changes this document: OQ-001 (does this application record map to a real owned system at all?), OQ-003 (are the item quality rules a capability and data domain in their own right?) and OQ-004 (is the unimplemented 'Conjured' rule a live defect, an intended unfinished state, or stale documentation?).",
+    "accessibility_standard": "Section 508 (36 CFR Part 1194, ICT Final Rule) with a WCAG 2.1 AA conformance target",
+    "prescriptive_note": "This document is PRESCRIPTIVE: it states what the modernized system MUST do, as against the descriptive record of what the legacy system was observed to do. Where the two differ the difference is recorded as a numbered anomaly with an explicit FIX / OMIT / CONSOLIDATE / DEFER resolution, so that no legacy defect is silently carried forward and no correction is silently invented.",
+    "scope_caveat": "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY, recorded and not adopted: the authoritative governing profile is `faa` and this document is written under it, but all eight substantive Discovery passes independently observed that the source tree is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata' with no aviation, NAS or certification content, and that AssemblyInfo.cs:11 and :13 assert a third, non-FAA attribution ('DSHS'). Carried as anomaly ANOM-022 and synthesis finding SYN-HCF-001."
+  },
+  "detail_files": {
+    "functional_requirements": "srs-requirements-functional.json",
+    "nonfunctional_requirements": "srs-requirements-nonfunctional.json",
+    "data_model": "srs-data-model.json",
+    "accessibility_compliance": "srs-accessibility-compliance.json",
+    "anomaly_resolution_log": "srs-anomaly-resolution-log.json",
+    "synthesis_narrative": "discovery-synthesis.md",
+    "synthesis_digest": "synthesis.json"
+  },
+  "id_scheme": {
+    "functional_requirement": "FR-GR-nnn — three-digit, contiguous, assigned in srs-requirements-functional.json. FR-GR-001..FR-GR-035.",
+    "nonfunctional_requirement": "NFR-GR-nnn — three-digit, contiguous, assigned in srs-requirements-nonfunctional.json. NFR-GR-001..NFR-GR-024.",
+    "anomaly": "ANOM-nnn — three-digit, contiguous, assigned in srs-anomaly-resolution-log.json. ANOM-001..ANOM-025.",
+    "srs_module": "SRS-M-nn, plus the pseudo-module SRS-XC for cross-cutting non-functional requirements that attach to no single module.",
+    "upstream_business_rule": "BR-nnn from business-logic.json, plus the single specified-but-absent rule BR-MISSING-001.",
+    "upstream_implicit_behaviour": "IL-nnn from implicit-logic.json (IL-001..IL-027).",
+    "upstream_code_smell": "QR-nnn from quality-risk.json (QR-001..QR-008).",
+    "upstream_data_domain": "DD-GRK-nnn (domains), CDR-GRK-nnn (cross-domain references), ARB-GRK-nnn (boundary arbitrations), BV-GRK-nnn (boundary violations carried forward), all from data-domains.json.",
+    "upstream_decomposition_risk": "RISK-nn from shared-db-analysis.json.",
+    "synthesized_finding": "SYN-HCF-nnn / SYN-MCF-nnn / SYN-LCF-nnn from synthesis.json — the traceability spine the Architecture line's ADRs cite."
+  },
+  "modules": [
+    {
+      "id": "SRS-M-01",
+      "name": "Inventory Rules Domain",
+      "description": "The item classification scheme and the complete set of quality and sell-in valuation rules. This is the module the legacy application does NOT have: today all four item classes and every rule exist only as literal string comparisons and numeric guards inlined into the control flow of one 75-line method on an internal class. Creating this module is the first and enabling target-architecture move, because while the rules live on an internal class's instance method reading a private field, nothing outside the assembly — test, service or replacement — can call them.",
+      "actor_names": ["Inventory Operator", "Merchandising Policy Administrator", "Inventory Revaluation Scheduler"],
+      "data_entities": ["ItemCategory", "QualityDegradationRule", "QualityBounds"],
+      "state_machines": ["StandardGoodsValuationLifecycle", "AppreciatingGoodsValuationLifecycle", "BackstagePassValuationLifecycle", "LegendaryItemStasis"],
+      "requirement_count": 25,
+      "requirement_ids_selector": "srs-requirements-functional.json: requirements where module_hint == \"SRS-M-01\" (25 of 35)",
+      "notable_findings": [
+        "SYN-HCF-004 — there is no seam: the rules engine is an instance method on the INTERNAL class Program reading the private field Items (Program.cs:5, :7, :37), so it is mechanically unreachable from any other assembly.",
+        "SYN-HCF-005 — the entire business taxonomy is carried by case-sensitive whole-string equality against three hardcoded display names across eight comparison sites, with no category field and no default-case diagnostic.",
+        "SYN-HCF-008 — the pre-/post-decrement dual meaning of SellIn: the literals 11 and 6 are correct ONLY because they are evaluated before the decrement at Program.cs:80. This is the single most likely mis-transcription in any re-implementation.",
+        "SYN-HCF-010 / ANOM-001 — the documented 'Conjured' rule has no implementing branch, so a seeded Conjured item is mispriced as ordinary goods on every run. Blocking open question OQ-004.",
+        "SYN-MCF-008 / ANOM-002 — the legendary Quality of 80 exists only as a seed literal 30 above the documented maximum of 50, and the application's own documentation contradicts itself about it.",
+        "BV-GRK-001 — the rule set has no representation in the code at all; materializing it as first-class data is a precondition for treating it as a domain, which is itself the subject of blocking open question OQ-003."
+      ]
+    },
+    {
+      "id": "SRS-M-02",
+      "name": "Inventory Stock Item",
+      "description": "The Item aggregate, the run-scoped inventory working set, and the persistence, retention and egress that the legacy application never had. The legacy Item is a three-property POCO with public setters and no invariant of any kind; every constraint lives in the update loop rather than in the type, so the model cannot be trusted by any consumer. All legacy state is an in-memory list discarded at process exit, so this module is almost entirely new construction rather than a migration.",
+      "actor_names": ["Inventory Operator", "Inventory Revaluation Scheduler"],
+      "data_entities": ["Item", "InventoryWorkingSet"],
+      "state_machines": ["ItemSellByLifecycle"],
+      "requirement_count": 4,
+      "requirement_ids_selector": "srs-requirements-functional.json: requirements where module_hint == \"SRS-M-02\" (4 of 35)",
+      "notable_findings": [
+        "SYN-HCF-003 — no database, file, queue or blob exists; the empty schema and cluster inventories are measured negatives verified independently by four passes. There is no data to migrate; the target must ADD persistence.",
+        "ANOM-007 / IL-019 — Item enforces no invariants: Quality -100 or 9999 constructs cleanly and is never normalised, and README.md:36-40 forbids altering the Item class, so validation must be added outside it.",
+        "DD-GRK-001 — the stock-item domain is the higher-confidence half of the data model at 0.86, versus 0.58 for the rule-set domain.",
+        "CDR-GRK-001 — the reference from Item to its category is by mutable display string with no referential integrity; fragility is rated HIGH because a rename silently reclassifies an item and changes its valuation.",
+        "ANOM-020 / IL-023 — an 'inventory' model with no quantity or stock-count field: nothing in the code can express 'twelve wheels of Aged Brie'. Deferred as a target-scope question (OQ-013)."
+      ]
+    },
+    {
+      "id": "SRS-M-03",
+      "name": "Inventory Run Host",
+      "description": "Invocation, business-date and idempotence control, authorisation, audit, output and observability — the operational shell around the domain. Everything in this module is prescribed rather than carried forward: the legacy host blocks on a keypress so it cannot complete unattended, hardcodes its six inventory items so it cannot be parameterised, keeps no run-date record so a retry silently double-applies a day of depreciation, authorises nothing, audits nothing, and emits nothing.",
+      "actor_names": ["Inventory Operator", "Inventory Revaluation Scheduler"],
+      "data_entities": ["RevaluationRun", "RevaluationAuditEntry", "InventoryWorkingSet"],
+      "state_machines": [],
+      "requirement_count": 6,
+      "requirement_ids_selector": "srs-requirements-functional.json: requirements where module_hint == \"SRS-M-03\" (6 of 35)",
+      "notable_findings": [
+        "SYN-HCF-006 / ANOM-009 — the blocking System.Console.ReadKey() at Program.cs:33 makes the process non-terminating under an orchestrator, and both projects target end-of-support, Windows-only .NET Framework 4.5/4.5.1 with no in-place path onto the profile's container substrate.",
+        "SYN-HCF-012 / ANOM-011 — the only console output is the literal 'OMGHAI!' printed BEFORE the calculation; the business output of the nightly revaluation is today unobservable.",
+        "SYN-HCF-007 / ANOM-013 — the revaluation of the entire inventory is unauthenticated: no user, role, permission, session or credential concept exists anywhere in the tree.",
+        "ANOM-012 / IL-025 — Quality is mutated at 13 sites and SellIn at 1 with no before/after capture, no event and no versioning, so there is no way to answer why an item is worth what it is worth.",
+        "ANOM-010 / IL-017 — running the revaluation twice advances the inventory two days; there is no run-date record, already-processed check or lock.",
+        "SYN-MCF-006 — zero usage instrumentation, which is not zero usage: the target must add the telemetry needed to establish any post-cutover adoption baseline at all."
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "name": "Inventory Operator",
+      "type": "human",
+      "authentication": "PRESCRIBED, with no legacy counterpart. The legacy application performs no authentication, authorization or identity check of any kind — its only access control is OS-level permission to run the executable — so this actor's authentication is new construction. Any exposed target surface MUST inherit the portfolio's federated identity decision rather than invent a per-application model.",
+      "permissions": [
+        "Initiate an inventory revaluation run for a stated business date",
+        "Read the current valuation of any stock item",
+        "Read the per-run audit record of valuation changes"
+      ],
+      "target_assurance": "Phishing-resistant AAL2 or above (PIV or FIDO2). This is the PRESCRIBED level, not the level observed: the identity pass recorded the legacy application at nist_aal 'below-AAL1' with mfa_type 'none', and was explicit that MFA is absent because authentication is absent by design rather than missing from an authenticated application. No email- or SMS-code pattern is to be carried forward.",
+      "modules": ["SRS-M-01", "SRS-M-02", "SRS-M-03"],
+      "endpoints_accessed": ["The single legacy interface is 'GildedRose.Console.exe command-line invocation' (interface-inventory total 1, human_facing 1, machine_facing 0); the target's surface is undecided pending OQ-010."],
+      "evidence": {
+        "derived_from": "ux-accessibility.json:personas (persona_id 'local-console-operator'); structural-analysis.json:interface-inventory; identity-landscape.json:identity_models (user_classes 'local-interactive-operator')",
+        "citation": "src/GildedRose.Console/Program.cs:8, src/GildedRose.Console/Program.cs:33",
+        "confidence_caveat": "LOW confidence in the population, not in the mechanism (SYN-LCF-003). The persona is inferred entirely from code structure — a console Main with no argument parsing, no authentication, and a blocking keypress requiring one human present per run — plus the README's framing of the repository as a kata exercise. Estimated headcount is UNKNOWN: no telemetry, login system or role model exists to count distinct users. The UX pass self-rates this at 0.3 and states the determination needs a stakeholder, not more static analysis."
+      }
+    },
+    {
+      "name": "Merchandising Policy Administrator",
+      "type": "human",
+      "authentication": "PRESCRIBED, with no legacy counterpart, and CONDITIONAL on a pending decision.",
+      "permissions": [
+        "Create, amend and retire item categories",
+        "Create and amend the quality degradation and appreciation rules bound to each category",
+        "Amend the quality bounds, including the legendary exemption"
+      ],
+      "target_assurance": "Phishing-resistant AAL2 or above, with a segregation-of-duties expectation against the Inventory Operator role: an actor who can change the pricing rules should not also be the sole actor who can run and approve a revaluation.",
+      "modules": ["SRS-M-01"],
+      "endpoints_accessed": ["None in the legacy system. In the legacy application the effective write path for every rule is a source-code edit plus a rebuild."],
+      "evidence": {
+        "derived_from": "data-domains.json:domains (DD-GRK-002 write_owner: 'No runtime writer. The effective write path is a source-code edit plus a rebuild'); ARB-GRK-002",
+        "citation": "src/GildedRose.Console/Program.cs:41-109",
+        "confidence_caveat": "CONDITIONAL AND UNEVIDENCED AS TO OWNERSHIP. This actor exists only if the reviewer keeps the two-domain shape: the data-domain pass separated the merchandising rule set from stock operations partly BECAUSE the two would plausibly sit with different business owners, but recorded that NEITHER owner could be evidenced (both owner fields are UNKNOWN, BV-GRK-004) and escalated the domain count as a blocking decision at 0.58 confidence. If the reviewer collapses the domains (option 'one-domain-rules-are-behaviour' on OQ-003), this actor is withdrawn and its permissions fold into the Inventory Operator. It is recorded rather than omitted so the reviewer sees what the two-domain choice implies."
+      }
+    },
+    {
+      "name": "Inventory Revaluation Scheduler",
+      "type": "system",
+      "authentication": "PRESCRIBED, with no legacy counterpart: a non-interactive workload identity. The legacy application cannot be scheduled at all — it blocks indefinitely on a keypress that a scheduler will never supply.",
+      "permissions": [
+        "Invoke exactly one revaluation run per business date, idempotently",
+        "Read the run-date record in order to detect and refuse a duplicate run"
+      ],
+      "target_assurance": "Non-interactive workload identity with no human credential; the run must be authorised as an operation and recorded in the audit trail with its invoking identity.",
+      "modules": ["SRS-M-03"],
+      "endpoints_accessed": ["None in the legacy system: the structural pass records scheduled_jobs 0 and message_consumers 0, and no cron, scheduler or queue-listener declaration exists anywhere in the tree."],
+      "evidence": {
+        "derived_from": "BR-021 (interactive keypress blocks unattended execution); BR-020 (one run equals one day, with no persistence and no idempotence); IL-016 (one invocation equals one business day with no clock); IL-017 (repeat execution is not idempotent and is unguarded)",
+        "citation": "src/GildedRose.Console/Program.cs:31, src/GildedRose.Console/Program.cs:33",
+        "confidence_caveat": "PRESCRIBED, not observed. The legacy application has no scheduler and the structural pass classified its single interface's kind as 'unknown' precisely because the run is batch-SHAPED — one pass over the whole inventory, then exit — but not unattended, since it blocks on a keypress and therefore cannot be scheduled. This actor formalises the intent the legacy shape implies; whether an automated schedule is actually wanted is part of OQ-010."
+      }
+    }
+  ],
+  "state_machines": [
+    {
+      "entity": "Item (sell-by lifecycle)",
+      "module": "SRS-M-02",
+      "description": "The master lifecycle every non-legendary item traverses, driven solely by the sign of SellIn. PROVENANCE: reconstructed, not declared. The legacy application has no status field, no enum, no state column and no transition table — every state below is recovered from the integer predicate that defines it, and the target MUST make these states explicit (SYN-MCF-004).",
+      "states": ["WithinSellByWindow (SellIn >= 1 at start of day)", "FinalSellDay (SellIn == 0 at start of day)", "PastSellBy (SellIn <= -1 at start of day; absorbing)"],
+      "initial_state": "WithinSellByWindow",
+      "terminal_states": ["PastSellBy"],
+      "transitions": [
+        "WithinSellByWindow -> WithinSellByWindow when SellIn >= 2 (BR-012)",
+        "WithinSellByWindow -> FinalSellDay when SellIn == 1; SellIn becomes 0 and the expiry test is FALSE, so this is the last day of single-rate treatment — the most commonly mis-implemented boundary in the algorithm (BR-012, BR-016)",
+        "FinalSellDay -> PastSellBy when SellIn == 0; SellIn becomes -1 and a second quality adjustment is applied in the same iteration (BR-012, BR-013, BR-014, BR-015)",
+        "PastSellBy -> PastSellBy on any further invocation; SellIn decrements without limit (BR-013, BR-014, BR-015, BR-022)"
+      ],
+      "dead_states_removed": "None. No legacy state is dropped, because no legacy state was declared to drop — all three states are reconstructions. The target MUST, however, ADD an exit from PastSellBy: the legacy has no archival, removal or write-off transition out of that state, so an expired item remains in inventory indefinitely at SellIn -1, -2, -365 (ANOM-008 / IL-020 / BR-022).",
+      "evidence": "state-machines.json:state_machines; src/GildedRose.Console/Program.cs:80-109"
+    },
+    {
+      "entity": "Standard goods (valuation lifecycle)",
+      "module": "SRS-M-01",
+      "description": "The quality trajectory of any item matching none of the three special names: two depreciation rates and one absorbing floor. Applies to '+5 Dexterity Vest', 'Elixir of the Mongoose' and — incorrectly, per ANOM-001 — 'Conjured Mana Cake'. Reconstructed, not declared.",
+      "states": ["DepreciatingSingleRate (-1 per day)", "DepreciatingDoubleRate (-2 per day, or -1 when Quality is exactly 1)", "Worthless (Quality == 0; absorbing)"],
+      "initial_state": "DepreciatingSingleRate",
+      "terminal_states": ["Worthless"],
+      "transitions": [
+        "DepreciatingSingleRate -> DepreciatingDoubleRate when SellIn falls below 0 (BR-013)",
+        "DepreciatingSingleRate -> Worthless when Quality reaches 0 within the sell-by window (BR-003)",
+        "DepreciatingDoubleRate -> Worthless when Quality reaches 0. NOTE THE ASYMMETRY the target must preserve or deliberately correct: from Quality 1 the net loss for the day is 1, not 2, because the floor guard blocks the second decrement (BR-003, BR-013)",
+        "Worthless -> Worthless on any further invocation (BR-003, BR-022)"
+      ],
+      "dead_states_removed": "None removed. The target MUST replace the guard-based floor with a clamp, because the floor holds today only because every decrement step happens to be exactly 1 — and the prescribed Conjured rule introduces the first multi-step degradation, which would undershoot a guard (ANOM-001, IL-002, IL-006).",
+      "evidence": "state-machines.json:state_machines; src/GildedRose.Console/Program.cs:43-96"
+    },
+    {
+      "entity": "Appreciating goods / Aged Brie (valuation lifecycle)",
+      "module": "SRS-M-01",
+      "description": "Mirror image of the standard-goods machine: two appreciation rates and an absorbing ceiling. The acceleration after the sell-by date is EMERGENT — neither the code nor the documentation states that Brie improves faster once expired; the +2 arises because two separate increments fire in the same iteration (ANOM-024 / IL-013). Reconstructed, not declared.",
+      "states": ["AppreciatingSingleRate (+1 per day)", "AppreciatingDoubleRate (+2 per day, or +1 when Quality is exactly 49)", "Saturated (Quality == 50; absorbing)"],
+      "initial_state": "AppreciatingSingleRate",
+      "terminal_states": ["Saturated"],
+      "transitions": [
+        "AppreciatingSingleRate -> AppreciatingDoubleRate when SellIn falls below 0 (BR-014)",
+        "AppreciatingSingleRate -> Saturated when Quality reaches 50 within the sell-by window (BR-007)",
+        "AppreciatingDoubleRate -> Saturated when Quality reaches 50; from 49 the net gain is 1, not 2 (BR-007, BR-014)",
+        "Saturated -> Saturated on any further invocation; nothing ever reduces Aged Brie's quality (BR-007, BR-022)"
+      ],
+      "dead_states_removed": "None. The target MUST state the accelerated post-sell-by appreciation rate explicitly as a single prescribed rule rather than leaving it emergent from two coincident increments (ANOM-024, action CONSOLIDATE).",
+      "evidence": "state-machines.json:state_machines; src/GildedRose.Console/Program.cs:53-108"
+    },
+    {
+      "entity": "Backstage pass (valuation lifecycle)",
+      "module": "SRS-M-01",
+      "description": "The richest machine in the application: four demand tiers selected by SellIn thresholds, then a cliff to zero. Every tier boundary is evaluated against the PRE-decrement SellIn, which is the only reason the literals 11 and 6 express '10 days or less' and '5 days or less' (SYN-HCF-008). Reconstructed, not declared.",
+      "states": ["BaseDemand (SellIn >= 11; +1/day)", "TenDayWindow (6 <= SellIn <= 10; +2/day)", "FiveDayWindow (1 <= SellIn <= 5; +3/day)", "ConcertDay (SellIn == 0; +3 computed then discarded, net 0)", "Worthless (SellIn <= -1; net 0, absorbing in observable terms)", "Saturated (Quality == 50; exited only by the concert-day cliff)"],
+      "initial_state": "BaseDemand",
+      "terminal_states": ["Worthless"],
+      "transitions": [
+        "BaseDemand -> TenDayWindow when SellIn < 11 at the moment the threshold is evaluated (BR-009, BR-010, BR-016)",
+        "TenDayWindow -> FiveDayWindow when SellIn < 6 at the moment the threshold is evaluated; the bonuses STACK as three independent +1 operations, each independently capped (BR-009, BR-010, BR-011, BR-016)",
+        "FiveDayWindow -> ConcertDay when SellIn reaches 0; +3 is applied and then entirely discarded (BR-011, BR-012, BR-015)",
+        "Saturated -> Worthless when SellIn falls below 0: a pass worth the maximum 50 drops to 0 in one day, the largest single-day value change the application can produce (BR-015)",
+        "Worthless -> Worthless with IMPLICIT CHURN: the pass is still matched by the appreciation branch, so Quality rises 0 -> 1 -> 2 -> 3 and is then zeroed again every run. Net observable Quality stays 0, but any re-implementation that logs, audits, publishes events or commits between phases would expose the non-zero intermediate as a real value (BR-009, BR-010, BR-011, BR-015, IL-012)"
+      ],
+      "dead_states_removed": "The ConcertDay computation is prescribed for REMOVAL as dead: ANOM-005 (action OMIT) drops the compute-then-discard churn and requires that no intermediate valuation is ever externally observable. The state itself is retained because the cliff to zero is real business behaviour; only the wasted computation and its observable intermediate are removed.",
+      "evidence": "state-machines.json:state_machines; src/GildedRose.Console/Program.cs:53-99"
+    },
+    {
+      "entity": "Legendary item / Sulfuras (stasis)",
+      "module": "SRS-M-01",
+      "description": "DEGENERATE BY DESIGN — recorded because its emptiness is the finding. One state and no transitions: quality is exempted at both decrement sites and SellIn is never decremented, so the item cannot leave the state it was seeded in. Reconstructed, not declared.",
+      "states": ["PermanentStasis (SellIn and Quality both frozen at their seeded values, 0 and 80)"],
+      "initial_state": "PermanentStasis",
+      "terminal_states": ["PermanentStasis"],
+      "transitions": [],
+      "dead_states_removed": "None removed, but TWO defects must be corrected rather than carried forward. ANOM-002: the Quality of 80 exists only as a seed literal 30 above the documented maximum of 50, with no constant, assertion or restoration path, so a mis-seeded legendary item would carry any value forever. ANOM-025: the legendary guard at Program.cs:91 is data-dependent dead code — never reached for the seeded inventory because Sulfuras is seeded at SellIn 0 and never decremented, but load-bearing for a Sulfuras seeded with a negative SellIn — so the exemption MUST be prescribed as a single explicit early exit rather than a repeated negated guard.",
+      "evidence": "state-machines.json:state_machines; src/GildedRose.Console/Program.cs:19, src/GildedRose.Console/Program.cs:45, src/GildedRose.Console/Program.cs:78, src/GildedRose.Console/Program.cs:91"
+    }
+  ],
+  "anomaly_resolution_log_summary": {
+    "total": 25,
+    "by_action": {
+      "FIX": 19,
+      "OMIT": 1,
+      "CONSOLIDATE": 1,
+      "DEFER": 4
+    },
+    "by_severity": {
+      "high": 13,
+      "medium": 9,
+      "low": 3
+    },
+    "sme_confirmation_required": [
+      "ANOM-001 — is the documented-but-unimplemented 'Conjured' rule a live defect, an intended unfinished state, or stale documentation? (blocking, OQ-004)",
+      "ANOM-002 — what is the intended legendary quality invariant, given that the documentation contradicts itself between 'never more than 50' and 'its Quality is 80'?",
+      "ANOM-004 — confirm the prescribed phase ordering preserves today's boundary-day outcomes at SellIn 11, 6 and 0 before any refactor",
+      "ANOM-005 — confirm that no consumer depends on the non-zero mid-iteration intermediate before the dead computation is removed",
+      "ANOM-006 — should unknown or unrecognised merchandise depreciate by default, or be rejected?",
+      "ANOM-008 — should a long-expired item be archived or written off, and at what threshold?",
+      "ANOM-010 — confirm the business-date and idempotence semantics for a nightly run",
+      "ANOM-013 — confirm who is permitted to initiate a revaluation, and the segregation of duties against rule administration",
+      "ANOM-014 — confirm the intended item category taxonomy, which no code artifact declares",
+      "ANOM-017 — is a runtime port in scope, or is this a retire/replace candidate? (OQ-010)",
+      "ANOM-020 — should the inventory model carry a quantity or stock-count field? (OQ-013)",
+      "ANOM-021 — does Section 508 / WCAG 2.1 AA apply to a character-mode console surface, and can an accessibility-checker run now be dispatched? (OQ-007)",
+      "ANOM-022 — does this application record genuinely map to an FAA-owned system? (blocking, OQ-001)",
+      "ANOM-024 — confirm the accelerated post-sell-by appreciation rate for Aged Brie, which no documentation states",
+      "ANOM-025 — confirm the legendary exemption is intended to hold for a legendary item seeded with a negative SellIn"
+    ],
+    "sme_confirmation_required_count": 15,
+    "detail": "srs-anomaly-resolution-log.json",
+    "note": "Every anomaly carries an explicit resolution so that no legacy defect is silently carried forward. The four DEFERs are deliberate and each names what must happen before it can close: ANOM-019 defers the dependency vulnerability posture pending an SCA run (the empty legacy vulnerabilities array is a MEASUREMENT GAP, not a clean result), ANOM-021 defers accessibility pending both a checker run and an applicability ruling (the empty legacy findings array is empty by omission of a checker run, NOT a verdict of conformance), ANOM-020 defers the quantity-field question to the business owner, and ANOM-022 defers the application-identity question to a stakeholder. No DEFER is a silent carry-forward."
+  },
+  "traceability_matrix": {
+    "srs_to_discovery": {
+      "method": "Every requirement in both detail files carries a traces_to array of objects, each naming the upstream finding id, the artifact that holds it, and a {file}:{line} or key-path citation. No requirement was written without one; a requirement with no source would be an invention rather than a derivation.",
+      "functional_requirements_traced": 35,
+      "functional_requirements_total": 35,
+      "nonfunctional_requirements_traced": 24,
+      "nonfunctional_requirements_total": 24,
+      "citation_forms_used": [
+        "Bare upstream finding id: BR-016, IL-009, QR-005, RISK-02, BV-GRK-002, DD-GRK-001, ESC-001",
+        "Key path into an input artifact: quality-risk.json:test_coverage.measurement, structural-analysis.json:coupling_indicators.magic_string_dispatch",
+        "Source citation: src/GildedRose.Console/Program.cs:47"
+      ],
+      "forbidden_forms_avoided": "No citation anywhere in this SRS names a LIST POSITION — that is, a section name followed by a bracketed ordinal index. A position is not an address: it names a different entry as soon as the list is reordered, and it does not resolve at the gate. Where the entry meant has no id of its own, the section key path is cited instead, alongside a citation that does resolve."
+    },
+    "discovery_to_srs": {
+      "method": "Reverse coverage, because one-directional coverage hides dropped rules — a legacy behaviour with no requirement is exactly the one that gets lost.",
+      "business_rules_total": 25,
+      "business_rules_with_at_least_one_requirement": 25,
+      "business_rules_with_no_requirement": [],
+      "business_rules_coverage_note": "All 24 implemented rules (BR-001..BR-024) plus the single specified-but-absent rule BR-MISSING-001 are traced by at least one functional requirement. BR-MISSING-001 is prescribed as target behaviour (-2/day before the sell-by date, -4/day after, floored at 0) under anomaly ANOM-001 with action FIX, explicitly pending the OQ-004 ruling — it is NOT recorded as satisfied by the legacy code, which prices Conjured items as ordinary goods.",
+      "state_machines_total": 5,
+      "state_machines_with_at_least_one_requirement": 5,
+      "implicit_behaviours_total": 27,
+      "implicit_behaviours_carried_into_a_requirement_or_anomaly": 27,
+      "implicit_behaviours_note": "All 27 IL entries are accounted for: each is either traced by a requirement, carried as a numbered anomaly, or both. Implicit behaviour IS business logic in this application — because the quality ceiling, the zero floor and the demand thresholds exist only as inline literals inside one method, a re-implementation that does not reproduce them exactly changes what the inn charges for its stock.",
+      "code_smells_total": 8,
+      "code_smells_addressed_by_a_requirement": 8,
+      "data_domain_boundary_violations_total": 4,
+      "data_domain_boundary_violations_addressed": 4,
+      "decomposition_risks_total": 3,
+      "decomposition_risks_addressed": 3,
+      "synthesized_findings_total": 25,
+      "synthesized_findings_architecturally_significant": 22,
+      "synthesized_findings_note": "The 22 architecturally significant findings in synthesis.json are the ADR-coverage denominator for the Architecture line. Significance is DECLARED in synthesis.json and is NOT re-scored here. The three findings deliberately not flagged are SYN-MCF-001 (the debt score), SYN-MCF-007 (the pipeline staging defect) and SYN-LCF-003 (the inferred persona)."
+    },
+    "coverage": {
+      "srs_to_discovery_pct": 100,
+      "srs_to_discovery_denominator": "59 requirements (35 functional + 24 non-functional), each carrying at least one resolvable traces_to citation",
+      "discovery_to_srs_pct": 100,
+      "discovery_to_srs_denominator": "25 business rules + 5 state machines + 27 implicit behaviours + 8 code smells + 4 data-domain boundary violations + 3 decomposition risks = 72 upstream findings, each accounted for by a requirement, an anomaly, or both",
+      "caveat": "100% here means EVERY upstream finding is accounted for and every requirement is sourced — it does NOT mean the prescription is settled. Three blocking open questions (OQ-001, OQ-003, OQ-004) and 15 SME confirmations remain outstanding, and two dimensions of the underlying Discovery were never measured at all: the dependency vulnerability surface (no SCA input was supplied) and the accessibility baseline (the accessibility-checker contract was absent from the UX pass's dispatch). Traceability completeness must not be read as evidentiary completeness."
+    }
+  },
+  "summary": {
+    "srs_modules": 3,
+    "actors": 3,
+    "actors_with_a_legacy_counterpart": 1,
+    "actors_prescribed_new": 2,
+    "functional_requirements": 35,
+    "functional_requirements_by_module": {
+      "SRS-M-01": 25,
+      "SRS-M-02": 4,
+      "SRS-M-03": 6
+    },
+    "nonfunctional_requirements": 24,
+    "requirements_total": 59,
+    "state_machines": 5,
+    "state_machines_declared_in_legacy_code": 0,
+    "data_entities": 7,
+    "data_entities_declared_in_legacy_code": 1,
+    "data_entities_implicit_in_legacy_code": 4,
+    "data_entities_prescribed_new": 2,
+    "data_entities_persistent_in_legacy": 0,
+    "anomalies": 25,
+    "anomalies_requiring_sme_confirmation": 15,
+    "accessibility_findings": 0,
+    "accessibility_gate_decision": "undetermined",
+    "accessibility_note": "Zero findings is NOT a conformance verdict. The UX pass could not run an accessibility checker because the required sub-skill output contract was absent from its dispatch, and whether WCAG 2.1 AA applies to a character-mode console surface at all is separately unruled. See srs-accessibility-compliance.json.",
+    "blocking_open_questions": 3,
+    "headline": "For this application, modernization is overwhelmingly new construction rather than migration. Of 7 data entities, 1 is declared in the legacy code, 4 are implicit and 2 have no legacy counterpart at all; 0 are persistent, because the application has no database, file or queue and discards every value it computes at process exit. Of 5 state machines, 0 are declared. Of 3 actors, 2 are prescribed. The single enabling move is to create a boundary that does not yet exist: while the rules engine remains an instance method on an internal class reading a private field, nothing — no test, no service, no replacement — can call it, which is simultaneously why coverage is a provable 0% and why no transformation of this application is currently verifiable."
+  },
+  "open_questions": [
+    "OQ-001 (BLOCKING) — Does application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely map to an FAA-owned production system? All eight substantive Discovery passes independently observed that the source tree is the publicly published Gilded Rose Refactoring Kata with no aviation, NAS or certification content, and that the shipped assembly metadata asserts a different agency. If the answer is no, this entire SRS is scoped to the wrong subject. Carried as ANOM-022.",
+    "OQ-003 (BLOCKING) — Are the item quality rules a capability and data domain in their own right, or behaviour belonging to the stock-item domain? The answer determines whether SRS-M-01 exists as a separate module, whether the Merchandising Policy Administrator actor exists at all, and whether ItemCategory, QualityDegradationRule and QualityBounds are materialized as first-class reference data.",
+    "OQ-004 (BLOCKING) — Is the documented-but-unimplemented 'Conjured' degradation rule a live defect, the intended unfinished state of a refactoring exercise, or stale documentation? A characterization test written before this ruling will permanently lock in today's incorrect pricing. Carried as ANOM-001.",
+    "OQ-005 — Does a persistent store exist OUTSIDE this repository, owned by another application? If so the 'nothing to migrate' premise of SRS-M-02 inverts and the application cannot be treated as unconstrained for wave sequencing. Carried in NFR data-durability.",
+    "OQ-006 — The 12 NuGet dependencies are UNASSESSED for known CVEs because no SCA tool output was supplied. Run an SCA scan before the gate; the empty vulnerabilities array must not be read as clean. Carried as ANOM-019.",
+    "OQ-007 — Does Section 508 / WCAG 2.1 AA apply to a character-mode console surface with no page, form or rendered GUI, and can an accessibility-checker run now be dispatched? Carried as ANOM-021.",
+    "OQ-008 — Who owns sign-off on the characterization tests that will define correct behaviour, particularly for the self-cancelling 'Quality = Quality - Quality' branch at Program.cs:99 and whether the 50-Quality cap is intended to apply to the second and third backstage-pass increments at Program.cs:61-71?",
+    "OQ-009 — Which organizational unit owns each candidate data domain? Both are recorded UNKNOWN rather than guessed, and because the business-owner heuristic is the strongest remaining separator, the missing owner is also why OQ-003 cannot be closed on evidence alone.",
+    "OQ-010 — Is a runtime port in scope, or is this a retire/replace candidate? Both modules target end-of-support, Windows-only .NET Framework 4.5/4.5.1 with no in-place path onto the profile's container substrate, and the structural pass states explicitly that no service decomposition is warranted. Carried as ANOM-017.",
+    "OQ-011 — What do the build and test steps actually execute? tasks.ps1 imports its task bodies from an out-of-repository package that was not restored in the workspace, so whether any test runner is invoked at all is unverified.",
+    "OQ-013 — Should the inventory model carry a quantity or stock-count field? Each Item instance is exactly one unit and nothing in the code can express 'twelve wheels of Aged Brie'. Carried as ANOM-020."
+  ]
+}

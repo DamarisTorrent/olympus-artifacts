@@ -1,0 +1,196 @@
+{
+  "$schema": "olympus:artifact:downstream-pointers:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "generated": "2026-09-28T19:05:00Z",
+  "synthesis_artifact": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+  "determinism_note": "This pointer map is derived mechanically from the synthesis digest: findings are listed in the id order they were assigned, modules in the order the structural pass declares them, and evidence paths in the order of the input inventory. Given the same pass inputs, two runs produce the same pointers.",
+  "global_caveat": "EVERY pointer below is conditional on open question OQ-001. All eight substantive Discovery passes independently observed that the analysed source tree carries no FAA content, and the leading G-DC review ask ('analysis-scope-unconfirmed') asks a human to accept the scope or re-scope. If the answer is 're-scope', nothing referenced here should be carried forward, because each artifact is internally consistent with the target as analysed and would silently mislead. Two further open questions are blocking: OQ-003 (capability and domain count) and OQ-004 (disposition of the unimplemented 'Conjured' rule).",
+  "pointers": {
+    "redundancy-analyzer": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+      "relevant_findings": [
+        "SYN-LCF-001",
+        "SYN-MCF-003",
+        "SYN-MCF-007",
+        "SYN-HCF-003",
+        "SYN-HCF-001"
+      ],
+      "relevant_modules": [
+        "gildedrose-console"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/capability-catalog.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/data-domains.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+      ],
+      "note": "One capability only: 'asset-and-inventory-management', at the producing pass's own confidence of 0.4, with legacy_system.external_id, business_domain external_id and capability external_id all NULL because no client-profile reference catalog was available to bind against — not because binding was attempted and rejected. DO NOT conclude either redundancy or uniqueness from this grain: contradiction CONTRA-002 records that the capability pass ran WITHOUT data-domains.json (which it names as its strongest signal), and that data-domains.json independently derived a second, separable capability grain ('Merchandising policy', DD-GRK-002 at 0.58). Blocking question OQ-003 must be answered first, and the capability pass should be re-run once the staging defect in SYN-MCF-007 is corrected. Structurally this application presents no overlap surface that could be detected at all: zero integration points, zero HTTP endpoints, zero machine-facing interfaces, zero databases and zero shared tables, so an absence of detected overlap here is a measured null result over a null surface rather than evidence of non-redundancy."
+    },
+    "disposition-recommender": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+      "relevant_findings": [
+        "SYN-HCF-002",
+        "SYN-HCF-003",
+        "SYN-HCF-004",
+        "SYN-HCF-006",
+        "SYN-HCF-009",
+        "SYN-HCF-012",
+        "SYN-MCF-001",
+        "SYN-MCF-002",
+        "SYN-LCF-004",
+        "SYN-LCF-005"
+      ],
+      "relevant_modules": [
+        "gildedrose-console",
+        "gildedrose-tests"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/quality-risk.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/business-criticality.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json"
+      ],
+      "note": "READ THE TWO AXES SIDE BY SIDE AND DO NOT COMBINE THEM. Catalog records complexity_tier 'simple' (172 LOC, 2 modules, 0 tables); quality-risk records overall_risk_tier HIGH (provable zero coverage, an unseamed 75-line rules engine, an end-of-support runtime, a non-hermetic build chain). Those measure how hard this is to CHANGE. BUSINESS CRITICALITY IS NOT RATED: business-criticality.json returns assessment 'insufficient_evidence' with rating NULL, and that must be read as 'we could not tell what breaks if this stops', NOT as a low rating — treating it as a 1 would route a possibly-important system to the back of the queue, which is precisely the failure the artifact exists to prevent. Decision-relevant inputs: SYN-HCF-002 (no cutover can be verified by replay, because no behavioural baseline exists), SYN-HCF-006 (no in-place runtime path exists), SYN-HCF-003 plus SYN-HCF-012 (there is nothing to migrate and no observable output — this is new construction, not a lift), and SYN-LCF-005 (the structural pass states explicitly that no service decomposition is warranted and defers portfolio treatment to this line). SYN-LCF-004 is the risk to price in: if an out-of-repository data store exists, the no-coupling and nothing-to-migrate conclusions both invert."
+    },
+    "extraction": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs.json",
+      "relevant_findings": [
+        "SYN-HCF-004",
+        "SYN-HCF-005",
+        "SYN-HCF-008",
+        "SYN-HCF-010",
+        "SYN-MCF-004",
+        "SYN-MCF-008",
+        "SYN-HCF-002"
+      ],
+      "relevant_modules": [
+        "gildedrose-console"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/business-logic.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/business-logic-extraction/implicit-logic.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/business-logic-extraction/state-machines.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+      ],
+      "note": "Extract against gildedrose-console ONLY; gildedrose-tests carries zero business rules. CANONICAL SPANS, reconciled in CONTRA-005 because two Discovery artifacts differ by one line: the method is src/GildedRose.Console/Program.cs:37-111 (75 lines), the loop is Program.cs:39-110, the rule block is Program.cs:41-109, and the Item model is Program.cs:115-122. Extraction surface: 25 rules (BR-001..BR-024 plus BR-MISSING-001), 27 implicit behaviours (IL-001..IL-027) and 5 reconstructed state machines. THREE TRAPS, each load-bearing and each a high-confidence finding. (1) SYN-HCF-008 / BR-016 / IL-009: SellIn means days-remaining-at-START-of-day at Program.cs:59 and :67 and days-remaining-at-END-of-day at :83, because the decrement sits between them at :80. The literals 11 and 6 are CORRECT — never 'fix' them to 10 and 5, and never hoist the decrement. (2) IL-010: expired backstage passes are zeroed by 'Quality = Quality - Quality', so no search for an assignment of literal zero will find the rule. (3) IL-015: the legendary guard at Program.cs:91 looks removable but is data-dependent dead code — load-bearing for any legendary item seeded with a negative SellIn. Capture a golden-master characterization test over the six seeded items BEFORE any transformation — but resolve OQ-004 first, because a baseline taken now permanently locks in the incorrect Conjured pricing."
+    },
+    "architecture": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+      "relevant_findings": [
+        "SYN-HCF-001",
+        "SYN-HCF-002",
+        "SYN-HCF-003",
+        "SYN-HCF-004",
+        "SYN-HCF-005",
+        "SYN-HCF-006",
+        "SYN-HCF-007",
+        "SYN-HCF-008",
+        "SYN-HCF-009",
+        "SYN-HCF-010",
+        "SYN-HCF-011",
+        "SYN-HCF-012",
+        "SYN-MCF-002",
+        "SYN-MCF-003",
+        "SYN-MCF-004",
+        "SYN-MCF-005",
+        "SYN-MCF-006",
+        "SYN-MCF-008",
+        "SYN-LCF-001",
+        "SYN-LCF-002",
+        "SYN-LCF-004",
+        "SYN-LCF-005"
+      ],
+      "relevant_modules": [
+        "gildedrose-console",
+        "gildedrose-tests"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/data-domains.json"
+      ],
+      "note": "THE 22 FINDING IDS LISTED HERE ARE EXACTLY THE FINDINGS FLAGGED architecturally_significant: true IN synthesis.json, AND THEY ARE THE ADR-COVERAGE DENOMINATOR. Significance is DECLARED in synthesis.json by the pass with cross-pass context and MUST NOT be re-scored by the traceability validator. The three findings deliberately excluded are SYN-MCF-001 (the technical debt score — a scoring input, not a design decision), SYN-MCF-007 (the pipeline input-staging defect — a platform concern) and SYN-LCF-003 (the inferred persona — an unevidenced population estimate). The 22/25 ratio is high and is a property of the subject rather than of flagging discipline: for this application nearly every finding is a 'the target must ADD this' finding — persistence, egress, audit, identity, observability, a test seam, a category identifier, explicit lifecycle states — rather than a 'the target must preserve this' finding. Three candidate boundaries come from the structural pass and are intra-assembly, not microservices: inventory-rules-domain (CUT FIRST), inventory-run-host, inventory-rules-tests; the structural pass also states a fourth boundary explicitly, 'no-service-decomposition-warranted', so these must not be read as a microservice plan."
+    },
+    "data-modeling": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs-data-model.json",
+      "relevant_findings": [
+        "SYN-MCF-003",
+        "SYN-HCF-003",
+        "SYN-HCF-005",
+        "SYN-MCF-008",
+        "SYN-LCF-002",
+        "SYN-LCF-004"
+      ],
+      "relevant_modules": [
+        "gildedrose-console"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/data-domains.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+      ],
+      "note": "Two candidate domains over five legacy logical entities — DD-GRK-001 Inventory Stock Item (0.86) and DD-GRK-002 Item Quality Rule Set (0.58) — of which exactly ONE entity (Item) is declared in code and four are implicit. ZERO are persistent: there is no table, file, queue or blob, so there is nothing to migrate and everything to build. The domain COUNT is a blocking reviewer decision (OQ-003 / ARB-GRK-002) with three options recorded by the producing pass, and if it collapses to one domain the prescribed Merchandising Policy Administrator actor is withdrawn. One cross-domain reference, CDR-GRK-001, runs from Item.Name to ItemCategory by mutable display string with NO referential integrity — fragility rated HIGH — and the target must replace it with a category identifier. Four boundary violations are carried forward: BV-GRK-001 (the rule set has no representation in code at all), BV-GRK-002 (the Conjured documentation/code disagreement), BV-GRK-003 (no egress, so no legacy data format, retention rule or archival schedule exists to preserve) and BV-GRK-004 (neither domain has an evidenced owner). Do NOT admit any entity from fixtures/default.json or fixtures/domain-boundary-ambiguous.json: both are untracked harness material describing different, fabricated applications, and admitting either would manufacture a database tier and a phantom shared cluster for an application that has neither (ARB-GRK-003, RISK-03, open question OQ-014)."
+    },
+    "wave-planning": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json",
+      "relevant_findings": [
+        "SYN-HCF-003",
+        "SYN-LCF-004",
+        "SYN-HCF-002",
+        "SYN-HCF-006"
+      ],
+      "relevant_modules": [
+        "gildedrose-console"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/shared-database-analysis/decomposition-strategy.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+      ],
+      "note": "Zero shared-database clusters, zero shared tables, zero database links and zero co-waving constraints arising from shared data — a MEASURED negative result, verified first-hand at the shared-database pass's own dispatch rather than inherited. No decomposition tactic (database-per-service, strangler fig, database facade) applies because there is no shared store to decompose, and no facade is proposed so no sunset date is required. TWO CAVEATS BEFORE TREATING THIS APPLICATION AS UNCONSTRAINED. First, RISK-01 / SYN-LCF-004: the finding is bounded by this repository, and if a production store owned by a different application exists, this application could be forced into that application's wave — the opposite of the recorded conclusion. Second, no wave-global shared-db-cluster-map was supplied, so the 'no other application shares a store with this one' direction rests on this application's own evidence rather than a portfolio-wide join. Note also that shared-db-analysis.json carries wave_id 'unassigned-discovery', which is an explicit placeholder recording the absence of a wave assignment, NOT a real wave — rebind it once Rationalization assigns one."
+    },
+    "security-and-compliance": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json",
+      "relevant_findings": [
+        "SYN-HCF-007",
+        "SYN-HCF-011",
+        "SYN-HCF-009",
+        "SYN-MCF-002",
+        "SYN-MCF-005"
+      ],
+      "relevant_modules": [
+        "gildedrose-console",
+        "gildedrose-tests"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/compliance-citations.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/structural-analysis/identity-landscape.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/quality-risk.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/ux-accessibility.json"
+      ],
+      "note": "TWO GENUINE NULL RESULTS AND TWO GENUINE MEASUREMENT GAPS — do not confuse them. NULL RESULTS (measured, trustworthy): zero statutory or regulatory citations across all 22 git-tracked application files, zero of 25 business rules mapped to any regulation, zero PII/PHI/FTI-bearing entities, and no authentication, authorization, identity, session or credential concept anywhere (the identity pass is careful that MFA is absent because authentication is absent BY DESIGN, not missing from an authenticated application — a materially different risk, and the remediation is a target-state obligation on the Design line rather than a legacy defect). MEASUREMENT GAPS (unmeasured, must not be read as clean): SYN-MCF-002, the 12 NuGet dependencies were never scanned for known CVEs because no SCA tool output or vulnerability database was supplied, so the quality-risk pass excluded vulnerability_count from its score rather than defaulting it to zero; and SYN-MCF-005, the accessibility findings array is empty by omission of a checker run because the required sub-skill output contract was absent from the UX pass's dispatch, with gate_decision 'undetermined'. Note for the control-coverage view: the absence of AC-3 access enforcement and AU-2/AU-12 audit generation is a NIST 800-53 observation for this line, not a business-rule-to-regulation mapping. Also note that the compliance pass documents a diagnostic scan of the untracked directories producing 75 spurious citation hits from its OWN reference material, correctly excluded — do not re-derive a compliance footprint by scanning the source root instead of the git-tracked file set."
+    },
+    "modernization-generate": {
+      "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs-requirements-functional.json",
+      "relevant_findings": [
+        "SYN-HCF-002",
+        "SYN-HCF-008",
+        "SYN-HCF-010",
+        "SYN-MCF-004",
+        "SYN-HCF-005"
+      ],
+      "relevant_modules": [
+        "gildedrose-console"
+      ],
+      "source_evidence": [
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs-requirements-functional.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs-requirements-nonfunctional.json",
+        "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/srs-from-discovery/srs-anomaly-resolution-log.json"
+      ],
+      "note": "Build against the 59 requirements (35 functional FR-GR-001..035, 24 non-functional NFR-GR-001..024); every one carries acceptance criteria, and the functional criteria mostly reuse the concrete boundary values the business-rules pass recorded as test hints, so they are directly executable as tests. Read srs-anomaly-resolution-log.json FIRST: 25 anomalies carry explicit resolutions (19 FIX, 1 OMIT, 1 CONSOLIDATE, 4 DEFER) and 15 need SME confirmation, so generating against an unconfirmed anomaly risks building the wrong behaviour. The highest-consequence one is ANOM-001: the Conjured rule is prescribed as target behaviour (-2/day before the sell-by date, -4/day after, floored at 0) but is pending the OQ-004 ruling, and it introduces the first multi-step degradation in the application — which is why the zero floor is prescribed as a CLAMP rather than the legacy's guard, since a guard correct for steps of exactly 1 will undershoot on a step of 2."
+    }
+  }
+}

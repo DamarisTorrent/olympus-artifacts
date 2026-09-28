@@ -1,0 +1,107 @@
+{
+  "$schema": "olympus:artifact:srs-accessibility-compliance:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "governing_profile": "faa",
+  "prescribed_standard": "Section 508 (36 CFR Part 1194, ICT Final Rule)",
+  "conformance_target": "WCAG 2.1 AA",
+  "source_note": "These are the standards the Discovery UX/accessibility pass recorded as applicable for this governing profile: Section 508 (36 CFR Part 1194, ICT Final Rule) and WCAG 2.1 AA as referenced by that rule. They are carried forward here as prescribed, not re-derived.",
+  "prescribed_requirement": "Any human-facing surface of the modernized system MUST conform to WCAG 2.1 AA and MUST be verified by an accessibility checker before its gate. The checker's machine-readable report (naming the tool and ruleset version) MUST be attached to the gate package, and zero Level A or AA violations may remain open without a recorded, time-bounded exception. If the target introduces no human-facing surface, that MUST be stated explicitly and this obligation recorded as not-yet-triggered rather than satisfied. See NFR-GR-023 in srs-requirements-nonfunctional.json.",
+  "findings": [],
+  "baseline_posture": {
+    "method": "not-assessed",
+    "surfaces_reviewed": "1 of 1 surface given a direct (non-checker) review; 0 of 1 given an actual accessibility-checker run",
+    "tool": "none — no accessibility checker was dispatched or run against this application",
+    "gate_decision": "undetermined",
+    "gate_decision_note": "The empty findings array above is EMPTY BY OMISSION OF A CHECKER RUN, NOT a compliance verdict of zero defects. The Discovery UX/accessibility pass could not compose with the accessibility-checker sub-skill as its own methodology directs: that composition depends on a 'Sub-Skill Output Contract' (the checker's exact output path plus its schema, reproduced verbatim) which was absent from the system prompt and dispatch bundle actually supplied for that run. Rather than fabricate a path and schema for a sub-skill it could not correctly invoke, the pass recorded its own direct, transparent read of the single discovered surface and left the findings list empty — so no checker ever examined this application, and nothing here may be read as evidence of conformance. Separately, and independent of that gap: WCAG / Section 508 applicability to a character-mode console surface is itself UNRULED. This surface has no page, no form, no report and no rendered GUI — only one stdout banner line and one blocking keypress — while WCAG success criteria are written primarily for rendered web/GUI content. Whether the obligation attaches at all needs an accessibility-compliance reviewer's ruling, not a static walk's guess; the structural pass's interface inventory reached the same conclusion independently before the UX pass ran.",
+    "total_findings": {
+      "total": 0
+    },
+    "findings_empty_reason": "no accessibility-checker run was dispatched (missing Sub-Skill Output Contract); absence of findings is a measurement gap, not compliance",
+    "manual_review_required": [
+      "console-entry-point — needs (a) an accessibility-compliance reviewer's ruling on whether Section 508 / WCAG 2.1 AA applies at all to a character-mode console interface with no page, form or rendered GUI, and (b) a real accessibility-checker composition once the missing Sub-Skill Output Contract is supplied."
+    ]
+  },
+  "unassessed_gaps": [
+    "The accessibility-checker Sub-Skill Output Contract (exact output path plus verbatim schema) was absent from the UX pass's dispatch, so NO accessibility checker was dispatched against this application and no checker output of any kind exists. The findings list is empty for that reason alone.",
+    "Whether Section 508 (36 CFR Part 1194) and WCAG 2.1 AA apply at all to a character-mode console interface is UNDETERMINED. The surface is human-facing, which normally triggers the obligation, but it has no page, form, report or rendered GUI — only one stdout line and a keypress wait — and WCAG success criteria are written primarily for rendered web/GUI content. This requires an accessibility-compliance reviewer's ruling.",
+    "The legacy surface inventory is ONE console entry point and nothing else (1 interface total, 1 human-facing, 0 machine-facing), so the modernized system's real UI surface has no legacy baseline to compare against. Any target-state accessibility result will be a first measurement, not a regression comparison."
+  ],
+  "verified_non_issues": [
+    {
+      "observation": "No images are rendered by this application — no image, icon or graphic reference exists in any UI code path.",
+      "wcag_criteria_with_no_target": "1.1.1 Non-text Content",
+      "note": "Grounded negative from the UX pass: the criterion has no rendered target to fail against. This is not a conformance pass."
+    },
+    {
+      "observation": "No colour conveys information — the surface is unstyled default-terminal monochrome text (a single 'OMGHAI!' banner).",
+      "wcag_criteria_with_no_target": "1.4.1 Use of Color",
+      "note": "Grounded negative from the UX pass: the criterion has no applicable target. This is not a conformance pass."
+    },
+    {
+      "observation": "No form controls, labels or input fields exist — the program never reads its arguments or stdin except a single Console.ReadKey() call to exit.",
+      "wcag_criteria_with_no_target": "1.3.1 Info and Relationships / 4.1.2 Name, Role, Value",
+      "note": "Grounded negative from the UX pass: the label and name-role-value criteria have no applicable target. This is not a conformance pass."
+    },
+    {
+      "observation": "No timing-based content, auto-refresh or session timeout exists — the process blocks indefinitely on Console.ReadKey() with no timeout.",
+      "wcag_criteria_with_no_target": "2.2.1 Timing Adjustable",
+      "note": "Grounded negative from the UX pass: the criterion has no applicable target. This is not a conformance pass."
+    }
+  ],
+  "legacy_ui_inventory": [
+    {
+      "surface_id": "console-entry-point",
+      "name": "GildedRose.Console.exe interactive console session",
+      "platform": "Windows character-mode console (.NET Framework 4.5)",
+      "technology": "System.Console.WriteLine (stdout) / System.Console.ReadKey (stdin); no GUI toolkit, no web framework, no markup of any kind",
+      "screens_in_repo": 1,
+      "human_facing": true,
+      "user_population": "Single local operator per invocation; no roles, no authentication, and no concurrent-user or multi-session concept exists anywhere in the code",
+      "notes": "The application's only human-facing surface and its only interface of any kind. It writes one banner line, the literal \"OMGHAI!\", to stdout and then blocks on System.Console.ReadKey() until any key is pressed, then exits. There is no page, form, menu or navigable screen, and the banner is emitted BEFORE the calculation runs — no computed value is ever printed. Six hard-coded inventory items are processed identically on every run.",
+      "checker_run": false,
+      "citations": [
+        "src/GildedRose.Console/Program.cs:8-35",
+        "src/GildedRose.Console/Program.cs:10",
+        "src/GildedRose.Console/Program.cs:33",
+        "ux-accessibility.json:ui_inventory (surface_id console-entry-point)",
+        "structural-analysis.json:interface-inventory.counts (total 1, human_facing 1, machine_facing 0)"
+      ]
+    }
+  ],
+  "traces_to": [
+    {
+      "finding_id": "ux-accessibility.json:accessibility_findings.applicable_standards",
+      "artifact": "ux-accessibility.json",
+      "source": "ux-accessibility.json:accessibility_findings.applicable_standards"
+    },
+    {
+      "finding_id": "ux-accessibility.json:accessibility_findings.gate_decision_note",
+      "artifact": "ux-accessibility.json",
+      "source": "ux-accessibility.json:accessibility_findings.gate_decision_note"
+    },
+    {
+      "finding_id": "ux-accessibility.json:accessibility_findings.verified_non_issues",
+      "artifact": "ux-accessibility.json",
+      "source": "ux-accessibility.json:accessibility_findings.verified_non_issues"
+    },
+    {
+      "finding_id": "ux-accessibility.json:ui_inventory",
+      "artifact": "ux-accessibility.json",
+      "source": "src/GildedRose.Console/Program.cs:8-35"
+    },
+    {
+      "finding_id": "structural-analysis.json:interface-inventory.open_questions",
+      "artifact": "structural-analysis.json",
+      "source": "structural-analysis.json:interface-inventory.open_questions"
+    }
+  ],
+  "related_requirements": [
+    "NFR-GR-023 (srs-requirements-nonfunctional.json) — Section 508 / WCAG 2.1 AA conformance and mandatory checker verification for any human-facing target surface; records the legacy baseline as undetermined."
+  ],
+  "open_questions": [
+    "Supply the accessibility-checker Sub-Skill Output Contract and re-run the accessibility assessment; until then this artifact's empty findings list must not be cited as a conformance result.",
+    "Obtain an accessibility-compliance reviewer's ruling on whether Section 508 / WCAG 2.1 AA applies to a character-mode console surface with no page, form or rendered GUI.",
+    "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY (recorded, not adopted): the governing profile is `faa`, but the source tree is the publicly published Gilded Rose Refactoring Kata with no aviation, NAS or certification content, and the shipped assembly metadata asserts a different agency attribution. The applicability of this profile's accessibility standards is conditional on that mapping being confirmed."
+  ]
+}

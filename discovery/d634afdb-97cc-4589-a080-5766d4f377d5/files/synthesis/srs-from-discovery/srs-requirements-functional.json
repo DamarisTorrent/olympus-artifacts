@@ -1,0 +1,1257 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "Functional and constraint requirements prescribed for the modernized inventory revaluation system. Derived from the 25 gate-approved business rules in business-logic.json (BR-001..BR-024 plus BR-MISSING-001), the 27 implicit behaviours in implicit-logic.json (IL-001..IL-027), the 5 reconstructed state machines in state-machines.json, and the structural findings in structural-analysis.json. Language is prescriptive: these state what the modernized system MUST do, not what the legacy console application was observed to do. Where the legacy behaviour is a defect, an emergent accident, or an undocumented implicit dependency, the requirement prescribes the corrected behaviour and names the anomaly resolution applied.",
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST revalue every item in the inventory exactly once per revaluation cycle, applying the phases in this fixed order for each item: (1) the pre-sell-by quality adjustment, (2) the sell-in decrement, (3) the past-sell-by quality adjustment. The ordering MUST be an explicit, named, documented property of the implementation rather than an accident of statement sequence, because the correctness of REQ-010, REQ-011, REQ-013, REQ-014 and REQ-015 depends on it.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A full inventory is revalued in a single pass",
+          "given": "An inventory containing 6 items in the documented seed configuration",
+          "when": "One revaluation cycle is executed",
+          "then": "Every one of the 6 items has been evaluated exactly once, and the (name, sell_in, quality) tuple of each matches the golden-master expectation for cycle 1"
+        },
+        {
+          "criterion": "An empty inventory is a success, not an error",
+          "given": "An inventory containing 0 items",
+          "when": "One revaluation cycle is executed",
+          "then": "The cycle completes successfully, reports 0 items revalued, and raises no error"
+        },
+        {
+          "criterion": "A null or absent inventory is rejected with a diagnostic, not a null dereference",
+          "given": "The inventory source yields no collection at all (null)",
+          "when": "A revaluation cycle is attempted",
+          "then": "The cycle fails fast with error code INVENTORY_SOURCE_UNAVAILABLE and a message naming the source; no NullReferenceException or equivalent unhandled fault escapes"
+        },
+        {
+          "criterion": "Phase order is externally observable and asserted",
+          "given": "A backstage pass with sell_in = 11 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 21 (base increment only, because the 10-day threshold is evaluated against the cycle-start sell_in of 11) and sell_in = 10, proving the quality phase ran before the sell-in decrement"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-001",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 37,
+        "line_range": "37-111",
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "Legacy: the orchestration is a bare indexed for-loop over Items with the three phases interleaved as raw statements and no guard against a null list (NullReferenceException at Program.cs:39 and :41 per BR-001 test_hints.error_paths). Prescribed: the phase order becomes an explicit, named contract and a null inventory source produces a diagnostic rather than an unhandled fault.",
+      "related_requirements": ["REQ-012", "REQ-016", "REQ-023"]
+    },
+    {
+      "id": "REQ-002",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST decrease the quality of a STANDARD-category item by exactly 1 per revaluation cycle while the item is within its sell-by window, subject to the quality floor of REQ-003. STANDARD MUST be the explicitly assigned category for items that belong to no other category, and category MUST be resolved per REQ-017 rather than by failing to match a set of name literals.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Standard good degrades by one",
+          "given": "A STANDARD item '+5 Dexterity Vest' with sell_in = 10 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 9 and quality = 19"
+        },
+        {
+          "criterion": "The floor is respected at the boundary",
+          "given": "A STANDARD item with sell_in = 5 and quality = 1",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0"
+        },
+        {
+          "criterion": "A quality already at the floor is not driven below it",
+          "given": "A STANDARD item with sell_in = 5 and quality = 0",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0 and no error is raised"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-002",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 41,
+        "line_range": "41-50",
+        "discovery_artifact": "business-logic"
+      },
+      "related_requirements": ["REQ-003", "REQ-013", "REQ-017"]
+    },
+    {
+      "id": "REQ-003",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST NOT allow an item's quality to fall below 0 under any rule, any category, or any combination of degradation steps within a single cycle. The floor MUST be implemented as a clamp applied to the computed result (quality = max(0, computed_quality)) and MUST NOT be implemented as a pre-decrement guard on the value being changed.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A multi-step degradation saturates at the floor instead of undershooting",
+          "given": "A CONJURED item with sell_in = -1 and quality = 3, for which REQ-018 prescribes a 4-point degradation",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0, not -1"
+        },
+        {
+          "criterion": "The floor holds for the doubled standard degradation",
+          "given": "A STANDARD item with sell_in = 0 and quality = 1, for which REQ-013 prescribes a 2-point degradation",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0"
+        },
+        {
+          "criterion": "A negative quality supplied by an external source is rejected at the boundary",
+          "given": "An inventory source that supplies an item with quality = -5",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected at the input boundary per REQ-019 with error code QUALITY_OUT_OF_RANGE; the revaluation engine never observes a negative quality"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-003",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 43,
+        "line_range": "43-49",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:89-95", "README.md:21"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-003",
+      "anomaly_details": "Legacy: the floor is enforced only by two `Quality > 0` guards standing in front of the two decrement sites (Program.cs:43, :89). BR-003 and IL-002 both record that this holds ONLY because every legacy decrement step happens to be exactly 1 — any multi-step degradation would undershoot the floor undetected. Because REQ-018 introduces exactly such a multi-step degradation, carrying the guard forward would be carrying a latent defect forward. Prescribed: a clamp on the computed result. Side effect made explicit: the legacy asymmetry whereby an expired standard item at quality 1 loses 1 rather than 2 is PRESERVED by the clamp (max(0, 1-2) = 0), so observable behaviour is unchanged for every legacy input.",
+      "related_requirements": ["REQ-002", "REQ-013", "REQ-018", "REQ-019"]
+    },
+    {
+      "id": "REQ-004",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST NOT change the quality of a LEGENDARY-category item under any rule, in any phase, at any sell_in value. The exemption MUST be expressed once, as a single positive property of the LEGENDARY category evaluated before any adjustment is computed, and MUST NOT be restated as a negated guard in front of each individual mutation site.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Legendary quality is immutable within the sell-by window",
+          "given": "A LEGENDARY item 'Sulfuras, Hand of Ragnaros' with sell_in = 0 and quality = 80",
+          "when": "100 revaluation cycles are executed",
+          "then": "quality = 80 after every cycle"
+        },
+        {
+          "criterion": "Legendary quality is immutable past the sell-by date — the legacy data-dependent dead path is covered",
+          "given": "A LEGENDARY item with sell_in = -1 and quality = 80",
+          "when": "10 revaluation cycles are executed",
+          "then": "quality = 80 after every cycle, and sell_in = -1 after every cycle per REQ-005"
+        },
+        {
+          "criterion": "A single exemption point governs every phase",
+          "given": "The implemented rules engine",
+          "when": "The LEGENDARY exemption is located in the code",
+          "then": "Exactly one decision site determines legendary immutability; no separate per-mutation-site legendary guard exists"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-004",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 45,
+        "line_range": "45-48",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:91-94", "src/GildedRose.Console/Program.cs:19", "README.md:24-25", "README.md:44-45"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-005",
+      "anomaly_details": "Legacy: the legendary exemption is implemented negatively as `!=` guards at Program.cs:45 and :91, plus a third at :78 for sell_in, so every future rule must remember to restate it (BR-004). IL-015 further records that the guard at :91 is data-dependent dead code — never reached for the seeded Sulfuras (sell_in 0 never goes negative), but load-bearing for a legendary item seeded with a negative sell_in. Prescribed: one positive category-level exemption, which removes the duplication AND removes the dead-code ambiguity without losing the behaviour the :91 guard protects. The second acceptance criterion deliberately exercises the path that no legacy test could reach.",
+      "related_requirements": ["REQ-005", "REQ-008", "REQ-017"]
+    },
+    {
+      "id": "REQ-005",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST NOT decrement the sell_in of a LEGENDARY-category item. A legendary item's sell_in MUST remain at the value supplied by the inventory source for the lifetime of the item, and a LEGENDARY item MUST NOT be treated as expired regardless of the sign of its sell_in.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Legendary sell_in is frozen",
+          "given": "A LEGENDARY item with sell_in = 0",
+          "when": "10 revaluation cycles are executed",
+          "then": "sell_in = 0 after every cycle"
+        },
+        {
+          "criterion": "A non-zero legendary sell_in is equally frozen",
+          "given": "A LEGENDARY item with sell_in = 5",
+          "when": "10 revaluation cycles are executed",
+          "then": "sell_in = 5 after every cycle"
+        },
+        {
+          "criterion": "A negative legendary sell_in does not trigger expiry treatment",
+          "given": "A LEGENDARY item with sell_in = -1 and quality = 80",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 80; no past-sell-by adjustment of any kind is applied"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-005",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 78,
+        "line_range": "78-81",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:19", "README.md:24-25"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-005",
+      "anomaly_details": "Legacy: legendary immutability was doubly protected, but one of the two protections was invisible — IL-014 records that because Sulfuras is seeded at sell_in 0 and never decremented, it never reaches the expiry branch at all, so its immunity rested partly on seed data rather than on logic. Prescribed: the exemption from expiry treatment becomes an explicit stated property of the LEGENDARY category, so it holds for any supplied sell_in rather than only for the seeded one.",
+      "related_requirements": ["REQ-004", "REQ-012"]
+    },
+    {
+      "id": "REQ-006",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST increase the quality of an APPRECIATING-category item (legacy exemplar: 'Aged Brie') by exactly 1 per revaluation cycle while the item is within its sell-by window, subject to the quality ceiling of REQ-007.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Appreciating good gains one",
+          "given": "An APPRECIATING item 'Aged Brie' with sell_in = 2 and quality = 0",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 1 and quality = 1"
+        },
+        {
+          "criterion": "The ceiling is respected at the boundary",
+          "given": "An APPRECIATING item with sell_in = 5 and quality = 49",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50"
+        },
+        {
+          "criterion": "A quality already at the ceiling is not raised",
+          "given": "An APPRECIATING item with sell_in = 5 and quality = 50",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-006",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 51,
+        "line_range": "51-56",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:17", "README.md:22"],
+        "discovery_artifact": "business-logic"
+      },
+      "related_requirements": ["REQ-007", "REQ-014", "REQ-017"]
+    },
+    {
+      "id": "REQ-007",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST NOT allow any appreciation rule to raise an item's quality above the maximum quality of 50. The maximum MUST be defined once as a single named constant and MUST be applied as a clamp on the cycle's computed result, so that an item eligible for a multi-point gain saturates at exactly 50 and never overshoots. The maximum MUST NOT be applied to LEGENDARY-category items (see REQ-008).",
+      "acceptance_criteria": [
+        {
+          "criterion": "A three-point gain saturates at exactly the maximum",
+          "given": "A BACKSTAGE_PASS item with sell_in = 5 and quality = 48, eligible for a 3-point gain per REQ-011",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50, not 51"
+        },
+        {
+          "criterion": "A two-point gain saturates at exactly the maximum",
+          "given": "An APPRECIATING item with sell_in = 0 and quality = 49, eligible for a 2-point gain per REQ-014",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50, not 51"
+        },
+        {
+          "criterion": "The maximum exists once, as a named constant",
+          "given": "The implemented rules engine",
+          "when": "The source is searched for the literal 50",
+          "then": "The value appears in exactly one named-constant declaration; no comparison site contains the bare literal"
+        },
+        {
+          "criterion": "The maximum does not bind legendary items",
+          "given": "A LEGENDARY item with quality = 80",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 80; it is neither clamped to 50 nor flagged as invalid"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-007",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 53,
+        "line_range": "53-55",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:61-64", "src/GildedRose.Console/Program.cs:69-72", "src/GildedRose.Console/Program.cs:104-107", "README.md:23"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-004",
+      "anomaly_details": "Legacy: the `Quality < 50` predicate is repeated at four comparison sites (Program.cs:53, :61, :69, :104) as an inline literal with no named constant, and the no-overshoot property of BR-007 depends on all four being present (IL-001, IL-011, QR-004 duplicated-code count 4). Prescribed: one named constant and one clamp on the computed result. Verified equivalence: because every legacy increment is +1 and each is independently gated, clamping the summed delta produces identical results for every reachable input — IL-011 notes this equivalence holds 'by coincidence of the numbers', so the acceptance criteria pin the saturation boundary explicitly rather than relying on that coincidence.",
+      "related_requirements": ["REQ-006", "REQ-008", "REQ-009", "REQ-010", "REQ-011", "REQ-014"]
+    },
+    {
+      "id": "REQ-008",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST define the quality of a LEGENDARY-category item as a single named constant with the value 80, MUST exempt LEGENDARY items from the maximum quality of REQ-007, and MUST reject at the input boundary any LEGENDARY item whose supplied quality is not equal to the legendary quality constant. The legendary quality MUST NOT exist only as seed data.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A correctly valued legendary item is admitted and unchanged",
+          "given": "A LEGENDARY item with quality = 80",
+          "when": "The item is admitted and one revaluation cycle is executed",
+          "then": "The item is admitted without error and quality = 80"
+        },
+        {
+          "criterion": "A mis-valued legendary item is rejected rather than carried forever",
+          "given": "An inventory source that supplies a LEGENDARY item with quality = 42",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code LEGENDARY_QUALITY_INVALID naming the expected value 80 and the supplied value 42"
+        },
+        {
+          "criterion": "The legendary quality is a named constant, not a seed literal",
+          "given": "The implemented system",
+          "when": "The source is searched for the value 80",
+          "then": "The value appears in exactly one named-constant declaration referenced by both the validation rule and any default; it does not appear only inside inventory seed data"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-008",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 19,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:41-49", "src/GildedRose.Console/Program.cs:91-94", "README.md:23", "README.md:44-45"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-006",
+      "anomaly_details": "Legacy: BR-008 and IL-005 record that 80 appears exactly once in the whole application — in the seed list at Program.cs:19 — and never in any rule. No code asserts it, defaults to it, or restores it, so a mis-seeded legendary item would carry any value forever, and the legendary quality sits 30 above the documented maximum of 50. Prescribed: the constant becomes explicit and validated. SME CONFIRMATION REQUIRED: README.md:23 ('never more than 50') and README.md:44-45 ('its Quality is 80 and it never alters') are mutually inconsistent as written; this requirement resolves the contradiction in favour of a stated legendary exemption, which is the behaviour the code actually implements, but a business owner must confirm that reading.",
+      "related_requirements": ["REQ-004", "REQ-007", "REQ-019"]
+    },
+    {
+      "id": "REQ-009",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST increase the quality of a BACKSTAGE_PASS-category item by a base 1 per revaluation cycle while the item is within its sell-by window, before any proximity bonus of REQ-010 or REQ-011 is applied, subject to the quality ceiling of REQ-007.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Base appreciation applies outside every bonus window",
+          "given": "A BACKSTAGE_PASS item with sell_in = 15 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 14 and quality = 21"
+        },
+        {
+          "criterion": "The base increment alone applies on the threshold day above the 10-day window",
+          "given": "A BACKSTAGE_PASS item with sell_in = 11 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 21, confirming no bonus has engaged"
+        },
+        {
+          "criterion": "No increment is applied at the ceiling",
+          "given": "A BACKSTAGE_PASS item with sell_in = 15 and quality = 50",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-009",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 51,
+        "line_range": "51-56",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:22-24", "README.md:26-29"],
+        "discovery_artifact": "business-logic"
+      },
+      "related_requirements": ["REQ-007", "REQ-010", "REQ-011", "REQ-015"]
+    },
+    {
+      "id": "REQ-010",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST apply an additional 1-point quality increase to a BACKSTAGE_PASS-category item (2 points in total for the cycle, with REQ-009) when the item's sell_in AT THE START OF THE CYCLE is 10 or fewer and greater than 5. The threshold MUST be expressed against the explicitly named cycle-start sell_in value of REQ-016 and MUST NOT be expressed as a bare literal whose correctness depends on statement position.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The bonus engages at the documented boundary",
+          "given": "A BACKSTAGE_PASS item with sell_in = 10 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 9 and quality = 22"
+        },
+        {
+          "criterion": "The bonus does not engage one day early",
+          "given": "A BACKSTAGE_PASS item with sell_in = 11 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 10 and quality = 21"
+        },
+        {
+          "criterion": "The bonus is still exactly 2 points at the lower edge of its window",
+          "given": "A BACKSTAGE_PASS item with sell_in = 6 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 22, confirming the 5-day bonus has not yet engaged"
+        },
+        {
+          "criterion": "The combined gain saturates at the ceiling",
+          "given": "A BACKSTAGE_PASS item with sell_in = 10 and quality = 49",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-010",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 59,
+        "line_range": "57-65",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-55", "README.md:26-29"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "Legacy: the condition is the bare literal `SellIn < 11` at Program.cs:59. IL-003 names this 'the single most likely mis-transcription in any re-implementation': read in isolation the line looks like an off-by-one bug, and it correctly expresses the documented '10 days or less' ONLY because it is evaluated before the sell-in decrement at Program.cs:80. Prescribed: the threshold is stated as '10 or fewer at the start of the cycle' against the named cycle-start value of REQ-016, so the boundary survives any restructuring. The exclusive upper bound of the 5-day window is stated here so that the three bonus tiers partition the range rather than relying on incidental statement stacking.",
+      "related_requirements": ["REQ-009", "REQ-011", "REQ-016"]
+    },
+    {
+      "id": "REQ-011",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST apply a further 1-point quality increase to a BACKSTAGE_PASS-category item (3 points in total for the cycle, with REQ-009 and REQ-010) when the item's sell_in AT THE START OF THE CYCLE is 5 or fewer and the item has not yet passed its sell-by date. The threshold MUST be expressed against the explicitly named cycle-start sell_in value of REQ-016.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The bonus engages at the documented boundary",
+          "given": "A BACKSTAGE_PASS item with sell_in = 5 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 4 and quality = 23"
+        },
+        {
+          "criterion": "The bonus does not engage one day early",
+          "given": "A BACKSTAGE_PASS item with sell_in = 6 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 22"
+        },
+        {
+          "criterion": "The combined three-point gain saturates at the ceiling",
+          "given": "A BACKSTAGE_PASS item with sell_in = 5 and quality = 48",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50, not 51"
+        },
+        {
+          "criterion": "The bonus is not applied once the sell-by date has passed",
+          "given": "A BACKSTAGE_PASS item with sell_in = 0 and quality = 20 at the start of the cycle",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0 per REQ-015, and no intermediate non-zero quality is ever published, recorded or committed"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-011",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 67,
+        "line_range": "67-73",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-65", "README.md:26-29"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "Legacy: the bare literal `SellIn < 6` at Program.cs:67, with the same pre-decrement dependency trap as REQ-010 (IL-004). Prescribed: stated against the named cycle-start value. The fourth acceptance criterion additionally pins the resolution of ANOM-007 — the legacy code computed this bonus and then discarded it on the concert day (IL-012), and the prescribed system MUST NOT make the discarded intermediate observable.",
+      "related_requirements": ["REQ-009", "REQ-010", "REQ-015", "REQ-016"]
+    },
+    {
+      "id": "REQ-012",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST decrease the sell_in of every item that is not LEGENDARY-category by exactly 1 per revaluation cycle, and MUST do so after the pre-sell-by quality phase and before the past-sell-by quality phase, as required by REQ-001.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Sell-in advances by exactly one for a non-legendary item",
+          "given": "A STANDARD item with sell_in = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 9"
+        },
+        {
+          "criterion": "The transition into the expired state is at the documented boundary",
+          "given": "A STANDARD item with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 8, confirming the doubled degradation of REQ-013 engages on this cycle"
+        },
+        {
+          "criterion": "The cycle before the boundary is single-rate",
+          "given": "A STANDARD item with sell_in = 1 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 0 and quality = 9, confirming single-rate treatment on the final sell day"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-012",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 80,
+        "line_range": "78-81",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:83"],
+        "discovery_artifact": "business-logic"
+      },
+      "related_requirements": ["REQ-001", "REQ-005", "REQ-016", "REQ-021"]
+    },
+    {
+      "id": "REQ-013",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST apply a second 1-point quality decrease to a STANDARD-category item (2 points in total for the cycle, with REQ-002) when the item's sell_in AFTER the cycle's decrement is below 0, subject to the quality floor clamp of REQ-003.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Expired standard goods degrade at the doubled rate",
+          "given": "A STANDARD item with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 8"
+        },
+        {
+          "criterion": "The doubling does not engage on the final sell day",
+          "given": "A STANDARD item with sell_in = 1 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 0 and quality = 9"
+        },
+        {
+          "criterion": "The clamp preserves the legacy asymmetry at quality 1",
+          "given": "A STANDARD item with sell_in = -1 and quality = 1",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0, a net loss of 1 rather than 2"
+        },
+        {
+          "criterion": "An already worthless expired item is stable",
+          "given": "A STANDARD item with sell_in = -5 and quality = 0",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-013",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 83,
+        "line_range": "83-96",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:41-50", "README.md:20"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "Legacy: the expiry test `SellIn < 0` at Program.cs:83 reads the ALREADY-DECREMENTED sell_in, whereas the backstage thresholds at :59 and :67 read the pre-decrement value — the dual meaning recorded as BR-016 and IL-009. This requirement states which of the two values it binds to. The prescribed clamp of REQ-003 replaces the legacy floor guard at :89 while preserving the quality-1 asymmetry, which the third acceptance criterion pins because BR-013 test_hints names it 'an easily missed asymmetry'.",
+      "related_requirements": ["REQ-002", "REQ-003", "REQ-012", "REQ-016"]
+    },
+    {
+      "id": "REQ-014",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST apply a second 1-point quality increase to an APPRECIATING-category item (2 points in total for the cycle, with REQ-006) when the item's sell_in AFTER the cycle's decrement is below 0, subject to the quality ceiling clamp of REQ-007. This accelerated post-sell-by appreciation MUST be stated as an intentional rule rather than left as an emergent consequence of two independent increments firing in the same cycle.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Expired appreciating goods gain at the doubled rate",
+          "given": "An APPRECIATING item 'Aged Brie' with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 12"
+        },
+        {
+          "criterion": "The doubling does not engage on the final sell day",
+          "given": "An APPRECIATING item with sell_in = 1 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 0 and quality = 11"
+        },
+        {
+          "criterion": "The clamp caps the doubled gain at the maximum",
+          "given": "An APPRECIATING item with sell_in = -1 and quality = 49",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50, not 51"
+        },
+        {
+          "criterion": "A saturated appreciating item is stable",
+          "given": "An APPRECIATING item with sell_in = -10 and quality = 50",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 50"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-014",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 102,
+        "line_range": "102-108",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-55", "README.md:22"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-009",
+      "anomaly_details": "Legacy: nothing in code or documentation states that Aged Brie appreciates faster once expired. BR-014 and IL-013 both record the +2 rate as EMERGENT — it arises only because the generic appreciation at Program.cs:55 and the expiry-branch appreciation at :106 both fire in the same iteration, and README.md:22 says only that Brie 'increases in Quality the older it gets'. Prescribed: the accelerated rate becomes an explicit stated rule, because a re-implementation that separated the phases would otherwise silently drop it. SME CONFIRMATION REQUIRED: a business owner must confirm that the emergent +2 is the intended rule and not an unnoticed legacy accident, since no documentation asserts it.",
+      "related_requirements": ["REQ-006", "REQ-007", "REQ-012", "REQ-016"]
+    },
+    {
+      "id": "REQ-015",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST set the quality of a BACKSTAGE_PASS-category item to 0 when the item's sell_in AFTER the cycle's decrement is below 0. The system MUST apply this as a direct assignment of 0 and MUST NOT compute any proximity bonus for a pass whose sell-by date has passed. No non-zero intermediate quality for an expired pass may be published, logged, committed, or made observable to any consumer.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A pass is worthless the cycle its sell-by date passes",
+          "given": "A BACKSTAGE_PASS item with sell_in = 0 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 0"
+        },
+        {
+          "criterion": "A maximum-value pass drops to zero in one cycle",
+          "given": "A BACKSTAGE_PASS item with sell_in = 0 and quality = 50",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0"
+        },
+        {
+          "criterion": "A pass is still valuable on the final sell day",
+          "given": "A BACKSTAGE_PASS item with sell_in = 1 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 0 and quality = 23"
+        },
+        {
+          "criterion": "An already expired pass performs no wasted appreciation",
+          "given": "A BACKSTAGE_PASS item with sell_in = -1 and quality = 0",
+          "when": "One revaluation cycle is executed and the audit record of REQ-027 is read",
+          "then": "quality = 0, and the audit record shows no quality increase applied and no adjustment discarded for this item in this cycle"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-015",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 99,
+        "line_range": "97-100",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-73", "README.md:26-29"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "OPTIMIZE",
+      "proposed_anomaly": "ANOM-007",
+      "anomaly_details": "Two anomalies are resolved here. (1) OBFUSCATED IDIOM (ANOM-008, IL-010): the legacy zeroing is written `Items[i].Quality = Items[i].Quality - Items[i].Quality` at Program.cs:99, so any reader or tool searching for an assignment of literal zero misses the rule entirely; prescribed as a direct assignment of 0. (2) DEAD COMPUTATION (ANOM-007, IL-012, BR-015): on the concert day the legacy code earns up to +3 at lines 55/63/71 and then throws it away at line 99, and repeats that churn on every subsequent day an already-worthless pass stays in inventory. Net legacy external behaviour is unchanged, but IL-012 warns that any re-implementation which logs, audits, publishes events or commits between phases would expose the non-zero intermediate as a real value — and REQ-025 and REQ-027 introduce exactly such emission and audit. The prescribed system therefore MUST NOT compute the discarded bonus at all, which removes the churn and forecloses the observability hazard the new requirements would otherwise create.",
+      "related_requirements": ["REQ-009", "REQ-010", "REQ-011", "REQ-025", "REQ-027"]
+    },
+    {
+      "id": "REQ-016",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST expose the two distinct meanings of sell_in within a revaluation cycle as two separately named values — sell_in_at_cycle_start and sell_in_after_decrement — and every rule MUST state which of the two it binds to. The system MUST NOT rely on statement position within a procedure to distinguish them.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Proximity thresholds bind to the cycle-start value",
+          "given": "A BACKSTAGE_PASS item with sell_in = 11 and quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 21 and sell_in = 10; the 10-day bonus did NOT engage even though the post-decrement value is 10"
+        },
+        {
+          "criterion": "Expiry rules bind to the post-decrement value",
+          "given": "A STANDARD item with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 8; the doubled degradation DID engage even though the cycle-start value was 0 and not negative"
+        },
+        {
+          "criterion": "Restructuring cannot silently shift a boundary",
+          "given": "The implemented rules engine and its characterization test suite per NFR-001",
+          "when": "The sell-in decrement is relocated to the start of the cycle and the suite is run",
+          "then": "The suite fails with an explicit assertion naming the affected boundary, rather than passing with changed pricing"
+        },
+        {
+          "criterion": "Both values are named in the implementation",
+          "given": "The implemented rules engine",
+          "when": "The rule evaluation inputs are inspected",
+          "then": "Two distinctly named values exist and every threshold references one of them by name; no rule reads a single mutable sell_in field at two different points in the cycle"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-016",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 80,
+        "line_range": "41-109",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:59", "src/GildedRose.Console/Program.cs:67", "src/GildedRose.Console/Program.cs:83", "src/GildedRose.Tests/TestAssemblyTests.cs:10"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "This is the highest-risk implicit behaviour in the application. BR-016 (severity critical, complexity high) and IL-009 record that within one iteration 'SellIn' denotes days-remaining-at-start-of-day for the bonus rules at Program.cs:59 and :67, and days-remaining-at-end-of-day for the expiry test at :83, because the decrement at :80 sits textually between the two groups of readers. BR-016 test_hints state that hoisting the decrement — 'the most natural cleanup a developer would make' — silently shifts outcomes on the boundary days sell_in 11, 6 and 0, and that no test detects it because the only legacy test asserts Assert.True(true). Prescribed: two named values, so the distinction is carried by the model rather than by statement order. SME CONFIRMATION REQUIRED per BR-016.regulatory_traceability.sme_review_required.",
+      "related_requirements": ["REQ-001", "REQ-010", "REQ-011", "REQ-013", "REQ-014"]
+    },
+    {
+      "id": "REQ-017",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-002",
+      "description": "The system MUST determine an item's pricing behaviour from an explicit category attribute stored on the item, drawn from a closed set of category values (STANDARD, APPRECIATING, BACKSTAGE_PASS, LEGENDARY, CONJURED). The system MUST NOT derive category from the item's display name, and MUST NOT couple pricing behaviour to customer-facing marketing copy. Renaming an item MUST NOT change its pricing behaviour.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Renaming an item preserves its pricing behaviour",
+          "given": "An item with category = APPRECIATING, display name 'Aged Brie', sell_in = 2, quality = 0",
+          "when": "The display name is changed to 'Vintage Reserve Brie' and one revaluation cycle is executed",
+          "then": "quality = 1; the item still appreciates"
+        },
+        {
+          "criterion": "Case and whitespace variation in the name is behaviourally irrelevant",
+          "given": "Items with category = APPRECIATING and display names 'aged brie', 'AGED BRIE' and 'Aged Brie ' (trailing space), each with sell_in = 2 and quality = 0",
+          "when": "One revaluation cycle is executed",
+          "then": "All three have quality = 1; none is treated as STANDARD"
+        },
+        {
+          "criterion": "The concert can be renamed without losing demand pricing",
+          "given": "An item with category = BACKSTAGE_PASS, display name 'Backstage passes to a DIFFERENT concert', sell_in = 5, quality = 20",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 23; the proximity bonuses still apply"
+        },
+        {
+          "criterion": "Category is validated against the closed set",
+          "given": "An inventory source that supplies an item with category = 'MYSTERY'",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code ITEM_CATEGORY_UNKNOWN naming the supplied value and the permitted set"
+        },
+        {
+          "criterion": "No name literal drives a pricing decision",
+          "given": "The implemented rules engine",
+          "when": "The source is searched for the legacy name literals 'Aged Brie', 'Sulfuras, Hand of Ragnaros' and 'Backstage passes to a TAFKAL80ETC concert'",
+          "then": "None appears in any pricing decision; any occurrence is confined to migration mapping or test data"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-017",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 41,
+        "line_range": "41-91",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:45", "src/GildedRose.Console/Program.cs:57", "src/GildedRose.Console/Program.cs:85", "src/GildedRose.Console/Program.cs:87", "src/GildedRose.Console/Program.cs:91", "src/GildedRose.Console/Program.cs:117"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "RENAME",
+      "proposed_anomaly": "ANOM-002",
+      "anomaly_details": "Legacy: BR-017 (severity critical), IL-007, IL-008 and QR-005 (magic-string-dispatch, count 8) all record that there is no category, type or SKU field anywhere — an item's entire pricing behaviour is selected by exact, ordinal, case-sensitive, culture-insensitive, whole-string equality against three hardcoded display-name literals at eight comparison sites across six lines. There is no Trim, ToLower, StartsWith, Contains or comparer anywhere, so any variation in casing, whitespace, wording or localisation silently reclassifies the item as standard goods with no error. structural-analysis.json records this as coupling_indicators.magic_string_dispatch at severity high. Prescribed: an explicit validated category attribute, with a migration mapping from the five known legacy display names to their categories. SME CONFIRMATION REQUIRED per BR-017: the intended category taxonomy must be confirmed by a business owner, in particular whether CONJURED matches by exact name, prefix or explicit attribute (see REQ-018).",
+      "related_requirements": ["REQ-002", "REQ-004", "REQ-006", "REQ-009", "REQ-018", "REQ-019", "REQ-020"]
+    },
+    {
+      "id": "REQ-018",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST decrease the quality of a CONJURED-category item by 2 per revaluation cycle while it is within its sell-by window, and by 4 per cycle once its sell_in after the cycle's decrement is below 0, subject to the quality floor clamp of REQ-003. A CONJURED item MUST NOT be revalued as a STANDARD item.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Conjured goods degrade at twice the standard rate within the sell-by window",
+          "given": "A CONJURED item 'Conjured Mana Cake' with sell_in = 3 and quality = 6",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = 2 and quality = 4"
+        },
+        {
+          "criterion": "Expired conjured goods degrade at twice the expired standard rate",
+          "given": "A CONJURED item with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 6"
+        },
+        {
+          "criterion": "The floor clamp holds against the 2-point degradation",
+          "given": "A CONJURED item with sell_in = 3 and quality = 1",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0, not -1"
+        },
+        {
+          "criterion": "The floor clamp holds against the 4-point degradation",
+          "given": "A CONJURED item with sell_in = -1 and quality = 3",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 0, not -1"
+        },
+        {
+          "criterion": "The legacy mispricing is corrected, not reproduced",
+          "given": "A CONJURED item with sell_in = 3 and quality = 6",
+          "when": "One revaluation cycle is executed",
+          "then": "quality = 4; the legacy result of 5 is a test failure, not the expected baseline"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-MISSING-001",
+        "source_file": "README.md",
+        "source_line": 34,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:26", "src/GildedRose.Console/Program.cs:37-111", "src/GildedRose.Console/Program.cs:41-50"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-018",
+      "anomaly_details": "SPECIFIED BUT NOT IMPLEMENTED. BR-MISSING-001 (severity critical, implementation_fidelity 'missing') and IL-024 record that README.md:34 requires conjured items to degrade twice as fast as normal items, and a 'Conjured Mana Cake' is seeded into the live inventory at Program.cs:26 — but the string 'Conjured' appears nowhere in UpdateQuality (Program.cs:37-111), so the item is silently revalued as ordinary standard goods (-1/-2 instead of the required -2/-4). The item is being mispriced today, on every run. Prescribed: FIX rather than OMIT, because the requirement is stated in the application's own specification and a matching item exists in live inventory; recording it as OMIT would let a downstream line silently accept the current behaviour as correct. NOTE ON REQ-003: BR-MISSING-001 warns that this is the first multi-step degradation in the system and that a naive fix subtracting 2 without a clamp drives quality to -1 from quality 1 — which is precisely why REQ-003 converts the legacy floor guard into a clamp. SME CONFIRMATION REQUIRED, on two points named by BR-MISSING-001 and structural-analysis.json open_questions[2]: (a) whether this is the kata's intended unfinished state or a live defect, and (b) whether the rule matches by exact name, by 'Conjured' prefix, or — as REQ-017 prescribes — by explicit category attribute.",
+      "related_requirements": ["REQ-002", "REQ-003", "REQ-013", "REQ-017"]
+    },
+    {
+      "id": "REQ-019",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-002",
+      "description": "The system MUST validate every inventory item at the system boundary, before it is admitted for revaluation, and MUST reject any item that violates a stated constraint with a diagnostic naming the item, the attribute and the violated constraint. The inventory item model MUST enforce its own invariants so that no code path can construct or mutate an item into an invalid state. Inner layers MUST trust boundary-validated input and MUST NOT re-validate it.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A quality above the maximum is rejected for a non-legendary item",
+          "given": "An inventory source supplying an item with category = STANDARD and quality = 9999",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code QUALITY_OUT_OF_RANGE naming the permitted range 0..50"
+        },
+        {
+          "criterion": "A negative quality is rejected",
+          "given": "An inventory source supplying an item with category = STANDARD and quality = -100",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code QUALITY_OUT_OF_RANGE"
+        },
+        {
+          "criterion": "A missing display name is rejected",
+          "given": "An inventory source supplying an item with no display name",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code ITEM_NAME_REQUIRED"
+        },
+        {
+          "criterion": "An invalid state cannot be reached by mutation",
+          "given": "An admitted, valid inventory item",
+          "when": "Any caller attempts to set quality to 51 on a STANDARD item",
+          "then": "The attempt fails with a domain error; no invalid item instance is observable"
+        },
+        {
+          "criterion": "Validation is not duplicated in inner layers",
+          "given": "The implemented system",
+          "when": "The rules engine is inspected",
+          "then": "The rules engine contains no range or null re-validation of admitted items; it relies on the boundary contract"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-018",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 117,
+        "line_range": "115-122",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:19", "src/GildedRose.Console/Program.cs:119", "src/GildedRose.Console/Program.cs:121"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-011",
+      "anomaly_details": "Legacy: BR-018, IL-019 and QR-008 (unguarded-invariants) record that Item is a three-property POCO with public setters, no constructor guard, no validation and no range check. Quality and SellIn are plain System.Int32, so quality -100 or 9999 constructs cleanly and is never normalized; a default-constructed Item has a null name, and every business constraint lives in the update loop rather than in the type. structural-analysis.json records this as coupling_indicators.shared_mutable_state_through_public_setters and notes the documented invariants 'are enforced nowhere but inside this one loop', so any second writer or any reordering of the loop can violate them undetectably. Prescribed: boundary validation plus a self-enforcing model. This also implements the redundant_validation resolution — validation is consolidated at the boundary and inner layers trust it — replacing the legacy pattern of re-testing the same floor and ceiling predicates at six separate mutation sites. NOTE: README.md:36-40 forbids altering the legacy Item class, so in the legacy codebase validation had to sit outside it; that constraint does not bind the modernized model.",
+      "related_requirements": ["REQ-003", "REQ-007", "REQ-008", "REQ-017", "REQ-020"]
+    },
+    {
+      "id": "REQ-020",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-002",
+      "description": "The system MUST reject, with an explicit diagnostic, any inventory item whose category cannot be determined, and MUST NOT silently apply default STANDARD pricing to an item of unknown, absent or unrecognised classification. Every rejection MUST be recorded so that a mispriced or unclassifiable item leaves a trace.",
+      "acceptance_criteria": [
+        {
+          "criterion": "An item with no category is rejected, not defaulted",
+          "given": "An inventory source supplying an item with a display name but no category attribute",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code ITEM_CATEGORY_REQUIRED, the rejection is recorded per REQ-027, and the item's quality is not changed"
+        },
+        {
+          "criterion": "A null display name is rejected rather than silently depreciated",
+          "given": "An inventory source supplying an item with a null display name and category = STANDARD",
+          "when": "The item is admitted for revaluation",
+          "then": "The item is rejected with error code ITEM_NAME_REQUIRED and no depreciation is applied"
+        },
+        {
+          "criterion": "A rejection does not abort the whole cycle",
+          "given": "An inventory of 6 valid items and 1 unclassifiable item",
+          "when": "One revaluation cycle is executed",
+          "then": "The 6 valid items are revalued, the cycle reports 6 revalued and 1 rejected, the rejection is recorded with the item identifier and reason, and the cycle exits with a non-zero-severity warning status"
+        },
+        {
+          "criterion": "Rejections are observable",
+          "given": "A cycle in which 1 item was rejected",
+          "when": "The cycle's output and audit record are read",
+          "then": "Both name the rejected item and the reason; no rejection is silent"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-023",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 41,
+        "line_range": "41-50",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:85-95", "src/GildedRose.Console/Program.cs:117"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-010",
+      "anomaly_details": "Legacy: BR-023 and IL-021 record that the name dispatch has no default-case diagnostic. Because every special-category test is an equality comparison and C# string equality is null-safe, an item with a null, empty or unrecognised name raises no exception — it simply satisfies every 'is not a special item' test and falls through to the standard-goods depreciation path. A default-constructed Item (name null, sell_in 0, quality 0) is processed as ordinary merchandise, and because there is no logging anywhere in the application a mispriced item leaves no trace at all. Prescribed: explicit rejection with a recorded diagnostic. SME CONFIRMATION REQUIRED per BR-023: a business owner must confirm that unknown merchandise should be REJECTED rather than depreciated by default — this requirement changes observable behaviour for any unclassified item, which is the deliberate correction of a silent-failure defect, not a like-for-like carry-forward.",
+      "related_requirements": ["REQ-017", "REQ-019", "REQ-025", "REQ-027"]
+    },
+    {
+      "id": "REQ-021",
+      "type": "functional",
+      "priority": "should",
+      "module_hint": "MOD-002",
+      "description": "The system MUST bound sell_in below rather than decrementing it without limit, and MUST flag an item as archival-eligible once it has been past its sell-by date and at quality 0 for a configurable number of consecutive cycles. The system MUST NOT permit an integer overflow of sell_in.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Sell-in does not decrement without limit",
+          "given": "A STANDARD item with sell_in = 0 and the configured sell_in floor of -365",
+          "when": "500 revaluation cycles are executed",
+          "then": "sell_in = -365 and no overflow, wraparound or error occurs"
+        },
+        {
+          "criterion": "A long-expired worthless item becomes archival-eligible",
+          "given": "A STANDARD item with sell_in = -1 and quality = 0, and the archival threshold configured at 30 cycles",
+          "when": "30 further revaluation cycles are executed",
+          "then": "The item is flagged archival_eligible = true and appears in the cycle's archival-candidate report"
+        },
+        {
+          "criterion": "Flagging does not itself remove or revalue the item",
+          "given": "An item flagged archival_eligible = true",
+          "when": "One further revaluation cycle is executed",
+          "then": "The item is still present, its quality is unchanged at 0, and no deletion occurs without an explicit separate archival action"
+        },
+        {
+          "criterion": "The behavioural boundary is unaffected",
+          "given": "A STANDARD item with sell_in = 0 and quality = 10",
+          "when": "One revaluation cycle is executed",
+          "then": "sell_in = -1 and quality = 8, identical to legacy behaviour; the floor and archival flag change nothing within the behaviourally meaningful range"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-022",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 80,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:83", "src/GildedRose.Console/Program.cs:119"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-012",
+      "anomaly_details": "Legacy: BR-022 (severity advisory) and IL-020 record that only the SIGN of sell_in is ever tested, never its magnitude, so it falls indefinitely (-1, -2, -365) with no floor, no archival path and no overflow guard — the only theoretical limit is int.MinValue. Nothing removes, archives or writes off a long-expired item. BR-022 also warns that a downstream store using a narrower integer type would overflow where this code does not. Priority is 'should' rather than 'must' because BR-022 is the only advisory-severity rule in the catalogue and the unbounded decrement is unreachable in practice. SME CONFIRMATION REQUIRED: the sell_in floor value and the archival threshold are configurable parameters with no legacy precedent — the values in the acceptance criteria are illustrative defaults requiring business-owner ratification, and the archival ACTION itself is deliberately left out of scope here (see open question on write-off ownership).",
+      "related_requirements": ["REQ-012", "REQ-019"]
+    },
+    {
+      "id": "REQ-022",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-003",
+      "description": "The system MUST obtain the inventory to be revalued from an external, configurable source supplied at invocation, and MUST NOT embed the inventory as hardcoded seed data in the application. The system MUST report the source it used and the number of items it read.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The inventory is supplied externally",
+          "given": "An external inventory source containing 6 items",
+          "when": "A revaluation cycle is invoked against that source",
+          "then": "All 6 items are read and revalued, and the cycle reports the source identifier and item count 6"
+        },
+        {
+          "criterion": "A different inventory yields a different run without a code change",
+          "given": "An external inventory source containing 250 items of mixed categories",
+          "when": "A revaluation cycle is invoked against that source",
+          "then": "All 250 items are revalued; no application code or recompilation was required to change the inventory"
+        },
+        {
+          "criterion": "An unreachable source fails fast with a diagnostic",
+          "given": "A configured inventory source that cannot be reached",
+          "when": "A revaluation cycle is invoked",
+          "then": "The cycle fails with error code INVENTORY_SOURCE_UNAVAILABLE naming the source, exits with a non-zero status, and makes no partial modification"
+        },
+        {
+          "criterion": "No inventory literal remains in the application",
+          "given": "The implemented system",
+          "when": "The source is searched for the five legacy seeded item names",
+          "then": "None appears in application code; any occurrence is confined to test fixtures or migration data"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-019",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 14,
+        "line_range": "14-29",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:7", "src/GildedRose.Console/Program.cs:8"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-019",
+      "anomaly_details": "Legacy: BR-019 records that the inventory is not loaded from anywhere — six items with fixed names, sell_in and quality values are constructed inline in Main as an object-initializer list assigned to a private field, so the application can only ever revalue those six items and every run starts from the same values. The `args` parameter is declared at Program.cs:8 and never read, which structural-analysis.json duplication_map.dead_code records as the application's only dead code and QR-007 counts as its dead-code smell: command-line input cannot supply an inventory. structural-analysis.json's 'inventory-run-host' decomposition boundary states directly that 'the six hard-coded items at Program.cs:16-26 make the run non-parameterisable'. Prescribed: an external configurable source. The unread `args` parameter is resolved as OMIT (ANOM-019) — it is not carried forward as a vestigial unused parameter; parameterisation is delivered by an explicit invocation contract instead.",
+      "related_requirements": ["REQ-001", "REQ-023", "REQ-025"]
+    },
+    {
+      "id": "REQ-023",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-003",
+      "description": "The system MUST accept an explicit business date for each revaluation cycle, MUST record that a cycle has been completed for that business date, and MUST refuse to apply a second cycle for a business date already completed unless an explicit, recorded override is supplied. One revaluation cycle MUST correspond to exactly one business date.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A cycle records its business date",
+          "given": "No cycle has been run for business date 2026-10-01",
+          "when": "A revaluation cycle is invoked for business date 2026-10-01",
+          "then": "The cycle completes, and the run record shows business_date = 2026-10-01 with status COMPLETED"
+        },
+        {
+          "criterion": "A repeat run for the same business date is refused",
+          "given": "A cycle has already completed for business date 2026-10-01",
+          "when": "A revaluation cycle is invoked again for business date 2026-10-01 with no override",
+          "then": "The invocation is refused with error code CYCLE_ALREADY_COMPLETED, no item is modified, and the refusal is recorded"
+        },
+        {
+          "criterion": "An override is permitted but recorded",
+          "given": "A cycle has already completed for business date 2026-10-01",
+          "when": "A revaluation cycle is invoked for 2026-10-01 with an explicit override and an operator identity",
+          "then": "The cycle runs, and the run record shows override = true with the operator identity and the justification supplied"
+        },
+        {
+          "criterion": "Successive business dates advance the inventory one cycle each",
+          "given": "A STANDARD item with sell_in = 10 and quality = 20",
+          "when": "Cycles are run for business dates 2026-10-01 and 2026-10-02",
+          "then": "sell_in = 8 and quality = 18"
+        },
+        {
+          "criterion": "A failed cycle can be retried without double application",
+          "given": "A cycle for business date 2026-10-01 that failed partway through",
+          "when": "The cycle is retried for business date 2026-10-01",
+          "then": "The end state is identical to a single successful cycle for that date; no item has had two cycles of adjustment applied"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-020",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 31,
+        "line_range": "31-35",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:7", "src/GildedRose.Console/Program.cs:14-29"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-013",
+      "anomaly_details": "Legacy: BR-020 (severity critical), IL-016 and IL-017 record that the effective business calendar IS the process lifecycle. No DateTime, timer, scheduler or date parameter exists anywhere; 'a day' is defined purely as one call to UpdateQuality; 'the sell-by date' is a countdown integer with no calendar anchor, so nothing can answer which real-world date an item expires on. There is no run-date record, no already-processed check and no lock, so running the revaluation twice advances the inventory two days, and IL-017 warns that in any variant of this system that DID persist its results a retry after a partial failure would double-apply a day of depreciation with no way to detect it — which is exactly the variant REQ-025 prescribes. Prescribed: an explicit business date plus an idempotence guard. SME CONFIRMATION REQUIRED per BR-020 and IL-016/IL-017: a business owner must confirm whether a real inventory store exists outside this repository, and who may authorise an override.",
+      "related_requirements": ["REQ-001", "REQ-022", "REQ-024", "REQ-025", "REQ-026", "REQ-027"]
+    },
+    {
+      "id": "REQ-024",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-003",
+      "description": "The system MUST complete a revaluation cycle and terminate without any interactive input, and MUST signal the outcome of the cycle through its process exit status. The system MUST NOT block on console input, and MUST NOT require an interactive terminal in order to complete.",
+      "acceptance_criteria": [
+        {
+          "criterion": "A cycle completes unattended",
+          "given": "The system deployed as a container task with no attached TTY and stdin closed",
+          "when": "A revaluation cycle is invoked",
+          "then": "The cycle completes and the process exits within its configured timeout; it does not hang"
+        },
+        {
+          "criterion": "Success is signalled by exit status",
+          "given": "A valid inventory and an uncompleted business date",
+          "when": "A revaluation cycle is invoked",
+          "then": "The process exits with status 0"
+        },
+        {
+          "criterion": "Failure is signalled by exit status",
+          "given": "A configured inventory source that cannot be reached",
+          "when": "A revaluation cycle is invoked",
+          "then": "The process exits with a non-zero status distinguishable from success"
+        },
+        {
+          "criterion": "No interactive input call remains",
+          "given": "The implemented system",
+          "when": "The source is searched for blocking console-input calls",
+          "then": "No blocking read of console input exists on the revaluation execution path"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-021",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 33,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:8-35"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-014",
+      "anomaly_details": "Legacy: BR-021 records that after the revaluation Main calls System.Console.ReadKey() and waits for a human keystroke before exiting, with no timeout and no non-interactive fallback. A nightly inventory process therefore cannot complete unattended: under a scheduler or in a container with no console it blocks indefinitely or throws InvalidOperationException depending on host, and the scheduled window is missed. structural-analysis.json's 'inventory-run-host' decomposition boundary states that 'the blocking System.Console.ReadKey() at Program.cs:33 makes the process non-terminating under an orchestrator', and names this as one of two structural facts that must change for any target-state deployment. Prescribed: unattended completion with an exit-status contract. BR-021 notes the revaluation itself completes before the block, so removing it does not alter any calculation — only the ability to exit cleanly.",
+      "related_requirements": ["REQ-023", "REQ-025"]
+    },
+    {
+      "id": "REQ-025",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-003",
+      "description": "The system MUST persist the revalued state of every item at the end of a revaluation cycle, and MUST emit a machine-readable summary of the cycle reporting the business date, the items read, the items revalued, the items rejected, and the before-and-after sell_in and quality of every item changed. The outcome of a revaluation cycle MUST NOT be discarded at process exit.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Revalued state survives the process",
+          "given": "A STANDARD item with sell_in = 10 and quality = 20 in the configured store",
+          "when": "A revaluation cycle completes and the process exits, and the store is then read by a separate process",
+          "then": "The item reads sell_in = 9 and quality = 19"
+        },
+        {
+          "criterion": "The cycle emits a machine-readable summary",
+          "given": "An inventory of 6 valid items and 1 unclassifiable item",
+          "when": "A revaluation cycle completes",
+          "then": "A machine-readable summary is emitted naming business_date, items_read = 7, items_revalued = 6, items_rejected = 1, and a per-item before/after record for each of the 6 changed items"
+        },
+        {
+          "criterion": "A failed cycle leaves no partial state",
+          "given": "A cycle that fails after revaluing 3 of 6 items",
+          "when": "The store is read after the failure",
+          "then": "No item shows a partially applied cycle; the store is either fully at the pre-cycle state or fully at the post-cycle state"
+        },
+        {
+          "criterion": "Discarded intermediates are not emitted",
+          "given": "A BACKSTAGE_PASS item with sell_in = 0 and quality = 20",
+          "when": "A revaluation cycle completes and the summary is read",
+          "then": "The summary reports a single transition from quality 20 to quality 0; no intermediate value of 23 appears anywhere in the emitted output"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "IL-018",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 10,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:33-35", "src/GildedRose.Console/Program.cs:7"],
+        "discovery_artifact": "business-logic",
+        "related_findings": ["BR-020", "IL-012"]
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-015",
+      "anomaly_details": "Legacy: IL-018 records that the only console output in the entire application is the literal 'OMGHAI!', printed BEFORE the calculation runs. No quality value is ever printed, returned, written or persisted, and the in-memory list dies with the process — 'the business output of the nightly revaluation is, today, unobservable'. BR-020 confirms no value is printed, returned, written or persisted. structural-analysis.json's database-schema-summary records that all application state is an in-memory IList<Item> created at Program.cs:14-27 and lost at process exit, and that the application therefore has 'no persistence to migrate — but equally no audit trail, no durability and no record of a night's inventory run'. Prescribed: durable state plus a machine-readable cycle summary. The fourth acceptance criterion is the guard IL-012 asks for: because emission now exists, the discarded concert-day intermediate must not become observable, which is why REQ-015 forbids computing it.",
+      "related_requirements": ["REQ-015", "REQ-020", "REQ-022", "REQ-023", "REQ-027"]
+    },
+    {
+      "id": "REQ-026",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-004",
+      "description": "The system MUST authenticate the identity invoking a revaluation cycle and MUST authorize that identity against an explicit permission to revalue inventory before any item is modified. An unauthenticated or unauthorized invocation MUST be refused, MUST modify no item, and MUST be recorded.",
+      "acceptance_criteria": [
+        {
+          "criterion": "An authorized identity may revalue",
+          "given": "An authenticated identity holding the inventory:revalue permission",
+          "when": "A revaluation cycle is invoked",
+          "then": "The cycle proceeds, and the run record names the invoking identity"
+        },
+        {
+          "criterion": "An unauthenticated invocation is refused",
+          "given": "An invocation carrying no credential",
+          "when": "A revaluation cycle is invoked",
+          "then": "The invocation is refused with error code UNAUTHENTICATED, no item is modified, and the refusal is recorded with its source"
+        },
+        {
+          "criterion": "An authenticated but unauthorized identity is refused",
+          "given": "An authenticated identity NOT holding the inventory:revalue permission",
+          "when": "A revaluation cycle is invoked",
+          "then": "The invocation is refused with error code FORBIDDEN, no item is modified, and the refusal is recorded with the identity"
+        },
+        {
+          "criterion": "The override of REQ-023 requires its own permission",
+          "given": "An authenticated identity holding inventory:revalue but NOT inventory:revalue:override",
+          "when": "A revaluation cycle is invoked for an already-completed business date with an override flag",
+          "then": "The invocation is refused with error code FORBIDDEN and no item is modified"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-024",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 37,
+        "line_range": "37-111",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:5", "src/GildedRose.Console/Program.cs:7", "structural-analysis.json:interface-inventory.interfaces[0].authentication"],
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-016",
+      "anomaly_details": "Legacy: BR-024 (the catalogue's single authorization-category rule) records that there is NO authorization rule of any kind — no user, role, permission check, approval step or audit trail governs revaluation of the entire inventory. The only access limit is accidental: IL-022 records that UpdateQuality is public on an INTERNAL class reading a private field, so its effective accessibility is assembly-internal. structural-analysis.json's interface-inventory states authentication as 'none — no authentication, authorization or identity check of any kind exists in the application; the only access control is OS-level permission to run the executable', and its open_questions[9] confirms greps for Authenticate, Login, Identity and Principal over all tracked files returned nothing. BR-024's own regulatory note records the absence of NIST 800-53 AC-3 access enforcement. Prescribed: explicit authentication and authorization. BR-024 test_hints warn that this means ADDING a capability that does not exist today rather than modifying one, and that 'making the class or field more accessible during modernization would widen an unguarded mutation surface' — which is why REQ-028's required public seam is paired with this requirement.",
+      "related_requirements": ["REQ-023", "REQ-027", "REQ-028"]
+    },
+    {
+      "id": "REQ-027",
+      "type": "functional",
+      "priority": "must",
+      "module_hint": "MOD-004",
+      "description": "The system MUST record an immutable audit entry for every change to an item's sell_in or quality, capturing the item identity, the business date, the invoking identity, the rule that caused the change, and the before and after values. The system MUST be able to answer, for any item, why it holds its current valuation.",
+      "acceptance_criteria": [
+        {
+          "criterion": "Every change is attributable to a rule",
+          "given": "A BACKSTAGE_PASS item with sell_in = 5 and quality = 20",
+          "when": "One revaluation cycle completes and the audit record is read",
+          "then": "The record shows quality 20 to 23 and sell_in 5 to 4, attributed to REQ-009, REQ-010, REQ-011 and REQ-012, with the business date and invoking identity"
+        },
+        {
+          "criterion": "A prior valuation is recoverable",
+          "given": "An item that has been revalued across 10 business dates",
+          "when": "The audit record is queried for business date 5",
+          "then": "The item's sell_in and quality as at that date are returned"
+        },
+        {
+          "criterion": "Audit entries are immutable",
+          "given": "An existing audit entry",
+          "when": "Any caller attempts to modify or delete it",
+          "then": "The attempt is refused and the refusal is itself recorded"
+        },
+        {
+          "criterion": "Rejections and refusals are audited, not only successes",
+          "given": "An unauthorized invocation and an unclassifiable item",
+          "when": "The audit record is read",
+          "then": "Both the authorization refusal per REQ-026 and the item rejection per REQ-020 appear as entries"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "IL-025",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 37,
+        "line_range": "37-111",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:39-110"],
+        "discovery_artifact": "business-logic",
+        "related_findings": ["BR-024", "BR-020"]
+      },
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-017",
+      "anomaly_details": "Legacy: IL-025 records that the revaluation mutates Quality at 13 sites and SellIn at 1 site with no before/after capture, no logging framework, no event and no versioning — 'once a day is applied, the previous valuation is unrecoverable; there is no way to answer why an item is worth what it is worth'. BR-024 records the same absence of any approval step, before/after record or log entry, and its regulatory note flags the absence of NIST 800-53 AU-2/AU-12 audit generation as a control-coverage observation. IL-021 and BR-023 add that because there is no logging anywhere, a mispriced item leaves no trace. Prescribed: an immutable per-change audit record. Note that this requirement is what makes the ANOM-007 resolution in REQ-015 load-bearing rather than cosmetic: once every change is audited, the legacy compute-then-discard churn would produce spurious audit entries for an already-worthless pass.",
+      "related_requirements": ["REQ-015", "REQ-020", "REQ-023", "REQ-025", "REQ-026"]
+    },
+    {
+      "id": "REQ-028",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-001",
+      "description": "The system MUST expose the inventory revaluation rules through a public, independently invocable interface that accepts an inventory as a parameter and is callable from a separate assembly or module, without requiring the process entry point. The rules MUST NOT be reachable only from within the hosting executable.",
+      "acceptance_criteria": [
+        {
+          "criterion": "The rules are callable from a separate test assembly",
+          "given": "A test project that references only the rules module and not the host",
+          "when": "The revaluation operation is invoked with a supplied inventory",
+          "then": "The inventory is revalued and returned; no host entry point is involved"
+        },
+        {
+          "criterion": "The rules accept inventory as a parameter rather than reading private state",
+          "given": "The implemented rules module",
+          "when": "The revaluation operation's signature is inspected",
+          "then": "The inventory is an explicit parameter; the operation reads no private field of a host type"
+        },
+        {
+          "criterion": "The host depends on the rules module, not the reverse",
+          "given": "The implemented system",
+          "when": "The module dependency graph is inspected",
+          "then": "The host module depends on the rules module and the rules module depends on neither the host nor any console or presentation concern"
+        },
+        {
+          "criterion": "Widening does not widen the mutation surface",
+          "given": "The public rules interface",
+          "when": "It is invoked without an authorized identity",
+          "then": "The invocation is refused per REQ-026; the public seam does not bypass authorization"
+        }
+      ],
+      "traces_to": {
+        "discovery_finding": "IL-022",
+        "source_file": "src/GildedRose.Console/Program.cs",
+        "source_line": 37,
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:5", "src/GildedRose.Console/Program.cs:7", "src/GildedRose.Tests/GildedRose.Tests.csproj:42-58"],
+        "discovery_artifact": "structural-analysis",
+        "related_findings": ["BR-024", "QR-002", "IL-026"]
+      },
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-021",
+      "anomaly_details": "Legacy: IL-022 records that UpdateQuality is declared public but sits on the INTERNAL class Program and operates on the private instance field Items, so its effective accessibility is assembly-internal and it takes no parameters — 'the business rules cannot be invoked, tested or reused by any other assembly, which is precisely why the test project, though present, cannot exercise them'. structural-analysis.json records the same as coupling_indicators.test_assembly_not_wired_to_production_code at severity high, noting the missing edge 'cannot simply be added; the rules must first be made reachable (public/extracted) before any test can call them', and names 'inventory-rules-domain' as the CUT FIRST boundary: 'this is the only boundary that unblocks the others'. QR-002 records the god-class smell over the same structure. Prescribed: an independently invocable rules module. This requirement is the structural precondition for NFR-001 — without it no characterization test can exist.",
+      "related_requirements": ["REQ-001", "REQ-026"]
+    }
+  ],
+  "totals": {
+    "total": 28,
+    "by_type": {
+      "functional": 20,
+      "constraint": 8,
+      "non-functional": 0
+    },
+    "by_priority": {
+      "must": 27,
+      "should": 1,
+      "could": 0
+    },
+    "by_module": {
+      "MOD-001": 18,
+      "MOD-002": 4,
+      "MOD-003": 4,
+      "MOD-004": 2
+    },
+    "with_anomaly_resolution": 24,
+    "by_anomaly_resolution": {
+      "FIX": 11,
+      "MAKE_EXPLICIT": 8,
+      "CONSOLIDATE": 3,
+      "OPTIMIZE": 1,
+      "RENAME": 1
+    },
+    "without_anomaly_resolution": 4,
+    "requirements_with_evidence": 28,
+    "requirements_without_evidence": 0,
+    "counting_note": "by_module counts module_hint values directly and sums to 28. Two requirements sit under a module other than that of the rule they derive from, deliberately: REQ-017 (derived from BR-017, a rules-engine rule) is assigned to MOD-002 because item categorization is a domain-model concern in the prescribed design, and REQ-028 (derived from IL-022, a structural finding) is assigned to MOD-001 because the required public seam is a property of the rules module. The 4 requirements carrying no anomaly_resolution are REQ-002, REQ-006, REQ-009 and REQ-012 — the four legacy rules that are prescribed forward unchanged."
+  }
+}

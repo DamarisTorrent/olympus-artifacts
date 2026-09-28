@@ -1,0 +1,797 @@
+{
+  "$schema": "olympus:artifact:discovery-synthesis:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "synthesis_pass": "discovery-synthesis",
+  "generated": "2026-09-28T19:05:00Z",
+  "scope_caveat": "GOVERNING-PROFILE / APPLICATION-IDENTITY DISCREPANCY, recorded and NOT adopted. The authoritative governing profile for this synthesis is `faa`, declared by the application's own record, and this document is written under it. Every one of the eight upstream Discovery passes independently observed that the analysed source tree contains no aviation, NAS, certification or FAA business content of any kind: it is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata', a 172-line C# console application modelling a retail inn's nightly inventory revaluation. Two further attributions conflict with the declared profile and with each other: src/GildedRose.Console/Properties/AssemblyInfo.cs:11 and :13 assert AssemblyCompany 'DSHS' and Copyright 'DSHS 2015', and an untracked fixtures/default.json in the source root describes a third, fabricated application. The declared `faa` binding WINS and no artifact value was changed to match the code's apparent origin; the discrepancy is carried as a finding (SYN-HCF-001) and routed as the leading review ask. Every persona, adoption, capability, domain-boundary and criticality judgement in this synthesis is conditional on that question being resolved.",
+  "input_inventory": [
+    {
+      "pass": "catalog",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json",
+      "justification": "Application catalog entry consumed in full. Supplied identity, tech fingerprint, size metrics and complexity_tier ('simple'), which is echoed verbatim into business-criticality.json and NOT recomputed here."
+    },
+    {
+      "pass": "structural",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json",
+      "justification": "Consumed in full, including its embedded database-schema-summary and interface-inventory blocks. Its sibling sub-artifacts were also staged and read: call-graph.json, data-flow-trace.json, db-archaeology.json, identity-landscape.json, language-detection.json, sqlserver-object-inventory.json and tiff-corpus-assessment.json. This pass supplies the module spine (gildedrose-console, gildedrose-tests) that every other pass is joined onto."
+    },
+    {
+      "pass": "structural-specialist-dotnet",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/structural-analysis/discovery-patterns-dotnet/dotnet-fingerprint.json",
+      "justification": "The tech-stack specialist selected by the C#/.NET fingerprint. Present and staged."
+    },
+    {
+      "pass": "business-rules",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/business-logic.json",
+      "justification": "Consumed in full (25 rules: BR-001..BR-024 plus BR-MISSING-001), together with its detail artifacts state-machines.json (5 reconstructed machines) and implicit-logic.json (27 implicit behaviours, IL-001..IL-027). Note: this input was NOT delivered paged — no business-logic.index.json or per-module slice directory was staged — so the whole document was read directly and all 25 rules are accounted for against totals.total_rules."
+    },
+    {
+      "pass": "quality-risk",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/quality-risk.json",
+      "justification": "Consumed in full together with its escalation-record.json (ESC-001). PARTIAL BY ITS OWN DECLARATION: two of the four debt-rubric inputs (vulnerability_count, churn_rate) were unmeasurable, so the pass excluded rather than zero-defaulted them. The vulnerability surface of 12 NuGet dependencies is UNASSESSED, not clean."
+    },
+    {
+      "pass": "ux-accessibility",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/ux-accessibility.json",
+      "justification": "Present and consumed, but INCOMPLETE BY ITS OWN DECLARATION: the accessibility-checker sub-skill could not be composed because the required Sub-Skill Output Contract (exact output path plus schema) was absent from that pass's dispatch. Its accessibility_findings array is therefore empty by omission of a checker run, NOT a verdict of zero defects, and its gate_decision is 'undetermined'. Any accessibility-dependent conclusion in this synthesis is capped at medium confidence for that reason (SYN-MCF-005)."
+    },
+    {
+      "pass": "data-domains",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/data-domains.json",
+      "justification": "Consumed in full (2 domains, 5 logical entities, 3 arbitration decisions, 4 carried-forward boundary violations). Derived first-hand from source because no inherited domain artifact and no database-schema summary were available to that pass."
+    },
+    {
+      "pass": "shared-database",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/shared-db-analysis.json",
+      "justification": "Consumed in full together with decomposition-strategy.json. Reports a measured negative result (zero databases, zero clusters, zero co-waving constraints) verified first-hand at its own dispatch rather than inherited."
+    },
+    {
+      "pass": "capability",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/capability-catalog.json",
+      "justification": "Present and consumed, but PRODUCED FROM AN INCOMPLETE INPUT SET: the pass records that data-domains.json — which it names as the methodology's strongest capability signal — was absent from its dispatch. data-domains.json IS present in this synthesis's input set, so the corroboration that pass could not perform is performed here, and the resulting disagreement is recorded as CONTRA-002. The pass's single capability is carried at its own 0.4 confidence (SYN-LCF-001)."
+    },
+    {
+      "pass": "compliance-citations",
+      "status": "present",
+      "artifact_ref": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/compliance-citations.json",
+      "justification": "Profile-declared additional pass. Consumed in full: zero citations found across the 22 git-tracked application files. The pass documents that a diagnostic scan including the untracked Discovery skill-bundle directories produced 75 hits purely from its own reference material, which were correctly excluded."
+    }
+  ],
+  "summary": {
+    "system_classification": "Single-assembly .NET Framework 4.5 console monolith (archetype 'cli'), 172 LOC of C# across 2 modules and 22 git-tracked files. One human-facing interface (an interactive console entry point), zero HTTP endpoints, zero machine-facing interfaces, zero integrations, zero databases, zero persistence, zero identity model and zero regulatory citations. The entire business capability is a 75-line nightly inventory-revaluation rules engine (Program.cs:37-111) carrying 25 extracted business rules, of which 10 are critical and 9 are implicit, guarded by exactly zero executable tests. Catalog complexity_tier is 'simple'; the quality-risk pass rates overall risk HIGH. Those are orthogonal axes and this synthesis does not combine them.",
+    "narrative": "Ten Discovery passes were available and all ten were consumed; nothing in the contract-declared input set was absent. The merged picture is unusually coherent because the application is unusually small: one module carries 160 of 172 lines, and that module carries the entry point, the complete rules engine and the domain model in a single file, class and namespace. Five genuine cross-pass contradictions were found and are recorded rather than resolved away — one about whether the application is human-facing at all, one about how many capabilities it has, one about whether the unimplemented 'Conjured' rule is a live defect or stale documentation, and two numeric disagreements (cyclomatic complexity 20 vs ~17, method extent 75 vs 74 lines) that matter only because downstream extraction cites those figures. The dominant finding is not a defect in the code but a question about the subject: every single pass independently observed that this source tree carries no FAA content, and that question is unresolved. It is the leading review ask because if the analysis target is wrong then every other artifact in the gate package is scoped wrong while remaining internally consistent. The second dominant finding is structural: there is no seam. The rules engine is an instance method on an internal class reading a private field, so it is mechanically unreachable from any other assembly — which is simultaneously why test coverage is a provable 0%, why the test project's presence is misleading rather than reassuring, and why the first target-architecture move must be to create a boundary that does not yet exist. The third is that there is nothing to migrate: no database, no file, no queue, no output of any kind. All state is an in-memory list discarded at process exit, and the only console write is a banner emitted before the calculation runs. For this application 'modernization' is almost entirely new construction, which is why 22 of the 25 consolidated findings are flagged architecturally significant — a high ratio that reflects the subject, not an inflated flagging discipline.",
+    "high_confidence_findings": [
+      {
+        "id": "SYN-HCF-001",
+        "statement": "The governing profile declared for this application is `faa`, but the analysed source tree contains no aviation, NAS, certification or FAA business content: it is the publicly published, MIT-licensed 'Gilded Rose Refactoring Kata', and the shipped assembly metadata asserts a third-party 'DSHS' company and copyright. Whether application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system is unconfirmed, and this bears on whether the FAA-specific lens applied by every pass is the correct lens at all.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — independently observed and independently flagged by all eight substantive passes, with no pass dissenting",
+        "contributing_passes": ["catalog", "structural", "business-rules", "quality-risk", "ux-accessibility", "data-domains", "shared-database", "capability", "compliance-citations"],
+        "source_findings": [
+          "catalog.json:open_questions",
+          "catalog.json:business_domain",
+          "structural-analysis.json:open_questions",
+          "quality-risk.json:risk_summary.top_risk_drivers",
+          "ux-accessibility.json:scope_caveat",
+          "data-domains.json:method_notes.profile_note",
+          "shared-db-analysis.json:open_questions",
+          "capability-catalog.json:open_questions",
+          "compliance-citations.json:summary.total_citations"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-002",
+        "statement": "Executable test coverage of the business-rules engine is a structurally proven 0%, not an unmeasured gap: GildedRose.Tests.csproj declares no <ProjectReference> to GildedRose.Console (a repository-wide grep for ProjectReference returns nothing) and its single test method asserts Assert.True(true), so it is mechanically incapable of executing any statement in the production assembly. No behavioural baseline exists for any transformation to be verified against.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — four passes, each with independent structural evidence; the quality-risk pass rates its own coverage measurement 'high' confidence on a structural proof rather than a tool run",
+        "contributing_passes": ["structural", "quality-risk", "business-rules", "shared-database", "data-domains"],
+        "source_findings": [
+          "quality-risk.json:test_coverage.measurement",
+          "structural-analysis.json:coupling_indicators.test_assembly_not_wired_to_production_code",
+          "IL-026",
+          "RISK-02",
+          "data-domains.json:deployment_coupling_constraints"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-003",
+        "statement": "The application has no database and no persistence of any kind. All state is an in-memory IList<Item> constructed from six compiled-in literals at Program.cs:14-27, mutated once, and discarded at process exit. The empty schema, cluster and table inventories are measured negative results, independently verified by four passes, not unfinished walks — so there is no data to migrate and any target design must ADD the persistence, retention and egress this application never had.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — five passes, and the shared-database pass re-derived it first-hand at its own dispatch rather than inheriting the negative",
+        "contributing_passes": ["structural", "shared-database", "data-domains", "catalog", "ux-accessibility"],
+        "source_findings": [
+          "structural-analysis.json:database-schema-summary",
+          "shared-db-analysis.json:cross_application_sharing_summary",
+          "BV-GRK-003",
+          "catalog.json:size_metrics.table_count_note",
+          "ux-accessibility.json:adoption_baseline.telemetry_source"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-004",
+        "statement": "There is no seam. One 124-line file holds the process entry point, the seed data, the complete business-rules engine and the domain model in a single class and namespace, and UpdateQuality is an instance method on the INTERNAL class Program that reads the private field Items — so its effective accessibility is assembly-internal and it takes no parameters. The rules cannot be invoked, tested, reused or replaced from any other assembly, and any decomposition begins by inventing boundaries that do not exist yet.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — four passes citing the same three lines (Program.cs:5, :7, :37) from independent analyses",
+        "contributing_passes": ["structural", "business-rules", "quality-risk", "shared-database"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.god_type_single_file_application",
+          "IL-022",
+          "quality-risk.json:risk_summary.highest_risk_modules",
+          "RISK-02",
+          "business-logic.json:module_summary.gildedrose-console.reachability"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-005",
+        "statement": "The entire business taxonomy is carried by exact, case-sensitive, culture-insensitive whole-string equality against three hardcoded item display names across eight comparison sites, with no category, type or SKU field, no enum, no lookup table and no default-case diagnostic. Business behaviour is therefore coupled to marketing copy: renaming an item, changing its casing or adding a trailing space silently reclassifies it as standard goods and changes its valuation, with no error, log or warning.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — three passes, reaching the same conclusion from a coupling walk, a rule extraction and a data-domain boundary analysis respectively",
+        "contributing_passes": ["structural", "business-rules", "data-domains"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.magic_string_dispatch",
+          "BR-017",
+          "IL-007",
+          "IL-008",
+          "CDR-GRK-001"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-006",
+        "statement": "Both modules target .NET Framework 4.5 / 4.5.1 — Windows-only and past Microsoft end of support — and Main blocks on System.Console.ReadKey() at Program.cs:33, so the process cannot terminate unattended under a scheduler or container. There is no in-place path onto the governing profile's container substrate: any target state requires a runtime port plus removal of the blocking keypress plus parameterisation of the six hardcoded items.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — three passes, and the structural pass independently records the same conclusion as a named decomposition-boundary constraint",
+        "contributing_passes": ["structural", "quality-risk", "business-rules"],
+        "source_findings": [
+          "structural-analysis.json:primary_technology.runtimes",
+          "structural-analysis.json:open_questions",
+          "quality-risk.json:risk_summary.top_risk_drivers",
+          "BR-021",
+          "structural-analysis.json:recommended_decomposition_boundaries"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-007",
+        "statement": "The revaluation of the entire inventory is unauthenticated and unaudited. No user, role, permission check, approval step, session, credential store or directory integration exists anywhere in the tree; greps for identity, principal, authentication, authorization, OAuth, SAML, LDAP, PIV and Login.gov returned only three false positives on xUnit PublicKeyToken attributes. The only access control is OS-level permission to run the executable, and the only accidental limit is the assembly-internal accessibility of the rules method.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — five passes; the identity pass is careful to record this as 'authentication absent by design' rather than 'MFA missing from an authenticated application', which is a materially different risk and is preserved here",
+        "contributing_passes": ["structural", "business-rules", "structural-specialist-identity", "ux-accessibility", "data-domains"],
+        "source_findings": [
+          "BR-024",
+          "IL-025",
+          "identity-landscape.json:identity_models",
+          "identity-landscape.json:assurance_gaps",
+          "structural-analysis.json:interface-inventory",
+          "data-domains.json:heuristics_applied"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-008",
+        "statement": "The algorithm's correctness rests on an undocumented evaluation order: within one iteration, SellIn means days-remaining-at-start-of-day for the backstage threshold rules (read at Program.cs:59 and :67, before the decrement at :80) and days-remaining-at-end-of-day for the expiry rules (read at :83, after it). The literals 11 and 6 express the documented '10 days or less' and '5 days or less' ONLY under that ordering. Hoisting the decrement — the most natural cleanup a developer would make — silently shifts outcomes on boundary days 11, 6 and 0, and no test detects it.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — three passes; the business-rules pass rates this the highest-risk implicit behaviour in the application and the data-domain pass independently identifies Item.SellIn as a read-write ordering-coupling hotspot",
+        "contributing_passes": ["business-rules", "data-domains", "structural"],
+        "source_findings": [
+          "BR-016",
+          "IL-003",
+          "IL-004",
+          "IL-009",
+          "data-domains.json:hub_entities_and_coupling_hotspots",
+          "structural-analysis.json:coupling_indicators.deep_conditional_nesting"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-009",
+        "statement": "The build chain is neither hermetic nor self-describing, and is a supply-chain exposure. build.bat downloads an unpinned NuGet.exe over the public internet when absent and restores from the deprecated nuget.org v2 feed; tasks.ps1 defines no task bodies at all, importing Version/Clean/Build/Test from the out-of-repository psake.net 0.1.3 package, so what Build and Test actually DO is invisible in the repository and was unreadable in the structural walk; and a NuGet.exe binary is vendored into source control.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — two passes, both citing the same build files, and the structural pass separately records the unread psake.net task bodies as a known limit of its own walk",
+        "contributing_passes": ["structural", "quality-risk"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.build_chain_depends_on_out_of_repo_conventions_and_the_public_internet",
+          "quality-risk.json:risk_summary.top_risk_drivers",
+          "structural-analysis.json:open_questions",
+          "structural-analysis.json:duplication_map.vendored_binary_in_source_control"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-010",
+        "statement": "A documented business rule has no implementation: README.md:34 requires that 'Conjured' items degrade in Quality twice as fast as normal items, and a 'Conjured Mana Cake' is seeded into the live inventory at Program.cs:26, but the string 'Conjured' appears nowhere in UpdateQuality and no branch matches it. The item is therefore revalued as ordinary standard goods (-1/day, -2 after the sell-by date) instead of the required -2 and -4, on every run.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — four passes; the absence is only visible by comparing three separate places (the README requirement, the seed list, and the rules method), and each pass found it independently. Note that the passes DISAGREE on its disposition — see CONTRA-003.",
+        "contributing_passes": ["business-rules", "structural", "data-domains", "capability"],
+        "source_findings": [
+          "BR-MISSING-001",
+          "IL-024",
+          "structural-analysis.json:open_questions",
+          "BV-GRK-002",
+          "capability-catalog.json:open_questions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-011",
+        "statement": "There is no regulatory, compliance or sensitive-data surface. Zero statutory or regulatory citations were found across the 22 git-tracked application files; zero of the 25 extracted business rules map to any regulation and zero regulation sections lack an implementation; zero entities bear PII, PHI or FTI; and the quality-risk pass records no regulatory surface flags. The business-rules pass is explicit that the five FAA regulatory sources in the profile (14 CFR Parts 47, 61, 63, 67 and 183) cover aircraft registration, airman certification, medical certification and designee management, and that this application — which revalues retail inn merchandise — matches none of them.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — five passes, each a measured negative rather than an unrun check; the compliance pass documents that a diagnostic scan including its own untracked reference material produced 75 spurious hits, which it correctly excluded",
+        "contributing_passes": ["compliance-citations", "business-rules", "data-domains", "quality-risk", "structural-specialist-identity"],
+        "source_findings": [
+          "compliance-citations.json:summary.total_citations",
+          "business-logic.json:totals.rules_mapped_to_a_regulation",
+          "data-domains.json:entity_assignment_summary.pii_note",
+          "quality-risk.json:risk_summary.regulatory_surface_flags",
+          "ESC-001"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-012",
+        "statement": "The application's business output is unobservable. The only console write in the entire tree is the literal 'OMGHAI!', emitted at Program.cs:10 BEFORE the calculation runs; no computed Quality or SellIn value is ever printed, returned, written, logged or persisted, and the in-memory list dies with the process. A nightly revaluation therefore produces no artifact that anyone or anything downstream could consume or verify.",
+        "confidence": "high",
+        "signal": "cross-pass-confirmed — two passes reaching the identical conclusion, the business-rules pass from an output trace and the data-domain pass from an egress-boundary analysis, both rating it high severity",
+        "contributing_passes": ["business-rules", "data-domains"],
+        "source_findings": [
+          "IL-018",
+          "BV-GRK-003",
+          "BR-020",
+          "data-domains.json:domains"
+        ],
+        "architecturally_significant": true
+      }
+    ],
+    "medium_confidence_findings": [
+      {
+        "id": "SYN-MCF-001",
+        "statement": "Technical debt is scored 76/100, in the assessor's 'high' band, concentrated entirely in gildedrose-console (18 weighted code-smell occurrences across QR-001..QR-008 in 160 LOC). The figure is honest but partial by its own declaration: only two of the rubric's four inputs were measurable, their combined 0.30 weight was redistributed, the smell-density saturation constant of 25 is a stated assessor judgement, and the band thresholds are assessor-defined because no profile-specific debt bands were found.",
+        "confidence": "medium",
+        "signal": "single-pass with strong stated evidence and a self-declared medium measurement confidence; the pass exposes its formula so a reviewer can substitute constants and rerun the arithmetic",
+        "contributing_passes": ["quality-risk"],
+        "source_findings": [
+          "quality-risk.json:technical_debt_score",
+          "quality-risk.json:technical_debt_score.contributing_factors",
+          "QR-004",
+          "QR-005"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-MCF-002",
+        "statement": "The application's 12 distinct NuGet package dependencies, several pinned to 2014-era versions, are UNASSESSED for known CVEs. No SCA tool output or vulnerability database was supplied as an input, so the quality-risk pass excluded vulnerability_count from its weighted score rather than defaulting it to zero. The empty vulnerabilities array is a measurement gap and MUST NOT be read as 'no vulnerabilities found'.",
+        "confidence": "medium",
+        "signal": "single-pass, but the absence is explicitly and repeatedly declared by that pass rather than implied, and the dependency count is independently corroborated by the structural pass",
+        "contributing_passes": ["quality-risk", "structural"],
+        "source_findings": [
+          "quality-risk.json:vulnerabilities",
+          "quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count",
+          "quality-risk.json:risk_summary.top_risk_drivers",
+          "structural-analysis.json:summary_metrics.distinct_nuget_package_ids"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-003",
+        "statement": "Two candidate data domains were derived over five logical entities — Inventory Stock Item (Item, InventoryWorkingSet) at 0.86 confidence and Item Quality Rule Set (ItemCategory, QualityDegradationRule, QualityBounds) at 0.58 — of which exactly one entity (Item) is declared in code and four are implicit. Neither domain has any physical footprint: no table, file, queue or blob. A single cross-domain reference runs between them, by mutable display string with no referential integrity.",
+        "confidence": "medium",
+        "signal": "single-pass with strong evidence and a self-declared 0.72 overall confidence; the entity inventory is directly verifiable (one declared type in 172 lines) but the domain COUNT is escalated by that pass as a blocking reviewer decision",
+        "contributing_passes": ["data-domains"],
+        "source_findings": [
+          "data-domains.json:entity_assignment_summary",
+          "DD-GRK-001",
+          "DD-GRK-002",
+          "CDR-GRK-001"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-004",
+        "statement": "Five behavioural state machines govern the application (ItemSellByLifecycle, StandardGoodsValuationLifecycle, AppreciatingGoodsValuationLifecycle, BackstagePassValuationLifecycle, LegendaryItemStasis) but NONE is declared in the code: there is no status field, no enum, no state column and no transition table. Every state is reconstructed from the integer predicate that defines it, and one machine (LegendaryItemStasis) is degenerate — one state, no transitions — which is itself the finding.",
+        "confidence": "medium",
+        "signal": "single-pass with strong evidence, but explicitly labelled by its own producer as RECONSTRUCTED rather than observed: 'they are offered as the behavioural model a re-implementation should make explicit, not as structures a reader will find named in the source'",
+        "contributing_passes": ["business-rules"],
+        "source_findings": [
+          "state-machines.json:state_machines",
+          "business-logic.json:totals.state_machines_recovered",
+          "BR-016",
+          "BR-015"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-005",
+        "statement": "The accessibility posture of this application is UNDETERMINED, not compliant. The UX pass could not compose with the accessibility-checker sub-skill because the required Sub-Skill Output Contract was absent from its dispatch, so its empty findings list is empty by omission of a checker run and its gate_decision is 'undetermined'. Separately, whether Section 508 / WCAG 2.1 AA applies at all to a character-mode console surface — one stdout line and a blocking keypress, with no page, form or rendered GUI — is itself unruled and needs an accessibility-compliance reviewer rather than a static walk's guess.",
+        "confidence": "medium",
+        "signal": "cross-pass on the applicability question (structural raised it first, UX carried it forward) but single-pass and self-declared incomplete on the checker gap; capped at medium because a dependency of this dimension was missing",
+        "contributing_passes": ["ux-accessibility", "structural"],
+        "source_findings": [
+          "ux-accessibility.json:accessibility_findings.gate_decision_note",
+          "ux-accessibility.json:open_questions",
+          "ux-accessibility.json:accessibility_findings.manual_review_required",
+          "structural-analysis.json:interface-inventory"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-006",
+        "statement": "There is zero usage instrumentation, which is not the same as zero usage. No logging framework, telemetry call, login system, audit log, session record or persisted state of any kind exists, so every adoption figure is an explicit instrumentation gap rather than a measured zero, and no measurement window could be established at all. If a business owner holds out-of-repository usage records for this application_id they are invisible to Discovery.",
+        "confidence": "medium",
+        "signal": "single-pass, corroborated by the structural pass's zero-logging and zero-integration counts; the UX pass is careful to label each figure a gap rather than a zero, which is why this is recorded as a known-unknown rather than a finding of disuse",
+        "contributing_passes": ["ux-accessibility", "structural"],
+        "source_findings": [
+          "ux-accessibility.json:measurement_window",
+          "ux-accessibility.json:adoption_baseline",
+          "IL-025",
+          "structural-analysis.json:summary_metrics.external_integration_points"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-007",
+        "statement": "A pipeline input-staging defect affected at least three Discovery passes on this application: capability-extraction ran without data-domains.json (which it names as its strongest signal and which does exist), data-domain-discovery found only the dispatch context in its own input directory, and shared-database-analysis found its declared required input structural-analysis.json unstaged and read it from a sibling producer directory instead. Each pass recovered or declared the gap honestly, but the capability grain was measurably weakened by it.",
+        "confidence": "medium",
+        "signal": "cross-pass in aggregate — three passes independently report the same class of staging gap — but each report is only verifiable for its own dispatch; the one directly checkable element is that data-domains.json does in fact exist, confirming capability-extraction's stated gap was real",
+        "contributing_passes": ["capability", "data-domains", "shared-database"],
+        "source_findings": [
+          "capability-catalog.json:open_questions",
+          "data-domains.json:method_notes.thin_inputs",
+          "data-domains.json:method",
+          "shared-db-analysis.json:open_questions"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-MCF-008",
+        "statement": "The legendary item's Quality of 80 exists ONLY as a seed literal at Program.cs:19. No code asserts it, defaults to it, restores it or names it as a constant, and it sits 30 above the documented maximum of 50 — so the application's own documentation is self-contradictory (README.md:23 'never more than 50' versus README.md:44-45 'its Quality is 80 and it never alters'), and a mis-seeded legendary item would carry any value forever. The 50 ceiling in practice binds only items that pass through an appreciation branch, which Sulfuras never does.",
+        "confidence": "medium",
+        "signal": "cross-pass-confirmed in substance (business-rules and data-domains both record the 80-as-seed-only finding) but capped at medium because the business-rules pass classifies it as implicit/emergent and flags it for SME review rather than asserting the intended invariant",
+        "contributing_passes": ["business-rules", "data-domains"],
+        "source_findings": [
+          "BR-008",
+          "IL-005",
+          "BR-018",
+          "data-domains.json:domains"
+        ],
+        "architecturally_significant": true
+      }
+    ],
+    "low_confidence_findings": [
+      {
+        "id": "SYN-LCF-001",
+        "statement": "Exactly one capability is catalogued for this application — 'asset-and-inventory-management' — at the producing pass's own confidence of 0.4. The pass records it as a best-effort technical mapping rather than a claim about a real FAA capability, emitted without the data-domain corroboration its methodology names as the strongest signal, and with no client-profile reference catalog available, so legacy_system, business_domain and capability external_ids are all null because binding could not be attempted rather than because it was attempted and rejected.",
+        "confidence": "low",
+        "signal": "single-pass-hedged — the producing pass self-rates 0.4, states the input gap, and explicitly disclaims the mapping as non-authoritative",
+        "contributing_passes": ["capability"],
+        "source_findings": [
+          "capability-catalog.json:capabilities",
+          "capability-catalog.json:open_questions",
+          "capability-catalog.json:legacy_system"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-LCF-002",
+        "statement": "Whether the Item Quality Rule Set is a data domain in its own right or merely behaviour belonging to the Inventory Stock Item domain is unsettled and is flagged BLOCKING by the data-domain pass. Of five boundary heuristics, lifecycle and business-owner separate the two domains, queried-together unifies them, and security-classification and ownership are non-discriminating — a genuine 2-1 split with two heuristics silent — and the rule-set domain has no declared type, table or configuration file anywhere in the source, so calling it data rather than behaviour is an interpretation, not an observation.",
+        "confidence": "low",
+        "signal": "single-pass-hedged — self-rated 0.58, escalated by its producer as a reviewer decision with three mutually exclusive options rather than settled",
+        "contributing_passes": ["data-domains"],
+        "source_findings": [
+          "ARB-GRK-002",
+          "DD-GRK-002",
+          "BV-GRK-001",
+          "data-domains.json:open_questions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-LCF-003",
+        "statement": "A single user persona is recorded — a local console operator who builds and runs the executable interactively and presses a key to exit — inferred entirely from code structure (a console Main with no argument parsing, no authentication, a blocking keypress) and from the README's framing of the repository as a kata exercise. Estimated headcount is unknown: no telemetry, login system or role model exists to count distinct users, and there is no repeat-usage session model, menu navigation or data entry of any kind.",
+        "confidence": "low",
+        "signal": "single-pass-hedged — the producing pass self-rates its persona ask at 0.3 and states that whether this represents a real in-scope user population 'needs a stakeholder, not more static analysis'",
+        "contributing_passes": ["ux-accessibility"],
+        "source_findings": [
+          "ux-accessibility.json:personas",
+          "ux-accessibility.json:adoption_baseline.instrumentation_present",
+          "ux-accessibility.json:ui_inventory"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-004",
+        "statement": "Whether a persistent store exists for this application OUTSIDE this repository is unresolved, and it is the single question that most affects the data findings. If application_id d634afdb-97cc-4589-a080-5766d4f377d5 denotes a production system whose inventory state persists in a store owned by a different application, that store and any cluster it sits on are entirely invisible to a static walk, and the zero-shared-database and nothing-to-migrate conclusions would both invert. An application with no durability and no audit trail of its nightly run is an odd thing to find under portfolio management, which is why this is raised explicitly rather than assumed away.",
+        "confidence": "low",
+        "signal": "single-pass-hedged known-unknown — recorded by its producer as a high-severity scope-validity risk on which 'every other conclusion in this artifact is conditional', and which static analysis cannot close",
+        "contributing_passes": ["shared-database", "structural"],
+        "source_findings": [
+          "RISK-01",
+          "shared-db-analysis.json:open_questions",
+          "structural-analysis.json:database-schema-summary"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-LCF-005",
+        "statement": "Whether this application should be ported at all, or treated as a retire/replace candidate, is unresolved. The structural pass states explicitly that no service decomposition is warranted — at 172 lines, one deployable, zero endpoints, zero integrations and zero tables there is no service to split out and no shared database to disentangle, and the coupling findings are intra-assembly design debt — and defers portfolio treatment to the disposition line, conditional on whether this application_id maps to a real system at all.",
+        "confidence": "low",
+        "signal": "single-pass-hedged — the producing pass frames it as an explicit open question and deliberately states the no-decomposition boundary so a downstream line does not read its intra-module boundaries as a microservice plan",
+        "contributing_passes": ["structural"],
+        "source_findings": [
+          "structural-analysis.json:recommended_decomposition_boundaries",
+          "structural-analysis.json:open_questions",
+          "catalog.json:complexity_tier"
+        ],
+        "architecturally_significant": true
+      }
+    ]
+  },
+  "per_module_view": [
+    {
+      "module_id": "gildedrose-console",
+      "module_name": "GildedRose.Console — entry point, inventory-revaluation rules engine and Item domain model (160 LOC; observed by catalog, structural, business-rules, quality-risk, ux-accessibility, data-domains, capability; NOT separately keyed by shared-database or compliance, both of which returned application-wide null results)"
+    },
+    {
+      "module_id": "gildedrose-tests",
+      "module_name": "GildedRose.Tests — orphaned xUnit scaffold, structurally disconnected from production code (12 LOC; observed by catalog, structural, business-rules, quality-risk; carries zero business rules and is not a coverage target, and its risk is the false impression of a safety net)"
+    }
+  ],
+  "contradictions": [
+    {
+      "id": "CONTRA-001",
+      "topic": "Whether the application has a human-facing surface at all",
+      "claim_a": {
+        "pass": "catalog",
+        "finding_id": "catalog.json:user_facing",
+        "claim": "user_facing is recorded as false — the application is catalogued as not user-facing."
+      },
+      "claim_b": {
+        "pass": "structural + ux-accessibility",
+        "finding_id": "structural-analysis.json:interface-inventory; ux-accessibility.json:ui_inventory; ux-accessibility.json:personas",
+        "claim": "Exactly one interface exists and it IS human-facing (interface-inventory counts: total 1, human_facing 1, machine_facing 0). The UX pass inventories it as surface 'console-entry-point' and derives a named persona, 'local-console-operator', for it; the blocking System.Console.ReadKey() at Program.cs:33 requires one human physically present at an interactive terminal per run."
+      },
+      "resolution": "RECONCILED TOWARD claim_b on evidence strength — two passes, both citing the same source line, against one pass's boolean with no stated basis. The application IS human-invoked and has exactly one human-facing surface. Catalog's `false` is defensible only under a narrower reading of user_facing as 'serves an end-user population through a managed UI', which is also true: there is no page, form, menu or navigable screen, and the surface writes one banner line and waits for a keypress. BOTH claims are retained because they are answering different questions and downstream consumers use the field differently: a 508/accessibility obligation attaches to claim_b, while adoption and training-debt scoring attach to claim_a. Routed as OQ-002 so the field's definition is settled rather than silently picked."
+    },
+    {
+      "id": "CONTRA-002",
+      "topic": "How many business capabilities this application has",
+      "claim_a": {
+        "pass": "capability",
+        "finding_id": "capability-catalog.json:capabilities; capability-catalog.json:open_questions",
+        "claim": "Exactly one capability, 'asset-and-inventory-management', at confidence 0.4 — and the pass records that data-domains.json, 'the methodology's strongest capability signal', was not present anywhere in its dispatch, so the catalog was built from the catalog entry and structural analysis only."
+      },
+      "claim_b": {
+        "pass": "data-domains",
+        "finding_id": "DD-GRK-002; ARB-GRK-002",
+        "claim": "A second, separable capability exists and is recorded as its own domain: 'Merchandising policy — define which class an item belongs to and how its quality and sell-in advance over time', distinguished from nightly stock valuation by lifecycle (compile-time constant versus nightly change) and by a plausibly different business owner, at confidence 0.58."
+      },
+      "resolution": "NOT RECONCILED — routed as a blocking open question (OQ-003). Neither pass dominates: the capability pass has the governed vocabulary but ran without its strongest input, and the data-domain pass has the corroborating lifecycle analysis but self-rates the second boundary at 0.58 and explicitly escalates the domain count rather than asserting it. The corroboration the capability pass could not perform IS performed here — data-domains.json exists and does carry a second candidate grain — so the capability catalog is now known to be under-specified rather than merely low-confidence. Both claims are retained verbatim; the capability grain must not be consumed by Rationalization until the domain-count decision (data-domains review ask 'domain-boundary-ambiguous') is answered, because the two questions have the same answer."
+    },
+    {
+      "id": "CONTRA-003",
+      "topic": "Whether the unimplemented 'Conjured' rule is a live defect or stale documentation",
+      "claim_a": {
+        "pass": "business-rules",
+        "finding_id": "BR-MISSING-001",
+        "claim": "Recorded at severity critical with implementation_fidelity 'missing': 'The item is being mispriced today, on every run.' The requirement is stated in the application's own specification and a matching item exists in the live inventory, so the gap is recorded as missing rather than out-of-scope specifically 'so that no downstream line silently accepts the current behaviour as correct'."
+      },
+      "claim_b": {
+        "pass": "data-domains",
+        "finding_id": "BV-GRK-002",
+        "claim": "Recorded at severity medium and carried to business-logic extraction with the instruction that 'downstream lines must treat the code, not the README, as the as-built rule set' — i.e. the documentation, not the code, is the side that is wrong."
+      },
+      "resolution": "NOT RECONCILED — routed as OQ-004. The two passes agree completely on the FACTS (the README requires it, an affected item is seeded, no branch matches it) and disagree on the DISPOSITION, which is a question about intent that no static evidence can settle: the capability pass frames the same gap as possibly 'the kata's intended unfinished state'. Neither severity is better evidenced than the other, so no winner is picked. The consequence is concrete and must not be lost: it determines whether the SRS prescribes the Conjured rule as target behaviour (recorded as anomaly ANOM-001, action FIX pending SME confirmation) or records it as stale documentation, and a characterization test written before the ruling will lock in today's incorrect behaviour."
+    },
+    {
+      "id": "CONTRA-004",
+      "topic": "Cyclomatic complexity of the UpdateQuality method",
+      "claim_a": {
+        "pass": "business-rules",
+        "finding_id": "business-logic.json:module_summary.gildedrose-console.method_level_cyclomatic_complexity_estimate",
+        "claim": "20 — derived as 19 decision predicates in UpdateQuality (the for loop, the two comparisons on line 41, and single predicates on lines 43, 45, 53, 57, 59, 61, 67, 69, 78, 83, 85, 87, 89, 91, 104) plus 1, with the pass noting that no upstream artifact reported a cyclomatic figure."
+      },
+      "claim_b": {
+        "pass": "quality-risk",
+        "finding_id": "ESC-001; escalation-record.json:trigger.details",
+        "claim": "'cyclomatic complexity max ~17 (UpdateQuality, Program.cs:37-111) vs >50' — used as one of five complexity-escalation metrics, none of which breached threshold."
+      },
+      "resolution": "RECONCILED TOWARD claim_a on evidence strength: 20 is carried forward because the business-rules pass enumerates its 19 predicates line by line and its arithmetic is checkable, whereas the quality-risk figure is stated as an approximation ('~17') with no enumerated basis. claim_b is retained in the record. The disagreement changes NO disposition — both figures are far below the >50 escalation threshold, so the escalation outcome (no breach) stands either way — but it is recorded because the SRS, any complexity-based sizing and any target-refactor estimate must cite one figure, and a silent 3-point drift between two Discovery artifacts is the kind of inconsistency a gate reviewer is entitled to see resolved."
+    },
+    {
+      "id": "CONTRA-005",
+      "topic": "The extent of the business-logic method, which downstream extraction cites by line range",
+      "claim_a": {
+        "pass": "structural + business-rules + quality-risk",
+        "finding_id": "structural-analysis.json:summary_metrics.loc_business_logic_update_quality_method; QR-001; business-logic.json:module_summary.gildedrose-console.business_logic_locus",
+        "claim": "UpdateQuality is 75 lines, spanning src/GildedRose.Console/Program.cs:37-111."
+      },
+      "claim_b": {
+        "pass": "data-domains",
+        "finding_id": "BV-GRK-001; data-domains.json:boundary_arbitration_decisions",
+        "claim": "'a single 74-line method', with the rules cited as src/GildedRose.Console/Program.cs:39-110 and Program.cs:41-109."
+      },
+      "resolution": "RECONCILED AS NON-EXCLUSIVE, with one canonical figure chosen. The two spans measure different things: 37-111 is the method declaration through its closing brace (75 lines, three passes agree), while 39-110 is the for-loop body inside it and 41-109 is the rule block within that. 37-111 / 75 lines is carried forward as the canonical method extent and 39-110 as the canonical loop extent. Recorded rather than silently normalised because Modernization's extraction step and the SRS both cite these ranges, and a one-line drift between Discovery artifacts silently relocates a citation."
+    }
+  ],
+  "confidence_scores": {
+    "SYN-HCF-001": 0.97,
+    "SYN-HCF-002": 0.97,
+    "SYN-HCF-003": 0.95,
+    "SYN-HCF-004": 0.96,
+    "SYN-HCF-005": 0.95,
+    "SYN-HCF-006": 0.94,
+    "SYN-HCF-007": 0.95,
+    "SYN-HCF-008": 0.93,
+    "SYN-HCF-009": 0.92,
+    "SYN-HCF-010": 0.95,
+    "SYN-HCF-011": 0.9,
+    "SYN-HCF-012": 0.93,
+    "SYN-MCF-001": 0.7,
+    "SYN-MCF-002": 0.78,
+    "SYN-MCF-003": 0.72,
+    "SYN-MCF-004": 0.75,
+    "SYN-MCF-005": 0.65,
+    "SYN-MCF-006": 0.74,
+    "SYN-MCF-007": 0.62,
+    "SYN-MCF-008": 0.7,
+    "SYN-LCF-001": 0.4,
+    "SYN-LCF-002": 0.45,
+    "SYN-LCF-003": 0.3,
+    "SYN-LCF-004": 0.35,
+    "SYN-LCF-005": 0.4
+  },
+  "open_questions": [
+    {
+      "id": "OQ-001",
+      "question": "Does application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely map to an FAA-owned production system? The analysed source tree is the publicly published Gilded Rose Refactoring Kata with no aviation, NAS or certification content, and the shipped assembly metadata asserts a different agency ('DSHS'). If the answer is no, the whole Discovery package for this application is scoped to the wrong subject while remaining internally consistent.",
+      "domain_area": "portfolio-governance / application-ownership",
+      "source_pass": "catalog, structural, quality-risk, ux-accessibility, data-domains, shared-database, capability, compliance-citations",
+      "source_finding_id": "SYN-HCF-001; catalog.json:open_questions; structural-analysis.json:open_questions",
+      "priority": "blocking",
+      "blocking": true
+    },
+    {
+      "id": "OQ-002",
+      "question": "Is this application user-facing? The catalog records user_facing: false while the structural and UX passes record exactly one human-facing interface with a named persona. Settle which definition the field carries, because a Section 508 obligation attaches to one reading and adoption/training-debt scoring attaches to the other.",
+      "domain_area": "ux-accessibility / catalog-data-quality",
+      "source_pass": "catalog, structural, ux-accessibility",
+      "source_finding_id": "CONTRA-001",
+      "priority": "high",
+      "blocking": false
+    },
+    {
+      "id": "OQ-003",
+      "question": "Is the Item Quality Rule Set a capability and data domain in its own right, or behaviour belonging to Inventory Stock Item? The capability pass catalogues one capability (without its strongest input); the data-domain pass derives a second, separable merchandising-policy domain and flags the question BLOCKING. The two questions have the same answer and the capability grain must not be consumed by Rationalization until it is given.",
+      "domain_area": "data-architecture / capability-rationalization",
+      "source_pass": "capability, data-domains",
+      "source_finding_id": "CONTRA-002; ARB-GRK-002; SYN-LCF-002",
+      "priority": "blocking",
+      "blocking": true
+    },
+    {
+      "id": "OQ-004",
+      "question": "Is the documented-but-unimplemented 'Conjured' degradation rule (README.md:34, affected item seeded at Program.cs:26) a live defect to be corrected in the target, the intended unfinished state of a refactoring exercise, or stale documentation to be discarded? A characterization test written before this ruling will permanently lock in today's incorrect pricing.",
+      "domain_area": "business-rules / merchandising-policy owner",
+      "source_pass": "business-rules, data-domains, capability, structural",
+      "source_finding_id": "CONTRA-003; BR-MISSING-001; BV-GRK-002",
+      "priority": "blocking",
+      "blocking": true
+    },
+    {
+      "id": "OQ-005",
+      "question": "Does a persistent store for this application's inventory exist OUTSIDE this repository, owned by another application? If so, the zero-shared-database result, the zero co-waving constraint and the 'nothing to migrate' conclusion all invert, and this application cannot be treated as unconstrained for wave sequencing.",
+      "domain_area": "data-architecture / business owner",
+      "source_pass": "shared-database, structural",
+      "source_finding_id": "RISK-01; SYN-LCF-004",
+      "priority": "high",
+      "blocking": false
+    },
+    {
+      "id": "OQ-006",
+      "question": "The 12 NuGet dependencies are UNASSESSED for known CVEs because no SCA tool output or vulnerability database was supplied. Run an SCA scan before the gate; the empty vulnerabilities array must not be read as a clean result.",
+      "domain_area": "security / supply-chain",
+      "source_pass": "quality-risk",
+      "source_finding_id": "SYN-MCF-002; quality-risk.json:technical_debt_score.contributing_factors.vulnerability_count",
+      "priority": "high",
+      "blocking": false
+    },
+    {
+      "id": "OQ-007",
+      "question": "Does Section 508 / WCAG 2.1 AA apply to a character-mode console surface with no page, form or rendered GUI — and separately, can an accessibility-checker run now be dispatched? The UX pass could not compose with the checker because the required Sub-Skill Output Contract was absent from its dispatch, so the empty findings list is a missing measurement, not a compliance verdict.",
+      "domain_area": "accessibility-compliance",
+      "source_pass": "ux-accessibility, structural",
+      "source_finding_id": "SYN-MCF-005; ux-accessibility.json:accessibility_findings.gate_decision_note",
+      "priority": "medium",
+      "blocking": false
+    },
+    {
+      "id": "OQ-008",
+      "question": "Who owns sign-off on the characterization tests that will define correct behaviour before any transformation — particularly for the self-cancelling 'Quality = Quality - Quality' branch at Program.cs:99, and whether the 50-Quality cap is intended to apply to the second and third backstage-pass increments at Program.cs:61-71?",
+      "domain_area": "business-rules / merchandising-policy owner",
+      "source_pass": "structural, business-rules",
+      "source_finding_id": "structural-analysis.json:open_questions; BR-007; BR-015",
+      "priority": "high",
+      "blocking": false
+    },
+    {
+      "id": "OQ-009",
+      "question": "Which organizational unit owns each candidate data domain? No owner could be evidenced for either, so both are recorded UNKNOWN rather than guessed — and because the business-owner heuristic is the strongest remaining separator, the missing owner is also why the domain-count decision cannot be closed on evidence alone.",
+      "domain_area": "data-governance / CMDB",
+      "source_pass": "data-domains, catalog",
+      "source_finding_id": "BV-GRK-004; data-domains.json:open_questions",
+      "priority": "medium",
+      "blocking": false
+    },
+    {
+      "id": "OQ-010",
+      "question": "Is a runtime port in scope, or is this a retire/replace candidate? Both modules target end-of-support, Windows-only .NET Framework 4.5/4.5.1 with no in-place path onto the profile's container substrate, and the structural pass states explicitly that no service decomposition is warranted and defers portfolio treatment to the disposition line.",
+      "domain_area": "target-architecture / disposition",
+      "source_pass": "structural, quality-risk",
+      "source_finding_id": "SYN-HCF-006; SYN-LCF-005; structural-analysis.json:open_questions",
+      "priority": "high",
+      "blocking": false
+    },
+    {
+      "id": "OQ-011",
+      "question": "What do the build and test steps actually execute? tasks.ps1 imports its Version/Clean/Build/Test task bodies from the out-of-repository psake.net 0.1.3 package and the packages directory is not restored in the workspace, so whether any test runner is invoked at all is unverified. Restoring packages and re-reading Functions.psm1 would close this.",
+      "domain_area": "build-engineering / supply-chain",
+      "source_pass": "structural, quality-risk",
+      "source_finding_id": "SYN-HCF-009; structural-analysis.json:open_questions",
+      "priority": "medium",
+      "blocking": false
+    },
+    {
+      "id": "OQ-012",
+      "question": "Confirm the Discovery pipeline input-staging defect is fixed before the next rework attempt: capability-extraction ran without data-domains.json, and data-domain-discovery and shared-database-analysis each found declared inputs unstaged. The capability grain is measurably weaker as a result and should be re-run once staging is corrected.",
+      "domain_area": "platform / pipeline-engineering",
+      "source_pass": "capability, data-domains, shared-database",
+      "source_finding_id": "SYN-MCF-007; capability-catalog.json:open_questions",
+      "priority": "medium",
+      "blocking": false
+    },
+    {
+      "id": "OQ-013",
+      "question": "Should an 'inventory' model carry a quantity or stock-count field? Each Item instance represents exactly one unit, duplicates are not aggregated, and nothing in the code can express 'twelve wheels of Aged Brie'. This is a target-scope decision for the business owner, not a defect.",
+      "domain_area": "data-modelling / business owner",
+      "source_pass": "business-rules",
+      "source_finding_id": "IL-023",
+      "priority": "low",
+      "blocking": false
+    },
+    {
+      "id": "OQ-014",
+      "question": "Confirm that the untracked harness material staged into the source root stays excluded. fixtures/default.json describes a fabricated unrelated application with a SQL Server cert.* schema, and fixtures/domain-boundary-ambiguous.json is a pre-baked answer for the data-domain step describing a different application entirely. Admitting either would manufacture a database tier and a phantom shared cluster for an application that has neither.",
+      "domain_area": "platform / evidence-hygiene",
+      "source_pass": "structural, data-domains, shared-database, compliance-citations",
+      "source_finding_id": "RISK-03; ARB-GRK-003; structural-analysis.json:duplication_map",
+      "priority": "medium",
+      "blocking": false
+    }
+  ],
+  "downstream_consumer_summary": {
+    "redundancy_analyzer": "One capability only ('asset-and-inventory-management', SYN-LCF-001) at 0.4 confidence, unbound to any strategy-of-record identifier because no client-profile reference catalog was available — so external_ids are null for want of a catalog, not because binding was rejected. Do NOT conclude redundancy or uniqueness from this grain until OQ-003 (is the merchandising rule set a second capability?) and OQ-001 (is this an FAA system at all?) are answered. Zero integrations, zero endpoints and zero shared data mean this application presents no overlap surface that could be detected structurally.",
+    "disposition_recommender": "The decision-relevant pairing is catalog complexity_tier 'simple' against quality-risk overall_risk_tier HIGH — orthogonal axes that this synthesis does not combine. Weight SYN-HCF-002 (provable zero coverage, so no cutover can be verified by replay), SYN-HCF-006 (no in-place runtime path), SYN-HCF-003 and SYN-HCF-012 (nothing to migrate, no observable output — modernization here is new construction), and SYN-LCF-005 (the structural pass states no service decomposition is warranted and defers disposition). Business criticality is NOT rated: business-criticality.json returns assessment 'insufficient_evidence' with rating null, which must be read as 'we could not tell what breaks', NOT as a low rating.",
+    "modernization_extraction": "Extract against gildedrose-console only; gildedrose-tests carries no business logic. The canonical spans are Program.cs:37-111 for the method and Program.cs:39-110 for the loop (see CONTRA-005 — two Discovery artifacts differ by one line and this is the reconciled figure). 25 rules (BR-001..BR-024 plus BR-MISSING-001), 27 implicit behaviours (IL-001..IL-027) and 5 reconstructed state machines are the extraction surface. Three extraction traps are load-bearing and each is a high-confidence finding: the SellIn pre/post-decrement dual meaning (SYN-HCF-008 — never 'fix' the literals 11 and 6 to 10 and 5), the self-cancelling 'Quality = Quality - Quality' zeroing idiom that no search for a literal zero will find (IL-010), and the data-dependent dead legendary guard at Program.cs:91 (IL-015). Capture a golden-master characterization test BEFORE any transformation — but note OQ-004 first, because a baseline taken now locks in the incorrect Conjured pricing.",
+    "architecture": "22 of the 25 consolidated findings carry architecturally_significant: true and form the ADR-coverage denominator. Significance is DECLARED HERE and must not be re-scored. The ratio is high because for this application nearly every finding is a 'the target must ADD this' finding — persistence, egress, audit, identity, observability, a test seam, a category identifier, explicit lifecycle states — rather than a 'the target must preserve this' finding. The three findings deliberately NOT flagged significant are the debt score (SYN-MCF-001), the pipeline staging defect (SYN-MCF-007) and the inferred persona (SYN-LCF-003).",
+    "srs": "The SRS index and its five detail files in this same output set are derived from these findings: srs.json (index), srs-requirements-functional.json, srs-requirements-nonfunctional.json, srs-data-model.json, srs-accessibility-compliance.json and srs-anomaly-resolution-log.json. 25 anomalies (ANOM-001..ANOM-025) carry an explicit FIX/OMIT/CONSOLIDATE/DEFER resolution so that no legacy defect is silently carried forward; the accessibility file's empty findings array is empty by omission of a checker run and its gate_decision is 'undetermined', which must not be read as conformance."
+  },
+  "quality": {
+    "groundedness": "grounded",
+    "claims_total": 25,
+    "claims_cited": 25,
+    "uncited_claim_ids": [],
+    "checked_at": "2026-09-28T19:05:00Z"
+  },
+  "review_asks": [
+    {
+      "ask_slug": "analysis-scope-unconfirmed",
+      "action": "decide",
+      "title": "Before anything else: confirm this record is the system you meant us to analyse, or tell us to re-scope",
+      "why": "If the analysis target is wrong then every artifact in this gate package is scoped to the wrong subject while each one remains internally consistent — so an automated pre-review will still score the package highly and the error will pass the gate undetected.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.93,
+        "rationale": "High confidence that the discrepancy is real and material: the code's public provenance, its MIT licence, its retail-inn subject matter and the conflicting 'DSHS' attribution embedded in its shipped assembly metadata are all directly verifiable in the tree, and all eight substantive Discovery passes flagged it independently before this synthesis ran. What is genuinely unknown is only the intent behind the portfolio mapping, which no amount of further static analysis can recover."
+      },
+      "assessment": "We analysed application record d634afdb-97cc-4589-a080-5766d4f377d5 under the FAA profile, as instructed. What the repository actually contains is the publicly published 'Gilded Rose Refactoring Kata' — a 172-line programming exercise about an inn's nightly stock revaluation, MIT-licensed and attributed to third-party authors — with no aviation, air-traffic, certification or NAS content of any kind. Its compiled assembly metadata credits a different agency entirely ('DSHS', copyright 2015). The repository also contains untracked test-fixture files describing two further, fabricated applications, which we excluded. We did not change any value to match the code's apparent origin: the declared FAA binding was applied throughout and the discrepancy is recorded as a finding. Separately, two analysis questions are flagged blocking by the passes themselves — whether the item quality rules are a capability and data domain in their own right, and whether the documented-but-unimplemented 'Conjured' pricing rule is a live defect or stale documentation. We are asking you to accept the scope as analysed, or to send it back to be re-scoped.",
+      "reasoning": "Three independent signals point the same way and none of them is evidence of FAA ownership: the README identifies the repository as a widely used public refactoring kata; the shipped AssemblyInfo asserts a non-FAA company and copyright; and the business domain could not be grounded in the FAA taxonomy at all, so the catalog pass set it to 'unclassified'. Every subsequent pass reached the same conclusion from its own angle — the compliance scan found zero statutory citations in the application's own files, the business-rules pass found that none of the profile's five FAA regulatory sources applies, and the capability pass could bind nothing to a strategy-of-record identifier. The conflicting signal is contextual rather than technical: the record exists under portfolio management, which is why we are asking rather than concluding. Note also that the analysis has a second, independent scope weakness we are obliged to report: the capability catalogue was produced without the data-domain artifact its own methodology names as its strongest input, so the capability grain is under-specified regardless of how the ownership question resolves.",
+      "evidence_refs": [
+        {
+          "name": "Public kata provenance and licence",
+          "detail": "README identifies the repository as the Gilded Rose Refactoring Kata, a retail-inn inventory exercise; MIT-licensed and attributed to third-party authors. 172 lines of C#, 22 tracked files, no aviation or NAS content.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json"
+        },
+        {
+          "name": "Conflicting agency attribution in shipped metadata",
+          "detail": "AssemblyInfo.cs:11 and :13 assert AssemblyCompany 'DSHS' and Copyright 'DSHS 2015' — a third attribution, different from both the declared profile and the code's public origin.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json"
+        },
+        {
+          "name": "Business domain could not be grounded in the FAA taxonomy",
+          "detail": "Catalog set business_domain to 'unclassified' because no FAA domain (Air Traffic, Flight Safety, Certification, Workforce, Finance, Logistics, Admin) could be evidenced; zero statutory citations were found in the application's own 22 tracked files; zero of 25 business rules map to any regulation.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/compliance-citations.json"
+        },
+        {
+          "name": "Two blocking analysis questions the passes escalated themselves",
+          "detail": "Whether the item quality rules are a separate capability and data domain (self-rated 0.58, flagged blocking), and whether the unimplemented 'Conjured' rule is a live defect (severity critical) or stale documentation (severity medium) — the two passes disagree on disposition while agreeing on the facts.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/data-domains.json"
+        },
+        {
+          "name": "Capability catalogue built from an incomplete input set",
+          "detail": "The capability pass records that data-domains.json, which it names as the methodology's strongest capability signal, was absent from its dispatch; that artifact does exist and does carry a second candidate capability grain.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/capability-catalog.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "accept-scope",
+          "label": "Accept the scope as analysed — this record is the system we meant",
+          "description": "Confirms that application record d634afdb-97cc-4589-a080-5766d4f377d5 is correctly in the FAA portfolio and that this repository is the whole system. Discovery's findings stand as written and the downstream lines may consume them. Note that accepting scope does not answer the two blocking analysis questions (the domain/capability count and the Conjured rule disposition); those still need rulings before Rationalization consumes the capability grain or the SRS fixes the pricing rule."
+        },
+        {
+          "key": "rescope",
+          "label": "Re-scope — this is not the system, or not the whole system",
+          "description": "Sends the analysis back. Choose this if the record was mapped to the wrong repository, if this repository is a sample or fixture rather than a production system, or if the real system includes code or a data store outside this repository. Every artifact in this Discovery package would be re-derived against the corrected target; nothing here should be carried forward, because each artifact is internally consistent with the target as analysed and would silently mislead."
+        }
+      ]
+    },
+    {
+      "ask_slug": "synthesis-recorded",
+      "action": "aware",
+      "title": "Discovery synthesis recorded: all ten passes consumed, 25 consolidated findings, five cross-pass contradictions preserved",
+      "why": "This is the record of what the synthesis was and was not built from, so a reviewer can see the gaps as declared facts rather than infer them from silence.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.88,
+        "rationale": "The input inventory is complete and directly verifiable — every contract-declared pass was staged and consumed, with none absent — and the twelve high-confidence findings are each corroborated by two or more independent passes. Confidence is held below certainty because two of the consolidated findings depend on dimensions a pass itself declared incomplete (the accessibility checker was never run; the vulnerability surface was never scanned)."
+        },
+      "assessment": "All ten Discovery passes were present and consumed: catalog, structural analysis with its .NET specialist and seven sibling sub-artifacts, business-logic extraction, quality and risk, UX and accessibility, data domains, shared database, capability extraction and compliance citations. Nothing declared by the contract was missing. Twenty-five findings were consolidated — twelve high confidence, eight medium, five low — and 22 of them are flagged as needing a target-architecture decision. Five genuine disagreements between passes were found and are preserved in full rather than resolved away: whether the application is user-facing, how many capabilities it has, whether the unimplemented 'Conjured' rule is a defect or stale documentation, and two numeric disagreements about the size and complexity of the one method that holds all the business logic. Three of the fourteen open questions are blocking. Two dimensions are honestly incomplete and are labelled as gaps rather than clean results: the application's twelve third-party dependencies have never been scanned for known vulnerabilities, and its accessibility posture was never checked because the checker tool contract was missing from the earlier pass's dispatch. Neither absence should be read as a pass.",
+      "reasoning": "Findings were graded by corroboration: a claim two or more passes reached independently is high confidence, a claim one pass made with strong stated evidence is medium, and a claim its own producer hedged or self-rated below 0.6 is low. Five low-confidence findings are retained deliberately — they are known-unknowns, not oversights, and dropping them would make the package look more certain than the evidence supports. The contradiction count is the part most worth a reviewer's attention: a synthesis reporting zero disagreements across ten passes would almost certainly be under-reporting, and the two numeric contradictions here (cyclomatic complexity 20 versus about 17, method extent 75 versus 74 lines) are small but were recorded because downstream extraction cites exactly those figures. One reconciliation is worth naming: the classic high-risk signal of zero test coverage against heavy live usage does NOT apply here, because usage was never instrumented — so we report an instrumentation gap rather than manufacturing a traffic figure the evidence cannot support.",
+      "evidence_refs": [
+        {
+          "name": "Input completeness record",
+          "detail": "Ten pass rows, all status 'present'. Two are present-but-incomplete by their own declaration: UX (accessibility-checker contract absent) and capability (ran without data-domains.json).",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json"
+        },
+        {
+          "name": "Consolidated findings and contradictions",
+          "detail": "25 findings (12 high / 8 medium / 5 low), 22 flagged architecturally significant, 5 contradictions each retaining both claims and an explicit reconciliation, 14 open questions of which 3 are blocking.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/synthesis.json"
+        },
+        {
+          "name": "Executive narrative, process model and onboarding guide",
+          "detail": "Merged per-module view, a business-process diagram with risk annotations, a dependency and evidence-provenance diagram, and a role-by-role onboarding guide.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/files/synthesis/discovery-synthesis.md"
+        },
+        {
+          "name": "Business criticality declined rather than guessed",
+          "detail": "business-criticality.json returns assessment 'insufficient_evidence' with rating null, because the consequence of this application stopping cannot be established while its identity and its out-of-repository persistence are both unconfirmed.",
+          "artifact_path": "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/business-criticality.json"
+        }
+      ]
+    }
+  ]
+}

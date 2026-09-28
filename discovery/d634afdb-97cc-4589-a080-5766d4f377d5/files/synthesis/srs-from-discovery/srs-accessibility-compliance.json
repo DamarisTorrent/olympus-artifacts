@@ -1,0 +1,122 @@
+{
+  "$schema": "olympus:artifact:srs-accessibility-compliance:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "prescribed_standard": "Section 508 of the Rehabilitation Act (36 CFR Part 1194, ICT Final Rule), incorporating WCAG 2.1",
+  "conformance_target": "WCAG 2.1 Level AA",
+  "source_note": "STANDARD NOT READ FROM THE CLIENT PROFILE — THIS IS A SUBSTITUTION AND MUST BE RATIFIED. The skill methodology requires the accessibility standard and conformance level to be resolved from the active client profile's compliance configuration (profiles/faa/compliance.yaml, the {{accessibility_standard}} variable). No profiles/ directory exists anywhere in the two working directories available to this dispatch, and a directory search for compliance.yaml returned nothing, so that value could not be read. The standard and target recorded above are therefore taken from the next-best evidence in the Discovery corpus: ux-accessibility.json accessibility_findings.applicable_standards, which lists exactly 'Section 508 (36 CFR Part 1194, ICT Final Rule)' and 'WCAG 2.1 AA (as referenced by the Section 508 ICT Final Rule)'. That artifact was itself produced under the same governing profile, so the values are consistent with it rather than invented — but they are second-hand and MUST be re-read from profiles/faa/compliance.yaml and reconciled before Modernization's Extract step consumes this document. Note also that capability-catalog.json independently records 'NO CLIENT-PROFILE REFERENCE CATALOG AVAILABLE: no profiles/faa/ directory ... was present in this workspace', so this is a dispatch-wide staging gap rather than a gap specific to this skill. Separately, prior artifacts cite profiles/faa/compliance.yaml as containing five regulatory_sources (14 CFR Parts 47, 61, 63, 67 and 183), none of which business-logic.json found applicable to this application — consistent with compliance-citations.json returning total_citations 0.",
+  "prescribed_requirement": "NFR-005",
+  "prescribed_requirement_summary": "Every human-facing surface the modernized system exposes MUST conform to WCAG 2.1 Level AA as incorporated by Section 508. Conformance MUST be verified by an automated accessibility check on every build plus a documented manual review of each surface, and MUST NOT be asserted on the basis of a surface having no rendered content. A surface with no rendered graphical content MUST receive a recorded reviewer determination stating which success criteria apply and which have no applicable target, rather than being exempted by default.",
+  "baseline_posture": {
+    "method": "static source review of the single discovered UI surface by the Discovery UX assessor, WITHOUT an accessibility-checker tool run",
+    "surfaces_reviewed": "1 of 1 surface given a direct (non-checker) review; 0 of 1 given an actual accessibility-checker run",
+    "surface_inventory": "One surface only: console-entry-point, 'GildedRose.Console.exe interactive console session' — a Windows character-mode console on .NET Framework 4.5 using System.Console.WriteLine for stdout and System.Console.ReadKey for stdin, with no GUI toolkit, no web framework and no markup of any kind. It writes one banner line ('OMGHAI!') to stdout, then blocks indefinitely on a keypress, then exits. There is no page, form, menu or navigable screen. Evidence: src/GildedRose.Console/Program.cs:8-35; structural-analysis.json interface-inventory counts total 1, human_facing 1, machine_facing 0.",
+    "gate_decision": "undetermined",
+    "gate_decision_note": "CARRIED FORWARD UNRESOLVED, AND DELIBERATELY NOT CONVERTED INTO A PASS. ux-accessibility.json records findings: [] with finding_counts.total 0, but its own gate_decision is 'undetermined' and its note states the emptiness is 'empty by omission of a checker run, not a compliance verdict of zero defects'. Two distinct gaps produced that: (1) TOOLING GAP — the accessibility-checker sub-skill could not be composed, because the Sub-Skill Output Contract naming the checker's exact output path and schema was absent from the UX assessor's dispatch; its tool field reads 'none — accessibility-checker composition unavailable this run'. (2) APPLICABILITY GAP — whether Section 508 / WCAG 2.1 AA applies AT ALL to a character-mode console surface with no page, form or rendered GUI is itself undetermined, and both ux-accessibility.json and structural-analysis.json interface-inventory open_questions[1] record that this needs an accessibility-compliance reviewer's ruling rather than a static walk's guess. This SRS therefore prescribes the conformance target and the verification method (NFR-005) while recording the applicability question as an open anomaly (ANOM-022, action DEFER, SME confirmation required). A zero-findings baseline MUST NOT be read as a clean baseline.",
+    "total_findings": {
+      "total": 0,
+      "level_a": 0,
+      "level_aa": 0,
+      "level_aaa": 0,
+      "unassessed_surfaces": 1
+    },
+    "by_category": {
+      "perceivable": 0,
+      "operable": 0,
+      "understandable": 0,
+      "robust": 0,
+      "not_yet_assessed": 1
+    },
+    "instrumentation_note": "No usage telemetry, login system, audit log or session/event logging of any kind exists anywhere in this application, so no assistive-technology usage, no user-reported accessibility defect history and no adoption figure was available to corroborate or contradict the static review. ux-accessibility.json records instrumentation_present: false and telemetry_source: 'none', and labels every adoption figure an instrumentation gap rather than a measured zero. structural-analysis.json summary_metrics records connection_strings 0, external_integration_points 0 and environment_variable_reads 0.",
+    "persona_note": "One persona was derivable: 'local-console-operator' (local console operator / kata participant / build verifier), with estimated_headcount 'unknown — no telemetry, login system, or role model exists to count distinct users'. ux-accessibility.json assigns this persona inference confidence level 'low' (score 0.3) and raises a review ask ('personas-confirmed') warning that if this application_id has real operational users beyond a kata participant, every persona-dependent downstream artifact is built on a fictional user base."
+  },
+  "findings": [
+    {
+      "id": "A11Y-001",
+      "wcag": "N/A — applicability determination required before any success criterion can be assessed",
+      "level": "undetermined",
+      "surface_id": "console-entry-point",
+      "summary": "The applicability of Section 508 / WCAG 2.1 AA to the application's single human-facing surface has never been determined. The surface is human-facing, which normally triggers the Section 508 obligation, but WCAG success criteria are written primarily for rendered web and GUI content and this surface has no page, form, report or rendered graphical content — only one stdout line and a blocking keypress. Recorded as a finding rather than as a non-issue because an undetermined obligation is an open compliance exposure, not a clean result.",
+      "prescribed_fix": "An accessibility-compliance reviewer MUST issue a recorded determination stating which WCAG 2.1 AA success criteria apply to a character-mode, non-rendered surface and which have no applicable target, with the reasoning for each. That determination MUST be made against the surfaces the MODERNIZED system exposes, not against the legacy console, because NFR-002 and REQ-024 together remove the interactive console surface entirely — the modernized revaluation cycle runs unattended with no interactive input and signals outcome through exit status, so the surface being assessed will not be the surface Discovery found. Tracked as ANOM-022.",
+      "evidence": [
+        "src/GildedRose.Console/Program.cs:10 (the single stdout banner line)",
+        "src/GildedRose.Console/Program.cs:33 (the blocking keypress wait)",
+        "structural-analysis.json:interface-inventory.open_questions[1]",
+        "ux-accessibility.json:accessibility_findings.manual_review_required[0]",
+        "ux-accessibility.json:open_questions[2]"
+      ],
+      "status": "open",
+      "sme_confirmation_required": true,
+      "governed_by": ["NFR-005"]
+    },
+    {
+      "id": "A11Y-002",
+      "wcag": "N/A — verification-process defect, not a success-criterion defect",
+      "level": "undetermined",
+      "surface_id": "console-entry-point",
+      "summary": "No accessibility-checker tool has ever been run against this application. The Discovery baseline is a human static read of one surface, explicitly not checker output, because the Sub-Skill Output Contract that the UX assessment methodology requires — naming the checker's exact output path and schema — was absent from that agent's dispatch. The result is that the application has a recorded finding count of 0 and a gate decision of 'undetermined' simultaneously, and the 0 must not be relied upon.",
+      "prescribed_fix": "An automated accessibility check MUST be wired into the build pipeline per NFR-005 and MUST run against every human-facing surface the modernized system exposes, failing the build on any Level A or AA violation. The missing Sub-Skill Output Contract MUST also be supplied to the Discovery UX assessment step so that a real checker baseline can be established for comparison; until then no before-and-after accessibility comparison is possible for this application.",
+      "evidence": [
+        "ux-accessibility.json:accessibility_findings.gate_decision_note",
+        "ux-accessibility.json:accessibility_findings.tool ('none — accessibility-checker composition unavailable this run')",
+        "ux-accessibility.json:accessibility_findings.surfaces_reviewed_of_total",
+        "ux-accessibility.json:open_questions[1]",
+        "ux-accessibility.json:scope_caveat"
+      ],
+      "status": "open",
+      "sme_confirmation_required": true,
+      "governed_by": ["NFR-005"]
+    }
+  ],
+  "verified_non_issues": [
+    {
+      "wcag": "1.1.1 Non-text Content",
+      "level": "A",
+      "surface_id": "console-entry-point",
+      "basis": "No images are rendered by this application; no image, icon or graphic reference exists in any UI code path, so this criterion has no rendered target to fail against. Source: ux-accessibility.json accessibility_findings.verified_non_issues.",
+      "caveat": "Verified against the LEGACY surface only. Must be re-verified against whatever surface the modernized system exposes."
+    },
+    {
+      "wcag": "1.4.1 Use of Color",
+      "level": "A",
+      "surface_id": "console-entry-point",
+      "basis": "No color is used to convey information — the surface is unstyled default-terminal monochrome text (a single 'OMGHAI!' banner), so this criterion has no applicable target. Source: ux-accessibility.json accessibility_findings.verified_non_issues.",
+      "caveat": "Verified against the LEGACY surface only. Must be re-verified against whatever surface the modernized system exposes."
+    },
+    {
+      "wcag": "1.3.1 Info and Relationships / 4.1.2 Name, Role, Value",
+      "level": "A",
+      "surface_id": "console-entry-point",
+      "basis": "No form controls, labels or input fields exist — Program.cs never reads args or stdin except a single Console.ReadKey() call to exit — so the label and name-role-value criteria have no applicable target. Source: ux-accessibility.json accessibility_findings.verified_non_issues.",
+      "caveat": "Verified against the LEGACY surface only. Must be re-verified against whatever surface the modernized system exposes."
+    },
+    {
+      "wcag": "2.2.1 Timing Adjustable",
+      "level": "A",
+      "surface_id": "console-entry-point",
+      "basis": "No timing-based content, auto-refresh or session timeout exists — the process blocks indefinitely on Console.ReadKey() with no timeout — so this criterion has no applicable target. Source: ux-accessibility.json accessibility_findings.verified_non_issues.",
+      "caveat": "Verified against the LEGACY surface only, AND the underlying condition is deliberately changed: REQ-024 removes the blocking Console.ReadKey() entirely, so the basis for this non-issue no longer holds in the prescribed system and 2.2.1 must be re-assessed against the modernized invocation surface."
+    }
+  ],
+  "unassessed_gaps": [
+    "APPLICABILITY UNRULED: whether Section 508 / WCAG 2.1 AA binds a character-mode, non-rendered surface at all has never been determined by an accessibility-compliance reviewer. Recorded as finding A11Y-001 and anomaly ANOM-022.",
+    "NO CHECKER RUN: 0 of 1 discovered surfaces have been assessed by an accessibility-checker tool; the entire baseline is one human static read. Recorded as finding A11Y-002.",
+    "STANDARD NOT READ FROM THE PROFILE: the prescribed standard and conformance level could not be resolved from profiles/faa/compliance.yaml because no profiles/ directory is staged in this dispatch; they are taken second-hand from ux-accessibility.json. See source_note.",
+    "SURFACE SET WILL CHANGE: REQ-024 and NFR-002 together remove the interactive console surface — the modernized cycle runs unattended, signals outcome by exit status, and emits structured logs (NFR-008) and a machine-readable cycle summary (REQ-025). Whether the modernized system exposes ANY human-facing surface at all is an Architecture decision not yet made, so the set of surfaces that must conform to WCAG 2.1 AA is currently unknown. If Architecture introduces an operator-facing UI for the override of REQ-023 or for the archival-candidate report of REQ-021, that surface is in scope for NFR-005 and has no Discovery baseline whatsoever.",
+    "NO ASSISTIVE-TECHNOLOGY EVIDENCE: no telemetry, login system, audit log or user-reported defect history exists, so no real-world accessibility experience could be observed for any user of this application. ux-accessibility.json records this as 'ZERO INSTRUMENTATION, NOT ZERO USAGE' and warns that out-of-repo usage records, if any exist, are invisible to Discovery.",
+    "PERSONA UNCONFIRMED: the single derived persona carries confidence 0.3 and an open review ask. If the real user population differs, the accessibility obligation may differ with it.",
+    "GOVERNING-PROFILE DISCREPANCY BEARS ON SCOPE: ux-accessibility.json states that every persona, adoption and accessibility figure it reports is conditional on whether this application_id genuinely maps to an FAA-owned system, which remains unconfirmed. See ANOM-028 and srs.json open_questions."
+  ],
+  "summary": {
+    "prescribed_standard": "Section 508 (36 CFR Part 1194, ICT Final Rule) / WCAG 2.1 Level AA",
+    "prescribed_requirement_count": 1,
+    "baseline_gate_decision": "undetermined",
+    "baseline_findings_count": 0,
+    "open_findings_count": 2,
+    "verified_non_issues_count": 4,
+    "unassessed_gaps_count": 7,
+    "surfaces_discovered": 1,
+    "surfaces_checker_assessed": 0,
+    "sme_confirmations_required": 2,
+    "honest_summary": "This application has NO accessibility baseline. It has a zero finding count and an 'undetermined' gate decision at the same time, which means the zero is an absence of assessment rather than an absence of defects. Both open findings are process gaps — an unruled applicability question and a checker that was never run — not observed success-criterion violations. Four criteria were verified as having no applicable target against the legacy surface, and one of those four (2.2.1) is invalidated by this SRS's own REQ-024. The accessibility obligation of the modernized system cannot be fully stated until Architecture decides whether it exposes any human-facing surface at all."
+  }
+}

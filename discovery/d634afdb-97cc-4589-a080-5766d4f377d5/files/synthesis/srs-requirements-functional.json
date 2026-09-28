@@ -1,0 +1,1101 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "document_type": "srs-requirements-functional",
+  "generated_date": "2026-09-28",
+  "derivation": "Prescriptive functional requirements for the MODERNIZED system, derived from the 25 business rules in business-logic.json (BR-001..BR-024 plus BR-MISSING-001), the 27 implicit-logic entries in implicit-logic.json, the 5 recovered state machines in state-machines.json, and the two data domains in data-domains.json. Legacy behaviour is carried forward verbatim except where an anomaly_resolution is stated.",
+  "module_map": {
+    "SRS-M-01": "Inventory Rules Domain - item classification and all quality / sell-in valuation rules",
+    "SRS-M-02": "Inventory Stock Item - the Item entity, the inventory working set, persistence and egress",
+    "SRS-M-03": "Inventory Run Host - invocation, scheduling, idempotence, output and audit"
+  },
+  "requirements": [
+    {
+      "id": "FR-GR-001",
+      "type": "functional",
+      "priority": "must",
+      "description": "The system MUST expose a single revaluation operation that advances the entire inventory working set by exactly one business day per invocation. One invocation MUST revalue every item in the supplied set exactly once, MUST NOT loop over multiple days internally, and MUST return a completion result (items processed, items changed) rather than relying on in-place mutation of a caller-owned list as its only observable effect.",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given an inventory set of N items, When the revaluation operation is invoked once, Then each of the N items has been revalued exactly once and the operation reports items_processed = N.",
+        "Given an empty inventory set, When the revaluation operation is invoked, Then no item is revalued, no error is raised, and the operation completes successfully reporting items_processed = 0.",
+        "Given the revaluation operation is invoked twice in one process, Then the inventory has advanced exactly two business days (subject to the idempotence guard of FR-GR-025).",
+        "Given an inventory set containing a null item entry, When the revaluation operation is invoked, Then the entry is rejected with a diagnostic naming the offending position instead of raising an unhandled NullReferenceException.",
+        "Given a null inventory set, When the revaluation operation is invoked, Then a validation error is returned rather than an unhandled NullReferenceException."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-001",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "IL-027",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:39-110"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-002",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The revaluation of a single item MUST be implemented as three explicitly named, strictly ordered phases: (1) PRE_SELL_IN_VALUATION, which reads the sell-in value as it stood at the START of the day; (2) SELL_IN_ADVANCE, which decrements the sell-in counter; (3) POST_SELL_IN_VALUATION, which reads the sell-in value as it stands at the END of the day. The target MUST make the two readings of sell-in distinct named values (for example sell_in_at_start_of_day and sell_in_at_end_of_day) so that one field no longer denotes two different things within one iteration, and the phase order MUST NOT be reorderable by refactoring.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given a Backstage pass at SellIn 11 / Quality 20, When one day is applied, Then Quality becomes 21 (base +1 only) and SellIn becomes 10 - proving the 10-day threshold is evaluated against the start-of-day value, not the decremented value.",
+        "Given a Backstage pass at SellIn 6 / Quality 20, When one day is applied, Then Quality becomes 22 (+2, the 5-day bonus has not engaged) and SellIn becomes 5.",
+        "Given a standard item at SellIn 1 / Quality 10, When one day is applied, Then Quality becomes 9 (single degradation only) and SellIn becomes 0, because the end-of-day sell-in value 0 is not below 0.",
+        "Given a standard item at SellIn 0 / Quality 10, When one day is applied, Then Quality becomes 8 and SellIn becomes -1, because the end-of-day value -1 is below 0.",
+        "The two sell-in readings are separately named in the target model, and a test asserts that PRE_SELL_IN_VALUATION cannot observe the decremented value."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-016",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41-109"
+        },
+        {
+          "finding_id": "IL-009",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:59, :67, :80, :83"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-004",
+      "anomaly_details": "Legacy: a single mutable SellIn field is read before the decrement at Program.cs:80 by the Backstage thresholds (lines 59, 67) and after it by the expiry test (line 83), so 'SellIn' silently means two different things inside one iteration and the ordering is enforced only by statement position. Target: the same observable outcomes are preserved, but the two readings become two explicitly named values inside two named phases, so the ordering cannot be broken by a reordering refactor."
+    },
+    {
+      "id": "FR-GR-003",
+      "type": "functional",
+      "priority": "must",
+      "description": "Every stock item MUST carry an explicit category identifier (for example STANDARD, APPRECIATING, EVENT_TICKET, LEGENDARY, CONJURED) that selects its valuation rules. Rule selection MUST be driven by that identifier alone; the system MUST NOT derive an item's pricing behaviour from its display name, and MUST NOT perform case-sensitive whole-string equality against marketing copy. Renaming an item's display name MUST NOT change its valuation.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given an item with category APPRECIATING and display name changed from \"Aged Brie\" to \"Aged Brie (Reserve)\", When one day is applied, Then it still appreciates by +1, proving classification is independent of the display name.",
+        "Given an item with category EVENT_TICKET whose display name no longer mentions \"TAFKAL80ETC\", When one day is applied, Then full demand pricing still applies.",
+        "Given the display names \"aged brie\", \"Aged Brie \" and \"AGED BRIE\" attached to category APPRECIATING, When one day is applied, Then all three appreciate identically - no casing or whitespace difference reclassifies an item.",
+        "A single category-to-rule resolution point exists in the target; the legacy's eight display-name comparison sites at Program.cs:41, :45, :57, :85, :87, :91 are replaced by exactly one dispatch on the category identifier."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-017",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41-91"
+        },
+        {
+          "finding_id": "IL-007",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91"
+        },
+        {
+          "finding_id": "IL-008",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91"
+        },
+        {
+          "finding_id": "BR-017",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:117"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-014",
+      "anomaly_details": "Legacy: the entire business taxonomy is encoded in three hardcoded customer-facing display-name literals compared at eight sites (Program.cs:41, :45, :57, :85, :87, :91), so any rename, re-casing or trailing space silently reclassifies an item as standard goods. Target: a first-class category identifier on the stock item, resolved once, with the display name carrying no behavioural meaning."
+    },
+    {
+      "id": "FR-GR-004",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category STANDARD MUST lose exactly 1 Quality per business day while its sell-by date has not passed. STANDARD MUST remain the behaviour applied to any item whose category resolves to ordinary goods, so newly introduced merchandise assigned that category needs no rule change.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A \"+5 Dexterity Vest\" (STANDARD) at SellIn 10 / Quality 20 becomes SellIn 9 / Quality 19 after one day.",
+        "An \"Elixir of the Mongoose\" (STANDARD) at Quality 1 becomes Quality 0 after one day - the last degrading day.",
+        "A STANDARD item at Quality 0 remains at Quality 0 after one day.",
+        "A STANDARD item at SellIn 5 / Quality 7 reports Quality 2 after five days."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-002",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41-50"
+        },
+        {
+          "finding_id": "IL-006",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:47"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-005",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category STANDARD MUST lose 2 Quality per business day once its sell-by date has passed (that is, once the end-of-day sell-in value is below 0), subject to the zero floor of FR-GR-006. The doubled loss MUST be expressed as a single rate of 2 for the day rather than as two independently guarded decrements.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A STANDARD item at SellIn 0 / Quality 10 becomes SellIn -1 / Quality 8 after one day.",
+        "A STANDARD item at SellIn 1 / Quality 10 becomes SellIn 0 / Quality 9 after one day - single rate, because the end-of-day sell-in value is 0 and not below 0.",
+        "A STANDARD item at SellIn -1 / Quality 1 becomes SellIn -2 / Quality 0 after one day - the loss is clamped to 1 rather than 2, exactly as the legacy floor guard produced.",
+        "A STANDARD item at SellIn -1 / Quality 0 remains at Quality 0."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-013",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:83-96"
+        },
+        {
+          "finding_id": "IL-006",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:93"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-006",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Quality MUST NEVER fall below 0 for any non-legendary item. The floor MUST be implemented as a CLAMP applied to the computed end-of-day Quality value (final_quality = max(0, computed_quality)), NOT as a pre-decrement guard of the form `Quality > 0`. The clamp MUST hold for degradation steps of any magnitude, including the -2 and -4 rates of FR-GR-019.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given a STANDARD item at SellIn -1 / Quality 1, When one day is applied at the expired rate of 2, Then Quality is 0 and never -1.",
+        "Given a CONJURED item at Quality 1 and a required loss of 2, Then Quality lands on 0, not -1.",
+        "Given a CONJURED item past its sell-by at Quality 3 and a required loss of 4, Then Quality lands on 0, not -1.",
+        "Given any item at Quality 0, When any number of further days are applied, Then Quality remains 0.",
+        "Given an item presented with a negative Quality (for example -5), Then it is rejected at intake by FR-GR-021 rather than silently carried forward unchanged."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-003",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:43-49"
+        },
+        {
+          "finding_id": "IL-002",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:43, :89"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy: the zero floor exists only as two `Quality > 0` guards preceding the two decrement sites (Program.cs:43, :89). It holds only because every decrement step happens to be exactly 1, so the first multi-step degradation - precisely the Conjured rule of FR-GR-019 - would undershoot it undetected. Target: a single clamp on the computed value, correct for any step size."
+    },
+    {
+      "id": "FR-GR-007",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category APPRECIATING (the class occupied today by \"Aged Brie\") MUST gain exactly 1 Quality per business day while its sell-by date has not passed, subject to the ceiling of FR-GR-009.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Aged Brie (APPRECIATING) at SellIn 2 / Quality 0 becomes SellIn 1 / Quality 1 after one day.",
+        "An APPRECIATING item at Quality 49 becomes Quality 50 after one day.",
+        "An APPRECIATING item at Quality 50 remains at Quality 50 after one day.",
+        "No code path reduces the Quality of an APPRECIATING item."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-006",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:51-56"
+        },
+        {
+          "finding_id": "IL-006",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:55"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-008",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category APPRECIATING MUST gain 2 Quality per business day once its sell-by date has passed (end-of-day sell-in value below 0), subject to the ceiling of FR-GR-009. This accelerated rate MUST be stated explicitly as a documented rate of the APPRECIATING category rather than left to emerge from two separate increments, and it MUST be confirmed with the business owner as intended behaviour before release.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Aged Brie at SellIn 0 / Quality 10 becomes SellIn -1 / Quality 12 after one day.",
+        "Aged Brie at SellIn 1 / Quality 10 becomes SellIn 0 / Quality 11 after one day (+1 only).",
+        "An expired APPRECIATING item at Quality 49 becomes Quality 50, not 51.",
+        "An expired APPRECIATING item at Quality 50 remains at Quality 50."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-014",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:102-108"
+        },
+        {
+          "finding_id": "IL-013",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:55, :106"
+        }
+      ],
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-024",
+      "anomaly_details": "Legacy: the +2 per day for expired Aged Brie is emergent and undocumented - it arises only because the generic increment at Program.cs:55 and the expiry-branch increment at Program.cs:106 both fire in the same iteration, while the business documentation says only that Brie improves with age. Target: the same +2 rate, consolidated into one explicit documented post-sell-by rate for the APPRECIATING category, and flagged for business-owner confirmation."
+    },
+    {
+      "id": "FR-GR-009",
+      "type": "constraint",
+      "priority": "must",
+      "description": "No appreciation MUST raise an item's Quality above 50. The ceiling MUST be applied such that an item eligible for a multi-point gain in one day saturates at exactly 50 and never overshoots to 51 or 52. The ceiling MUST constrain appreciation outcomes only; it MUST NOT be applied to items of category LEGENDARY (see FR-GR-010).",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A Backstage pass at SellIn 5 / Quality 48 rises to exactly 50 after one day, not 51.",
+        "A Backstage pass at SellIn 5 / Quality 49 rises to exactly 50 after one day, not 52.",
+        "An APPRECIATING item at Quality 50 stays at 50 with every increment suppressed.",
+        "A LEGENDARY item at Quality 80 is never tested against, nor reduced to, the 50 ceiling.",
+        "The value 50 is defined once as a named upper-bound constant of the rules domain, not repeated as an inline literal at four comparison sites."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-007",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:53-55"
+        },
+        {
+          "finding_id": "IL-001",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:53, :61, :69, :104"
+        },
+        {
+          "finding_id": "IL-011",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:53, :61, :69"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-010",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Items of category LEGENDARY MUST be exempt from the 0..50 Quality band and MUST have their Quality fixed at 80 by an explicit, asserted rule of the rules domain. The value 80 MUST be a named legendary-quality constant that the system validates on intake and preserves thereafter; it MUST NOT exist only as seed data. An item presented as LEGENDARY with a Quality other than 80 MUST be rejected with a diagnostic rather than carried forward indefinitely.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "\"Sulfuras, Hand of Ragnaros\" (LEGENDARY) reports Quality 80 on day 0 and on day 100.",
+        "A LEGENDARY item presented at Quality 42 is rejected at intake with a diagnostic naming the expected legendary quality of 80, instead of being carried forward at 42 forever.",
+        "A LEGENDARY item presented at Quality 1000 is likewise rejected.",
+        "The band check for ordinary categories asserts 0..50; the LEGENDARY exemption is declared explicitly so that no downstream consumer assuming 0..50 is silently violated.",
+        "The contradiction between the documented maximum of 50 and the legendary value of 80 is recorded and resolved in the target specification rather than left implicit."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-008",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:19"
+        },
+        {
+          "finding_id": "IL-005",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:19"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-002",
+      "anomaly_details": "Legacy: the legendary Quality of 80 appears exactly once in the application - the seed list at Program.cs:19 - and in no rule. Nothing asserts, defaults to or restores it, so a mis-seeded legendary item would carry any value forever, and the value sits 30 above the documented maximum of 50. Target: 80 becomes a named, validated constant of the LEGENDARY category with the ceiling exemption stated explicitly."
+    },
+    {
+      "id": "FR-GR-011",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The Quality of an item of category LEGENDARY MUST NEVER change, on any day, in any phase. The exemption MUST be implemented as a single positive short-circuit for the LEGENDARY category evaluated before any valuation phase runs, NOT as negated guards repeated in front of each adjustment site.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "\"Sulfuras, Hand of Ragnaros\" at SellIn 0 / Quality 80 is still SellIn 0 / Quality 80 after any number of days.",
+        "A LEGENDARY item presented with a negative sell-in value (for example -1) still never changes Quality, so its immutability does not depend on never reaching the post-sell-by phase.",
+        "A LEGENDARY item presented at Quality 0 (were it admitted) is never incremented, confirming the exemption is unconditional and not an artefact of a floor guard short-circuiting first.",
+        "Exactly one LEGENDARY exemption site exists in the target; adding a new valuation rule cannot omit the exemption."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-004",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:45-48"
+        },
+        {
+          "finding_id": "IL-015",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:91"
+        }
+      ],
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-025",
+      "anomaly_details": "Legacy: the legendary exemption is stated negatively at two separate decrement sites (Program.cs:45 and :91), and the second guard is never reached by the seeded Sulfuras because its sell-in never goes negative - making it data-dependent dead code that nonetheless becomes load-bearing for a legendary item seeded with a negative sell-in. Target: one unconditional LEGENDARY short-circuit, so the exemption is neither duplicated nor seed-dependent."
+    },
+    {
+      "id": "FR-GR-012",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The sell-in counter of an item of category LEGENDARY MUST NEVER advance. A legendary item's sell-by counter MUST remain at the value it was admitted with, for any number of business days, and the system MUST NOT rely on that value being 0 in order to keep the item out of the post-sell-by phase.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "\"Sulfuras, Hand of Ragnaros\" admitted at SellIn 0 reports SellIn 0 after 10 days.",
+        "A LEGENDARY item admitted at SellIn 5 reports SellIn 5 after any number of days and never reaches the post-sell-by phase.",
+        "A LEGENDARY item admitted at SellIn -1 reports SellIn -1 after any number of days, and its Quality still never changes (see FR-GR-011).",
+        "No business day advances a LEGENDARY item's sell-in counter in either direction."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-005",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:78-81"
+        },
+        {
+          "finding_id": "IL-014",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:19, :78-81, :83"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-013",
+      "type": "functional",
+      "priority": "must",
+      "description": "The system MUST decrement the sell-in counter of every non-LEGENDARY item by exactly 1 per business day, in the SELL_IN_ADVANCE phase defined by FR-GR-002. This decrement MUST occur after the pre-sell-in valuation phase and before the post-sell-in valuation phase, and MUST occur exactly once per item per day.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Any non-LEGENDARY item's sell-in value falls by exactly 1 per business day.",
+        "A non-LEGENDARY item at SellIn 0 becomes SellIn -1, which is the day the post-sell-by rules first engage.",
+        "A non-LEGENDARY item at SellIn -1 becomes SellIn -2 (subject to the lower-bound policy of FR-GR-023).",
+        "A LEGENDARY item's sell-in value is unchanged by the same run."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-012",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:78-81"
+        },
+        {
+          "finding_id": "BR-016",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-014",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category EVENT_TICKET (the class occupied today by \"Backstage passes to a TAFKAL80ETC concert\") MUST gain a base 1 Quality per business day while the event has not yet occurred, before any proximity bonus is applied, and subject to the ceiling of FR-GR-009.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A Backstage pass at SellIn 15 / Quality 20 becomes SellIn 14 / Quality 21 after one day.",
+        "A Backstage pass at SellIn 11 / Quality 20 becomes SellIn 10 / Quality 21 after one day - base +1 only, because neither proximity threshold is met at the start of the day.",
+        "A Backstage pass at Quality 50 receives no increment at all, base or bonus.",
+        "The base gain is applied to every EVENT_TICKET item whose event has not yet occurred, independent of the proximity bonuses."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-009",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:51-56"
+        },
+        {
+          "finding_id": "IL-006",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:55"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-015",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category EVENT_TICKET MUST gain one additional Quality point (total +2 for the day) when its sell-in value READ AT THE START OF THE DAY, before the SELL_IN_ADVANCE phase, is below 11 - that is, 10 days or fewer remain. The threshold literal 11 is CORRECT under pre-decrement evaluation and MUST NOT be changed to 10; the target MUST evaluate it against the explicitly named start-of-day sell-in value required by FR-GR-002.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A Backstage pass at SellIn 10 / Quality 20 becomes SellIn 9 / Quality 22.",
+        "A Backstage pass at SellIn 11 / Quality 20 becomes SellIn 10 / Quality 21 - the bonus has not yet engaged.",
+        "A Backstage pass at SellIn 6 / Quality 20 becomes SellIn 5 / Quality 22 - +2, because the 5-day bonus has not yet engaged.",
+        "A Backstage pass at SellIn 10 / Quality 49 becomes Quality 50, with the second increment suppressed by the ceiling.",
+        "A regression test asserts the SellIn 11 boundary yields +1 and the SellIn 10 boundary yields +2, so hoisting the sell-in decrement can never pass silently."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-010",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:57-65"
+        },
+        {
+          "finding_id": "IL-003",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:59"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-016",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category EVENT_TICKET MUST gain a further Quality point (total +3 for the day, stacking on FR-GR-014 and FR-GR-015) when its sell-in value READ AT THE START OF THE DAY, before the SELL_IN_ADVANCE phase, is below 6 - that is, 5 days or fewer remain. The threshold literal 6 is CORRECT under pre-decrement evaluation and MUST NOT be changed to 5. Each of the three increments MUST remain independently bounded by the 50 ceiling so the day's total gain saturates at exactly 50.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A Backstage pass at SellIn 5 / Quality 20 becomes SellIn 4 / Quality 23.",
+        "A Backstage pass at SellIn 6 / Quality 20 becomes SellIn 5 / Quality 22 - +2 only.",
+        "A Backstage pass at SellIn 5 / Quality 48 becomes Quality 50, not 51.",
+        "A regression test asserts the SellIn 6 boundary yields +2 and the SellIn 5 boundary yields +3."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-011",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:67-73"
+        },
+        {
+          "finding_id": "IL-004",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:67"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-017",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item of category EVENT_TICKET MUST have its Quality set to 0 once the event has passed - that is, once the end-of-day sell-in value is below 0. The target MUST express this as an explicit assignment of the value 0 (a documented business cliff), NOT as the self-cancelling arithmetic idiom `Quality = Quality - Quality`.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A Backstage pass at SellIn 0 / Quality 20 becomes SellIn -1 / Quality 0 in a single day.",
+        "A Backstage pass at SellIn 0 / Quality 50 becomes SellIn -1 / Quality 0 - the largest single-day value change the system can produce.",
+        "A Backstage pass at SellIn 1 / Quality 20 becomes SellIn 0 / Quality 23 - it is NOT yet zeroed, because the end-of-day sell-in value is 0 and not below 0.",
+        "A Backstage pass already at SellIn -1 / Quality 0 reports Quality 0 after any further day.",
+        "The zeroing appears in the target source as an assignment of the literal 0, discoverable by searching for a zero assignment."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-015",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:97-100"
+        },
+        {
+          "finding_id": "IL-010",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:99"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-003",
+      "anomaly_details": "Legacy: expired passes are zeroed by `Items[i].Quality = Items[i].Quality - Items[i].Quality` at Program.cs:99, so any reader or tool searching for an assignment of literal zero misses the rule entirely and the line reads as arithmetic rather than as a business cliff. Target: the identical outcome expressed as an explicit assignment of 0."
+    },
+    {
+      "id": "FR-GR-018",
+      "type": "functional",
+      "priority": "must",
+      "description": "For an item of category EVENT_TICKET whose event has passed, the system MUST NOT compute, record, emit or publish any appreciation for that day. The end-of-day Quality MUST be determined as 0 directly, so that no non-zero intermediate value is ever observable to a logger, audit record, event stream or partial commit. The externally observable end-of-day result MUST be identical to the legacy result.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given a Backstage pass at SellIn 0 / Quality 20, When one day is applied, Then the audit record for that day shows exactly one transition, from Quality 20 to Quality 0, and no intermediate value of 21, 22 or 23.",
+        "Given an already-expired Backstage pass at SellIn -1 / Quality 0, When one day is applied, Then no appreciation is computed and no valuation change is recorded - the item does not churn 0 -> 3 -> 0.",
+        "Given a Backstage pass at SellIn 0 / Quality 50, When one day is applied, Then the recorded result is Quality 0 and no intermediate value is emitted.",
+        "End-of-day Quality and sell-in values for every expired EVENT_TICKET case match the legacy golden-master snapshot exactly."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-012",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:99"
+        },
+        {
+          "finding_id": "BR-015",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:97-100"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-005",
+      "anomaly_details": "Legacy: on the concert day and on every subsequent day, a pass earns up to +3 at Program.cs:55/:63/:71 and is then zeroed at Program.cs:99 within the same iteration, so the work is wasted and an already-worthless pass repeatedly climbs to 3 and is reset. Net external behaviour is unaffected today only because nothing observes the intermediate; any target that logs, audits or commits between phases would expose it as a real value. Target: the appreciation is not computed at all once the event has passed."
+    },
+    {
+      "id": "FR-GR-019",
+      "type": "functional",
+      "priority": "must",
+      "description": "The system MUST implement the documented CONJURED category: an item of category CONJURED MUST lose 2 Quality per business day while its sell-by date has not passed, and 4 Quality per business day once it has passed, in both cases clamped at a floor of 0 per FR-GR-006. Category membership MUST be determined by the explicit category identifier of FR-GR-003, not by prefix or substring matching on the display name, and the intended membership criterion MUST be confirmed with the business owner before release.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A \"Conjured Mana Cake\" (CONJURED) at SellIn 3 / Quality 6 becomes SellIn 2 / Quality 4 after one day.",
+        "A CONJURED item at SellIn 0 / Quality 10 becomes SellIn -1 / Quality 6 after one day (-4 once past the sell-by date).",
+        "A CONJURED item at Quality 1 with a required loss of 2 lands on Quality 0, not -1.",
+        "A CONJURED item past its sell-by date at Quality 3 with a required loss of 4 lands on Quality 0, not -1.",
+        "A CONJURED item at SellIn 1 / Quality 10 becomes SellIn 0 / Quality 8 - still the pre-sell-by rate of 2, because the end-of-day sell-in value is 0 and not below 0."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-MISSING-001",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "IL-024",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:26"
+        },
+        {
+          "finding_id": "BR-MISSING-001",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:26"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_details": "Legacy: the Conjured rule is specified in the application's own business documentation (README.md:34) and a \"Conjured Mana Cake\" is seeded into the live inventory at Program.cs:26, but the string \"Conjured\" appears nowhere in UpdateQuality (Program.cs:37-111). The legacy therefore prices Conjured items as ordinary standard goods - losing 1 per day before the sell-by date and 2 after, instead of the required 2 and 4 - so the item is mispriced on every run. This requirement prescribes the documented behaviour, which is NOT implemented today, and it is the reason FR-GR-006 must be a clamp rather than a guard."
+    },
+    {
+      "id": "FR-GR-020",
+      "type": "functional",
+      "priority": "must",
+      "description": "An item whose category identifier is null, empty or not a recognised category MUST NOT be revalued silently as standard goods. The system MUST either reject the item with a validation error that names the item and the unrecognised category, or apply a configured explicit default category AND emit a diagnostic record for every item so defaulted. The choice between rejection and explicit defaulting MUST be confirmed with the business owner.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given an item with a null category identifier, When a day is applied, Then either a validation error is returned or the item is defaulted with a diagnostic naming it - never a silent standard-goods depreciation.",
+        "Given an item with an empty category identifier, Then the same outcome as the null case is produced.",
+        "Given an item with category \"MYSTERY_BOX\" which is not a recognised category, Then a diagnostic identifying the unrecognised category value is emitted and the item is not silently depreciated.",
+        "Given a run containing one valid and one unrecognised item, Then the run result reports a non-zero count of rejected or defaulted items, and that count is externally observable.",
+        "No revaluation path exists that reaches a default rule arm without emitting a diagnostic."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-023",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41-50"
+        },
+        {
+          "finding_id": "IL-021",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41, :45, :85, :87, :91"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-006",
+      "anomaly_details": "Legacy: C# string equality is null-safe, so a null, empty or unrecognised Name satisfies every 'is not a special item' test at Program.cs:41, :45, :85, :87, :91 and falls through to the standard-goods path with no exception, log or validation error. A default-constructed Item (Name null, SellIn 0, Quality 0) is priced as ordinary merchandise. Target: unknown or null categories are rejected, or explicitly defaulted with a diagnostic."
+    },
+    {
+      "id": "FR-GR-021",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The stock item model MUST enforce its own invariants at construction and on every mutation: the display name MUST be non-null and non-empty, the category identifier MUST be a recognised category, Quality MUST lie within 0..50 for non-legendary categories and MUST equal 80 for LEGENDARY, and the sell-in value MUST be an integer within the bound defined by FR-GR-023. An out-of-range value MUST be rejected at the model boundary rather than accepted and relied upon to be corrected by the valuation rules.",
+      "module_hint": "SRS-M-02",
+      "acceptance_criteria": [
+        "Constructing a stock item with Quality = -100 is rejected with a validation error.",
+        "Constructing a stock item with Quality = 9999 is rejected with a validation error.",
+        "Constructing a stock item with a null display name is rejected with a validation error.",
+        "Constructing a default / uninitialised stock item (no name, no category) is rejected rather than yielding a processable item.",
+        "Constructing a stock item with category LEGENDARY and Quality 80 succeeds; the same item with Quality 42 is rejected.",
+        "Constructing a stock item with Quality 0, category STANDARD and a valid name succeeds."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-018",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:115-122"
+        },
+        {
+          "finding_id": "IL-019",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:119, :121"
+        },
+        {
+          "finding_id": "BR-018",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:115-122"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-007",
+      "anomaly_details": "Legacy: Item is a three-property POCO with public setters, no constructor guard and no range check (Program.cs:115-122), so negative Quality, Quality above 50 and a null Name all construct cleanly and are never normalized. Every constraint lives in the update loop rather than the model, so no consumer of Item can trust its values. Target: the invariants move into the model, which is the reason the legacy prohibition on editing the Item class does not carry forward to the modernized system."
+    },
+    {
+      "id": "FR-GR-022",
+      "type": "functional",
+      "priority": "may",
+      "description": "The stock item model MAY carry an explicit quantity or stock-count attribute so that multiple identical units need not be represented as separate entries. Until the business owner confirms the intended granularity, the target MUST continue to treat one stock item record as exactly one unit, and MUST NOT silently aggregate duplicates.",
+      "module_hint": "SRS-M-02",
+      "acceptance_criteria": [
+        "Given two stock item records with the same display name, category and Quality, When a day is applied, Then both are revalued independently and neither is merged into the other.",
+        "Given the quantity attribute is not yet introduced, Then each record continues to represent exactly one unit and no quantity is inferred.",
+        "The open question of whether the inventory model should express 'twelve wheels of Aged Brie' as one record with a quantity is recorded for business-owner decision rather than assumed."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-023",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:115-122"
+        }
+      ],
+      "anomaly_resolution": "DEFER",
+      "proposed_anomaly": "ANOM-020",
+      "anomaly_details": "Legacy: an inventory system with no quantity or stock-count field at all (Program.cs:115-122). Each Item instance represents exactly one unit, duplicates are not aggregated, and nothing in the code can express a multi-unit holding. Deferred rather than fixed because the extraction pass flagged the intended granularity as requiring SME confirmation and no observed behaviour settles it."
+    },
+    {
+      "id": "FR-GR-023",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The sell-in counter MUST have a defined lower bound, and the system MUST provide an archival or write-off path for long-expired stock. Sell-in MUST NOT decrement without limit; once an item reaches the configured lower bound the system MUST either stop decrementing it or transition it to an ARCHIVED / WRITTEN_OFF state that removes it from the active working set, and that transition MUST be recorded. The system MUST NOT depend on only the sign of sell-in ever being tested.",
+      "module_hint": "SRS-M-02",
+      "acceptance_criteria": [
+        "Given a STANDARD item admitted at SellIn 10, When 20 business days are applied, Then it reports Quality 0 and its sell-in value has either stopped at the configured lower bound or the item has been archived - it does not report SellIn -10 in the active working set indefinitely.",
+        "Given an item that reaches the configured lower bound, Then an archival or write-off record is emitted naming the item and the run date.",
+        "Given a Backstage pass zeroed after its event, Then it follows the same archival path rather than remaining in the active working set accruing and discarding value forever.",
+        "No arithmetic path exists in which the sell-in counter can approach integer underflow.",
+        "The sell-in value is representable in the target persistence layer's declared column type without overflow."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-022",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        },
+        {
+          "finding_id": "IL-020",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:80, :83"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-008",
+      "anomaly_details": "Legacy: only the sign of SellIn is ever tested, never its magnitude (Program.cs:80, :83), so it falls indefinitely to -1, -2, -365 with no floor, no overflow guard and no archival, write-off or removal path. A downstream store using a narrower integer type would overflow where this code does not. Target: an explicit lower bound plus an archival transition out of the past-sell-by state."
+    },
+    {
+      "id": "FR-GR-024",
+      "type": "functional",
+      "priority": "must",
+      "description": "The system MUST acquire the inventory to be revalued from a parameterised external source - a datastore, a supplied file or an explicit input argument - and MUST NOT depend on a hardcoded seed list compiled into the program. The inventory working set MUST be supplied to the revaluation operation as an input, and the six legacy seed items MUST be retained only as test fixture data for characterization testing.",
+      "module_hint": "SRS-M-02",
+      "acceptance_criteria": [
+        "Given an inventory of 200 items supplied from the configured external source, When a day is applied, Then all 200 are revalued - the system is not limited to six items.",
+        "Given the six legacy seed items (+5 Dexterity Vest, Aged Brie, Elixir of the Mongoose, Sulfuras, Backstage passes, Conjured Mana Cake) supplied as input, When a day is applied, Then the output matches the legacy golden-master snapshot for that day, except where an anomaly resolution in this document prescribes otherwise.",
+        "Given no inventory source is configured, When the run host starts, Then it fails with a configuration diagnostic rather than silently revaluing a built-in list.",
+        "Given the inventory source returns zero items, When a day is applied, Then the run completes successfully reporting items_processed = 0.",
+        "The revaluation operation accepts the inventory as a parameter and does not read a private compiled-in field."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-019",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:14-29"
+        },
+        {
+          "finding_id": "IL-022",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:5, :7, :37"
+        },
+        {
+          "finding_id": "BR-019",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:7"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-025",
+      "type": "functional",
+      "priority": "must",
+      "description": "Each revaluation run MUST be identified by an explicit business date supplied to or resolved by the run host, and that run date MUST be recorded durably. A run for a business date that has already been completed MUST be refused (or MUST complete as a no-op reporting 'already processed'), so that a retry after a partial or failed run cannot double-apply a day's valuation change. One completed run MUST equal exactly one business day of inventory advance.",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given the run for business date D has completed, When the run for business date D is invoked again, Then no item is revalued and the run reports 'already processed for D'.",
+        "Given the run for business date D has completed, When the run for business date D+1 is invoked, Then every item advances exactly one day.",
+        "Given a run fails partway through, When it is retried for the same business date, Then the completed portion is not re-applied and the final state equals exactly one day of advance.",
+        "Given the run host is invoked with no business date, Then it either resolves the date from a single defined source or fails with a diagnostic - it never guesses.",
+        "The run-date record persists across process restarts, so the calendar is no longer defined by the process lifecycle."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-020",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31-35"
+        },
+        {
+          "finding_id": "IL-017",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        },
+        {
+          "finding_id": "IL-016",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-010",
+      "anomaly_details": "Legacy: the business calendar is the process lifecycle. UpdateQuality is called once per run with no clock read, no date parameter, no run-date record and no already-processed check (Program.cs:31-35), so running the revaluation twice advances the inventory two days and a retry after a partial failure would double-apply a day of depreciation undetectably in any variant that persisted its results. Target: an explicit recorded run date and an idempotence guard."
+    },
+    {
+      "id": "FR-GR-026",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The revaluation run MUST complete unattended and non-interactively. The run host MUST NOT wait for console input at any point; the blocking keypress that terminates the legacy process MUST be removed. The run MUST exit with a deterministic process exit code - zero on success, non-zero on failure - so that a scheduler or container orchestrator can detect the outcome, and MUST function with no console attached and with standard input redirected or closed.",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given the run is launched with standard input closed, When the revaluation completes, Then the process exits without blocking and returns exit code 0.",
+        "Given the run is launched in a container with no attached console, When the revaluation completes, Then the process exits cleanly within its scheduled window and does not hang.",
+        "Given the revaluation fails, When the process exits, Then the exit code is non-zero and the failure is reported on the diagnostic output.",
+        "No call that waits for a keystroke exists anywhere in the run host.",
+        "An automated end-to-end test invokes the run host as a subprocess with no TTY and asserts a clean, timely exit."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-021",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        }
+      ],
+      "anomaly_resolution": "OMIT",
+      "proposed_anomaly": "ANOM-009",
+      "anomaly_details": "Legacy: after the revaluation, Main calls System.Console.ReadKey() at Program.cs:33 and blocks indefinitely on a keystroke, with no timeout and no non-interactive fallback, so a nightly inventory process cannot complete unattended - under a scheduler or in a container it hangs or throws. Target: the keypress is omitted entirely and the run exits with a deterministic exit code."
+    },
+    {
+      "id": "FR-GR-027",
+      "type": "functional",
+      "priority": "must",
+      "description": "The results of each revaluation run MUST be emitted and durably persisted. For every item processed, the system MUST record the end-of-day category, sell-in value and Quality against the run's business date, and MUST make that result available to downstream consumers (a datastore write plus a machine-readable run output). Results MUST NOT exist only as in-memory state discarded at process exit, and the run MUST report a summary (items processed, items changed, items rejected or defaulted, items archived).",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given a run over the six legacy seed items for business date D, When the run completes, Then a persisted result set exists for date D containing six records each carrying the end-of-day sell-in value and Quality.",
+        "Given the process exits, When the store is read again, Then the previous run's results are still present - state survives process exit.",
+        "Given a run completes, Then the run summary reports items_processed, items_changed, items_rejected and items_archived, and those numbers reconcile with the persisted result set.",
+        "No revaluation outcome is computed without being emitted; a test asserts the persisted record count equals items_processed.",
+        "The run's only output is no longer a greeting printed before the calculation."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-018",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:10, :33-35"
+        },
+        {
+          "finding_id": "BR-020",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:31-35"
+        },
+        {
+          "finding_id": "IL-018",
+          "artifact": "data-domains.json",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-011",
+      "anomaly_details": "Legacy: the only console output in the whole application is the literal \"OMGHAI!\" printed BEFORE the calculation runs (Program.cs:10), and no Quality value is ever printed, returned, written or persisted - the in-memory list dies with the process at Program.cs:33-35. The business output of the nightly revaluation is unobservable today. Target: durable persistence plus a machine-readable run output."
+    },
+    {
+      "id": "FR-GR-028",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Invoking a revaluation run MUST be an authorised operation. The system MUST authenticate the invoking identity (human or service principal) and MUST verify an explicit permission to revalue inventory before any item is changed. An unauthenticated or unauthorised invocation MUST be refused with no mutation of any item, and the refusal MUST be recorded. Accessibility of the rules engine MUST NOT be relied on as the access control (an assembly-visibility accident is not an authorisation decision).",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given no credential is supplied, When a run is invoked, Then it is refused, no item Quality or sell-in value changes, and the refusal is recorded.",
+        "Given an authenticated identity without the revalue-inventory permission, When a run is invoked, Then it is refused and the refusal is recorded with the identity.",
+        "Given an authenticated identity holding the revalue-inventory permission, When a run is invoked, Then the run proceeds and the authorised identity is recorded on the run record.",
+        "A negative authorisation test exists and passes - there is a code path that denies the operation, which the legacy had none of.",
+        "The rules engine is callable from a separate test assembly under an authorised test identity, so access control is explicit rather than a side effect of assembly visibility."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-024",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "IL-022",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:5, :7, :37"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-013",
+      "anomaly_details": "Legacy: no user, role, permission check or approval step of any kind governs revaluation of the entire inventory (Program.cs:37-111). Any in-assembly caller may revalue every item. The only access limit is accidental - UpdateQuality is public on an internal class reading a private field (Program.cs:5, :7), which makes it assembly-internal and simultaneously makes it untestable. Target: explicit authentication and permission enforcement, which is a new capability rather than a modification of an existing one."
+    },
+    {
+      "id": "FR-GR-029",
+      "type": "functional",
+      "priority": "must",
+      "description": "Every valuation change MUST be audited. For each item changed, the system MUST record the run's business date, the item identity and category, the before and after sell-in and Quality values, the rule or rules applied, and the authorised identity that invoked the run. The audit record MUST be durable and MUST be sufficient to answer why an item is worth what it is worth, and to reconstruct the previous valuation.",
+      "module_hint": "SRS-M-03",
+      "acceptance_criteria": [
+        "Given a STANDARD item goes from SellIn 10 / Quality 20 to SellIn 9 / Quality 19, Then an audit record exists naming the before values 10/20, the after values 9/19, the rule applied (standard pre-sell-by degradation) and the run's business date.",
+        "Given a Backstage pass goes from Quality 20 to Quality 0 on its event day, Then a single audit record shows 20 -> 0 attributed to the event-expiry rule, with no intermediate value (see FR-GR-018).",
+        "Given a run has completed, When the audit store is queried for an item, Then the full history of its valuations across business dates is returned and the prior valuation is recoverable.",
+        "Given an item is unchanged by a run (for example a LEGENDARY item), Then no spurious change record is written, but the run record still shows the item was processed.",
+        "Every audit record carries the authorised invoking identity from FR-GR-028."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-025",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "finding_id": "BR-024",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:39-110"
+        }
+      ],
+      "anomaly_resolution": "FIX",
+      "proposed_anomaly": "ANOM-012",
+      "anomaly_details": "Legacy: the revaluation mutates Quality at 13 sites and the sell-in value at 1 site with no before/after capture, no logging framework, no event and no versioning (Program.cs:37-111). Once a day is applied the previous valuation is unrecoverable. Target: a durable per-item audit trail of every valuation change."
+    },
+    {
+      "id": "FR-GR-030",
+      "type": "functional",
+      "priority": "must",
+      "description": "The target MUST make the ItemSellByLifecycle explicit and named: the states WithinSellByWindow (sell-in at start of day >= 1), FinalSellDay (sell-in at start of day == 0) and PastSellBy (sell-in at start of day <= -1) MUST be first-class, named, inspectable states of every non-legendary stock item, and the transitions between them MUST be declared rather than recomputed as an incidental side effect of an integer sign test. PastSellBy MUST remain absorbing with respect to valuation, and its only exit MUST be the archival transition of FR-GR-023.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given an item in WithinSellByWindow at SellIn 2, When one day is applied, Then it remains in WithinSellByWindow at SellIn 1 and only pre-sell-by valuation applies.",
+        "Given an item in WithinSellByWindow at SellIn 1, When one day is applied, Then it transitions to FinalSellDay at SellIn 0 and post-sell-by valuation does NOT apply, because 0 is not below 0.",
+        "Given an item in FinalSellDay at SellIn 0, When one day is applied, Then it transitions to PastSellBy at SellIn -1 and post-sell-by valuation applies in the same run.",
+        "Given an item in PastSellBy, When further days are applied, Then it remains in PastSellBy and no valuation rule returns it to an earlier state.",
+        "The state of each item is reported in the run output, so the lifecycle is inspectable rather than inferred."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-012",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:80-83"
+        },
+        {
+          "finding_id": "BR-016",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:83"
+        },
+        {
+          "finding_id": "BR-022",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:80-109"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-031",
+      "type": "functional",
+      "priority": "must",
+      "description": "The target MUST make the StandardGoodsValuationLifecycle explicit and named for items of category STANDARD: the states DepreciatingSingleRate, DepreciatingDoubleRate and Worthless MUST be declared, together with the transitions DepreciatingSingleRate -> DepreciatingDoubleRate (sell-by date passes), DepreciatingSingleRate -> Worthless and DepreciatingDoubleRate -> Worthless (Quality reaches 0), and the Worthless self-loop. Worthless MUST remain absorbing: no rule MAY raise the Quality of standard goods.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given a STANDARD item in DepreciatingSingleRate at SellIn 0 / Quality 10, When one day is applied, Then it is in DepreciatingDoubleRate at SellIn -1 / Quality 8.",
+        "Given a STANDARD item in DepreciatingSingleRate at Quality 1, When one day is applied, Then it is in Worthless at Quality 0.",
+        "Given a STANDARD item in DepreciatingDoubleRate at Quality 1, When one day is applied, Then it is in Worthless at Quality 0 - the day's net loss is 1, not 2.",
+        "Given a STANDARD item in Worthless, When any number of days are applied, Then Quality remains 0 and no rule raises it.",
+        "The declared state set for STANDARD contains exactly these three states and no undeclared implicit state."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-013",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:83-96"
+        },
+        {
+          "finding_id": "BR-003",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:43"
+        },
+        {
+          "finding_id": "BR-002",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:41-50"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-032",
+      "type": "functional",
+      "priority": "must",
+      "description": "The target MUST make the AppreciatingGoodsValuationLifecycle explicit and named for items of category APPRECIATING: the states AppreciatingSingleRate, AppreciatingDoubleRate and Saturated MUST be declared, together with the transitions AppreciatingSingleRate -> AppreciatingDoubleRate (sell-by date passes), AppreciatingSingleRate -> Saturated and AppreciatingDoubleRate -> Saturated (Quality reaches 50), and the Saturated self-loop. Saturated MUST remain absorbing: no rule MAY reduce the Quality of appreciating goods.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given Aged Brie in AppreciatingSingleRate at SellIn 0 / Quality 10, When one day is applied, Then it is in AppreciatingDoubleRate at SellIn -1 / Quality 12.",
+        "Given an APPRECIATING item in AppreciatingSingleRate at Quality 49, When one day is applied, Then it is in Saturated at Quality 50.",
+        "Given an APPRECIATING item in AppreciatingDoubleRate at Quality 49, When one day is applied, Then it is in Saturated at Quality 50 - the day's net gain is 1, not 2.",
+        "Given an APPRECIATING item in Saturated, When any number of days are applied, Then Quality remains 50 and no rule reduces it.",
+        "The declared state set for APPRECIATING contains exactly these three states and no undeclared implicit state."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-014",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:102-108"
+        },
+        {
+          "finding_id": "BR-007",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:53"
+        },
+        {
+          "finding_id": "BR-006",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:51-56"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-033",
+      "type": "functional",
+      "priority": "must",
+      "description": "The target MUST make the BackstagePassValuationLifecycle explicit and named for items of category EVENT_TICKET: the states BaseDemand (sell-in at start of day >= 11), TenDayWindow (6..10), FiveDayWindow (1..5), ConcertDay (0), Worthless (<= -1) and Saturated (Quality == 50) MUST be declared, and each demand tier MUST be selected by the sell-in value READ AT THE START OF THE DAY per FR-GR-002. The transition from ConcertDay to Worthless MUST set Quality to 0, and the Worthless state MUST NOT accrue and discard value on subsequent days.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given a pass in BaseDemand at SellIn 11 / Quality 20, When one day is applied, Then Quality is 21 and it is in TenDayWindow at SellIn 10.",
+        "Given a pass in TenDayWindow at SellIn 6 / Quality 20, When one day is applied, Then Quality is 22 and it is in FiveDayWindow at SellIn 5.",
+        "Given a pass in FiveDayWindow at SellIn 1 / Quality 20, When one day is applied, Then Quality is 23 and it is in ConcertDay at SellIn 0.",
+        "Given a pass in ConcertDay at SellIn 0 / Quality 20, When one day is applied, Then it is in Worthless at SellIn -1 / Quality 0.",
+        "Given a pass in Saturated at Quality 50 and SellIn 0, When one day is applied, Then Quality becomes 0 - the largest single-day value change the system produces.",
+        "Given a pass in Worthless, When further days are applied, Then Quality stays 0 and no intermediate non-zero value is computed or recorded."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-010",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:59-65"
+        },
+        {
+          "finding_id": "BR-011",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:67-73"
+        },
+        {
+          "finding_id": "BR-015",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:97-100"
+        },
+        {
+          "finding_id": "BR-009",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:51-56"
+        }
+      ]
+    },
+    {
+      "id": "FR-GR-034",
+      "type": "functional",
+      "priority": "must",
+      "description": "The target MUST declare the LegendaryItemStasis lifecycle explicitly: an item of category LEGENDARY MUST have exactly one state, PermanentStasis, and no transitions. Its Quality and sell-in value MUST be frozen at their admitted values (Quality 80 per FR-GR-010), and that stasis MUST be enforced by a declared rule of the LEGENDARY category, NOT by the seeded data happening to keep the item out of the post-sell-by phase.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "Given \"Sulfuras, Hand of Ragnaros\" in PermanentStasis at SellIn 0 / Quality 80, When 100 days are applied, Then it is still in PermanentStasis at SellIn 0 / Quality 80.",
+        "Given a LEGENDARY item admitted at SellIn -1 / Quality 80, When any number of days are applied, Then it remains at SellIn -1 / Quality 80 - stasis does not depend on the sell-in seed value.",
+        "The declared transition set for the LEGENDARY lifecycle is empty, and a test asserts no rule can move a legendary item out of PermanentStasis.",
+        "A single declared LEGENDARY stasis rule replaces the duplicated exemption guards, so no valuation rule can reach a legendary item at all."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "BR-004",
+          "artifact": "state-machines.json",
+          "source": "src/GildedRose.Console/Program.cs:91"
+        },
+        {
+          "finding_id": "BR-005",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:78-81"
+        },
+        {
+          "finding_id": "IL-014",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Console/Program.cs:19, :78-81, :83"
+        }
+      ],
+      "anomaly_resolution": "CONSOLIDATE",
+      "proposed_anomaly": "ANOM-025",
+      "anomaly_details": "Legacy: legendary stasis is emergent rather than declared. Sulfuras is exempted at two decrement sites and never has its sell-in decremented, and because it is seeded at SellIn 0 it never reaches the expiry branch at all - so the legendary guard at Program.cs:91 is dead code for the seeded data and load-bearing only for a legendary item seeded with a negative sell-in. Whether that line is dead depends entirely on seed data. Target: one declared single-state lifecycle with no transitions."
+    },
+    {
+      "id": "FR-GR-035",
+      "type": "constraint",
+      "priority": "should",
+      "description": "Before any behaviour in this document is re-implemented, a characterization (golden-master) test suite SHOULD be captured over the legacy seeded inventory, pinning the full (category, sell-in, Quality) tuple of every item across at least 20 consecutive business days. Every requirement in this document MUST be covered by at least one automated assertion in the target test suite, and the boundary cases at sell-in 11, 6, 1, 0 and -1 and at Quality 0, 1, 49 and 50 MUST each be asserted explicitly.",
+      "module_hint": "SRS-M-01",
+      "acceptance_criteria": [
+        "A golden-master snapshot exists for the six legacy seed items over 20 business days and is asserted byte-for-byte by an automated test.",
+        "The target test suite references the rules engine from a separate test assembly and exercises it directly - unlike the legacy test project, which holds no reference to the application and asserts only Assert.True(true).",
+        "Boundary tests exist for a Backstage pass at sell-in 11, 6, 1 and 0; for a standard item at sell-in 1 and 0; and for Quality 0, 1, 49 and 50.",
+        "Each requirement id in this document maps to at least one named test, and the mapping is reported by the build.",
+        "Where an anomaly resolution in this document deliberately diverges from the legacy snapshot (notably FR-GR-019 Conjured), the divergence is recorded as an expected, approved delta rather than a test failure."
+      ],
+      "traces_to": [
+        {
+          "finding_id": "IL-026",
+          "artifact": "implicit-logic.json",
+          "source": "src/GildedRose.Tests/TestAssemblyTests.cs:7-11"
+        },
+        {
+          "finding_id": "BR-016",
+          "artifact": "business-logic.json",
+          "source": "src/GildedRose.Tests/TestAssemblyTests.cs:10"
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "by_type": {
+      "functional": 24,
+      "constraint": 11
+    },
+    "by_priority": {
+      "must": 33,
+      "should": 1,
+      "may": 1
+    },
+    "by_module": {
+      "SRS-M-01": 25,
+      "SRS-M-02": 4,
+      "SRS-M-03": 6
+    },
+    "total": 35
+  },
+  "coverage": {
+    "business_rules_covered": [
+      "BR-001",
+      "BR-002",
+      "BR-003",
+      "BR-004",
+      "BR-005",
+      "BR-006",
+      "BR-007",
+      "BR-008",
+      "BR-009",
+      "BR-010",
+      "BR-011",
+      "BR-012",
+      "BR-013",
+      "BR-014",
+      "BR-015",
+      "BR-016",
+      "BR-017",
+      "BR-018",
+      "BR-019",
+      "BR-020",
+      "BR-021",
+      "BR-022",
+      "BR-023",
+      "BR-024",
+      "BR-MISSING-001"
+    ],
+    "state_machines_covered": [
+      "ItemSellByLifecycle",
+      "StandardGoodsValuationLifecycle",
+      "AppreciatingGoodsValuationLifecycle",
+      "BackstagePassValuationLifecycle",
+      "LegendaryItemStasis"
+    ],
+    "proposed_anomalies_referenced": [
+      "ANOM-001",
+      "ANOM-002",
+      "ANOM-003",
+      "ANOM-004",
+      "ANOM-005",
+      "ANOM-006",
+      "ANOM-007",
+      "ANOM-008",
+      "ANOM-009",
+      "ANOM-010",
+      "ANOM-011",
+      "ANOM-012",
+      "ANOM-013",
+      "ANOM-014",
+      "ANOM-020",
+      "ANOM-024",
+      "ANOM-025"
+    ]
+  }
+}
