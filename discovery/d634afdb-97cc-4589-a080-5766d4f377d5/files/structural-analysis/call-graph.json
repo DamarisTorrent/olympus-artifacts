@@ -1,0 +1,198 @@
+{
+  "$schema": "olympus:artifact:call-graph:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "Method/member-grain call and mutation graph for the whole application. GRAIN: each node is a single method, constructor, field or property of a declared type (not a module and not an endpoint), because at 172 lines a module-grain graph would have exactly two nodes and one missing edge and would hide the finding that matters. The edge count is therefore per call site, and property/field nodes are included so that read-versus-write access to Item state is visible. Scope is the two code projects under src/; the 31 untracked Discovery-skill reference/template files staged into the source root are excluded. External Base Class Library members are included ONLY where they constitute the application's sole contact with anything outside itself (stdout, stdin) or its test framework - System.Collections.Generic.List<T> is modelled as the Items field's type rather than as separate BCL nodes.",
+  "nodes": [
+    {
+      "id": "GildedRose.Console.Program.Main(string[])",
+      "type": "static-method-entry-point",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:8"
+    },
+    {
+      "id": "GildedRose.Console.Program..ctor()",
+      "type": "implicit-default-constructor",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:5",
+      "note": "Not declared in source; invoked by the object-creation expression at Program.cs:12."
+    },
+    {
+      "id": "GildedRose.Console.Program.Items",
+      "type": "private-instance-field",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:7",
+      "note": "IList<Item>. Private and non-readonly; the only state the rules engine operates on, and the reason UpdateQuality is unreachable from outside the assembly."
+    },
+    {
+      "id": "GildedRose.Console.Program.UpdateQuality()",
+      "type": "public-instance-method",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:37",
+      "note": "The entire business logic (75 lines). `public` on an `internal` class, so its effective accessibility is assembly-internal."
+    },
+    {
+      "id": "GildedRose.Console.Item..ctor()",
+      "type": "implicit-default-constructor",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:115"
+    },
+    {
+      "id": "GildedRose.Console.Item.Name",
+      "type": "auto-property",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:117",
+      "note": "string, public get/set, no validation. Doubles as the rule-selection key."
+    },
+    {
+      "id": "GildedRose.Console.Item.SellIn",
+      "type": "auto-property",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:119",
+      "note": "int, public get/set, unbounded (goes negative by design)."
+    },
+    {
+      "id": "GildedRose.Console.Item.Quality",
+      "type": "auto-property",
+      "surface": "gildedrose-console-exe",
+      "module": "gildedrose-console",
+      "location": "src/GildedRose.Console/Program.cs:121",
+      "note": "int, public get/set. The 0..50 range and the Sulfuras value of 80 are enforced nowhere on this property."
+    },
+    {
+      "id": "System.Console.WriteLine(string)",
+      "type": "external-bcl-method",
+      "surface": "gildedrose-console-exe",
+      "module": "external",
+      "location": "mscorlib/System.Console"
+    },
+    {
+      "id": "System.Console.ReadKey()",
+      "type": "external-bcl-method",
+      "surface": "gildedrose-console-exe",
+      "module": "external",
+      "location": "mscorlib/System.Console",
+      "note": "BLOCKING call. This single edge is what makes the process non-terminating without an interactive console."
+    },
+    {
+      "id": "GildedRose.Tests.TestAssemblyTests.TestTheTruth()",
+      "type": "test-method",
+      "surface": "build-time-only (test assembly, not deployed)",
+      "module": "gildedrose-tests",
+      "location": "src/GildedRose.Tests/TestAssemblyTests.cs:8"
+    },
+    {
+      "id": "Xunit.Assert.True(bool)",
+      "type": "external-test-framework-method",
+      "surface": "build-time-only (test assembly, not deployed)",
+      "module": "external",
+      "location": "packages/xunit.assert.2.0.0"
+    }
+  ],
+  "edges": [
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "System.Console.WriteLine(string)",
+      "kind": "stdout-write",
+      "evidence": "src/GildedRose.Console/Program.cs:10"
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Program..ctor()",
+      "kind": "object-construction",
+      "evidence": "src/GildedRose.Console/Program.cs:12",
+      "note": "Main constructs an instance of its own declaring type purely to reach the instance field and instance method below."
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Program.Items",
+      "kind": "field-write",
+      "evidence": "src/GildedRose.Console/Program.cs:14-27",
+      "note": "Object-initializer assignment of a six-element List<Item>. The seed data is hard-coded here, not read from any configuration or store."
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Item..ctor()",
+      "kind": "object-construction",
+      "call_sites": 6,
+      "evidence": "src/GildedRose.Console/Program.cs:16, src/GildedRose.Console/Program.cs:17, src/GildedRose.Console/Program.cs:18, src/GildedRose.Console/Program.cs:19, src/GildedRose.Console/Program.cs:20, src/GildedRose.Console/Program.cs:26"
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Item.Name",
+      "kind": "property-write",
+      "evidence": "src/GildedRose.Console/Program.cs:16, src/GildedRose.Console/Program.cs:17, src/GildedRose.Console/Program.cs:18, src/GildedRose.Console/Program.cs:19, src/GildedRose.Console/Program.cs:22, src/GildedRose.Console/Program.cs:26",
+      "note": "The literals written here are the same literals UpdateQuality compares against - the data-value coupling, expressed as two ends of one string."
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Item.SellIn",
+      "kind": "property-write",
+      "evidence": "src/GildedRose.Console/Program.cs:16, src/GildedRose.Console/Program.cs:17, src/GildedRose.Console/Program.cs:18, src/GildedRose.Console/Program.cs:19, src/GildedRose.Console/Program.cs:23, src/GildedRose.Console/Program.cs:26"
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Item.Quality",
+      "kind": "property-write",
+      "evidence": "src/GildedRose.Console/Program.cs:16, src/GildedRose.Console/Program.cs:17, src/GildedRose.Console/Program.cs:18, src/GildedRose.Console/Program.cs:19, src/GildedRose.Console/Program.cs:24, src/GildedRose.Console/Program.cs:26",
+      "note": "Sulfuras is seeded at Quality 80, outside the 0..50 range every other rule assumes."
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "GildedRose.Console.Program.UpdateQuality()",
+      "kind": "instance-method-call",
+      "evidence": "src/GildedRose.Console/Program.cs:31",
+      "note": "Called exactly once per process run - one 'day' per invocation. There is no loop, scheduler or repeat."
+    },
+    {
+      "from": "GildedRose.Console.Program.Main(string[])",
+      "to": "System.Console.ReadKey()",
+      "kind": "stdin-blocking-read",
+      "evidence": "src/GildedRose.Console/Program.cs:33"
+    },
+    {
+      "from": "GildedRose.Console.Program.UpdateQuality()",
+      "to": "GildedRose.Console.Program.Items",
+      "kind": "field-read-and-element-mutation",
+      "evidence": "src/GildedRose.Console/Program.cs:39, src/GildedRose.Console/Program.cs:41-109",
+      "note": "Reads Items.Count for the loop bound and reaches Items[i] on roughly 25 separate lines rather than binding a local; the list is never reassigned, only its elements are mutated in place."
+    },
+    {
+      "from": "GildedRose.Console.Program.UpdateQuality()",
+      "to": "GildedRose.Console.Item.Name",
+      "kind": "property-read-for-rule-dispatch",
+      "call_sites": 8,
+      "evidence": "src/GildedRose.Console/Program.cs:41, src/GildedRose.Console/Program.cs:45, src/GildedRose.Console/Program.cs:57, src/GildedRose.Console/Program.cs:78, src/GildedRose.Console/Program.cs:85, src/GildedRose.Console/Program.cs:87, src/GildedRose.Console/Program.cs:91",
+      "note": "Line 41 contains two comparisons. No comparison for 'Conjured' exists, although a Conjured item is seeded at Program.cs:26 and README.md specifies a doubled degradation rule for it."
+    },
+    {
+      "from": "GildedRose.Console.Program.UpdateQuality()",
+      "to": "GildedRose.Console.Item.Quality",
+      "kind": "property-read-write",
+      "evidence": "src/GildedRose.Console/Program.cs:43, src/GildedRose.Console/Program.cs:47, src/GildedRose.Console/Program.cs:53, src/GildedRose.Console/Program.cs:55, src/GildedRose.Console/Program.cs:61, src/GildedRose.Console/Program.cs:63, src/GildedRose.Console/Program.cs:69, src/GildedRose.Console/Program.cs:71, src/GildedRose.Console/Program.cs:89, src/GildedRose.Console/Program.cs:93, src/GildedRose.Console/Program.cs:99, src/GildedRose.Console/Program.cs:104, src/GildedRose.Console/Program.cs:106",
+      "note": "13 access sites. Line 99 is the self-cancelling `Quality = Quality - Quality` (expired backstage passes) rather than an assignment to 0."
+    },
+    {
+      "from": "GildedRose.Console.Program.UpdateQuality()",
+      "to": "GildedRose.Console.Item.SellIn",
+      "kind": "property-read-write",
+      "evidence": "src/GildedRose.Console/Program.cs:59, src/GildedRose.Console/Program.cs:67, src/GildedRose.Console/Program.cs:80, src/GildedRose.Console/Program.cs:83",
+      "note": "Decremented at line 80 for everything except Sulfuras, then re-read at line 83 for the expiry branch - so the expiry test runs against the ALREADY-decremented value, an ordering dependency invisible from either line alone."
+    },
+    {
+      "from": "GildedRose.Tests.TestAssemblyTests.TestTheTruth()",
+      "to": "Xunit.Assert.True(bool)",
+      "kind": "test-framework-call",
+      "evidence": "src/GildedRose.Tests/TestAssemblyTests.cs:10",
+      "note": "Asserts the constant `true`. This is the only edge the test assembly has."
+    }
+  ],
+  "cycles": [],
+  "notes": "NO CYCLES EXIST, and this is a measured result rather than an unfinished traversal: the graph is a directed tree rooted at Program.Main plus one isolated test edge, there is no recursion, no mutual method reference, and no <ProjectReference> anywhere in the repository (a repo-wide grep returns nothing), so no module-level cycle is even expressible. THE MOST IMPORTANT FEATURE OF THIS GRAPH IS A MISSING EDGE: nothing connects GildedRose.Tests.TestAssemblyTests.TestTheTruth to any GildedRose.Console node. The test assembly is a disconnected component, so the 75-line rules engine at Program.cs:37-111 has zero executable coverage, and the graph offers no behavioural baseline for a downstream refactor. Adding that edge is not a one-line fix: Program is `internal`, Items is a private instance field, and UpdateQuality is an instance method (Program.cs:5, :7, :37), so the rules must first be made reachable. BLIND SPOTS: none of the usual ones apply - there is no reflection, no dynamic dispatch, no DI container, no interface indirection, no delegate or event, no code generation, no P/Invoke and no virtual member in the tree, so the static graph is exact rather than best-effort. The one genuine gap is BUILD-TIME, not run-time: tasks.ps1:11 imports its Version/Clean/Build/Test bodies from the out-of-repo psake.net 0.1.3 package, packages/ is not restored in this workspace, and build.bat:42 shells out to GitVersion.exe - so no edge is drawn for what the build actually executes, including whether any xUnit runner is invoked at all. Property accessors are modelled as single nodes rather than separate get/set pairs; the access direction is carried on the edge `kind`."
+}

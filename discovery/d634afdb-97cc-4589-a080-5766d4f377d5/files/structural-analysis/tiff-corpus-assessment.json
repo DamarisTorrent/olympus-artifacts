@@ -1,0 +1,72 @@
+{
+  "$schema": "olympus:artifact:tiff-corpus-assessment:v1",
+  "corpus_id": "not-applicable-no-image-corpus-d634afdb-97cc-4589-a080-5766d4f377d5",
+  "source_system": {
+    "system_name": "None \u2014 application d634afdb-97cc-4589-a080-5766d4f377d5 ('Gilded Rose Refactoring Kata') has no image corpus, no document-imaging store and no imaging integration of any kind",
+    "store_type": "other",
+    "wrapper_format": "none \u2014 zero TIFF files exist in the tree (find for *.tif/*.tiff returns nothing); the only raster file is images/build_output.png, a README build screenshot, which is documentation rather than a document image",
+    "access_method": "unknown"
+  },
+  "scale_estimate": {
+    "image_count_estimate": 1,
+    "estimate_confidence": "exact",
+    "total_size_gb": 2.91e-05,
+    "avg_image_size_kb": 30.5,
+    "growth_rate_per_year": 0
+  },
+  "sampling_strategy": {
+    "method": "pure-random",
+    "sample_size": 100,
+    "strata_definition": "none \u2014 no strata, because there is no corpus to stratify",
+    "confidence_level": 0.8,
+    "rationale": "NO SAMPLING WAS PERFORMED, AND THE NUMBERS IN THIS OBJECT ARE SCHEMA FLOORS, NOT MEASUREMENTS. The whole tree holds exactly one raster file (images/build_output.png, 31,254 bytes \u2014 a README build screenshot) and zero document images, so there is nothing to sample. This schema requires `sample_size` >= 100 and `confidence_level` >= 0.8, and the fields are mandatory, so the minimum permitted values are emitted to satisfy the contract: sample_size 100 and confidence_level 0.8 describe no sample that was ever drawn. `method: pure-random` is likewise a forced selection from a closed enum, not a chosen methodology. Do not read any value in this object as evidence. The only measured figures in this document are scale_estimate.image_count_estimate (1 \u2014 an exact file count, not an estimate) and its two size fields, derived from `ls -l images/`."
+  },
+  "ocr_readiness": {
+    "overall_score": 1,
+    "factors": [
+      {
+        "factor": "text-density",
+        "score": 1,
+        "weight": 1,
+        "notes": "PLACEHOLDER \u2014 NOT AN ASSESSMENT. No image was scored, because no document image exists. `factors` requires at least one entry and `score` is bounded to 1-5, so the floor value is emitted; it does NOT mean 'poor OCR readiness was measured', it means 'readiness was not measurable'. The same applies to overall_score above, which is the schema minimum rather than a weighted composite of anything."
+      }
+    ],
+    "recommended_engine": "tesseract"
+  },
+  "metadata_inference_plan": {
+    "available_structured_metadata": [],
+    "inferable_from_content": [],
+    "inference_strategy": "rule-based"
+  },
+  "migration_sequencing": {
+    "waves": [
+      {
+        "wave": 1,
+        "image_count_estimate": 0,
+        "selection_criteria": "NOT APPLICABLE \u2014 there are zero images to migrate. This wave exists only because the schema requires `waves` to hold at least one entry; it carries an image count of 0 and a duration of 0, and should not appear in any migration plan or roadmap.",
+        "estimated_duration_weeks": 0,
+        "dependencies": []
+      }
+    ],
+    "prioritization_basis": "recency",
+    "parallel_capacity_per_wave": 0
+  },
+  "cost_projection": {
+    "ocr_cost_usd": 0,
+    "storage_cost_monthly_usd": 0,
+    "total_migration_cost_usd": 0,
+    "basis": "Zero across the board because there is nothing to convert or store: 0 pages to OCR (0 pages x any $/page rate = $0) and 0 GB-month of image storage (0 GB x any $/GB-month rate = $0), from a population of 1 raster file, none of it a document image. No vendor price list was applied and no per-page or per-GB rate is claimed, because multiplying a rate by zero pages would dress a null result as a costed estimate. Both zero figures are measured (a count of zero document images), not estimated."
+  },
+  "risk_findings": [
+    {
+      "finding": "THIS ARTIFACT IS A SCHEMA-REQUIRED NULL RESULT AND MUST NOT BE CONSUMED AS AN ASSESSMENT. The tiff-corpus-assessor step was dispatched against an application with no image corpus (zero *.tif/*.tiff files; the single raster is images/build_output.png, a build screenshot). The schema floors several required numeric fields above zero \u2014 image_count_estimate >= 1, sample_size >= 100, confidence_level >= 0.8, overall_score >= 1, factors minItems 1, waves minItems 1 \u2014 and forces a choice from closed enums for store_type, access_method, sampling method, recommended_engine, inference_strategy and prioritization_basis. Every such value here is the minimum or an arbitrary forced selection, flagged in the adjacent free-text field. In particular `recommended_engine: tesseract` is a schema-forced enum pick, NOT an engine recommendation.",
+      "severity": "high",
+      "mitigation": "Treat corpus assessment as not-applicable for application d634afdb-97cc-4589-a080-5766d4f377d5 and exclude this document from any imaging roadmap, cost roll-up or OCR-capacity plan. Downstream consumers should key on source_system.system_name ('None \u2014 ... no image corpus') and on the zeroed cost_projection rather than on the floored numerics. Separately, the pipeline configuration should be corrected so the tiff-corpus-assessor is not dispatched for applications whose catalog entry records no imaging surface; and the schema should gain an explicit not-applicable representation so a null result need not be encoded as a floor value."
+    },
+    {
+      "finding": "Absence of an imaging surface is corroborated, not merely unobserved: the catalog entry for this application records no image store, the application has no file I/O whatsoever (its only state is an in-memory IList<Item> at src/GildedRose.Console/Program.cs:7, seeded from hardcoded literals at Program.cs:16-26), and its sole output is the literal string \"OMGHAI!\" at Program.cs:10. There is no Unisys InfoImage, Documentum, FileNet or SharePoint reference anywhere in the 22 git-tracked files.",
+      "severity": "low",
+      "mitigation": "None required. Recorded so a reviewer can distinguish a verified null result from an unreached part of the tree."
+    }
+  ]
+}

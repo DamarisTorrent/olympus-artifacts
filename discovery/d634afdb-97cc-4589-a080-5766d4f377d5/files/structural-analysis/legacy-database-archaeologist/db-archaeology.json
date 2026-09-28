@@ -1,0 +1,43 @@
+{
+  "$schema": "olympus:artifact:db-archaeology:v1",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata",
+    "id": "d634afdb-97cc-4589-a080-5766d4f377d5"
+  },
+  "database_engine": {
+    "type": "other",
+    "version": "none (no database engine present)"
+  },
+  "schemas": [],
+  "tables": [],
+  "stored_procedures": [],
+  "triggers": [],
+  "findings": [
+    {
+      "category": "orphan-object",
+      "severity": "medium",
+      "description": "NEGATIVE RESULT, NOT A SCAN FAILURE: this application has no database. Exhaustive sweep of all 22 git-tracked application files found zero DDL/DDM files, zero connection strings, zero DB drivers or ORM configuration, and no engine of any kind; the only data store is a hard-coded in-memory List<Item> built in Main(). The sole database-shaped artifact in the working tree is the UNTRACKED fixtures/default.json, which describes a different, fabricated application ('Fixture Certification Portal' on SQL Server 2016 with a cert.* schema, triggers and batch feeds). Every object it names -- cert.application_header, cert.fee_schedule, trg_ApplicationHeader_DeriveFee -- references a schema that does not exist in or near this application. That file self-identifies as a test fixture for a different skill (skill_id 'legacy-data-flow-tracer') and was NOT used to populate any field of this report. Downstream rationalization and extraction must treat this application as having no database-resident business logic; all business rules live in Program.cs UpdateQuality().",
+      "affected_objects": [
+        "fixtures/default.json",
+        "cert.application_header",
+        "cert.fee_schedule",
+        "trg_ApplicationHeader_DeriveFee"
+      ],
+      "remediation_hint": "Do not provision a database migration workstream for this application. Remove fixtures/default.json from the analysis working tree so it cannot be mistaken for a schema inventory, and confirm with stakeholders whether application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system before any downstream scope is sized -- the catalog entry's open_questions already flag that this source tree is the public Gilded Rose kata with no NAS, aviation, or FAA business-domain content, and business_domain was therefore set to 'unclassified' rather than grounded in the FAA taxonomy.",
+      "citation": "fixtures/default.json:1"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "info",
+      "description": "The working tree contains four untracked directories (references/, assets/, scripts/, fixtures/) that are staged analysis-tooling material rather than application source, confirmed by 'git status --porcelain' reporting all four as untracked while the application's own 22 files are tracked. Among them scripts/classify_procs_template.sql is the only .sql file anywhere in the tree; it is a bundled, deliberately non-executable dictionary-query template whose own header states the snippets 'are intentionally not directly executable' and which carries unresolved TODO placeholders for schema name and audit window. It queries vendor dictionary views (DBA_OBJECTS, DBA_SOURCE, sys.procedures) that presuppose an engine this application does not have. It is recorded here only so a later reviewer does not count it as application DDL or as evidence of a stored-procedure inventory.",
+      "affected_objects": [
+        "scripts/classify_procs_template.sql",
+        "references/",
+        "assets/",
+        "fixtures/"
+      ],
+      "remediation_hint": "Treat only git-tracked paths as application source when computing database metrics; exclude the untracked tooling directories from DDL and stored-procedure counts.",
+      "citation": "scripts/classify_procs_template.sql:5"
+    }
+  ]
+}

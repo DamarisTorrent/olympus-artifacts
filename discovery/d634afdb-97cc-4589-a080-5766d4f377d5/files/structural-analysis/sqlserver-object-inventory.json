@@ -1,0 +1,38 @@
+{
+  "$schema": "olympus:artifact:sqlserver-object-inventory:v1",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata (application_id d634afdb-97cc-4589-a080-5766d4f377d5)",
+    "discovery_date": "2026-09-28",
+    "server_version": "none-detected — NULL RESULT: no SQL Server instance, connection string, T-SQL object, DDL file, SSIS/SSRS/SSAS artifact or SQL Agent job exists anywhere in this application's git-tracked source tree, so no server version could be observed and none is asserted",
+    "databases": []
+  },
+  "object_inventory": {
+    "stored_procedures": [],
+    "functions": [],
+    "triggers": [],
+    "views": [],
+    "clr_objects": []
+  },
+  "bi_etl_inventory": {
+    "ssis_packages": [],
+    "ssrs_reports": [],
+    "ssas_cubes": []
+  },
+  "ops_inventory": {
+    "agent_jobs": [],
+    "service_broker_queues": [],
+    "linked_servers": []
+  },
+  "type_risks": [],
+  "driver_signatures": [
+    {
+      "connection_type": "unused-assembly-reference (NOT a live database connection)",
+      "provider": "none — System.Data is referenced by the default Visual Studio console project template and is consumed by no code: grep over all four *.cs files found zero occurrences of SqlConnection, SqlCommand, SqlDataReader, DataSet, DataTable, OdbcConnection, OleDbConnection or any ORM type. Recorded here so a downstream naive grep for 'System.Data' does not re-derive a database tier that does not exist.",
+      "pattern": "<Reference Include=\"System.Data\" /> and <Reference Include=\"System.Data.DataSetExtensions\" />",
+      "files": [
+        "src/GildedRose.Console/GildedRose.Console.csproj:40",
+        "src/GildedRose.Console/GildedRose.Console.csproj:38"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "$schema": "olympus:artifact:tiff-corpus-assessment:v1",
+  "corpus_id": "no-corpus-detected-d634afdb-97cc-4589-a080-5766d4f377d5",
+  "source_system": {
+    "system_name": "Gilded Rose Refactoring Kata (GildedRose.Console) — a 172-LOC C#/.NET Framework 4.5 console application. NO image-workflow system, image store, document repository, or scanned-page corpus is present in or referenced by this application.",
+    "store_type": "other",
+    "wrapper_format": "None. No image container, TIFF payload, folio structure, or document wrapper exists. The only raster file in the repository is images/build_output.png — a README build screenshot, not corpus content. Application state is a fixed in-memory Item list (catalog.json:36); databases: [] and table_ddl_files_in_source: 0 (catalog.json:25,52).",
+    "access_method": "unknown"
+  },
+  "scale_estimate": {
+    "image_count_estimate": 1,
+    "estimate_confidence": "low",
+    "total_size_gb": 0,
+    "avg_image_size_kb": 0,
+    "growth_rate_per_year": 0
+  },
+  "sampling_strategy": {
+    "method": "stratified-random",
+    "sample_size": 100,
+    "strata_definition": "NOT CONSTRUCTIBLE. The default strata are the cross-product {doc-type} x {decade} x {source-app}; none of the three dimensions exists for this application. There is no doc-type field (no FOLIO table, no INDEX_* tables, no metadata DB), no decade dimension (no dated records), and no contributing source applications (single console executable, 2 modules).",
+    "confidence_level": 0.8,
+    "rationale": "NO SAMPLE WAS PULLED AND NONE CAN BE. There is no corpus to sample: the application has no image store, no database, and no file store (catalog.json:25,50-53). Zero images were sampled. The emitted values are SCHEMA FLOORS, not a designed sampling plan: sample_size 100 is the schema minimum and confidence_level 0.80 is the schema minimum; 'stratified-random' is recorded because the enum admits no 'not-applicable' value and stratified-random is the skill default that WOULD apply if a corpus existed. Do not read these three values as evidence that a sampling plan was designed, costed, or executed. Access-path validation (round-trip 25 images via the production path) was not attempted because there is no access path to validate."
+  },
+  "ocr_readiness": {
+    "overall_score": 1,
+    "factors": [
+      {
+        "factor": "scan-resolution",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT MEASURED — no images exist to read a DPI header from. Score 1 is the schema floor sentinel, not an observation of poor resolution."
+      },
+      {
+        "factor": "compression-artifacts",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT MEASURED — no Group IV payloads exist to inspect for block noise or speckle. Score 1 is the schema floor sentinel, not an observation."
+      },
+      {
+        "factor": "color-depth",
+        "score": 1,
+        "weight": 0.05,
+        "notes": "NOT MEASURED — no bit-depth data available. Score 1 is the schema floor sentinel, not an observation."
+      },
+      {
+        "factor": "skew-and-rotation",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT MEASURED — no pages exist to compute a deskew angle or check rotation tags. Score 1 is the schema floor sentinel, not an observation."
+      },
+      {
+        "factor": "handwriting-presence",
+        "score": 1,
+        "weight": 0.2,
+        "notes": "NOT MEASURED — no pages exist to compute handwriting coverage. Score 1 is the schema floor sentinel. IMPORTANT: this score must NOT be used to trigger the rubric's handwriting rule (any stratum >=3 forces ABBYY/ensemble) in either direction — no handwriting determination was made."
+      },
+      {
+        "factor": "form-structure",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT MEASURED — no form templates or field coordinates exist. Score 1 is the schema floor sentinel, not an observation."
+      },
+      {
+        "factor": "language-consistency",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT MEASURED — no text content exists to determine dominant-language coverage. Score 1 is the schema floor sentinel, not an observation."
+      },
+      {
+        "factor": "text-density",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT MEASURED — no pages exist to compute chars/page. Score 1 is the schema floor sentinel, not an observation."
+      }
+    ],
+    "recommended_engine": "multi-engine-ensemble"
+  },
+  "metadata_inference_plan": {
+    "available_structured_metadata": [],
+    "inferable_from_content": [],
+    "inference_strategy": "rule-based"
+  },
+  "migration_sequencing": {
+    "waves": [
+      {
+        "wave": 1,
+        "image_count_estimate": 0,
+        "selection_criteria": "NO WAVE IS COMPOSABLE. Zero images are in scope: there is no corpus, no retention-classified record set, and no doc-type dimension to select on. This wave entry exists only because the schema requires minItems 1 on waves; it authorizes no migration work and should not be scheduled.",
+        "estimated_duration_weeks": 0,
+        "dependencies": []
+      }
+    ],
+    "prioritization_basis": "regulatory-retention",
+    "parallel_capacity_per_wave": 0
+  },
+  "cost_projection": {
+    "ocr_cost_usd": 0,
+    "storage_cost_monthly_usd": 0,
+    "total_migration_cost_usd": 0,
+    "basis": "NO COST WAS COMPUTED; all three figures are literal zero because there is nothing to OCR, store, or migrate. $/page: not applied — no engine rate was multiplied by any page count; the FAA profile supplies no $/page figure and no sample justifies selecting one. $/GB-month: not applied — corpus footprint is 0 GB, so no storage rate was applied. Sample size: 0 images actually sampled (the 100 recorded in sampling_strategy.sample_size is the schema minimum, not a real sample). These are zeros rather than estimates by design: this skill blocks cost_projection emission until ocr_readiness.factors is populated from a real stratified sample, and that precondition is unmet. In particular, the ~146M-page / ~40-year figure in the FAA profile (profiles/faa/skills/tiff-corpus-assessor/references/unisys-infoimage-extraction.md:54-55) was deliberately NOT imported — it is a reported Industry Day Slide 35 number for the RMS corpus, a different system, and multiplying it by any $/page here would manufacture a 7-figure projection for a corpus this application does not have."
+  },
+  "risk_findings": [
+    {
+      "finding": "NO IMAGE CORPUS EXISTS FOR THIS APPLICATION — the assessment is ungroundable. Application d634afdb-97cc-4589-a080-5766d4f377d5 is the 'Gilded Rose Refactoring Kata', a 172-LOC C#/.NET console application that seeds a fixed in-memory item list, calls UpdateQuality() once, and exits (catalog.json:4-5,36). The completed Catalog pass found databases: [], table_count: null, table_ddl_files_in_source: 0, and no connection strings, ORM config, or DB driver references (catalog.json:25,50-53). A search of the source tree for TIFF/TIF files and for any ocr-corpus-index.json returned zero hits, and a grep of all application code, project, config, and doc files for tiff|corpus|infoimage|eworkflow|folio|ocr|scanned returned zero hits outside the skill's own references/ and assets/ scaffolding. Every numeric field in this artifact is therefore a schema floor or a literal zero, not a measurement.",
+      "severity": "critical",
+      "mitigation": "Treat this skill as not-applicable for this application and withdraw it from the app's Discovery wave rather than consuming this artifact as a feasibility input. Before any re-dispatch, require the program to confirm from the authoritative application record which system this application_id designates; if the intended target is RMS or IMS, re-dispatch against that system's repository and metadata database, not this one."
+    },
+    {
+      "finding": "PROFILE-SCOPE MISMATCH — the FAA profile's InfoImage corpus material does not apply to this application, and importing it would fabricate the assessment. The governing profile is faa (authoritative, per the task declaration), but the profile's only TIFF-corpus reference is front-matter-scoped applies-to: [rms, ims] (profiles/faa/skills/tiff-corpus-assessor/references/unisys-infoimage-extraction.md:5). This application is neither RMS nor IMS: it has no Unisys container, no eWorkflow repository, no FOLIO/FOLIO_ITEM/IMAGE_METADATA tables, and no UNC TIFF store. The profile contains no application inventory at all, and greps for 'Gilded Rose' and for the id d634afdb-97cc-4589-a080-5766d4f377d5 across profiles/faa/ return zero hits, so nothing in the profile scopes this corpus material to this application. Consequently store_type is 'other' (not 'unisys-infoimage') and access_method is 'unknown' — the quality rule requiring an extraction reference and forbidding access_method: unknown is conditional on a detected store_type the profile covers, and that condition is not met here.",
+      "severity": "critical",
+      "mitigation": "Do not populate this assessment from the profile's RMS defaults (~146M pages, multi-engine-ensemble with ABBYY pre-1995 strata, bulk-export-via-Unisys-SDK access). Keep the applies-to: [rms, ims] scope test as an explicit precondition gate on this skill: when the detected store_type is not one the active profile's extraction reference covers, the skill must report not-applicable instead of inheriting another system's defaults."
+    },
+    {
+      "finding": "GOVERNING-PROFILE / CONTENT DISCREPANCY, RECORDED NOT ADOPTED — the application content shows no FAA nexus, and its repository contains a self-identified test fixture describing a different system. The declared governing profile faa stands and was used exclusively, but the source tree is a generic retail-inn refactoring exercise with no NAS, aviation, certification, or FAA business-domain content; the Catalog pass set business_domain to 'unclassified' and recommended stakeholder confirmation of whether this application_id maps to a genuine FAA-owned system (catalog.json:59). Separately, fixtures/default.json in the same repository self-identifies as a Discovery-skill test fixture and describes a fabricated ASP.NET WebForms 4.8 / SQL Server 2016 system of ~68,400 LOC in domain 'eligibility-certification' (catalog.json:60); its actual on-disk content is a legacy-data-flow-tracer fixture. That fixture was NOT used to populate any field of this assessment.",
+      "severity": "high",
+      "mitigation": "Route this application_id to stakeholder reconciliation against the authoritative application record before any Rationalization disposition consumes Discovery output for it, and carry the unresolved mapping question into gate G-DC as a blocking review item. Keep fixtures/default.json excluded from evidence, and have the repository owner delete or relocate it out of the analyzed tree so later passes cannot mistake it for application documentation."
+    },
+    {
+      "finding": "SENTINEL VALUES ARE STRUCTURALLY INDISTINGUISHABLE FROM MEASUREMENTS — a downstream consumer reading only the numbers will be misled. The schema forbids the honest values: image_count_estimate has minimum 1 so the true count of zero cannot be expressed and 1 is emitted; sample_size has minimum 100 so the true sample of zero cannot be expressed; confidence_level has minimum 0.80; overall_score and every per-factor score have minimum 1; method, recommended_engine, inference_strategy, and prioritization_basis are closed enums with no not-applicable member. The truth lives only in the free-text rationale, notes, basis, and selection_criteria strings and in these findings. A cost model or wave scheduler that reads the numeric fields alone will believe a corpus of 1 image was assessed at readiness 1 with a 100-image sample.",
+      "severity": "high",
+      "mitigation": "Do not machine-consume this artifact's numeric fields; gate G-DC should treat corpus_id 'no-corpus-detected-*' as a not-applicable marker and skip the artifact. To fix this class of defect at the contract level, add an explicit applicability discriminator to schemas/discovery/tiff-corpus-assessment.schema.json — for example a required 'assessment_status' enum of assessed | no-corpus-detected | blocked, with the numeric minimums relaxed to 0 when status is not 'assessed' — so a not-applicable result is expressible as data instead of as prose."
+    },
+    {
+      "finding": "FORCED ENUM SELECTIONS CARRY NO ANALYTIC BASIS AND MUST NOT BE TREATED AS RECOMMENDATIONS. recommended_engine is set to multi-engine-ensemble solely because the schema requires an enum member and, given the sentinel composite of 1, R6 of the engine-selection matrix ('readiness <=3 OR corpus crosses R1-R4') is the only row not self-contradicted; no engine evaluation was performed and the profile's own R6/R4/R1/R2 split for RMS was not applied because it is out of scope here. Likewise prioritization_basis 'regulatory-retention' is inherited from the retention-first default (migration-sequencing-strategy.md; profiles/faa/skills/tiff-corpus-assessor/references/unisys-infoimage-extraction.md:60-62) rather than derived from this application, and inference_strategy 'rule-based' is a lowest-commitment placeholder over two deliberately empty field lists. The OCR-readiness composite is arithmetically reproducible (all eight documented factors at score 1, weights 0.15/0.10/0.05/0.10/0.20/0.15/0.10/0.15 summing to 1.0, composite 1.0 rounding to 1) but reproducibility here demonstrates only internal consistency, not evidence.",
+      "severity": "high",
+      "mitigation": "Require a non-sentinel ocr_readiness.factors block — scores traceable to a logged sample-scoring run with reviewer IDs and Cohen's kappa per sample-scoring.jsonl — before any consumer treats recommended_engine, prioritization_basis, or inference_strategy from this artifact as a decision input. Discard all four enum values on re-dispatch and re-derive them from the real corpus."
+    },
+    {
+      "finding": "THE REST OF THE DISCOVERY WAVE DID NOT COMPLETE, so no corroborating evidence exists and none may be assumed later. Of the eight staged Discovery skill slots, only discovery-catalog produced output (2 files); discovery-structural-analysis, discovery-legacy-database-archaeologist, discovery-legacy-data-flow-tracer, discovery-identity-landscape-analyzer, discovery-legacy-language-reader, and discovery-discovery-patterns-dotnet are all empty directories whose work logs show every checklist item done: false. This assessment's no-corpus conclusion therefore rests on the Catalog entry plus this skill's own direct inspection of the source tree, with no independent database-archaeology or data-flow confirmation available.",
+      "severity": "medium",
+      "mitigation": "Record in gate G-DC that discovery completeness for this application is unmet, and re-run the failed passes before the Rationalization disposition decision. Should legacy-database-archaeologist later discover an InfoImage metadata database that this pass could not see, treat that as superseding evidence and re-dispatch this skill rather than reconciling against these sentinel values."
+    },
+    {
+      "finding": "NO CONCRETE RETENTION SCHEDULE EXISTS IN THE ACTIVE PROFILE, so a retention-first wave plan is not executable even for the systems the profile does cover. profiles/faa/ supplies the governing citations (49 USC 44703, 14 CFR Part 61, 49 CFR Part 830) and names regulatory-retention as the prioritization basis, and the schema side carries FOLIO.retention_class, but the profile contains no GRS item numbers, no retention year counts, and no disposition dates; templates/ato-decommission.md:40 is an empty table with a Retention Period column awaiting values. The retention-boundary filter that is supposed to run before wave composition — and that typically shrinks a records corpus 20-40% — therefore has no threshold to apply.",
+      "severity": "medium",
+      "mitigation": "Obtain the applicable NARA/GRS retention schedule with per-record-class year counts from the FAA records officer and encode it as a profile overlay keyed to FOLIO.retention_class values, before any retention-prioritized wave plan is produced for RMS, IMS, or any other corpus-bearing system under this profile."
+    }
+  ]
+}

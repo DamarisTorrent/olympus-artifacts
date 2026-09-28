@@ -1,0 +1,17 @@
+{
+  "$schema": "olympus:artifact:db-archaeology:v1",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata",
+    "id": "d634afdb-97cc-4589-a080-5766d4f377d5"
+  },
+  "database_engine": {
+    "type": "other",
+    "version": "none-detected (no database tier exists)",
+    "edition": "NULL RESULT, not an unfinished walk: this application has no persistence layer at all. Verified by four independent negative checks over the 22 git-tracked files — (1) zero connection strings: src/GildedRose.Console/app.config contains only <startup><supportedRuntime>, and no *.config declares <connectionStrings>; (2) zero DDL: no *.sql file is git-tracked (the single .sql in the working tree, scripts/classify_procs_template.sql, is untracked skill scaffolding); (3) zero ADO.NET/ORM usage in any of the 4 *.cs files — the System.Data references at GildedRose.Console.csproj:38 and :40 are default-template assembly references no code consumes; (4) the only application state is an in-memory IList<Item> declared at src/GildedRose.Console/Program.cs:7 and seeded from hardcoded literals at Program.cs:16-26, which is discarded at process exit (Program.cs:33-35). Consequently every inventory array below is legitimately empty."
+  },
+  "schemas": [],
+  "tables": [],
+  "stored_procedures": [],
+  "triggers": [],
+  "findings": []
+}

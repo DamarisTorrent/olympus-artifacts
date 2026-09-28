@@ -1,0 +1,89 @@
+{
+  "$schema": "olympus:artifact:language-detection:v1",
+  "primary_language": "C#",
+  "primary_framework": "",
+  "secondary_languages": [],
+  "frameworks": [
+    "xUnit"
+  ],
+  "build_tools": [
+    "MSBuild",
+    "NuGet",
+    "psake (PowerShell build automation via tasks.ps1/build.bat)"
+  ],
+  "databases": [],
+  "confidence": "strong",
+  "evidence": [
+    {
+      "language": "C#",
+      "signals": [
+        {
+          "type": "extension",
+          "match": ".cs",
+          "count": 4,
+          "path_sample": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "type": "config_file",
+          "match": "*.csproj (TargetFrameworkVersion v4.5 / v4.5.1, ToolsVersion 12.0 MSBuild project)",
+          "count": 2,
+          "path_sample": "src/GildedRose.Console/GildedRose.Console.csproj"
+        },
+        {
+          "type": "content_marker",
+          "match": "namespace / class / using System.Collections.Generic",
+          "count": 4,
+          "path_sample": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "type": "solution_file",
+          "match": "GildedRose.sln (Visual Studio solution referencing both .csproj projects)",
+          "count": 1,
+          "path_sample": "GildedRose.sln"
+        },
+        {
+          "type": "config_file",
+          "match": "packages.config referencing xunit.core/xunit.assert 2.0.0 (test framework, not an application framework)",
+          "count": 2,
+          "path_sample": "src/GildedRose.Tests/packages.config"
+        },
+        {
+          "type": "negative_signal",
+          "match": "no .aspx/.ascx/.ashx, no Web.config, no .cshtml/.razor, no Controllers/ or wwwroot/ directory anywhere in the tree",
+          "count": 0,
+          "path_sample": "src/GildedRose.Console/"
+        }
+      ],
+      "signal_count": 6,
+      "confidence": "strong"
+    }
+  ],
+  "dispatch": [
+    {
+      "language": "C#",
+      "framework": "none — plain .NET Framework console app; no ASP.NET WebForms, no ASP.NET Core, no ORM/web/service framework detected (only xUnit as a test-only dependency)",
+      "scope": "backend",
+      "primary_reference": "cross-cutting/skills/discovery-patterns/SKILL.md",
+      "resolved_on_disk": true
+    }
+  ],
+  "excluded_directories": [
+    "node_modules",
+    "vendor",
+    "packages",
+    ".git",
+    "bin",
+    "obj",
+    "target",
+    "dist",
+    "build",
+    ".nuget",
+    "fixtures",
+    "assets",
+    "references",
+    "scripts",
+    "images"
+  ],
+  "generated_by": "legacy-language-reader",
+  "generated_at": "2026-09-28T00:00:00Z"
+}

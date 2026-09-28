@@ -1,0 +1,522 @@
+{
+  "$schema": "olympus:artifact:structural-analysis:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "source_root": "/workspace/discovery-d634afdb-97cc-4589-a080-5766d4f377d5-01a0e90cffd0/source",
+  "discovery_pass": "Discovery Pass 1 - legacy-architecture-mapper",
+  "methodology_note": "Static walk of the full source tree, read-only; nothing was built, restored or executed, and no runtime was observed. SCOPING RULE APPLIED: `git ls-files` returned 22 tracked files, and `git status --untracked-files=all` returned 31 untracked files under references/ (22 .md), assets/ (7), scripts/ (1) and fixtures/ (1). Those 31 are Discovery-skill reference/template material staged into the source root by the dispatch harness, not application source, and they are EXCLUDED from every count, module, and coupling finding in this document (see duplication_map). All 4 C# files, both .csproj files, the .sln, all 4 NuGet config files, app.config, build.bat and tasks.ps1 were read in full. Dependency edges were derived from MSBuild <Reference>/<Import> elements, packages.config entries, and `using`/qualified-type references in source; there is no reflection, DI container, dynamic dispatch or code generation in the tree, so the import graph is complete rather than best-effort. Absence claims are grep-derived, not assumed: a case-insensitive search of all tracked files for connectionstring|Data Source=|Initial Catalog|SqlConnection|OleDb|Odbc|EntityFramework|System.Data.SqlClient|HttpClient|WebRequest|Soap|WCF|ServiceModel|Authenticate|Login|Identity|Principal|appSettings|ConfigurationManager|Environment.GetEnvironmentVariable returned ZERO matches, and a search for <ProjectReference> returned zero matches. FAN-OUT DECISION: not fanned out. The skill's rule fans out above 8 top-level modules / 50 KLOC / 20 tables; this tree has 2 modules, 172 lines of C# and 0 tables, so a single-pass walk is faster than sub-agent coordination. WHAT THE WALK COULD NOT REACH: the restored `packages/` directory does not exist in the workspace, so psake.net's Functions.psm1 (which supplies Get-DefaultPropertiesFile and Import-DefaultTasks, referenced at tasks.ps1:5 and tasks.ps1:11) was NOT read - the concrete Clean/Build/Test/Version task bodies are out-of-repo and unverified. No db-schema.json was written because the application has no database; manufacturing an empty schema file would assert a walk that found nothing had found a schema. The sibling Discovery artifacts declared for this pass (sqlserver-object-inventory, language-detection, db-archaeology, data-flow-trace, identity-landscape, tiff-corpus-assessment) are produced by their own skills in their own dispatches and are not emitted here; for this application most are inapplicable on the evidence above.",
+  "summary_metrics": {
+    "modules": 2,
+    "deployment_surfaces": 1,
+    "solution_code_projects": 2,
+    "solution_folders_non_module": 3,
+    "tracked_files_total": 22,
+    "csharp_source_files": 4,
+    "loc_csharp_total": 172,
+    "loc_program_cs": 124,
+    "loc_business_logic_update_quality_method": 75,
+    "classes_declared": 3,
+    "methods_excluding_property_accessors": 3,
+    "public_types": 2,
+    "internal_project_references": 0,
+    "distinct_nuget_package_ids": 12,
+    "nuget_package_declarations": 13,
+    "http_endpoints": 0,
+    "cli_entry_points": 1,
+    "database_tables": 0,
+    "stored_procedures": 0,
+    "database_triggers": 0,
+    "connection_strings": 0,
+    "external_integration_points": 0,
+    "config_files": 6,
+    "environment_variable_reads": 0,
+    "dependency_cycles": 0,
+    "test_methods": 1,
+    "test_methods_exercising_business_logic": 0,
+    "item_name_string_literal_comparisons_in_rules": 8,
+    "distinct_item_names_with_dedicated_rules": 3,
+    "max_nested_conditional_depth_in_update_quality": 5,
+    "untracked_non_application_files_excluded": 31
+  },
+  "primary_technology": {
+    "languages": [
+      {
+        "name": "C#",
+        "percent_of_source": 100,
+        "evidence": "src/GildedRose.Console/Program.cs:1, src/GildedRose.Tests/TestAssemblyTests.cs:1"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "xUnit",
+        "version": "2.0.0",
+        "role": "test framework only - no application framework (ASP.NET, WebForms, MVC, WCF) is present anywhere in the tree",
+        "evidence": "src/GildedRose.Tests/packages.config:3-8"
+      }
+    ],
+    "runtimes": [
+      {
+        "name": ".NET Framework",
+        "version": "4.5",
+        "module": "gildedrose-console",
+        "support_status": "past Microsoft end-of-support (4.5 reached end of support 2016-01-12); re-verify against the current Microsoft lifecycle policy before citing at a gate",
+        "evidence": "src/GildedRose.Console/GildedRose.Console.csproj:12, src/GildedRose.Console/app.config:4"
+      },
+      {
+        "name": ".NET Framework",
+        "version": "4.5.1",
+        "module": "gildedrose-tests",
+        "support_status": "past Microsoft end-of-support (4.5.1 reached end of support 2016-01-12); re-verify against the current Microsoft lifecycle policy before citing at a gate",
+        "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:15"
+      },
+      {
+        "name": "Windows-only runtime dependency",
+        "note": "System.Console.ReadKey() requires an interactive console, and the build chain is cmd + Windows PowerShell >= 3.0; neither module targets .NET Core/.NET 5+, so nothing here runs on a Linux container without a port",
+        "evidence": "src/GildedRose.Console/Program.cs:33, build.bat:3, build.bat:10"
+      }
+    ],
+    "build_tools": [
+      {
+        "name": "MSBuild",
+        "version": "ToolsVersion 12.0 (Visual Studio 2013)",
+        "evidence": "GildedRose.sln:3, src/GildedRose.Console/GildedRose.Console.csproj:2"
+      },
+      {
+        "name": "NuGet",
+        "note": "packages.config-style restore with a vendored .nuget/NuGet.exe and repositoryPath=packages",
+        "evidence": "NuGet.config:4, .nuget/NuGet.targets, build.bat:24"
+      },
+      {
+        "name": "psake",
+        "version": "4.4.1 (with psake.net 0.1.3 convention module)",
+        "note": "task bodies are imported from the out-of-repo psake.net package, not defined in tasks.ps1",
+        "evidence": "tasks.ps1:11, .nuget/packages.config:5-6"
+      },
+      {
+        "name": "GitVersionTask / GitVersion.CommandLine",
+        "version": "2.0.1 (console project), 3.4.1 (tests project), 2.0.0 (solution CLI)",
+        "note": "two different task versions plus a third CLI version participate in one build",
+        "evidence": "src/GildedRose.Console/packages.config:3, src/GildedRose.Tests/packages.config:3, .nuget/packages.config:3"
+      }
+    ],
+    "ci_cd": []
+  },
+  "architecture": {
+    "style": "single-assembly console monolith (one executable, no tiers, no process boundaries, no persistence)",
+    "major_components": [
+      {
+        "name": "Program.Main (console entry point)",
+        "kind": "ui",
+        "responsibility": "The application's only invocation surface: writes a banner to stdout, seeds a hard-coded six-item in-memory inventory, calls UpdateQuality() exactly once, then blocks on a keypress and exits. Classified `ui` because it is the sole human-facing surface; it accepts no arguments (the `args` parameter is never read). Evidence: src/GildedRose.Console/Program.cs:8-35."
+      },
+      {
+        "name": "Program.UpdateQuality (inventory rules engine)",
+        "kind": "service",
+        "responsibility": "The entire business logic of the application: 75 lines of nested conditionals that adjust each item's Quality and SellIn per item-specific rules, dispatching on item-name string literals. Evidence: src/GildedRose.Console/Program.cs:37-111."
+      },
+      {
+        "name": "Item (domain model)",
+        "kind": "shared-library",
+        "responsibility": "A three-property POCO (Name, SellIn, Quality) with public setters and no validation, invariants or persistence mapping. Declared in the same file and namespace as the entry point rather than in a separate assembly, which is why it is a `shared-library` in intent but not in packaging. Evidence: src/GildedRose.Console/Program.cs:115-122."
+      },
+      {
+        "name": "GildedRose.Tests (xUnit test assembly)",
+        "kind": "unknown",
+        "responsibility": "A build-time-only library assembly holding one tautological test, Assert.True(true). It declares NO reference to GildedRose.Console, so it cannot exercise any production code. Kind is `unknown` rather than `shared-library` because a test harness is not a component of the running system and the closed vocabulary has no test-assembly value. Evidence: src/GildedRose.Tests/TestAssemblyTests.cs:7-11, src/GildedRose.Tests/GildedRose.Tests.csproj:42-58."
+      }
+    ]
+  },
+  "deployment_surfaces": [
+    {
+      "surface": "gildedrose-console-exe",
+      "modules": [
+        "gildedrose-console"
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "id": "gildedrose-console",
+      "path": "src/GildedRose.Console",
+      "role": "The whole application: console entry point, the inventory-quality rules engine, and the Item domain model, all in one 124-line file in one namespace.",
+      "purpose": "Applies one night's inventory update to a hard-coded item list and exits.",
+      "loc": 160,
+      "language": "C#",
+      "framework": "none (no application framework; bare BCL only)",
+      "runtime": ".NET Framework 4.5 (csproj TargetFrameworkVersion v4.5; app.config supportedRuntime v4.0 sku=.NETFramework,Version=v4.5)",
+      "build_target": {
+        "kind": "exe",
+        "assembly_name": "GildedRose.Console",
+        "output_type": "Exe",
+        "project_file": "src/GildedRose.Console/GildedRose.Console.csproj",
+        "evidence": "src/GildedRose.Console/GildedRose.Console.csproj:8, src/GildedRose.Console/GildedRose.Console.csproj:11"
+      },
+      "deployment_surface": "gildedrose-console-exe",
+      "internal_dependencies": [],
+      "depends_on": [],
+      "external_dependencies": [
+        {
+          "name": "System, System.Core, Microsoft.CSharp, System.Data, System.Data.DataSetExtensions, System.Xml, System.Xml.Linq",
+          "kind": "bcl-assembly-reference",
+          "used": "partially - only System (System.Console) and System.Core (System.Collections.Generic via mscorlib/System.Core) are actually used; the System.Data, System.Data.DataSetExtensions, System.Xml and System.Xml.Linq references are Visual Studio template defaults with no matching `using` or type usage anywhere in Program.cs",
+          "evidence": "src/GildedRose.Console/GildedRose.Console.csproj:34-42, src/GildedRose.Console/Program.cs:1"
+        },
+        {
+          "name": "GitVersionTask",
+          "version": "2.0.1",
+          "kind": "nuget-development-dependency",
+          "note": "declared in packages.config but NOT imported by this .csproj (no GitVersionTask.targets Import element is present here, unlike the tests project) - a declared dependency with no effect on this project's build",
+          "evidence": "src/GildedRose.Console/packages.config:3"
+        }
+      ],
+      "db_access": {
+        "mode": "none",
+        "databases": [],
+        "evidence": "No connection string, DB driver reference, ORM, SQL text or DataSet usage exists in this module; app.config (src/GildedRose.Console/app.config:1-6) contains only a <startup>/<supportedRuntime> element and no <connectionStrings> section, and a grep of all tracked files for connection/driver/ORM markers returned zero matches. All state is an in-memory IList<Item> built at src/GildedRose.Console/Program.cs:14-27 and discarded at process exit."
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "soap": 0,
+        "message_consumers": 0,
+        "scheduled_jobs": 0,
+        "cli_entry_points": 1,
+        "evidence": "src/GildedRose.Console/Program.cs:8 (static void Main) is the only entry point; no controller, route, handler, listener or schedule declaration exists in the module."
+      },
+      "coupling_signals": [
+        {
+          "signal": "Entry point, business logic and domain model share one type/file/namespace, so there is no seam to test or replace independently.",
+          "evidence": "src/GildedRose.Console/Program.cs:5-122"
+        },
+        {
+          "signal": "UpdateQuality() is an instance method on the INTERNAL class Program and reads the private instance field Items, so the rules engine is unreachable from any other assembly. This is the mechanical reason the test project cannot cover it.",
+          "evidence": "src/GildedRose.Console/Program.cs:5, src/GildedRose.Console/Program.cs:7, src/GildedRose.Console/Program.cs:37"
+        },
+        {
+          "signal": "Business rules are keyed on item-name string literals, so behaviour is coupled to data values with no enum, type, subclass or lookup table; 8 literal name comparisons drive every branch.",
+          "evidence": "src/GildedRose.Console/Program.cs:41, src/GildedRose.Console/Program.cs:45, src/GildedRose.Console/Program.cs:57, src/GildedRose.Console/Program.cs:78, src/GildedRose.Console/Program.cs:85, src/GildedRose.Console/Program.cs:87, src/GildedRose.Console/Program.cs:91"
+        },
+        {
+          "signal": "Shared mutable state: UpdateQuality mutates caller-owned Item objects in place through the list indexer, and Item's setters are public and unguarded, so the 50-Quality cap and the 80-Quality Sulfuras invariant are enforced nowhere but inside this one loop.",
+          "evidence": "src/GildedRose.Console/Program.cs:47, src/GildedRose.Console/Program.cs:80, src/GildedRose.Console/Program.cs:117-121"
+        }
+      ],
+      "config": [
+        {
+          "file": "src/GildedRose.Console/app.config",
+          "binds": "CLR runtime version only (.NETFramework v4.5)",
+          "environment_specific_values": 0,
+          "evidence": "src/GildedRose.Console/app.config:3-5"
+        },
+        {
+          "file": "src/GildedRose.Console/packages.config",
+          "binds": "NuGet restore graph (GitVersionTask 2.0.1)",
+          "evidence": "src/GildedRose.Console/packages.config:3"
+        },
+        {
+          "finding": "There is no environment binding of any kind: zero appSettings, zero connectionStrings, zero ConfigurationManager or Environment.GetEnvironmentVariable reads, and no per-environment config transform. The six seeded items and every rule threshold (0, 1, 6, 11, 50) are hard-coded literals in Program.cs.",
+          "evidence": "src/GildedRose.Console/Program.cs:16-26, src/GildedRose.Console/Program.cs:53, src/GildedRose.Console/Program.cs:59, src/GildedRose.Console/Program.cs:67"
+        }
+      ],
+      "evidence": [
+        "GildedRose.sln:27",
+        "src/GildedRose.Console/GildedRose.Console.csproj:1-59",
+        "src/GildedRose.Console/Program.cs:1-124",
+        "src/GildedRose.Console/Properties/AssemblyInfo.cs:1-36"
+      ]
+    },
+    {
+      "id": "gildedrose-tests",
+      "path": "src/GildedRose.Tests",
+      "role": "An xUnit test assembly that is structurally disconnected from the application: it declares no reference to GildedRose.Console and contains a single assertion, Assert.True(true).",
+      "purpose": "Test scaffold only; not deployed and covers no production code.",
+      "loc": 12,
+      "language": "C#",
+      "framework": "xUnit 2.0.0",
+      "runtime": ".NET Framework 4.5.1 (csproj TargetFrameworkVersion v4.5.1)",
+      "build_target": {
+        "kind": "library",
+        "assembly_name": "GildedRose.Tests",
+        "output_type": "Library",
+        "project_file": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+        "deployed": false,
+        "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:11, src/GildedRose.Tests/GildedRose.Tests.csproj:14"
+      },
+      "internal_dependencies": [],
+      "depends_on": [],
+      "external_dependencies": [
+        {
+          "name": "xunit.abstractions / xunit.assert / xunit.core",
+          "version": "2.0.0",
+          "kind": "nuget-assembly-reference",
+          "resolution": "HintPath into ..\\..\\packages\\, so the build FAILS unless `nuget restore` has populated the repository path first (enforced by the EnsureNuGetPackageBuildImports error target)",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:46-57, src/GildedRose.Tests/GildedRose.Tests.csproj:70-78"
+        },
+        {
+          "name": "xunit.runner.visualstudio",
+          "version": "2.0.0",
+          "kind": "nuget-build-props-import",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:3"
+        },
+        {
+          "name": "GitVersionTask",
+          "version": "3.4.1",
+          "kind": "nuget-build-targets-import",
+          "note": "version-stamps this assembly; the console project declares GitVersionTask 2.0.1 instead and imports nothing, so the two assemblies are versioned by different mechanisms",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:80, src/GildedRose.Tests/packages.config:3"
+        }
+      ],
+      "db_access": {
+        "mode": "none",
+        "databases": [],
+        "evidence": "src/GildedRose.Tests/TestAssemblyTests.cs:1-13 contains one assertion and no I/O of any kind."
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "cli_entry_points": 0,
+        "test_methods": 1,
+        "test_methods_exercising_business_logic": 0,
+        "evidence": "src/GildedRose.Tests/TestAssemblyTests.cs:7-11"
+      },
+      "coupling_signals": [
+        {
+          "signal": "ZERO coupling to the code under test, which is itself the defect: the project's ItemGroup lists System, System.Core, Microsoft.CSharp and three xUnit assemblies and NO <ProjectReference> to GildedRose.Console (a repo-wide grep for ProjectReference returns nothing). The regression safety net for a 75-line rules method is therefore structurally absent, not merely thin - every downstream refactor or migration of gildedrose-console starts with no executable behavioural baseline.",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:42-58, src/GildedRose.Tests/TestAssemblyTests.cs:7-11"
+        },
+        {
+          "signal": "Cross-module runtime skew: the test assembly targets .NET Framework 4.5.1 while the code it is meant to test targets 4.5, and every NuGet package in both projects is marked targetFramework=net451 - including the console project's, which does not target net451.",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:15, src/GildedRose.Console/GildedRose.Console.csproj:12, src/GildedRose.Console/packages.config:3"
+        }
+      ],
+      "config": [
+        {
+          "file": "src/GildedRose.Tests/packages.config",
+          "binds": "NuGet restore graph (xUnit 2.0.0 family, GitVersionTask 3.4.1)",
+          "evidence": "src/GildedRose.Tests/packages.config:1-10"
+        },
+        {
+          "finding": "src/GildedRose.Tests/Properties/AssemblyInfo.cs is an EMPTY file (0 lines) yet is listed as a <Compile> item, so this assembly carries no title, version or company metadata of its own.",
+          "evidence": "src/GildedRose.Tests/GildedRose.Tests.csproj:60, src/GildedRose.Tests/Properties/AssemblyInfo.cs"
+        }
+      ],
+      "evidence": [
+        "GildedRose.sln:6",
+        "src/GildedRose.Tests/GildedRose.Tests.csproj:1-88",
+        "src/GildedRose.Tests/TestAssemblyTests.cs:1-13"
+      ]
+    }
+  ],
+  "coupling_indicators": {
+    "god_type_single_file_application": {
+      "kind": "mixed-responsibility",
+      "severity": "high",
+      "description": "One 124-line file holds the process entry point, the seed data, the complete business-rules engine and the domain model, in one namespace, with the rules engine as an instance method on the class whose other job is hosting Main(). There is no layering to preserve and no seam to cut, so any decomposition begins by inventing boundaries that do not exist yet.",
+      "affected_modules": [
+        "gildedrose-console"
+      ],
+      "evidence": [
+        "src/GildedRose.Console/Program.cs:5-113",
+        "src/GildedRose.Console/Program.cs:115-122"
+      ]
+    },
+    "magic_string_dispatch": {
+      "kind": "data-value-coupling",
+      "severity": "high",
+      "description": "Every rule branch is selected by comparing Item.Name against a literal string - \"Aged Brie\", \"Sulfuras, Hand of Ragnaros\" and \"Backstage passes to a TAFKAL80ETC concert\" - 8 comparisons in total, several negated and nested inside each other (lines 85-91 nest three name comparisons four levels deep). Behaviour is coupled to exact data values with no enum, subtype or lookup, so renaming an inventory item silently changes its business rules, and the comparisons are case-sensitive and whitespace-sensitive with no normalisation.",
+      "affected_modules": [
+        "gildedrose-console"
+      ],
+      "evidence": [
+        "src/GildedRose.Console/Program.cs:41",
+        "src/GildedRose.Console/Program.cs:45",
+        "src/GildedRose.Console/Program.cs:57",
+        "src/GildedRose.Console/Program.cs:78",
+        "src/GildedRose.Console/Program.cs:85",
+        "src/GildedRose.Console/Program.cs:87",
+        "src/GildedRose.Console/Program.cs:91"
+      ]
+    },
+    "test_assembly_not_wired_to_production_code": {
+      "kind": "missing-dependency-edge",
+      "severity": "high",
+      "description": "The solution contains a test project and a production project with NO edge between them: no <ProjectReference> exists anywhere in the repository, and the one test method asserts Assert.True(true). The coupling finding is the ABSENCE of a dependency that the solution's structure implies - a reader who counts two projects and an xUnit reference would reasonably assume coverage exists. It does not. Compounding it, UpdateQuality is an instance method on the internal class Program reading a private field, so the edge cannot simply be added; the rules must first be made reachable (public/extracted) before any test can call them.",
+      "affected_modules": [
+        "gildedrose-tests",
+        "gildedrose-console"
+      ],
+      "evidence": [
+        "src/GildedRose.Tests/GildedRose.Tests.csproj:42-58",
+        "src/GildedRose.Tests/TestAssemblyTests.cs:7-11",
+        "src/GildedRose.Console/Program.cs:5",
+        "src/GildedRose.Console/Program.cs:7",
+        "src/GildedRose.Console/Program.cs:37"
+      ]
+    },
+    "shared_mutable_state_through_public_setters": {
+      "kind": "encapsulation-breach",
+      "severity": "medium",
+      "description": "Item exposes public setters on all three properties and holds no invariants, while UpdateQuality mutates the caller's objects in place via the list indexer. The documented invariants (Quality never negative, never above 50, Sulfuras fixed at 80) are enforced only by the conditionals inside this single loop, so any second writer - or any reordering of the loop - can violate them undetectably. The loop also reaches Items[i] repeatedly rather than binding a local, so a rule change must be applied consistently across ~25 indexer accesses.",
+      "affected_modules": [
+        "gildedrose-console"
+      ],
+      "evidence": [
+        "src/GildedRose.Console/Program.cs:117-121",
+        "src/GildedRose.Console/Program.cs:39-110"
+      ]
+    },
+    "deep_conditional_nesting": {
+      "kind": "structural-complexity",
+      "severity": "medium",
+      "description": "UpdateQuality reaches five levels of nested conditionals inside the loop (lines 83-95: SellIn<0, then three negated name comparisons, then Quality>0, then a fourth name comparison), and expresses one branch as the self-cancelling `Quality = Quality - Quality` rather than an assignment to zero. The rules a reader must recover are interleaved rather than separated per item type, which is why business-rule extraction downstream must read the whole method as one unit rather than per-branch.",
+      "affected_modules": [
+        "gildedrose-console"
+      ],
+      "evidence": [
+        "src/GildedRose.Console/Program.cs:83-95",
+        "src/GildedRose.Console/Program.cs:99"
+      ]
+    },
+    "build_chain_depends_on_out_of_repo_conventions_and_the_public_internet": {
+      "kind": "build-time-coupling",
+      "severity": "high",
+      "description": "The build is not self-describing or hermetic. tasks.ps1 defines no task bodies - it calls Get-DefaultPropertiesFile and Import-DefaultTasks Version, Clean, Build, Test, all supplied by the out-of-repo psake.net 0.1.3 package, so what Build and Test actually DO is invisible in this repository (and was unreadable in this walk, since packages/ is not restored). build.bat additionally downloads NuGet.exe from https://www.nuget.org over the network when absent and restores from the deprecated https://nuget.org/api/v2/ v2 feed, hard-requires cmd plus Windows PowerShell >= 3.0, and shells out to GitVersion.exe. Every one of those is a build-time dependency on something outside the repo, and the v2 feed plus an unpinned nuget.exe download is also a supply-chain exposure.",
+      "affected_modules": [
+        "gildedrose-console",
+        "gildedrose-tests"
+      ],
+      "evidence": [
+        "tasks.ps1:5",
+        "tasks.ps1:11",
+        "build.bat:24-28",
+        "build.bat:30",
+        "build.bat:42",
+        "NuGet.config:7",
+        "build.bat:10"
+      ]
+    },
+    "divergent_versioning_of_one_build": {
+      "kind": "toolchain-inconsistency",
+      "severity": "low",
+      "description": "Three GitVersion components at three versions participate in one solution build - GitVersionTask 2.0.1 (console, declared but never imported), GitVersionTask 3.4.1 (tests, imported as a target), GitVersion.CommandLine 2.0.0 (invoked by build.bat) - and NUnit.Runners 2.6.4 is restored at solution level although no project references NUnit. The console assembly therefore ends up with the hard-coded AssemblyVersion 1.0.0.0 while the test assembly is version-stamped by GitVersion.",
+      "affected_modules": [
+        "gildedrose-console",
+        "gildedrose-tests"
+      ],
+      "evidence": [
+        "src/GildedRose.Console/packages.config:3",
+        "src/GildedRose.Tests/packages.config:3",
+        "src/GildedRose.Tests/GildedRose.Tests.csproj:80",
+        ".nuget/packages.config:3-4",
+        "src/GildedRose.Console/Properties/AssemblyInfo.cs:35"
+      ]
+    }
+  },
+  "duplication_map": {
+    "non_application_trees_staged_into_source_root": [
+      "references/ - 22 Discovery-skill reference documents (adabas-ddm-parsing.md, classic-asp-patterns.md, unisys-infoimage-schema.md, faa-identity-providers.md, nist-800-63-mapping.md, vb6-patterns.md and 16 others). Untracked in git; describe technologies absent from this repository.",
+      "assets/ - 7 skill output templates (data-flow-trace-template.yaml, db-archaeology-report-template.yaml, identity-landscape-template.yaml, corpus-assessment-template.yaml, language-detection-output-template.json, broker-recommendation-template.md, sampling-plan-worksheet.md). Untracked.",
+      "scripts/ - classify_procs_template.sql, a stored-procedure classification template for a database this application does not have. Untracked.",
+      "fixtures/ - default.json, a synthetic legacy-data-flow-tracer fixture describing a fabricated 'Fixture Certification Portal' (fixture-app) with ASP.NET session state and SQL Server triggers. Untracked, and NOT documentation of this application."
+    ],
+    "exclusion_basis": "All 31 files above are untracked in git (git status --untracked-files=all) while all 22 application files are tracked (git ls-files). They are excluded from loc, file, module, table and stored-procedure counts. Counting references/*.md or scripts/classify_procs_template.sql as source would inflate this 172-line application to 53 files and invent a database it does not have.",
+    "duplicate_nuget_configuration": [
+      "NuGet.config:1-9 (root) - sets repositoryPath=packages (NuGet.config:4) and the nuget.org v2 package source (NuGet.config:7)",
+      ".nuget/NuGet.Config:1-7 - sets disableSourceControlIntegration; a second, differently-cased config file for the same tool"
+    ],
+    "vendored_binary_in_source_control": [
+      ".nuget/NuGet.exe - a tracked executable binary (git ls-files), re-downloaded from the internet by build.bat:26-28 when absent"
+    ],
+    "dead_build_dependencies": [
+      "NUnit.Runners 2.6.4 (.nuget/packages.config:4) - no NUnit reference exists in either project; xUnit 2.0.0 is the only test framework used",
+      "GitVersionTask 2.0.1 (src/GildedRose.Console/packages.config:3) - declared but never imported by GildedRose.Console.csproj, so it is restored and has no effect",
+      "System.Data, System.Data.DataSetExtensions, System.Xml, System.Xml.Linq (src/GildedRose.Console/GildedRose.Console.csproj:37-41) - Visual Studio template default references with no corresponding using or type usage in Program.cs"
+    ],
+    "dead_code": [
+      "src/GildedRose.Console/Program.cs:8 - the string[] args parameter of Main is never read, so the executable accepts no configuration at invocation"
+    ]
+  },
+  "database-schema-summary": {
+    "$schema": "olympus:artifact:database-schema-summary:v1",
+    "tables": [],
+    "relationships": [],
+    "stored_procedures": [],
+    "triggers": [],
+    "views": [],
+    "database_links": [],
+    "open_questions": [
+      "This application has NO database. The empty arrays above are a measured result, not an unfinished walk: a case-insensitive grep of all 22 tracked files for connectionstring, 'Data Source=', 'Initial Catalog', SqlConnection, OleDb, Odbc, EntityFramework and System.Data.SqlClient returned zero matches; app.config (src/GildedRose.Console/app.config:1-6) contains no <connectionStrings> element; there are no .sql files, DDL files or migration scripts among the tracked files; and no ORM package appears in any packages.config. All application state is an in-memory IList<Item> created at src/GildedRose.Console/Program.cs:14-27 and lost at process exit.",
+      "scripts/classify_procs_template.sql exists in the source root but is UNTRACKED Discovery-skill template material, not this application's DDL, and must not be read as evidence of a schema.",
+      "Because state is in-memory only, the application has no persistence to migrate - but equally no audit trail, no durability and no record of a night's inventory run. Confirm with the business owner whether the real production system persists this inventory somewhere outside this repository (e.g. a database owned by another application), because if it does, that store is invisible to this walk.",
+      "If a persistent store is later identified, the 50-Quality cap and the Sulfuras 80-Quality invariant would need re-checking as data constraints; today they exist only as conditionals in src/GildedRose.Console/Program.cs:53-106."
+    ]
+  },
+  "interface-inventory": {
+    "$schema": "olympus:artifact:interface-inventory:v1",
+    "interfaces": [
+      {
+        "name": "GildedRose.Console.exe command-line invocation",
+        "kind": "unknown",
+        "address": "GildedRose.Console.exe (no arguments parsed; the args parameter at Program.cs:8 is never read)",
+        "technology": ".NET Framework 4.5 console executable; stdout via System.Console.WriteLine, stdin via System.Console.ReadKey",
+        "audience": "internal",
+        "human_facing": true,
+        "authentication": "none - no authentication, authorization or identity check of any kind exists in the application; the only access control is OS-level permission to run the executable",
+        "capability_hint": "Nightly inventory revaluation: adjust each stocked item's remaining sell-in days and quality per item-specific rules",
+        "evidence_refs": [
+          "src/GildedRose.Console/Program.cs:8",
+          "src/GildedRose.Console/Program.cs:10",
+          "src/GildedRose.Console/Program.cs:33"
+        ]
+      }
+    ],
+    "counts": {
+      "total": 1,
+      "human_facing": 1,
+      "machine_facing": 0
+    },
+    "open_questions": [
+      "The closed `kind` vocabulary has no value for an interactive console entry point. `unknown` was chosen deliberately: the run is batch-SHAPED (one pass over the whole inventory, then exit) but not unattended - it blocks on a keypress at src/GildedRose.Console/Program.cs:33, so it cannot be scheduled, and `batch`/`scheduled-job` would both assert a capability this application does not have. Forcing `ui-page` would be equally wrong - there is no page.",
+      "Section 508 / WCAG 2.1 AA applicability is UNDETERMINED for this surface. The interface is human-facing, which normally triggers the obligation, but WCAG success criteria are written for web content and there is no page, form or report here - only a single stdout line ('OMGHAI!') and a keypress wait. A 508 determination for a character-mode console surface needs the accessibility reviewer's ruling, not this walk's guess.",
+      "No machine-facing interface exists: zero HTTP endpoints, zero SOAP/WCF service contracts, zero queue consumers or producers, zero file imports or exports, and zero outbound calls (greps for HttpClient, WebRequest, ServiceModel, Soap and WCF over all tracked files returned nothing). Confirm whether the real production system is fed by an upstream interface that this repository does not contain."
+    ]
+  },
+  "integration_points": [],
+  "recommended_decomposition_boundaries": [
+    {
+      "boundary": "inventory-rules-domain",
+      "modules": [
+        "gildedrose-console"
+      ],
+      "note": "CUT FIRST, and cut inside the module rather than between modules. Extract Item plus the per-item-type rules out of Program into a separately-referencable library with a public entry point (e.g. IItemUpdateRule per item category, replacing the 8 name-literal comparisons at Program.cs:41-91 with polymorphic or table-driven dispatch). This is the only boundary that unblocks the others: while the rules live on an internal class's instance method reading a private field (Program.cs:5,7,37), nothing outside the assembly - test, service or replacement - can call them. Downstream lines should treat 'the rules engine' as this proposed boundary, NOT as an existing module, because today it is 75 lines inside the entry-point type."
+    },
+    {
+      "boundary": "inventory-run-host",
+      "modules": [
+        "gildedrose-console"
+      ],
+      "note": "What remains of Program after the extraction: composition, seed-data acquisition and invocation. Two structural facts must change here for any target-state deployment on the FAA profile's substrate (Amazon ECS on Fargate, profiles/faa/config/common.yaml cloud_container_service): the blocking System.Console.ReadKey() at Program.cs:33 makes the process non-terminating under an orchestrator, and the six hard-coded items at Program.cs:16-26 make the run non-parameterisable. Both are host concerns, not domain concerns, which is why they belong on this side of the cut."
+    },
+    {
+      "boundary": "inventory-rules-tests",
+      "modules": [
+        "gildedrose-tests"
+      ],
+      "note": "Re-point the orphaned test assembly at the extracted domain library with a real <ProjectReference> and replace Assert.True(true) with characterisation tests pinning today's OBSERVED behaviour (including the Conjured gap and the `Quality = Quality - Quality` branch at Program.cs:99) BEFORE any refactor. The behavioural baseline does not exist yet, so any downstream transformation of this application is currently unverifiable - this boundary is a precondition for the other two, not a follow-up."
+    },
+    {
+      "boundary": "no-service-decomposition-warranted",
+      "modules": [],
+      "note": "STATED EXPLICITLY so a downstream line does not read the boundaries above as a microservice plan. At 172 lines, one deployable, zero endpoints, zero integrations and zero tables, there is no service to split out and no shared database to disentangle; the coupling findings here are intra-assembly design debt. Portfolio-level treatment (retain / rationalise / retire) is the disposition line's call and depends on resolving whether this application_id maps to a real FAA system at all - see open_questions."
+    }
+  ],
+  "open_questions": [
+    "GOVERNING-PROFILE DISCREPANCY (recorded, not adopted): the authoritative governing profile for this task is `faa`, and this document is written under it. The source tree contains no aviation, NAS, certification or FAA content of any kind - it is the publicly published Gilded Rose Refactoring Kata (README.md:1, README.md attribution to @TerryHughes/@NotMyself and https://github.com/NotMyself/GildedRose), a retail-inn inventory exercise. Separately, src/GildedRose.Console/Properties/AssemblyInfo.cs:11 and :13 assert AssemblyCompany(\"DSHS\") and Copyright \"DSHS 2015\" - a DIFFERENT agency attribution embedded in the shipped assembly metadata. That attribution is reported here as an observation about the artifact and is NOT treated as this task's governing profile. A stakeholder must confirm whether application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned system before any downstream line consumes these boundaries.",
+    "INPUT-ARTIFACT DISCREPANCY: the staged catalog entry (input-artifacts/.../catalog.json, open_questions[1]) states that fixtures/default.json describes an 'ASP.NET WebForms 4.8 / SQL Server 2016 system, ~68,400 LOC, business_domain eligibility-certification'. The fixtures/default.json present in the source root at THIS dispatch contains something different: a legacy-data-flow-tracer fixture for a 'Fixture Certification Portal' (id fixture-app) with session-state and trigger flows. Both descriptions are of synthetic fixture content, and the file is untracked in git in both cases - so the conclusion (disregard it) is unchanged, but the file's contents evidently vary per dispatch. Nothing downstream should cite fixtures/default.json as evidence about this application.",
+    "UNIMPLEMENTED DOCUMENTED RULE: README.md states that '\"Conjured\" items degrade in Quality twice as fast as normal items', and Program.cs:26 seeds a 'Conjured Mana Cake' - but UpdateQuality contains NO branch matching 'Conjured' (the string appears nowhere in the rules at Program.cs:37-111), so conjured items currently degrade at the normal single rate. Is this the kata's intended starting state (the exercise to be completed), or a real production defect to be carried into the target state as a known behaviour? The answer changes whether business-rule extraction should record the rule as specified-but-absent or as out of scope.",
+    "The 75-line UpdateQuality method is the application's entire business logic and has ZERO test coverage (src/GildedRose.Tests/TestAssemblyTests.cs:7-11 asserts Assert.True(true) and the test project references no production code). Before any transformation, who owns sign-off on the characterisation tests that will define correct behaviour - particularly for the `Quality = Quality - Quality` branch at Program.cs:99 and whether the 50-Quality cap is intended to apply to the second and third backstage-pass increments at Program.cs:61-71?",
+    "BUILD CONTENT NOT REACHABLE IN THIS WALK: tasks.ps1:11 imports its Version/Clean/Build/Test task bodies from the out-of-repo psake.net 0.1.3 package (Functions.psm1), and packages/ is not restored in this workspace. What the build and test steps actually execute - including whether any test runner is invoked at all, and whether the empty src/GildedRose.Tests/Properties/AssemblyInfo.cs is intentional - is therefore unverified. Restoring packages and re-reading Functions.psm1 would close this.",
+    "No CI/CD pipeline definition exists in the repository (no .github/workflows, azure-pipelines.yml, Jenkinsfile, .gitlab-ci.yml or buildspec), so primary_technology.ci_cd is an empty array as measured. Confirm whether this application is built and released by an external, not-checked-in pipeline; if it is, that pipeline is the real deployment topology and is invisible here.",
+    "The repository holds a single git commit ('Update README.md') with no remote configured, so no change history, contributor pattern or release cadence could be derived. Is this a shallow or re-initialised clone? If the real history exists elsewhere, it is the best available source for which rules changed and when - evidence this walk could not obtain.",
+    "TARGET-RUNTIME GAP for the governing profile: both projects target .NET Framework 4.5/4.5.1 - Windows-only and past Microsoft end of support - while the faa profile's substrate is Amazon ECS on Fargate in AWS GovCloud (profiles/faa/config/common.yaml) and its .NET code-generation configuration targets .NET 8 (profiles/faa/config/code-generation-dotnet.yaml). There is no in-place path: any target state requires a runtime port plus removal of the blocking Console.ReadKey() at Program.cs:33. Confirm whether porting is in scope or whether this application is a retire/replace candidate.",
+    "No identity, authentication or authorization mechanism exists anywhere in the application (greps for Authenticate, Login, Identity and Principal over all tracked files returned nothing), so there is no identity model to inventory and OKTA federation (profiles/faa/config/common.yaml identity_provider) has nothing to attach to. If the real system is invoked by an operator on a shared host, the control is OS-level and outside this repository - confirm who is permitted to run it."
+  ]
+}

@@ -1,0 +1,154 @@
+{
+  "$schema": "olympus:artifact:language-detection:v1",
+  "primary_language": "C#",
+  "primary_framework": "",
+  "secondary_languages": [
+    "PowerShell",
+    "Windows batch",
+    "MSBuild XML"
+  ],
+  "frameworks": [
+    "xUnit 2.0.0 (test framework only)"
+  ],
+  "build_tools": [
+    "MSBuild",
+    "NuGet",
+    "psake",
+    "GitVersionTask"
+  ],
+  "databases": [],
+  "confidence": "strong",
+  "evidence": [
+    {
+      "language": "C#",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.cs",
+          "count": 4,
+          "path_sample": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "type": "build-file",
+          "match": "*.csproj",
+          "count": 2,
+          "path_sample": "src/GildedRose.Console/GildedRose.Console.csproj"
+        },
+        {
+          "type": "build-file",
+          "match": "GildedRose.sln (two code-project entries)",
+          "count": 1,
+          "path_sample": "GildedRose.sln"
+        },
+        {
+          "type": "code-marker",
+          "match": "namespace GildedRose.Console / class Program / static void Main(string[] args)",
+          "count": 1,
+          "path_sample": "src/GildedRose.Console/Program.cs:3"
+        },
+        {
+          "type": "code-marker",
+          "match": "C# auto-implemented properties (public int Quality { get; set; })",
+          "count": 3,
+          "path_sample": "src/GildedRose.Console/Program.cs:117"
+        }
+      ],
+      "signal_count": 5,
+      "confidence": "strong"
+    },
+    {
+      "language": "PowerShell",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.ps1",
+          "count": 1,
+          "path_sample": "tasks.ps1"
+        }
+      ],
+      "signal_count": 1,
+      "confidence": "strong"
+    },
+    {
+      "language": "Windows batch",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.bat",
+          "count": 1,
+          "path_sample": "build.bat"
+        }
+      ],
+      "signal_count": 1,
+      "confidence": "strong"
+    },
+    {
+      "language": "MSBuild XML",
+      "signals": [
+        {
+          "type": "build-file",
+          "match": "*.csproj / *.targets / packages.config / app.config",
+          "count": 8,
+          "path_sample": ".nuget/NuGet.targets"
+        }
+      ],
+      "signal_count": 1,
+      "confidence": "strong"
+    },
+    {
+      "language": "T-SQL",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.sql in git-tracked application source",
+          "count": 0,
+          "path_sample": "none — the only .sql file in the working tree, scripts/classify_procs_template.sql, is UNTRACKED skill scaffolding staged into the repo root for this dispatch (absent from `git ls-files`), not application source"
+        },
+        {
+          "type": "code-marker",
+          "match": "SqlConnection / SqlCommand / DataSet / connectionStrings in *.cs or *.config",
+          "count": 0,
+          "path_sample": "none — grep over all *.cs and *.config returned no ADO.NET usage; the only hits were the default project-template assembly references System.Data and System.Data.DataSetExtensions at src/GildedRose.Console/GildedRose.Console.csproj:38 and :40, which no code consumes"
+        }
+      ],
+      "signal_count": 0,
+      "confidence": "strong"
+    },
+    {
+      "language": "VB6 / Classic ASP / VBScript",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.vbp / *.frm / *.bas / *.asp / *.vbs",
+          "count": 0,
+          "path_sample": "none — no occurrence anywhere in the tree"
+        }
+      ],
+      "signal_count": 0,
+      "confidence": "strong"
+    }
+  ],
+  "dispatch": [
+    {
+      "language": "C#",
+      "framework": "none (plain .NET Framework console executable; xUnit is present as a test framework only)",
+      "scope": "src/GildedRose.Console and src/GildedRose.Tests (4 *.cs files, 172 LOC total). PARTIAL FIT, stated rather than hidden: references/dispatch-matrix.md carries rows for `vb6`, `dotnet-webforms` and `dotnet-aspnetcore` but NO row for a plain C# console executable. The .NET specialist is the correct routing family, so it is dispatched here, but its pattern file covers Classic ASP / WebForms page-and-postback idioms that this application does not contain — the reader should expect none of those patterns to match.",
+      "primary_reference": "cross-cutting/skills/discovery-patterns-dotnet/references/classic-asp-patterns.md",
+      "secondary_reference": "cross-cutting/skills/discovery-patterns/SKILL.md",
+      "resolved_on_disk": true
+    }
+  ],
+  "excluded_directories": [
+    ".git",
+    "packages",
+    "bin",
+    "obj",
+    "images",
+    "references (untracked skill reference material staged into the repo root for this dispatch, not application source)",
+    "assets (untracked skill templates staged into the repo root for this dispatch, not application source)",
+    "scripts (untracked skill templates, incl. classify_procs_template.sql)",
+    "fixtures (untracked synthetic test fixture; see structural-analysis.json open_questions)"
+  ],
+  "generated_by": "legacy-language-reader, dispatched inside Discovery Pass 1 legacy-architecture-mapper",
+  "generated_at": "2026-09-28"
+}

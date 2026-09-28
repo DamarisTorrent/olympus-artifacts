@@ -1,0 +1,190 @@
+{
+  "$schema": "olympus:artifact:data-flow-trace:v1",
+  "generated": "2026-09-28",
+  "methodology_notes": "Traced by reading the single executable path end to end: src/GildedRose.Console/Program.cs:8 (Main) -> Program.cs:16-26 (hardcoded seed list) -> Program.cs:31 (app.UpdateQuality()) -> Program.cs:37-111 (UpdateQuality) -> Program.cs:33-35 (ReadKey, exit). The application has exactly ONE process, ONE entry point and NO external interface, so the trace is complete rather than sampled: there is no upstream system, no database, no file I/O, no queue, no HTTP call and no report. Two data elements carry all behaviour (Item.Quality and Item.SellIn, declared at Program.cs:119-121); Item.Name is read-only control data used only for string-equality routing and is therefore not traced as a flow of its own. persistence_points and exit_points are EMPTY BY OBSERVATION, not by omission — see the data-loss risk findings. No PII, PHI or FTI of any kind is present: the only values handled are fictional retail item names and two integers.",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata",
+    "id": "d634afdb-97cc-4589-a080-5766d4f377d5"
+  },
+  "flows": [
+    {
+      "flow_id": "DF-GRK-001",
+      "data_element": {
+        "name": "Item.Quality",
+        "type": "int (System.Int32), auto-implemented property",
+        "description": "The saleable quality score of an inventory item, mutated in place once per nightly run.",
+        "business_meaning": "Per README.md, every item has a Quality value that degrades or improves as SellIn approaches; the documented invariants are 0 <= Quality <= 50 for ordinary goods, with 'Sulfuras, Hand of Ragnaros' a legendary exception fixed at 80.",
+        "pii_classification": "none"
+      },
+      "entry_point": {
+        "system": "GildedRose.Console (self — hardcoded literal seed list in the entry point; there is no upstream system)",
+        "interface": "manual-entry",
+        "citation": "src/GildedRose.Console/Program.cs:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "calculate",
+          "description": "Ordinary-goods branch: Quality decremented by 1, guarded by Quality > 0 and Name != 'Sulfuras, Hand of Ragnaros' (so Sulfuras is never decremented and Quality never goes below 0 on this path).",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:47"
+          },
+          "implicit": false
+        },
+        {
+          "step": 2,
+          "operation": "calculate",
+          "description": "Appreciating-goods branch (Aged Brie and Backstage passes): Quality incremented by 1, capped by the Quality < 50 guard.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:55"
+          },
+          "implicit": false
+        },
+        {
+          "step": 3,
+          "operation": "calculate",
+          "description": "Backstage passes only: a second +1 when SellIn < 11. Reads SellIn BEFORE this iteration's SellIn decrement (see DF-GRK-002 step 1).",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:63"
+          },
+          "implicit": false
+        },
+        {
+          "step": 4,
+          "operation": "calculate",
+          "description": "Backstage passes only: a third +1 when SellIn < 6, again reading the pre-decrement SellIn.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:71"
+          },
+          "implicit": false
+        },
+        {
+          "step": 5,
+          "operation": "calculate",
+          "description": "Past-sell-date ordinary goods: a second -1 in the same run, giving the documented double-degradation after the sell-by date. Guarded by Quality > 0 and the Sulfuras exclusion.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:93"
+          },
+          "implicit": false
+        },
+        {
+          "step": 6,
+          "operation": "calculate",
+          "description": "Past-sell-date Backstage passes: Quality zeroed. Expressed as the self-subtraction idiom `Items[i].Quality = Items[i].Quality - Items[i].Quality` rather than an assignment of 0 — behaviourally a reset to zero, but a re-implementer reading it as an arithmetic rule instead of a reset will carry the obfuscation forward.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:99"
+          },
+          "implicit": false
+        },
+        {
+          "step": 7,
+          "operation": "calculate",
+          "description": "Past-sell-date Aged Brie: a second +1 in the same run, capped by Quality < 50.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:106"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [],
+      "exit_points": [],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": false,
+      "risk_findings": [
+        {
+          "finding": "The computed result never leaves the process. UpdateQuality() mutates the in-memory list (Program.cs:37-111) and Main() then calls System.Console.ReadKey() and returns (Program.cs:33-35) without printing, writing, returning or persisting a single Quality value — the only console output in the whole application is the literal \"OMGHAI!\" at Program.cs:10, emitted BEFORE the calculation. There is therefore no persistence point and no exit point to trace: every nightly result is discarded at process exit. Any target design must add the egress this application never had, and no legacy output format exists to preserve.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "In-place mutation with no pre-image and no transaction: Quality is written directly on the shared list element at Program.cs:47, :55, :63, :71, :93, :99 and :106. No copy of the pre-run value is retained, so a run that fails part-way through the loop leaves the collection half-updated with no rollback, no idempotency key and no audit trail of what changed.",
+          "severity": "medium",
+          "category": "data-loss"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-GRK-002",
+      "data_element": {
+        "name": "Item.SellIn",
+        "type": "int (System.Int32), auto-implemented property",
+        "description": "Days remaining to sell the item; decremented once per run and read as the trigger for every date-dependent Quality rule.",
+        "business_meaning": "Per README.md, the number of days left to sell the item. It is both output (decremented) and control input (its value selects the Quality rule), which is why its read/write ordering is load-bearing.",
+        "pii_classification": "none"
+      },
+      "entry_point": {
+        "system": "GildedRose.Console (self — hardcoded literal seed list in the entry point; there is no upstream system)",
+        "interface": "manual-entry",
+        "citation": "src/GildedRose.Console/Program.cs:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "calculate",
+          "description": "SellIn decremented by 1 for every item except 'Sulfuras, Hand of Ragnaros'. Executes AFTER the Backstage SellIn reads at Program.cs:59 and :67 and BEFORE the past-sell-date read at Program.cs:83 — the ordering is the coupling described in cross_flow_findings.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:80"
+          },
+          "implicit": false
+        },
+        {
+          "step": 2,
+          "operation": "route",
+          "description": "The post-decrement SellIn < 0 test selects the past-sell-date rule set for the same iteration (steps 5-7 of DF-GRK-001). SellIn is unbounded below: it decrements indefinitely on repeated runs with no floor and no archival/expiry path.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality()",
+            "citation": "src/GildedRose.Console/Program.cs:83"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [],
+      "exit_points": [],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": false,
+      "risk_findings": [
+        {
+          "finding": "Like Quality, the decremented SellIn is never emitted or persisted (no output statement after Program.cs:10, no store of any kind), so successive business days cannot be modelled: each run restarts from the same hardcoded seed values at Program.cs:16-26.",
+          "severity": "high",
+          "category": "data-loss"
+        }
+      ]
+    }
+  ],
+  "cross_flow_findings": [
+    {
+      "finding": "Read-write ordering inside a single loop iteration couples the two flows, and nothing protects it. The Backstage Quality rules read SellIn BEFORE it is decremented (Program.cs:59 `SellIn < 11`, Program.cs:67 `SellIn < 6`), while the past-sell-date Quality rules read it AFTER the decrement (Program.cs:83 `SellIn < 0`). Re-ordering the SellIn decrement during re-implementation — the most natural cleanup a developer would make — silently changes Quality outcomes on the boundary days (SellIn 11, 6 and 0). No test detects this: the only test method asserts Assert.True(true) (src/GildedRose.Tests/TestAssemblyTests.cs:10), so the entire behaviour of both flows is unguarded. Capture a characterization/golden-master test over the seeded item set before any transformation of these rules.",
+      "flows_involved": [
+        "DF-GRK-001",
+        "DF-GRK-002"
+      ],
+      "severity": "high"
+    },
+    {
+      "finding": "A documented rule has no implementation in either flow: README.md states that 'Conjured' items degrade in Quality twice as fast as normal items, and Program.cs:26 seeds a 'Conjured Mana Cake', but no branch in UpdateQuality matches 'Conjured' — the item is processed by the ordinary-goods path (DF-GRK-001 steps 1 and 5). The documented behaviour and the observed data flow disagree; downstream lines must treat the code, not the README, as the as-built rule set, and route the discrepancy to a business owner.",
+      "flows_involved": [
+        "DF-GRK-001"
+      ],
+      "severity": "medium"
+    }
+  ]
+}

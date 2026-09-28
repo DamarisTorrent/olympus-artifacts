@@ -1,0 +1,374 @@
+{
+  "$schema": "olympus:artifact:data-flow-trace:v1",
+  "generated": "2026-09-28",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata",
+    "id": "d634afdb-97cc-4589-a080-5766d4f377d5"
+  },
+  "flows": [
+    {
+      "flow_id": "DF-GROSE-001",
+      "data_element": {
+        "name": "Item.Name",
+        "type": "string (System.String) — unannotated reference-typed auto-property in a pre-nullable-reference-types compilation, therefore null-permitting",
+        "description": "Free-text inventory item name, declared as a public settable auto-property on the Item class (src/GildedRose.Console/Program.cs:117) and seeded from six compiled-in string literals.",
+        "business_meaning": "The item's identity AND its rule selector. Name is the sole discriminator the nightly inventory update uses to choose a degradation rule, so it is simultaneously descriptive data and control data.",
+        "pii_classification": "none"
+      },
+      "entry_point": {
+        "system": "GildedRose.Console (compiled-in source literal)",
+        "interface": "manual-entry",
+        "citation": "src/GildedRose.Console/Program.cs:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "route",
+          "description": "Name is compared by string equality against hardcoded magic literals to select the pre-sell-by degradation rule: 'Aged Brie' and 'Backstage passes to a TAFKAL80ETC concert' are routed to the appreciation branch, and everything else — INCLUDING 'Sulfuras, Hand of Ragnaros' — falls through to the depreciation branch, where Sulfuras is then exempted by a separate name check at line 45 (and at line 78 for the SellIn decrement). The Sulfuras exemption is therefore NOT enforced at this line. No normalization (trim, case-fold, lookup table) precedes the comparison. This single line contains two of the eight comparison expressions in the method.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:41"
+          },
+          "implicit": false
+        },
+        {
+          "step": 2,
+          "operation": "route",
+          "description": "IMPLICIT — null drift on an unannotated reference type. Item.Name has no initializer and no null guard (src/GildedRose.Console/Program.cs:117), and the project predates nullable reference types (no Nullable element in GildedRose.Console.csproj), so an Item constructed without setting Name carries null. The expression `Items[i].Name != \"Aged Brie\"` resolves to the BCL String inequality operator, whose static-equality path is null-tolerant: it returns TRUE for a null operand rather than throwing. Reached only when SellIn < 0 at line 83, a null-named item then passes lines 85, 87, the `Quality > 0` gate at line 89 and line 91, and is silently routed into the normal-goods post-expiry depreciation at line 93. The routing outcome is produced by the BCL's null-versus-literal equality rule, not by any stated business rule. DOUBLY LATENT: line 83 is false for all six shipped seeds, so this whole block is unreachable in the as-shipped run — see the dead-rule-block cross_flow_finding.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality — post-sell-by re-dispatch",
+            "citation": "src/GildedRose.Console/Program.cs:85"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Gilded Rose source repository (Git)",
+          "store_type": "file-system",
+          "location": "src/GildedRose.Console/Program.cs — collection initializer, lines 14-27",
+          "source_of_truth": true,
+          "retention": "Indefinite — version-controlled in Git. Changing inventory requires a source edit, recompile and redeploy; there is no runtime data-entry path.",
+          "citation": "src/GildedRose.Console/Program.cs:14"
+        },
+        {
+          "system": "GildedRose.Console (process memory)",
+          "store_type": "cache",
+          "location": "Program.Items — private instance IList<Item>. NOTE: 'cache' is the nearest schema store_type enum value for a volatile in-process collection; no caching layer exists.",
+          "source_of_truth": false,
+          "retention": "Process lifetime only. The list is instantiated inside Main (lines 14-27), mutated once by app.UpdateQuality() (line 31), and becomes unreachable when Main returns. No durable copy is written anywhere.",
+          "citation": "src/GildedRose.Console/Program.cs:7"
+        }
+      ],
+      "exit_points": [],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Item.Name has ZERO egress. Exhaustive negative search across src/, both .csproj files, app.config and GildedRose.sln found no file write, database write, network call, queue publish, SMTP send, print or export in the application; the single Console.WriteLine (src/GildedRose.Console/Program.cs:10) emits only the constant literal \"OMGHAI!\" and carries no traced element. Name is read solely to drive rule dispatch and is then discarded at process exit. The empty exit_points array on this flow is a verified finding, not incomplete tracing.",
+          "severity": "high",
+          "category": "orphaned-data"
+        },
+        {
+          "finding": "Rule dispatch is keyed on eight string-equality comparisons against magic literals, spread over seven lines (src/GildedRose.Console/Program.cs:41 carries two; then 45, 57, 78, 85, 87, 91), with no shared constant, no normalization and no default-case assertion. Any future ingress supplying a name that differs by case or surrounding whitespace silently receives the normal-goods depreciation rule, and because there is no egress the mis-routing is unobservable from outside the process.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Item.Name is null-permitting with no guard, so a null name is silently routed rather than rejected (src/GildedRose.Console/Program.cs:85). LATENT under the current sole entry point — all six compiled-in seeds set Name — but Item is a public class with public setters (src/GildedRose.Console/Program.cs:115-122), so the defect activates for any new caller or any future non-literal ingress.",
+          "severity": "low",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-GROSE-002",
+      "data_element": {
+        "name": "Item.SellIn",
+        "type": "int (System.Int32) — non-nullable value type, default unchecked arithmetic context",
+        "description": "Integer day counter declared as a public settable auto-property on the Item class (src/GildedRose.Console/Program.cs:119) and seeded from six compiled-in integer literals.",
+        "business_meaning": "Days remaining before the item must be sold (README.md:13-14). Decremented once per nightly run. A negative value denotes days past the sell-by date and selects the accelerated-degradation rules, so SellIn is both a measure and a branch condition — which is why its read/write ordering within the loop is load-bearing.",
+        "pii_classification": "none"
+      },
+      "entry_point": {
+        "system": "GildedRose.Console (compiled-in source literal)",
+        "interface": "manual-entry",
+        "citation": "src/GildedRose.Console/Program.cs:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "route",
+          "description": "PRE-DECREMENT READ. The backstage-pass Quality thresholds test SellIn at lines 59 (`SellIn < 11`) and 67 (`SellIn < 6`) — both of which execute BEFORE the decrement at line 80 and therefore observe the value as it entered the iteration. README.md:26-29 states the rule as '10 days or less' and '5 days or less', which the pre-decrement `< 11` and `< 6` tests satisfy exactly. Recorded as its own step because the ordering, not the threshold, is the fragile part.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality — backstage threshold tests",
+            "citation": "src/GildedRose.Console/Program.cs:59"
+          },
+          "implicit": false
+        },
+        {
+          "step": 2,
+          "operation": "calculate",
+          "description": "SellIn is decremented by 1 for every item except 'Sulfuras, Hand of Ragnaros', which is gated out by the name check two lines above at line 78. Sulfuras is seeded at SellIn 0 (src/GildedRose.Console/Program.cs:19) and stays there permanently, consistent with README.md:24-25 ('never has to be sold').",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:80"
+          },
+          "implicit": false
+        },
+        {
+          "step": 3,
+          "operation": "calculate",
+          "description": "IMPLICIT — C# compiles integer arithmetic in an unchecked context by default, and GildedRose.Console.csproj sets no CheckForOverflowUnderflow element in either the Debug or Release PropertyGroup, so the default holds and no `checked` block exists anywhere in the tree. `Items[i].SellIn - 1` therefore neither throws nor saturates at a floor: the value is free to run arbitrarily negative and, at int.MinValue, wraps silently to int.MaxValue — flipping a maximally-expired item to maximally fresh with no error. The coercion is a property of the compilation's arithmetic context, not of the business rule stated at step 2.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "unchecked integer arithmetic in Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:80"
+          },
+          "implicit": true
+        },
+        {
+          "step": 4,
+          "operation": "route",
+          "description": "POST-DECREMENT READ. The sign of SellIn selects the post-sell-by rule block. Because `SellIn < 0` is evaluated AFTER the decrement at line 80, the effective entry condition is SellIn <= 0 at the top of the iteration — so any item EXCEPT 'Sulfuras, Hand of Ragnaros' arriving at SellIn 0 is treated as expired within that same run. Sulfuras is the exception precisely because line 78 skips its decrement, leaving `0 < 0` false. This read observes a different value than the step 1 reads do, from the same field in the same iteration. Note that this test is false for all six shipped seeds, so the block it guards never executes in the as-shipped run — see the dead-rule-block cross_flow_finding.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:83"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Gilded Rose source repository (Git)",
+          "store_type": "file-system",
+          "location": "src/GildedRose.Console/Program.cs — collection initializer, lines 14-27",
+          "source_of_truth": true,
+          "retention": "Indefinite — version-controlled in Git. Changing seed values requires a source edit, recompile and redeploy.",
+          "citation": "src/GildedRose.Console/Program.cs:14"
+        },
+        {
+          "system": "GildedRose.Console (process memory)",
+          "store_type": "cache",
+          "location": "Program.Items — private instance IList<Item>. NOTE: 'cache' is the nearest schema store_type enum value for a volatile in-process collection; no caching layer exists.",
+          "source_of_truth": false,
+          "retention": "Process lifetime only; unreachable once Main returns. No durable copy is written.",
+          "citation": "src/GildedRose.Console/Program.cs:7"
+        }
+      ],
+      "exit_points": [],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Item.SellIn has ZERO egress. The decremented value is never printed, exported, written to a file or database, or transmitted; it is discarded at process exit. Because nothing is persisted, every run restarts from the same hardcoded seeds at src/GildedRose.Console/Program.cs:16-26, so successive business days cannot be modelled at all — the 'end of each day' process described in README.md:16 can only ever execute its first day. The empty exit_points array is a finding, not incomplete tracing.",
+          "severity": "high",
+          "category": "orphaned-data"
+        },
+        {
+          "finding": "The decrement at src/GildedRose.Console/Program.cs:80 mutates the Item in place. Item is a reference type held by an IList and no snapshot of the prior value is taken anywhere in the tree, so the pre-run SellIn is irrecoverable the instant the loop body executes. The new value is never written back to the authoritative store (the source literals at lines 14-27), so the run's outcome is lost in both directions: forward to any consumer and backward to the store of record. There is also no transaction or rollback, so a failure part-way through the loop leaves the collection half-updated with no pre-image.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Unchecked int decrement with no floor (src/GildedRose.Console/Program.cs:80) admits unbounded negative drift and a silent wrap at int.MinValue that would reset an expired item to the maximum positive SellIn. NOT reachable in the current one-shot console invocation, which performs exactly one decrement per process with no persistence between runs; it becomes live the moment the update is looped or the state is persisted across runs — both of which any modernization will introduce.",
+          "severity": "low",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-GROSE-003",
+      "data_element": {
+        "name": "Item.Quality",
+        "type": "int (System.Int32) — non-nullable value type, default unchecked arithmetic context",
+        "description": "Integer quality score declared as a public settable auto-property on the Item class (src/GildedRose.Console/Program.cs:121) and seeded from six compiled-in integer literals ranging 0 to 80.",
+        "business_meaning": "The item's saleable value (README.md:15). Bounded to 0..50 by inline guards on six of the seven write paths; the seventh (line 99) carries no bound check and is safe only incidentally, because it is a self-subtraction to zero. 'Sulfuras, Hand of Ragnaros' is gated out of all writes and is seeded at 80 — above the ceiling every other item is held to. README.md:43-45 confirms the 80 value and the exemption are intentional, not a data defect.",
+        "pii_classification": "none"
+      },
+      "entry_point": {
+        "system": "GildedRose.Console (compiled-in source literal)",
+        "interface": "manual-entry",
+        "citation": "src/GildedRose.Console/Program.cs:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "validate",
+          "description": "Floor guard: every depreciation is gated on `Quality > 0`, so depreciation cannot drive the value negative (README.md:21). The guard is repeated inline rather than centralized (also at line 89).",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:43"
+          },
+          "implicit": false
+        },
+        {
+          "step": 2,
+          "operation": "validate",
+          "description": "Ceiling guard: every appreciation is gated on `Quality < 50` (README.md:23). The guard is repeated inline four times (lines 53, 61, 69, 104) rather than centralized, and it is never applied to Sulfuras, whose seed value of 80 therefore persists un-clamped.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:53"
+          },
+          "implicit": false
+        },
+        {
+          "step": 3,
+          "operation": "calculate",
+          "description": "Depreciation: Quality decremented by 1 for normal goods before the sell-by date. 'Sulfuras, Hand of Ragnaros' is exempt via the name check on line 45.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:47"
+          },
+          "implicit": false
+        },
+        {
+          "step": 4,
+          "operation": "calculate",
+          "description": "Appreciation: 'Aged Brie' and 'Backstage passes to a TAFKAL80ETC concert' gain 1. Backstage passes additionally gain a second point inside 11 days (guard line 59, write line 63) and a third inside 6 days (guard line 67, write line 71), each independently re-gated on the 50 ceiling — so a single run can add up to 3, a net effect stated nowhere in the code as one rule, though README.md:26-29 does describe it as +2 and +3.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:55"
+          },
+          "implicit": false
+        },
+        {
+          "step": 5,
+          "operation": "calculate",
+          "description": "IMPLICIT — read-after-write aliasing on the in-place mutated object. For a normal item past its sell-by date, Quality is decremented TWICE within the SAME loop iteration: once at line 47 and again at line 93. Both decrements execute when the name matches none of the three magic literals AND SellIn <= 0 on entry to the iteration AND Quality >= 2 on entry. Because Item is a reference type mutated through the IList indexer onto the same heap object, the second guard (`Quality > 0`, line 89) and the second write both observe the value ALREADY decremented at line 47 — so an item entering at Quality 1 is depreciated once and then held at 0 by that guard, yielding -1 rather than -2. The net change is therefore order- and value-dependent, and the resulting 'twice as fast' behaviour (README.md:20) is an emergent product of two independently guarded writes against shared mutable state rather than a single declared rule. LATENT under the current entry point: line 83 is false for all six shipped seeds, so the second decrement never fires in the as-shipped run and this behaviour is reachable only with different seed data or across repeated runs — see the dead-rule-block cross_flow_finding.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality — second depreciation pass over already-mutated state",
+            "citation": "src/GildedRose.Console/Program.cs:93"
+          },
+          "implicit": true
+        },
+        {
+          "step": 6,
+          "operation": "calculate",
+          "description": "Post-expiry zeroing: backstage-pass Quality is reset to zero by self-subtraction (`Quality = Quality - Quality`) rather than by assigning the literal 0. Functionally equivalent here, but it means the zeroing cannot be found by searching for an assignment of 0, and it is the only write on this element that is not guarded by a bound check. A re-implementer reading it as an arithmetic rule rather than a reset will carry the obfuscation forward.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:99"
+          },
+          "implicit": false
+        },
+        {
+          "step": 7,
+          "operation": "calculate",
+          "description": "Post-expiry appreciation: 'Aged Brie' gains a further 1 after its sell-by date, gated on the 50 ceiling — so Aged Brie can gain 2 in a single run once expired. README.md:22 states only that Brie 'increases in Quality the older it gets', without specifying this acceleration.",
+          "location": {
+            "system": "GildedRose.Console",
+            "component": "Program.UpdateQuality",
+            "citation": "src/GildedRose.Console/Program.cs:106"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Gilded Rose source repository (Git)",
+          "store_type": "file-system",
+          "location": "src/GildedRose.Console/Program.cs — collection initializer, lines 14-27",
+          "source_of_truth": true,
+          "retention": "Indefinite — version-controlled in Git. Changing seed values requires a source edit, recompile and redeploy.",
+          "citation": "src/GildedRose.Console/Program.cs:14"
+        },
+        {
+          "system": "GildedRose.Console (process memory)",
+          "store_type": "cache",
+          "location": "Program.Items — private instance IList<Item>. NOTE: 'cache' is the nearest schema store_type enum value for a volatile in-process collection; no caching layer exists.",
+          "source_of_truth": false,
+          "retention": "Process lifetime only; unreachable once Main returns. No durable copy is written.",
+          "citation": "src/GildedRose.Console/Program.cs:7"
+        }
+      ],
+      "exit_points": [],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Item.Quality has ZERO egress. All seven writes (src/GildedRose.Console/Program.cs:47, 55, 63, 71, 93, 99, 106) land only in the volatile in-memory list and are discarded at process exit; the computed result is never printed, exported or persisted, and the sole console output at line 10 is emitted BEFORE the calculation runs. (Of those seven, only 47 and 55 actually execute in the as-shipped run. Writes 93, 99 and 106 sit behind the line-83 test, which is false for all six seeds; writes 63 and 71 sit behind the backstage accelerations at lines 59 and 67, and the sole Backstage seed carries SellIn 15, so both gates are false too. See the dead-rule-block cross_flow_finding.) This is the most consequential finding in the trace: the application's entire purpose is to compute Quality, and it then throws the answer away. Any target design must add an egress this application never had, so there is no legacy output format to preserve. The empty exit_points array is a verified finding, not incomplete tracing.",
+          "severity": "high",
+          "category": "orphaned-data"
+        },
+        {
+          "finding": "All Quality writes mutate the Item in place with no prior-state snapshot anywhere in the tree, and the same element is written up to three times within a single loop iteration (lines 47 then 93, or 55 then 63 then 71). No intermediate value is recorded, so neither the pre-run value nor the per-rule contribution is recoverable after the fact — there is no audit trail for how a given Quality was arrived at, no rollback if the loop fails part-way, and nothing is written back to the authoritative source-literal store.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "The 0..50 bound on Quality is enforced by six repeated inline guards (src/GildedRose.Console/Program.cs:43, 53, 61, 69, 89, 104) rather than by the type or by a single validator, and the one unguarded write (line 99) happens to be safe only because it is a self-subtraction. 'Sulfuras, Hand of Ragnaros' is seeded at 80 (line 19), outside the bound every other item is held to, and is exempt from the guards because it is gated out of all write paths (lines 45, 91) — so the invariant is not an invariant of the data, only of certain code paths. Any new write path added during modernization inherits no enforcement.",
+          "severity": "medium",
+          "category": "type-coercion"
+        }
+      ]
+    }
+  ],
+  "cross_flow_findings": [
+    {
+      "finding": "GOVERNING-PROFILE DISCREPANCY. The governing client profile for this task is declared as 'faa' and that declaration is authoritative, but no input artifact grounds this application in the FAA portfolio. The source tree is the public Gilded Rose Refactoring Kata (a retail inn inventory exercise, attributed to @TerryHughes and @NotMyself at README.md:56-68); the supplied catalog entry sets business_domain to 'unclassified' and itself flags the mismatch in its open_questions; and profiles/faa/compliance.yaml was NOT present in this workspace, so the FAA identifier catalog bundled at references/faa-data-flow-examples.md:62 was used as the classification source instead of the live profile. Separately and independently: this repository's own fixtures/default.json (line 13) describes a DIFFERENT application — 'Fixture Certification Portal', id 'fixture-app', an ASP.NET-shaped system with session state, db/ddl SQL and PII flows whose src/web/, db/ddl/ and jobs/ citations resolve to files that do not exist in this repository. That file is this skill's own test fixture; it was NOT used as evidence and its contents are not restated as fact anywhere in this trace. CONSEQUENCE: the pii_classification of 'none' on all three flows is verified against THIS source tree only. If application_id d634afdb-97cc-4589-a080-5766d4f377d5 in fact denotes an FAA production system, this trace is aimed at the wrong codebase and every classification must be re-derived before gate G-DC.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "high"
+    },
+    {
+      "finding": "READ-WRITE ORDERING COUPLES THE SellIn AND Quality FLOWS, AND NOTHING PROTECTS IT. Within one loop iteration the backstage Quality rules read SellIn BEFORE it is decremented (src/GildedRose.Console/Program.cs:59 `SellIn < 11`, line 67 `SellIn < 6`), while the post-sell-by Quality rules read it AFTER the decrement (line 83 `SellIn < 0`). The same field is therefore read at two different values in the same iteration, and the thresholds are only correct relative to their position. Moving the SellIn decrement — the single most natural cleanup a developer refactoring this method would make — silently changes Quality outcomes on the boundary days (SellIn 11, 6 and 0) with no compile error. No test detects it: the only test method asserts Assert.True(true) (src/GildedRose.Tests/TestAssemblyTests.cs:10). ACTION: capture a characterization/golden-master test before any transformation of these rules — but it MUST NOT be built from the seeded item set alone. The six shipped seeds carry SellIn 10, 2, 5, 0, 15 and 3: none sits on 11 or 6, and the only seed at 0 is Sulfuras, which line 78 exempts from the decrement entirely. A golden master over the seeds would therefore pass while the reordering regression it is meant to catch goes undetected. The test set must be extended to cover SellIn 11, 6, 1 and 0 on a non-Sulfuras item. This is the most actionable finding in the trace.",
+      "flows_involved": ["DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "high"
+    },
+    {
+      "finding": "MOST OF THE BUSINESS LOGIC IS UNREACHABLE WITH THE SHIPPED SEED DATA — ONLY 2 OF THE 7 Quality WRITES EVER EXECUTE. Two independent gates are never satisfied by the six seeded items. (a) The post-sell-by block (src/GildedRose.Console/Program.cs:83-109) is guarded by `SellIn < 0`, evaluated AFTER the decrement at line 80. Post-decrement SellIn for the six seeds is: +5 Dexterity Vest 9, Aged Brie 1, Elixir of the Mongoose 4, Sulfuras 0 (skipped at line 78, so unchanged), Backstage passes 14, Conjured Mana Cake 2. None is negative, so line 83 is FALSE for every seeded item and lines 85-109 never execute. (b) The backstage accelerations at lines 59 (`SellIn < 11`) and 67 (`SellIn < 6`) are reachable only for 'Backstage passes to a TAFKAL80ETC concert', whose sole seed carries SellIn 15 (line 23), so both gates are FALSE and the writes at lines 63 and 71 never execute either. Net effect: of the seven Quality writes, only line 47 (Vest, Elixir, Conjured) and line 55 (Aged Brie, Backstage) run; writes 63, 71, 93, 99 and 106 are all dead under the shipped seeds. Consequences: the double-depreciation rule README.md:20 presents as the headline behaviour is never exercised, nor is the +2/+3 backstage escalation of README.md:26-29; and the null-drift path recorded as DF-GROSE-001 step 2 and the read-after-write aliasing recorded as DF-GROSE-003 step 5 both sit inside block (a), making them latent rather than live. This is why the characterization test called for above cannot be seeded from the existing item list, and why an extraction pass that reasons from observed behaviour rather than from the code will miss most of the rule set.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "high"
+    },
+    {
+      "finding": "NO BUSINESS-DATA EGRESS ANYWHERE IN THE APPLICATION. All three traced elements terminate with an empty exit_points array. The sole Console.WriteLine (src/GildedRose.Console/Program.cs:10) emits the constant literal \"OMGHAI!\" before any calculation and carries no traced element, and Console.ReadKey (line 33) discards the ConsoleKeyInfo it returns. Exhaustive negative search across src/, both .csproj files, app.config and GildedRose.sln found no File/Stream/Directory API, no serializer, no SqlConnection or any other ADO.NET call site, no HttpClient/WebRequest/Socket, no MessageQueue, no SmtpClient, and no SFTP/FTP client. Downstream consumers MUST read the empty exit_points arrays as a verified property of the system — there are no consumers whose contracts a migration needs to preserve — and gate G-DC should not treat them as unfinished tracing.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "high"
+    },
+    {
+      "finding": "AUTHORITATIVE STORE IS NEVER RECONCILED WITH THE RUNTIME COPY. For all three elements the source of truth is the compiled-in literal set at src/GildedRose.Console/Program.cs:14-27, but every mutation (lines 47, 55, 63, 71, 80, 93, 99, 106) is applied only to the volatile runtime copy declared at line 7. No write-back path exists, so the store of record never learns the outcome of any run and the two copies diverge permanently at the first loop iteration. In legacy terms this is an unreconciled copy whose reconciliation job was never written. Recorded here rather than per-flow because the divergence is a property of the shared store, not of any single element: exactly one source_of_truth is marked per flow, so this is disclosure, not ambiguity.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "high"
+    },
+    {
+      "finding": "SEEDED DATA ANTICIPATES A RULE THAT DOES NOT EXIST. README.md:31-34 introduces 'Conjured items degrade in Quality twice as fast as normal items' as a NEW requirement ('This requires an update to our system'), and src/GildedRose.Console/Program.cs:26 already seeds a 'Conjured Mana Cake' — but no branch in UpdateQuality matches 'Conjured', so the item is silently routed through the ordinary-goods path (DF-GROSE-001 step 1, DF-GROSE-003 steps 3 and 5) and degrades at the normal rate. This is a requirement-versus-code divergence in which the seed data is ahead of the implementation, not an implemented-but-broken rule. Downstream lines must treat the CODE as the as-built rule set and route the gap to a business owner; do not let an extraction pass read README.md:34 as a description of existing behaviour.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-003"],
+      "severity": "medium"
+    },
+    {
+      "finding": "SHARED PERSISTENCE LOCATION — all three flows occupy the same two stores. Item.Name, Item.SellIn and Item.Quality are fields of a single mutable Item object, so they share both the source-literal store (src/GildedRose.Console/Program.cs:14-27) and the single IList<Item> (line 7). Two consequences for migration: a single process exit loses all three elements simultaneously, and the three cannot be migrated or given durable storage independently — any durable store must be introduced for the whole Item aggregate at once. This is a duplicate-store detection triggered by location identity across flows, not a redundancy defect in itself.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "medium"
+    },
+    {
+      "finding": "NO AUTOMATED TEST COVERS ANY TRANSFORMATION IN THIS TRACE. GildedRose.Tests contains one test asserting a tautology (src/GildedRose.Tests/TestAssemblyTests.cs:10, `Assert.True(true);`) and the test project holds no ProjectReference to GildedRose.Console (src/GildedRose.Tests/GildedRose.Tests.csproj:42-58 references only System, System.Core, Microsoft.CSharp and three xunit assemblies). Its Properties/AssemblyInfo.cs is a 0-byte file. Every transformation citation in this trace is therefore derived from code reading alone, with zero behavioural corroboration, and any refactor of UpdateQuality would be unguarded. This bounds the confidence of the whole artifact and is the single cheapest gap to close before extraction.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "medium"
+    },
+    {
+      "finding": "A SECOND, DIVERGENT data-flow-trace.json EXISTS IN THIS WORKSPACE. A peer wave emitted artifacts/discovery-structural-analysis/data-flow-trace.json for the same application_id, using a different flow_id namespace (DF-GRK-001/002) and reaching narrower conclusions: two flows instead of three (Item.Name excluded as control data), persistence_points empty rather than identifying the source literals and the runtime list as two distinct stores, and has_implicit_transformations false on every flow — so all three implicit transformations recorded here are absent from it. The two artifacts do not contradict each other on any CITED LINE, but they do reach contrary CONCLUSIONS: the peer affirmatively asserts its persistence_points are 'EMPTY BY OBSERVATION, not by omission' and that Item.Name is deliberately not a flow, both of which conflict with the two-store, three-flow model recorded here. It is therefore narrower rather than a strict subset. Its one insight not independently reached here — the read-write ordering coupling — was corroborated from it and then verified against Program.cs:59, 67 and 83 before being recorded above. Flagged because two artifacts claiming the same schema id for the same application is itself an unreconciled copy: a downstream consumer that globs for data-flow-trace.json will silently bind to whichever it finds first. THIS artifact is the one produced under the legacy-data-flow-tracer contract.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "medium"
+    },
+    {
+      "finding": "DECLARED INGRESS SURFACES THAT SILENTLY DISCARD INPUT. Main declares a `string[] args` parameter (src/GildedRose.Console/Program.cs:8) that is never read anywhere in the application — verified: `args` occurs exactly once across every text-bearing file in the tree, in that signature — and Console.ReadKey (line 33) discards the ConsoleKeyInfo it produces. Both are ingress surfaces that exist in the code's shape but consume nothing, so an operator supplying command-line input would observe no effect and receive no diagnostic. Recorded because a modernization reading the signature could reasonably infer a parameterized entry point that has never existed.",
+      "flows_involved": ["DF-GROSE-001", "DF-GROSE-002", "DF-GROSE-003"],
+      "severity": "low"
+    }
+  ],
+  "methodology_notes": "SCOPE AND EVIDENCE BASE. The traced application is a C#/.NET Framework 4.5 console executable whose entire business logic is one method, Program.UpdateQuality (src/GildedRose.Console/Program.cs:37-111), operating on one model type, Item (lines 115-122). Program.cs is 124 lines; the catalog's loc_total of 172 is the whole-solution figure (Program.cs plus two AssemblyInfo files and the 12-line test), and the test project targets .NET Framework 4.5.1 rather than 4.5. Three business data elements exist and all three are traced: Item.Name, Item.SellIn, Item.Quality. Every citation was verified by reading the cited line, and two independent adversarial audits re-read all 22 structured citation targets and the large majority of the line numbers quoted in prose. All 22 structured citations resolve and support their claims. The counting, scope, attribution and reachability errors the audits found have been corrected in this revision; reviewers should still treat prose line references as the weaker class of evidence, since they are not mechanically checkable.\n\nINPUTS ACTUALLY AVAILABLE. The dispatch context declared two inputs: application-catalog-entry (staged; read) and tech-fingerprint (not file-addressable). The architecture map, db-archaeology output, integration graph, interface inventory and profiles/faa/compliance.yaml that this skill's Inputs section anticipates were NOT staged into this skill's input-artifacts directory, which contained only the dispatch context and discovery/<app_id>/catalog.json. Note for reviewers: peer artifacts DO exist elsewhere in the workspace under artifacts/, written by sibling waves during this run — among them db-archaeology.json, structural-analysis.json, call-graph.json, identity-landscape.json, sqlserver-object-inventory.json, dotnet-fingerprint.json and a peer data-flow-trace.json (the list is illustrative, not exhaustive). They were not declared inputs and arrived mid-execution. The peer data-flow-trace.json was read and reconciled (see the peer-artifact cross_flow_finding). Of the others, the two most likely to conflict were checked directly: db-archaeology.json records that this application has no database and sqlserver-object-inventory.json records an empty database list, both consistent with the no-persistence findings here. Where the FAA identifier catalog was needed for classification, the bundled reference references/faa-data-flow-examples.md was used; that is a documentation copy, not the live profile, and the substitution is a traceability limitation.\n\nNEGATIVE FINDINGS — recorded deliberately, because for this application the absences ARE the result. All scoped to APPLICATION code (src/, both .csproj files, app.config, GildedRose.sln); build tooling is treated separately below. (1) No persistence: no File/Stream/Directory/FileStream API, no XmlSerializer/JsonConvert/DataContractSerializer/BinaryFormatter, no SqlConnection/SqlCommand/OleDb/Odbc/OracleConnection/DbContext, no connectionStrings and no 'Data Source='. app.config is six lines containing only a <startup> element; no web.config exists. GildedRose.Console.csproj references System.Data and System.Data.DataSetExtensions (lines 40 and 38) but nothing `using`s them or calls ADO.NET — dead Visual Studio template references, not evidence of a database. (2) No cross-system flow: every pattern in references/cross-system-tracing-patterns.md was checked and every one returned negative — no file drops, no SFTP/FTP/WinSCP/pscp, no message queue (MSMQ, RabbitMQ, Kafka, JMS), no shared database tables, no DB links or OPENQUERY, no batch chains. (3) No scheduler: no cron, Task Scheduler XML, Autosys JIL, Windows ServiceBase, Quartz, Hangfire or Timer. The executable is manually invoked and runs once. This closes the skill's primary failure mode — application-code-only tracing missing an invisible file drop — by exhaustive negative search rather than by assumption. (4) No identity constructs of any kind: no principal, session, HttpContext, auth or credential handling, hence crosses_identity_boundary is false on every flow. (5) No encoding conversion: no Encoding.* call site, no cross-runtime hop, all XML prologs utf-8, so the encoding-mismatch category is not applicable. (6) No date or time handling whatsoever — SellIn is a bare int day counter (line 119) and no DateTime appears anywhere — so the date-format-drift and timezone checks in references/implicit-transformation-detection.md are not applicable. (7) No PII/PHI/FTI: the column-name sweep (ssn|tin|tax_id|dob|birth|license|medical|diagnosis|icd|rx) returned nothing, and no FAA identifier from the bundled catalog (airman certificate number, FTN, MID, designee number, N-Number, MedXPress questionnaire field, AME result) is present. The only values handled are fictional retail item names and two integers. pii_classification 'none' on all three flows is asserted only after this verification, per the reference's rule that 'none' is a default only after checking — but see the governing-profile cross_flow_finding for the scope limit on that verdict.\n\nIMPLICIT TRANSFORMATIONS. Three are recorded, each naming the mechanism: null drift on an unannotated reference type routing a null name into the wrong branch via the BCL's null-tolerant string equality (DF-GROSE-001 step 2); the compilation's default unchecked integer arithmetic context permitting unbounded negative drift and silent wrap on the SellIn decrement, confirmed by the absence of any CheckForOverflowUnderflow element in either csproj configuration (DF-GROSE-002 step 3); and read-after-write aliasing on an in-place-mutated reference type, where the second Quality depreciation in the same iteration observes the value the first already changed (DF-GROSE-003 step 5). ALL THREE are LATENT under the current single hardcoded entry point, and are labelled as such in their findings rather than overstated. The unchecked-arithmetic drift activates the moment the run is looped or state is persisted between runs. The other two sit inside the post-sell-by block at lines 83-109, which is unreachable with the shipped seed data (line 83 is false for all six items after the decrement), so they activate as soon as the seed data changes or runs accumulate. The third would be live for any item that is not one of the three magic literals and enters an iteration with SellIn <= 0 and Quality >= 2 — a condition no shipped seed satisfies. An earlier revision of this artifact described the third as already live; that was wrong, and the dead-rule-block cross_flow_finding now records the reachability analysis explicitly because it changes what a characterization test has to cover.\n\nSCHEMA ENUM GAPS, disclosed rather than silently papered over. entry_point.interface: the six item records are compiled-in source literals; the enum has no 'source-literal' or 'hardcoded' value, so 'manual-entry' is used — the values were manually entered, into source rather than a screen. persistence_points.store_type: the enum has no value for a volatile in-process collection, so 'cache' is used for Program.Items with an explicit note in each location string that no caching layer exists. Both substitutions are flagged inline so a downstream consumer does not read a cache tier or a data-entry screen into this system.\n\nEXCLUDED FROM SCOPE, with reasons. source/references/** and source/assets/** are this skill's own documentation and templates copied into the repository, not application code. scripts/classify_procs_template.sql is 138 lines in which every SQL statement is commented out, is self-described at its line 5 as intentionally not executable, and is referenced from no code, csproj, sln or build script — inert, and not a database ingress. fixtures/default.json is this skill's test fixture (see the governing-profile finding). images/build_output.png is a README screenshot (README.md:53). build.bat, tasks.ps1 and .nuget/NuGet.targets are build infrastructure and are excluded from the flows because they touch no business data — but they are not IO-free, and the earlier revision of this artifact overstated that: build.bat downloads NuGet.exe over HTTPS (line 27), reads .nuget/packages.config (line 35), shells NuGet to read config (line 30), runs `NuGet restore` (line 38) which writes an entire package tree to disk, executes GitVersion.exe and parses its stdout as JSON (lines 42-43), and invokes tasks.ps1 (line 54) whose psake Clean/Build/Test tasks write build output; .nuget/NuGet.targets uses System.IO and Path.GetFullPath (lines 91, 97) and downloads NuGet.exe via WebClient (lines 100-101). All of it is build-time, none of it carries a traced element.\n\nHANDOFF TO EXTRACTION. Per this skill's handoff contract, extraction should scope its rule capture around the three transformations marked implicit: true, since those encode behaviour that appears in no requirement and would otherwise be reimplemented differently. Two further items are routed to extraction rather than treated as data-flow defects: the Conjured Mana Cake requirement gap, captured as its own cross_flow_finding because it is a requirement-versus-code divergence rather than a pure flow property; and the Sulfuras Quality-80 exemption, captured in DF-GROSE-003 (business_meaning and risk_findings) with README.md:43-45 cited to confirm it is intentional. The highest-priority prerequisite for any downstream transformation work is the golden-master test called for in the read-write ordering finding — and per the dead-rule-block finding it CANNOT be seeded from the existing six-item list, because that list exercises neither the post-sell-by block (lines 83-109) nor the SellIn 11 and 6 boundaries. With the only existing test asserting a tautology, none of the seven Quality writes or four SellIn steps in this trace is behaviourally guarded, and only two of those seven writes (lines 47 and 55) execute at all under the shipped seeds."
+}

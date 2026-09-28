@@ -1,0 +1,285 @@
+{
+  "$schema": "olympus:artifact:dotnet-fingerprint:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "governing_profile": "faa",
+  "governing_profile_note": "Governing client profile is asserted as 'faa' for this task. No profiles/faa/ directory (and specifically no risk-classification.yaml) was reachable from this session's working directories, so no client-specific risk-tier banding could be applied to the findings below; severities are this skill's own defaults. See findings F-101/F-102.",
+  "repo": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "solution_files": [
+    {
+      "path": "GildedRose.sln",
+      "vs_format_version": "12.00",
+      "vs_version_hint": "Visual Studio 2013",
+      "projects_referenced": [
+        "src/GildedRose.Tests/GildedRose.Tests.csproj",
+        "src/GildedRose.Console/GildedRose.Console.csproj"
+      ],
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:GildedRose.sln:2"
+    }
+  ],
+  "project_fingerprints": [
+    {
+      "project_path": "src/GildedRose.Console/GildedRose.Console.csproj",
+      "project_style": "legacy-csproj",
+      "language": "csharp",
+      "output_type": "Exe",
+      "target_framework": "net45",
+      "target_framework_raw": "v4.5",
+      "root_namespace": "GildedRose.Console",
+      "assembly_name": "GildedRose.Console",
+      "citations": {
+        "project_style": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/GildedRose.Console.csproj:2",
+        "output_type": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/GildedRose.Console.csproj:8",
+        "target_framework": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/GildedRose.Console.csproj:12"
+      },
+      "compile_items": [
+        "Program.cs",
+        "Properties/AssemblyInfo.cs"
+      ],
+      "notes": "Sole application project. Contains the Main() entry point, the UpdateQuality() business method, and the Item model, all in one 125-line Program.cs file."
+    },
+    {
+      "project_path": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "project_style": "legacy-csproj",
+      "language": "csharp",
+      "output_type": "Library",
+      "target_framework": "net451",
+      "target_framework_raw": "v4.5.1",
+      "root_namespace": "GildedRose.Tests",
+      "assembly_name": "GildedRose.Tests",
+      "citations": {
+        "project_style": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/GildedRose.Tests.csproj:2",
+        "output_type": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/GildedRose.Tests.csproj:11",
+        "target_framework": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/GildedRose.Tests.csproj:15"
+      },
+      "compile_items": [
+        "Properties/AssemblyInfo.cs",
+        "TestAssemblyTests.cs"
+      ],
+      "notes": "xUnit test project. Single test method TestTheTruth() asserts Assert.True(true) and exercises none of GildedRose.Console's business logic (no ProjectReference / assembly reference to GildedRose.Console exists in this csproj)."
+    }
+  ],
+  "nuget_dependency_inventory": [
+    {
+      "package_id": "GitVersionTask",
+      "version": "2.0.1",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Console/GildedRose.Console.csproj",
+      "development_dependency": true,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/packages.config:3"
+    },
+    {
+      "package_id": "GitVersionTask",
+      "version": "3.4.1",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": true,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:3"
+    },
+    {
+      "package_id": "xunit",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:4"
+    },
+    {
+      "package_id": "xunit.abstractions",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:5"
+    },
+    {
+      "package_id": "xunit.assert",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:6"
+    },
+    {
+      "package_id": "xunit.core",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:7"
+    },
+    {
+      "package_id": "xunit.extensibility.core",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:8"
+    },
+    {
+      "package_id": "xunit.runner.visualstudio",
+      "version": "2.0.0",
+      "source": "packages.config",
+      "consumer_project": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "development_dependency": false,
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config:9"
+    }
+  ],
+  "repo_level_build_tooling_packages": {
+    "note": "Declared in .nuget/packages.config, restored via the legacy NuGet.exe/.nuget bootstrap referenced by GildedRose.sln's '.nuget' solution folder, not attributable to a single project.",
+    "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:.nuget/packages.config:2",
+    "packages": [
+      { "package_id": "GitVersion.CommandLine", "version": "2.0.0" },
+      { "package_id": "NUnit.Runners", "version": "2.6.4" },
+      { "package_id": "psake", "version": "4.4.1" },
+      { "package_id": "psake.net", "version": "0.1.3" },
+      { "package_id": "xunit.runner.console", "version": "2.0.0" }
+    ]
+  },
+  "hint_path_findings": {
+    "outside_repo_binary_only_dependencies": [],
+    "note": "All <HintPath> entries in GildedRose.Tests.csproj resolve to '..\\..\\packages\\...', a repo-relative NuGet restore location, not an out-of-repo binary. No binary-only dependency flag raised.",
+    "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/GildedRose.Tests.csproj:47"
+  },
+  "archetype_classification": {
+    "result": "unclassified_no_enum_match",
+    "enum_checked": ["web-app", "batch-etl", "api-service", "scheduled-job", "hybrid"],
+    "decision_trace": [
+      { "rule": "web-app", "matched": false, "reason": "No Microsoft.AspNetCore.App / Razor views; no System.Web reference or .aspx/.ascx/.master files anywhere in the repo." },
+      { "rule": "api-service", "matched": false, "reason": "No Microsoft.AspNetCore.App or Microsoft.AspNet.WebApi.Core reference; no ControllerBase/ApiController-derived type." },
+      { "rule": "scheduled-job", "matched": false, "reason": "No ServiceBase-derived class; no BackgroundService/IHostedService with a timer/cron trigger." },
+      { "rule": "batch-etl", "matched": false, "reason": "GildedRose.Console.csproj:8 sets OutputType=Exe and there is no web stack, but Program.cs has no SSIS, System.Data.SqlClient, ODBC, or file-drop bulk-data movement -- it seeds a fixed 6-item in-memory List<Item> literal and runs one in-process method." },
+      { "rule": "hybrid", "matched": false, "reason": "Requires >=2 of the above; zero matched." }
+    ],
+    "outcome_per_methodology_step_3": "console",
+    "manual_review_flag": true,
+    "rationale": "Per discovery-patterns-dotnet Methodology step 3, when no decision rule matches, the app is flagged for manual archetype review rather than guessed into the 5-value enum. GildedRose.Console is a single-run interactive console utility: it prints a banner (Program.cs:10), seeds a hardcoded item list (Program.cs:14-27), calls UpdateQuality() exactly once (Program.cs:31), blocks on a keypress (Program.cs:33), and exits. It is a coding-kata harness, not a production batch/web/api/scheduled workload.",
+    "citations": [
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:8",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:14",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:31",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:33"
+    ],
+    "cross_artifact_note": "The upstream Discovery.catalog artifact (discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json:35) independently set architecture.archetype = 'cli', a value outside this skill's 5-value dispatch enum but consistent with this skill's source-level findings (Exe output type, console-only I/O, no web/api/scheduler/batch signal). This fingerprint does not override that catalog value; it corroborates it and records the enum gap as finding F-002."
+  },
+  "hosting_model_findings": [
+    {
+      "project_path": "src/GildedRose.Console/GildedRose.Console.csproj",
+      "hosting_model": "console",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:8",
+      "supporting_evidence": [
+        "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:10 -- System.Console.WriteLine(\"OMGHAI!\") banner",
+        "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:33 -- System.Console.ReadKey() blocks for interactive keypress before exit",
+        "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/app.config:3 -- only a <startup> supportedRuntime element; no <system.webServer>, no IIS integration"
+      ],
+      "ruled_out": ["iis-aspnet", "iis-aspnet-core-module", "kestrel-selfhost", "windows-service", "worker-service"]
+    }
+  ],
+  "di_container_finding": {
+    "result": "none",
+    "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:12",
+    "rationale": "Program.cs:12 constructs its own dependency via a plain 'new Program() { ... }' object initializer. Repo-wide search found zero ConfigureServices/builder.Services calls and zero ContainerBuilder/UnityContainer/Autofac.ContainerBuilder/StructureMap.Container/Ninject.StandardKernel instantiations in any .cs file under src/."
+  },
+  "data_access_findings": [
+    {
+      "project_path": "src/GildedRose.Console/GildedRose.Console.csproj",
+      "data_access_style": "none",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:14",
+      "rationale": "Items are a hardcoded in-memory List<Item> object-initializer literal (Program.cs:14-27). No SqlConnection/OleDbConnection/OdbcConnection, no DbContext, no Dapper/NHibernate/.dbml/.edmx anywhere in the project. Consistent with catalog.json tech_stack.databases = [] and size_metrics.table_count = null."
+    },
+    {
+      "project_path": "src/GildedRose.Tests/GildedRose.Tests.csproj",
+      "data_access_style": "none",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/TestAssemblyTests.cs:10",
+      "rationale": "Single placeholder test (Assert.True(true)); no persistence surface of any kind."
+    }
+  ],
+  "configuration_and_secrets_surface": {
+    "web_config_connection_strings": [],
+    "app_config_connection_strings": [],
+    "appsettings_json_connection_strings": [],
+    "dotnet_user_secrets_references": [],
+    "hardcoded_credentials_found": false,
+    "files_scanned": [
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/app.config",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/packages.config",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/packages.config",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:.nuget/packages.config",
+      "d634afdb-97cc-4589-a080-5766d4f377d5:NuGet.config"
+    ],
+    "note": "app.config contains only a <startup> element (app.config:3). No connectionStrings or appSettings sections exist in any config file in the repo; no appsettings.json or web.config is present at all."
+  },
+  "companion_stack_check": {
+    "classic_asp_signals": "none -- no .asp/.inc/global.asa files, no <%@ Language=VBScript %> markers in application source (the only repo hits for ADODB/classic-ASP-style tokens are in fixtures/default.json and references/*.md, which are unrelated skill-fixture/reference material, not application code -- see F-101/F-102)",
+    "vb6_signals": "none -- no .bas/.cls/.frm/.ctl/.vbp/.vbg files anywhere in the repo"
+  },
+  "findings": [
+    {
+      "finding_id": "dotnet-fingerprint.json:archetype:F-001",
+      "severity": "informational",
+      "summary": "Application does not match any of the 5 catalog archetype enum values; flagged for manual archetype review per Methodology step 3 rather than guessed.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:8"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:archetype:F-002",
+      "severity": "informational",
+      "summary": "Enum gap: upstream catalog.json already records architecture.archetype = 'cli', a value not present in this skill's own 5-value dispatch enum (web-app|batch-etl|api-service|scheduled-job|hybrid). The two artifacts are directionally consistent (neither claims web/api/batch/scheduled) but this skill has no enum slot to confirm 'cli' formally.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json:35"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:target-framework:F-003",
+      "severity": "low",
+      "summary": "Target framework drift across the solution: GildedRose.Console targets net45 while GildedRose.Tests targets net451. Legal but forces the effective deployment/runtime floor to the lowest common target and should be recorded rather than silently collapsed.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/GildedRose.Console.csproj:12"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:nuget:F-004",
+      "severity": "low",
+      "summary": "GitVersionTask version drift: GildedRose.Console pins 2.0.1 while GildedRose.Tests pins 3.4.1 of the same build-time package, both via packages.config. No PackageReference/packages.config coexistence conflict was found (both projects use packages.config exclusively), but the cross-project version mismatch is a build-reproducibility finding.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/packages.config:3"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:nuget:F-005",
+      "severity": "informational",
+      "summary": "Repo-level .nuget/packages.config declares NUnit.Runners 2.6.4, but no NUnit test files exist anywhere in the repo -- the only test project (GildedRose.Tests) is xUnit-only. Likely a stale/unused build-tooling dependency from repo history.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:.nuget/packages.config:3"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:tests:F-006",
+      "severity": "medium",
+      "summary": "GildedRose.Tests.csproj has no ProjectReference or assembly Reference to GildedRose.Console, and its single test (TestTheTruth) asserts Assert.True(true). The UpdateQuality() business logic in Program.cs has zero automated test coverage.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Tests/TestAssemblyTests.cs:10"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:complexity:F-007",
+      "severity": "informational",
+      "summary": "UpdateQuality() (Program.cs:37-111) is a single ~75-line method with deeply nested conditionals (up to 6 levels) and string-literal item-name comparisons used as the dispatch mechanism ('Aged Brie', 'Sulfuras, Hand of Ragnaros', 'Backstage passes to a TAFKAL80ETC concert') instead of a type/strategy abstraction. This is the canonical Gilded Rose kata anti-pattern -- high cyclomatic complexity concentrated in one method, no polymorphism over Item.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:src/GildedRose.Console/Program.cs:37"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:governance:F-101",
+      "severity": "high",
+      "summary": "Governing client profile is declared as 'faa' for this task, but no profiles/faa/ directory -- and specifically no profiles/faa/risk-classification.yaml, which this skill's Inputs section requires for tier banding -- was reachable from this session's working directories (/workspace/discovery-d634afdb-97cc-4589-a080-5766d4f377d5-01a0e90cffd0/source and its parent). Finding severities in this artifact use this skill's own default bands, not FAA-specific tier banding. This is a discrepancy between the task's stated governance and the actually-available artifacts, recorded rather than silently worked around.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:N/A (absent input)"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:governance:F-102",
+      "severity": "medium",
+      "summary": "This repository's actual contents (a 172-LOC public 'Gilded Rose Refactoring Kata' C# console app with no database, no web stack, and no FAA/aviation domain content) do not correspond to a recognizable FAA production system. This corroborates the open question already raised in the upstream catalog.json (open_questions[0] and [1]): fixtures/default.json in this same repo describes an unrelated fabricated 'Fixture Certification Portal' (ASP.NET WebForms / SQL Server, eligibility-certification domain) that belongs to a different Discovery skill's fixture set (legacy-data-flow-tracer, per fixtures/default.json:2-4) and was correctly NOT used to populate this fingerprint or the catalog entry. Recommend stakeholder confirmation of the application_id-to-real-system mapping before this artifact is used for FAA rationalization decisions.",
+      "citation": "d634afdb-97cc-4589-a080-5766d4f377d5:fixtures/default.json:2"
+    }
+  ],
+  "quality_rule_checklist": {
+    "every_project_has_fingerprint_record": true,
+    "every_fingerprint_cites_target_framework_source_line": true,
+    "archetype_from_catalog_enum_only": false,
+    "archetype_deviation_reason": "No enum value matched; result recorded as 'unclassified_no_enum_match' / 'console' per Methodology step 3 (manual review), not forced into the enum. See F-001/F-002.",
+    "every_nuget_reference_has_consumer_id_version_source": true,
+    "every_hosting_finding_cites_config_or_class_line": true,
+    "data_access_per_project_not_per_solution": true,
+    "hardcoded_connection_strings_flagged_and_redacted": true,
+    "hardcoded_connection_strings_found": false,
+    "every_finding_has_artifact_and_repo_citations": true,
+    "validated_against_application_catalog_entry_schema": "not_performed -- schemas/discovery/application-catalog-entry.schema.json was not reachable from this session's working directories; structural shape follows the skill document's Outputs section instead. See F-101 for the parallel risk-classification.yaml gap."
+  }
+}

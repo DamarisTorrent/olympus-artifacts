@@ -1,0 +1,59 @@
+{
+  "$schema": "olympus:artifact:identity-landscape:v1",
+  "portfolio_id": "faa",
+  "analyzed_date": "2026-09-28",
+  "scope_note": "SINGLE-APPLICATION SCOPE. This schema models a portfolio-wide identity landscape, but this dispatch covered exactly one application (d634afdb-97cc-4589-a080-5766d4f377d5, 'Gilded Rose Refactoring Kata'). Nothing here characterises the wider faa portfolio: no other application's source was read, so the absence of Login.gov, PIV/MyAccess, AD/IWA or SAML below is a statement about THIS application only, not a portfolio finding. A genuine proliferation analysis needs a multi-application dispatch.",
+  "methodology_note": "Derived from negative evidence over all 22 git-tracked files. Greps for identity|principal|authenticat|authoriz|oauth|saml|ldap|login.gov|piv|password|credential|token across *.cs, *.config, *.csproj, *.ps1, *.bat and *.sln returned only three false positives — the PublicKeyToken attributes on the xUnit assembly references at src/GildedRose.Tests/GildedRose.Tests.csproj:46, :50 and :54. There is no authentication code, no authorization check, no session, no user record, no credential store and no directory or IdP integration of any kind.",
+  "identity_models": [
+    {
+      "model_name": "None — unauthenticated local console execution",
+      "model_type": "custom-app-specific",
+      "provider": "none",
+      "assurance_level": {
+        "nist_ial": "unknown",
+        "nist_aal": "below-AAL1",
+        "nist_fal": "not-applicable",
+        "phishing_resistant": false,
+        "mfa_type": "none"
+      },
+      "apps_using": [
+        "d634afdb-97cc-4589-a080-5766d4f377d5"
+      ],
+      "user_classes": [
+        "local-interactive-operator (whoever holds an interactive Windows session on the host; identified and authorised solely by the OS login, which this application never reads)"
+      ],
+      "evidence_citations": [
+        "src/GildedRose.Console/Program.cs:8 — `static void Main(string[] args)` is the only entry point; no authentication, authorization or principal lookup precedes the business logic at Program.cs:31",
+        "src/GildedRose.Console/app.config:1-6 — the entire configuration file is <startup><supportedRuntime>; no <authentication>, <membership>, <roleManager>, <identity>, <authorization> or <connectionStrings> element exists",
+        "src/GildedRose.Console/Program.cs:33 — System.Console.ReadKey() confirms an interactive local operator is the only actor; there is no network listener, so there is no remote authentication surface to assess",
+        "negative grep (whole tree): zero occurrences of WindowsIdentity, IPrincipal, ClaimsPrincipal, FormsAuthentication, OAuth, SAML, OpenIdConnect, LDAP, DirectoryEntry, Login.gov or PIV"
+      ]
+    }
+  ],
+  "assurance_gaps": [
+    {
+      "app": "d634afdb-97cc-4589-a080-5766d4f377d5",
+      "gap_type": "no-identity-proofing",
+      "severity": "low",
+      "description": "The application performs no identity proofing because it establishes no identity at all: it is a local console executable with a single Main() entry point (src/GildedRose.Console/Program.cs:8) and no user concept. Severity is LOW rather than high because the exposure is bounded by the host OS session — there is no listener, no persisted data and no PII (the only values handled are fictional retail item names and two integers, Program.cs:16-26) — so there is nothing an unproofed actor can reach beyond a local process that prints one greeting and exits.",
+      "remediation_recommendation": "Nothing to remediate in place. This becomes a real gap only if the target design exposes this logic as a service or API — at that point the new surface must inherit the portfolio's federated identity decision (see broker_recommendation) rather than invent a per-app model. Record it as a target-state obligation on the Design line, not as a legacy defect.",
+      "citation": "src/GildedRose.Console/Program.cs:8"
+    },
+    {
+      "app": "d634afdb-97cc-4589-a080-5766d4f377d5",
+      "gap_type": "no-mfa",
+      "severity": "low",
+      "description": "No MFA, because there is no first authentication factor to add a second to: no credential is collected, validated or stored anywhere in the tree (app.config carries only a <supportedRuntime> element, and no *.cs file references any credential or authentication type). Reported explicitly so a reviewer can distinguish 'MFA absent because authentication is absent by design' from 'MFA missing from an authenticated application', which is a materially different risk.",
+      "remediation_recommendation": "Not applicable to the as-is application. If the migration target is interactive or API-reachable, require phishing-resistant AAL2+ (PIV or FIDO2) on the new surface and do not carry forward any email- or SMS-code pattern.",
+      "citation": "src/GildedRose.Console/app.config:1-6"
+    }
+  ],
+  "proliferation_findings": [],
+  "proliferation_findings_note": "Deliberately empty and NOT a skipped check. Every finding_type in this schema's vocabulary asserts a relationship between two or more identity models, applications or accounts; this dispatch observed one application carrying zero identity models, so none of them can be evidenced. Emitting 'identity-model-per-app' here would be a fabricated portfolio claim from a single-app sample. Re-run across the full application roster to populate this array.",
+  "broker_recommendation": {
+    "recommended_pattern": "keep-separate",
+    "broker_technology": "none required for the as-is application",
+    "fronted_idps": [],
+    "rationale": "There is no identity surface to front: no listener, no session, no user store, no credential. Bringing this application behind a federated broker would mean inventing an authentication requirement the legacy system never had. 'keep-separate' is the honest as-is answer — it records that this application contributes nothing to a broker design and should not be counted as an in-scope relying party. If the Design line exposes the nightly inventory update as a service, the broker decision must be made against that NEW surface and against the wider portfolio, using a multi-application identity-landscape run rather than this single-app record."
+  }
+}
