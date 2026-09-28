@@ -1,0 +1,20 @@
+{
+  "step": "compliance-citation-mapping",
+  "artifacts": [
+    "## Summary\n\nExecuted `compliance-citation-mapper` for application `d634afdb-97cc-4589-a080-5766d4f377d5`.\n\n**Key finding:** The application's actual source is the public \"Gilded Rose Refactoring Kata\" (172-LOC C# console app, no HTTP/DB/regulatory logic) \u2014 already flagged as a domain mismatch in the upstream `discovery-catalog` entry, which noted the app couldn't be grounded in any FAA business domain.\n\n**Detection process:**\n1. Located the real skill bundle at `/app/skills/compliance-citation-mapper/` (verified the copy embedded in the source repo's `scripts/scan_citations.py` was byte-identical, so tooling wasn't tampered with).\n2. Found the working tree also contained **untracked** `fixtures/`, `references/`, `schemas/`, `scripts/`, `assets/` directories (confirmed via `git status`/`git ls-files`) \u2014 these are the skill's *own* bundle materials (its reference docs, catalog, schema, script, and test fixtures), not application code.\n3. Ran a diagnostic scan of the full directory to confirm the risk: it produced 75 fake citations (54 unique) purely because `references/faa-citation-catalog.md` and `references/citation-patterns.md` are themselves full of USC/CFR/FAA-Order example text. Including those would have misattributed the skill's own documentation to this kata app's compliance footprint.\n4. Scanned only the git-tracked application files (matching `git ls-files` exactly) via a clean temp copy. Result: **0 citations** \u2014 expected for a non-regulatory retail-inventory kata, not a red flag (business_domain is `unclassified`, not a regulated FAA domain).\n\n**Outputs written to `artifacts/discovery-compliance-citation-mapping/`:**\n- `compliance-citations.json` \u2014 validated against `schemas/discovery/compliance-citations.schema.json` (draft 2020-12), zero errors.\n- `scan-notes.md` \u2014 documents the exclusion rationale, the diagnostic contamination test, and carries forward (without restating as fact) the open question already raised upstream about whether this `application_id` genuinely maps to an FAA-owned system.\n\nNo changes were made to the source repository; no git commits were created (none were requested)."
+  ],
+  "file_artifacts": [
+    "compliance-citations.json",
+    "scan-notes.md"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 155333,
+  "token_usage": {
+    "input": 1055,
+    "output": 10237
+  },
+  "cost_estimate_usd": 0.42122960000000004,
+  "timestamp": "2026-09-28T18:33:09.090669+00:00",
+  "pass": "compliance-citation-mapping",
+  "skill_id": "compliance-citation-mapper"
+}

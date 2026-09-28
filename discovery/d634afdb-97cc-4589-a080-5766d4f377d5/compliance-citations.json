@@ -1,0 +1,15 @@
+{
+  "$schema": "olympus:artifact:compliance-citations:v1",
+  "application": {
+    "name": "Gilded Rose Refactoring Kata",
+    "id": "d634afdb-97cc-4589-a080-5766d4f377d5"
+  },
+  "assessed_date": "2026-09-28",
+  "source_path": "/workspace/discovery-d634afdb-97cc-4589-a080-5766d4f377d5-01a0e90cffd0/source (git-tracked files only; see scan-notes.md)",
+  "citations": [],
+  "summary": {
+    "total_citations": 0,
+    "unique_citations": 0,
+    "by_authority": {}
+  }
+}
