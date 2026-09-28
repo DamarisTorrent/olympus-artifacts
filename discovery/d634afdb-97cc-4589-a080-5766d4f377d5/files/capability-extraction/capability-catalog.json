@@ -1,0 +1,46 @@
+{
+  "$schema": "olympus:artifact:capability-catalog:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "legacy_system": {
+    "name": "Gilded Rose Inventory Kata (Unclassified / Non-FAA-Mapped System)",
+    "external_id": null,
+    "description": "A 172-line, single-assembly C# console application (the publicly published 'Gilded Rose Refactoring Kata') that seeds a fixed in-memory item list and applies a nightly Quality/SellIn rules engine to it. It has no HTTP surface, no database, and no observed aviation, NAS, or FAA business content, so it cannot be confidently bound to any strategy-of-record legacy system family; it is carried here as its own unclassified system pending stakeholder confirmation of whether this application_id genuinely maps to an FAA-owned production system.",
+    "evidence_refs": [
+      "catalog.json:description",
+      "catalog.json:open_questions[0]",
+      "structural-analysis.json:open_questions[0]",
+      "structural-analysis.json:architecture.style"
+    ]
+  },
+  "system_application_role": "primary",
+  "business_domains": [
+    {
+      "name": "Unclassified / Non-Aviation Inventory Exercise",
+      "external_id": null,
+      "description": "A standalone nightly inventory quality and sell-in revaluation exercise with no observed mapping to any FAA business domain (Air Traffic, Flight Safety, Certification, Workforce, Finance, Logistics, Admin/Travel) in the reference taxonomy."
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "asset-and-inventory-management",
+      "external_id": null,
+      "description": "Applies a per-item-type rules engine that adjusts each stocked item's remaining sell-in days and quality level once per night (normal goods, Aged Brie, Sulfuras, Backstage passes, and an unimplemented Conjured-item rule), enforcing quality bounds in-process. Invoked by a single interactive operator running the console executable; there is no other caller, scheduler, or upstream/downstream integration.",
+      "business_domain_names": [
+        "Unclassified / Non-Aviation Inventory Exercise"
+      ],
+      "evidence_refs": [
+        "structural-analysis.json:modules[gildedrose-console]",
+        "structural-analysis.json:interface-inventory.interfaces[0]",
+        "structural-analysis.json:coupling_indicators.magic_string_dispatch"
+      ],
+      "confidence": 0.4
+    }
+  ],
+  "open_questions": [
+    "GOVERNING-PROFILE DISCREPANCY (recorded per instruction, not adopted): the task's authoritative governing profile is `faa`, but this application's source tree is the generic, publicly published Gilded Rose Refactoring Kata with no aviation, NAS, certification, or FAA business content, and catalog.json sets business_domain to 'unclassified'. The single capability extracted below ('asset-and-inventory-management') is the closest technical fit in the governed capability vocabulary for what the code literally does (an inventory quality/sell-in rules engine); it is emitted as a best-effort mapping, not a claim that this is a real FAA capability. A stakeholder must confirm whether application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely maps to an FAA-owned production system before Rationalization consumes this grain.",
+    "MISSING REQUIRED INPUT: data-domains.json (Discovery.data-domain-discovery output), the methodology's strongest capability signal, was not present anywhere in this dispatch's input/artifact directories for this application — the discovery-data-domain-discovery output folder is empty. This catalog was built from application-catalog-entry.json and structural-analysis.json (which embeds interface-inventory) only. If data-domains.json is produced on a later run, re-run this skill to corroborate or expand the single capability recorded here.",
+    "NO CLIENT-PROFILE REFERENCE CATALOG AVAILABLE: no `profiles/faa/` directory (or any capability/system strategy-of-record reference catalog) was present in this workspace, so no capability or system could be bound to a strategy-of-record identifier. legacy_system.external_id, business_domains[].external_id, and capabilities[].external_id are all NULL for this reason, not because binding was attempted and rejected.",
+    "AGENCY-ATTRIBUTION DISCREPANCY (observed, not adopted): src/GildedRose.Console/Properties/AssemblyInfo.cs asserts AssemblyCompany/Copyright 'DSHS' (a different, non-FAA agency) in the shipped assembly metadata — reported per structural-analysis.json:open_questions[0] as a further signal against this being an FAA system, not treated as a governing profile.",
+    "UNIMPLEMENTED RULE AFFECTING CAPABILITY SCOPE: README.md documents a 'Conjured' item degradation rule that is absent from the actual UpdateQuality implementation (structural-analysis.json:open_questions[2]). Whether the asset-and-inventory-management capability should be described as covering Conjured items depends on whether that gap is the kata's intended unfinished state or a defect to carry into any target description."
+  ]
+}
