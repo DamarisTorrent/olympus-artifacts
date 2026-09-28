@@ -1,0 +1,555 @@
+{
+  "$schema": "olympus:artifact:data-domains:v1",
+  "target_app_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "target_service_id": "system",
+  "relationship": "refactor",
+  "source_app_ids": [
+    "d634afdb-97cc-4589-a080-5766d4f377d5"
+  ],
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "target_name": "Gilded Rose Refactoring Kata",
+  "source_app_names": [
+    "Gilded Rose Refactoring Kata"
+  ],
+  "generated_date": "2026-09-28",
+  "skill_id": "data-domain-patterns",
+  "task_type": "discovery-data-domain-discovery",
+  "method": "First-principles derivation from source code. No inherited Discovery data-domains.json was staged for this dispatch (the only file in the step's input-artifacts directory is the dispatch context itself), and the application has no database, so the five boundary heuristics were applied directly to the in-memory data model in src/GildedRose.Console/Program.cs and to the two traced data flows in the sibling data-flow-trace artifact.",
+  "method_rationale": "The declared input 'database-schema-summary' does not address a file and no schema summary exists: three independent sibling artifacts (db-archaeology, sqlserver-object-inventory, data-flow-trace) each record a verified NEGATIVE result -- zero connection strings, zero DDL, zero ORM usage, zero persistence points. Per the skill's 'Empty or Thin Inherited Inputs' rule this is a signal to do the domain analysis first-hand rather than emit a stub mirroring the empty input, so the domains below were derived from the Item class, the IList<Item> working set, and the implicit rule/category data encoded as literal string comparisons inside UpdateQuality().",
+  "heuristics_applied": [
+    "changes-together: Item.SellIn and Item.Quality are both mutated inside one loop iteration of UpdateQuality() (Program.cs:47,:55,:63,:71,:80,:93,:99,:106) with no intervening commit boundary, so they are inseparable; Item.Name is never written after seeding.",
+    "queried-together: every rule branch reads Item.Name for routing and Item.SellIn as a date gate before writing Item.Quality (Program.cs:41,:45,:57,:59,:67,:83,:85,:87,:91), so name, sell-in and quality are always read as one tuple -- an argument for keeping them in one domain.",
+    "same-lifecycle: DIVERGENT, and the load-bearing signal here. Item.Name and the rule thresholds it selects are seed-time constants that never change during a run; Item.SellIn and Item.Quality change on every run. This lifecycle split is what separates the reference-data domain from the transactional domain.",
+    "same-security-classification: NOT discriminating. All data is unclassified -- the data-flow-trace records pii_classification 'none' for both traced elements and the identity-landscape found no user, credential, session or authorization concept anywhere in the tree, so no access-control boundary can be derived.",
+    "same-business-owner: NOT discriminating -- no business owner could be established for any entity. The catalog entry records business_domain 'unclassified' and no CMDB export or ownership document was supplied at onboarding, so ownership is asserted as unknown rather than guessed. See review ask 'domain-owner-unknown'."
+  ],
+  "domains": [
+    {
+      "domain_id": "DD-GRK-001",
+      "name": "Inventory Stock Item",
+      "capability": "Nightly inventory valuation -- hold and advance the saleable state of each item of stock the inn carries.",
+      "aggregate_root": "Item",
+      "transaction_boundary": "One iteration of the UpdateQuality() loop (Program.cs:39-110) per Item; there is no database transaction, no pre-image and no rollback -- a mid-loop failure leaves the working set half-advanced.",
+      "physical_footprint": "NONE. This domain has no table, file, queue or blob behind it. Its entire persistence is an in-memory IList<Item> declared at Program.cs:7, seeded from hardcoded literals at Program.cs:16-26 and discarded at process exit (Program.cs:33-35).",
+      "write_owner": "Program.UpdateQuality() (Program.cs:37-111) is the sole writer of every mutable attribute in this domain.",
+      "security_classification": "unclassified -- no PII, PHI or FTI; the only values handled are fictional retail item names and two integers.",
+      "owner": "UNKNOWN -- not asserted. No organizational unit could be evidenced; see review ask 'domain-owner-unknown'.",
+      "confidence": 0.86,
+      "entities": [
+        {
+          "entity": "Item",
+          "role": "aggregate-root",
+          "kind": "in-memory class (no persistent counterpart)",
+          "attributes": [
+            "Name : string -- read-only control data after seeding; the de facto natural key AND the foreign key into the rule-set domain (see cross_domain_reference_map CDR-GRK-001).",
+            "SellIn : int -- days left to sell; both written (decremented) and read as the gate selecting which quality rule applies.",
+            "Quality : int -- saleable quality score; the only true output of the application."
+          ],
+          "citation": "src/GildedRose.Console/Program.cs:115-122",
+          "heuristic_signals": "changes-together (SellIn+Quality, same iteration); queried-together (all three attributes read as one tuple in every branch)"
+        },
+        {
+          "entity": "InventoryWorkingSet",
+          "role": "collection / run-scoped aggregate",
+          "kind": "implicit -- materialized only as the IList<Item> field on Program",
+          "attributes": [
+            "Items : IList<Item> -- the full set of stock advanced by a single nightly run; has no identity, no run id, no as-of date and no version."
+          ],
+          "citation": "src/GildedRose.Console/Program.cs:7 (declaration), Program.cs:14-29 (seeding)",
+          "heuristic_signals": "same-lifecycle (created and destroyed with the process, identically to every Item it holds)"
+        }
+      ],
+      "boundary_evidence": [
+        "Program.cs:39 -- the loop iterates the collection and touches nothing outside it; there is no second data structure in the application.",
+        "Program.cs:103-104 of the data-flow-trace (persistence_points and exit_points both empty) -- the domain has no egress, so its boundary is the process boundary."
+      ],
+      "boundary_justification": "Item and the collection that holds it share one lifecycle, one writer, one (absent) security classification and one transaction. Nothing separates them, so they form a single domain. The split that IS defensible -- pulling Item.Name's classification semantics out -- is handled by making the rule set a sibling domain rather than by splitting Item's attributes, which would violate the one-entity-one-domain rule."
+    },
+    {
+      "domain_id": "DD-GRK-002",
+      "name": "Item Quality Rule Set",
+      "capability": "Merchandising policy -- define which class an item belongs to and how its quality and sell-in advance over time.",
+      "aggregate_root": "ItemCategory",
+      "transaction_boundary": "None. This domain is read-only reference data at runtime; it changes only when the program text changes.",
+      "physical_footprint": "NONE, and not even a data structure. This domain is currently LATENT: it exists only as literal string comparisons and numeric bounds inlined into the control flow of UpdateQuality(). It has no class, no enum, no lookup table and no configuration file.",
+      "write_owner": "No runtime writer. The effective write path is a source-code edit plus a rebuild.",
+      "security_classification": "unclassified.",
+      "owner": "UNKNOWN -- not asserted. On the evidence this is business/merchandising policy rather than operational data, which is precisely why it plausibly has a DIFFERENT owner from DD-GRK-001; but no owner for either could be evidenced.",
+      "confidence": 0.58,
+      "entities": [
+        {
+          "entity": "ItemCategory",
+          "role": "reference / classification entity",
+          "kind": "implicit -- encoded as magic-string equality tests, never declared",
+          "members_observed": [
+            "'Aged Brie' -- appreciating good (Program.cs:41,:85)",
+            "'Sulfuras, Hand of Ragnaros' -- legendary, immutable (Program.cs:45,:78,:91)",
+            "'Backstage passes to a TAFKAL80ETC concert' -- accelerating then worthless (Program.cs:41,:57,:87)",
+            "ordinary goods -- the unnamed default class reached by negation, covering '+5 Dexterity Vest', 'Elixir of the Mongoose' and (unintentionally) 'Conjured Mana Cake'",
+            "'Conjured' -- DOCUMENTED IN README BUT ABSENT FROM CODE: no branch matches it, so the seeded 'Conjured Mana Cake' (Program.cs:26) falls through to the ordinary-goods rules. Carried forward as a boundary violation, not modelled as an implemented member."
+          ],
+          "citation": "src/GildedRose.Console/Program.cs:41,45,57,78,85,87,91",
+          "heuristic_signals": "same-lifecycle (immutable at runtime, unlike every attribute in DD-GRK-001); changes-together (all four class tests change together whenever a rule changes)"
+        },
+        {
+          "entity": "QualityDegradationRule",
+          "role": "reference / policy entity",
+          "kind": "implicit -- the branch bodies themselves are the rule rows",
+          "rules_observed": [
+            "ordinary goods: Quality -1 per run (Program.cs:47), and a second -1 once SellIn < 0 (Program.cs:93)",
+            "Aged Brie: Quality +1 per run (Program.cs:55), and a second +1 once SellIn < 0 (Program.cs:106)",
+            "Backstage passes: +1, +2 when SellIn < 11, +3 when SellIn < 6 (Program.cs:55,:63,:71), zeroed once SellIn < 0 (Program.cs:99, written as the self-subtraction idiom rather than an assignment of 0)",
+            "Sulfuras: exempt from both the Quality change and the SellIn decrement (Program.cs:45,:78,:91)"
+          ],
+          "citation": "src/GildedRose.Console/Program.cs:41-109",
+          "heuristic_signals": "queried-together (every rule is selected by the same ItemCategory test, so rule and category are inseparable)"
+        },
+        {
+          "entity": "QualityBounds",
+          "role": "reference / invariant entity",
+          "kind": "implicit -- guard conditions and one seeded literal",
+          "bounds_observed": [
+            "upper bound 50, enforced by the Quality < 50 guards at Program.cs:53,:61,:69,:104",
+            "lower bound 0, enforced by the Quality > 0 guards at Program.cs:43,:89",
+            "Sulfuras exception fixed at 80, present ONLY as a seed literal at Program.cs:19 and upheld indirectly by the name exclusions -- there is no assertion or constraint that would restore it if the seed changed",
+            "SellIn has NO lower bound -- it decrements without floor and there is no expiry or archival path (Program.cs:80,:83)"
+          ],
+          "citation": "src/GildedRose.Console/Program.cs:19,43,53,61,69,89,104",
+          "heuristic_signals": "same-lifecycle (constant at runtime); same-business-owner (the 0..50 band and the 80 exception are one policy statement, per README.md)"
+        }
+      ],
+      "boundary_evidence": [
+        "Lifecycle divergence is the whole case: DD-GRK-001's attributes change every run, everything in DD-GRK-002 is fixed at compile time. Heuristic 3 separates them even though heuristic 2 (queried-together) argues they are one.",
+        "README.md states the rules as business policy in prose, while Program.cs implements them as control flow -- the two disagree on 'Conjured', which is evidence that the rule set is a distinct thing with its own (documentary) source of truth.",
+        "data-flow-trace methodology_notes: 'Item.Name is read-only control data used only for string-equality routing and is therefore not traced as a flow of its own' -- the trace independently classified Name as control/reference data rather than transactional data."
+      ],
+      "boundary_justification": "Recorded as a separate domain because its lifecycle and its plausible business owner both differ from DD-GRK-001: merchandising policy changes on a business decision, stock state changes nightly. Confidence is materially lower (0.58) than for DD-GRK-001 because this domain is latent -- it has no declared entity in the source at all, so a reviewer could reasonably call it behaviour belonging to the Inventory Stock Item domain rather than data of its own. That is the open decision in review ask 'domain-boundary-ambiguous'."
+    }
+  ],
+  "entity_assignment_summary": {
+    "domain_count": 2,
+    "logical_entity_count": 5,
+    "explicitly_declared_entity_count": 1,
+    "implicit_entity_count": 4,
+    "persistent_entity_count": 0,
+    "entities_by_domain": {
+      "Inventory Stock Item": "Item, InventoryWorkingSet",
+      "Item Quality Rule Set": "ItemCategory, QualityDegradationRule, QualityBounds"
+    },
+    "one_entity_one_domain_check": "PASS -- every logical entity is assigned to exactly one domain. Item.Name is NOT split across domains: it stays wholly inside DD-GRK-001 and merely references DD-GRK-002 by value, which is recorded as a cross-domain reference rather than shared ownership.",
+    "unassigned_entities": "none",
+    "pii_bearing_entities": 0,
+    "pii_note": "Zero. Confirmed by the data-flow-trace (pii_classification 'none' on both traced elements) and by the identity-landscape (no user, credential or session concept in the tree)."
+  },
+  "cross_domain_reference_map": [
+    {
+      "reference_id": "CDR-GRK-001",
+      "from_domain": "Inventory Stock Item",
+      "to_domain": "Item Quality Rule Set",
+      "referencing_attribute": "Item.Name",
+      "referenced_entity": "ItemCategory",
+      "current_mechanism": "inline string equality against hardcoded literals -- there is no lookup, no join and no interface",
+      "citations": [
+        "src/GildedRose.Console/Program.cs:41",
+        "src/GildedRose.Console/Program.cs:45",
+        "src/GildedRose.Console/Program.cs:57",
+        "src/GildedRose.Console/Program.cs:85",
+        "src/GildedRose.Console/Program.cs:87",
+        "src/GildedRose.Console/Program.cs:91"
+      ],
+      "direction": "Inventory Stock Item consumes; Item Quality Rule Set owns",
+      "target_state_interface": "A category/rule lookup data product: the rule-set domain owns the category-to-rule mapping and exposes resolution by category, and the stock-item domain carries a category identifier instead of matching on a display name.",
+      "fragility": "HIGH -- the reference is by mutable display string, so a rename of an item's Name silently reclassifies it and changes its valuation. There is no referential integrity of any kind."
+    }
+  ],
+  "hub_entities_and_coupling_hotspots": [
+    {
+      "entity": "Item",
+      "hotspot_type": "sole hub",
+      "detail": "Item is the only declared data type in the application, so 100% of data coupling passes through it. There is no second entity to couple to and therefore no entity-level decomposition seam.",
+      "citation": "src/GildedRose.Console/Program.cs:115-122"
+    },
+    {
+      "entity": "Item.Name",
+      "hotspot_type": "overloaded attribute",
+      "detail": "Name simultaneously serves as display label, natural key and classification discriminator. It is the single point where the two domains touch, and the only reason DD-GRK-002 is separable at all.",
+      "citation": "src/GildedRose.Console/Program.cs:117"
+    },
+    {
+      "entity": "Item.SellIn",
+      "hotspot_type": "read-write ordering coupling",
+      "detail": "SellIn is read before its decrement by the Backstage rules (Program.cs:59,:67) and after the decrement by the past-sell-date rules (Program.cs:83). Any reordering during re-implementation silently changes Quality outcomes on the boundary days (SellIn 11, 6, 0), and no test detects it -- the only test method asserts Assert.True(true).",
+      "citation": "src/GildedRose.Console/Program.cs:59,67,80,83"
+    }
+  ],
+  "boundary_arbitration_decisions": [
+    {
+      "decision_id": "ARB-GRK-001",
+      "question": "Does Item.Name belong to the stock-item domain or to the rule-set domain, given that it functions as both label and classifier?",
+      "decision": "Assigned wholly to DD-GRK-001 (Inventory Stock Item). The rule-set domain owns the ItemCategory concept that Name resolves to, not Name itself.",
+      "rationale": "Splitting Name away from SellIn and Quality would split one entity's attributes across two domains, which the skill forbids (every entity belongs to exactly one domain). The correct expression of the tension is an owned-vs-consumed reference, recorded as CDR-GRK-001.",
+      "heuristics_weighed": [
+        "changes-together (favours keeping Name with Item -- they are seeded in the same object literal)",
+        "same-lifecycle (favours moving Name toward the rule set -- it is immutable like the rules)"
+      ],
+      "citation": "src/GildedRose.Console/Program.cs:117"
+    },
+    {
+      "decision_id": "ARB-GRK-002",
+      "question": "Is the quality rule set a data domain at all, or is it behaviour belonging to the Inventory Stock Item domain?",
+      "decision": "Recorded as a separate domain (DD-GRK-002) at confidence 0.58, and escalated to the reviewer rather than settled here.",
+      "rationale": "Heuristic 3 (lifecycle) and heuristic 5 (business owner) both separate it; heuristic 2 (queried-together) unifies it. With a 172-line single-class application the evidence does not settle the question, and the choice materially changes the target decomposition, so it is put to a human. See review ask 'domain-boundary-ambiguous'.",
+      "heuristics_weighed": [
+        "same-lifecycle: rules are compile-time constant, stock state changes nightly -- SEPARATE",
+        "same-business-owner: merchandising policy vs. inventory operations -- SEPARATE, but neither owner is evidenced",
+        "queried-together: every rule read is driven by the same Item tuple in the same statement -- TOGETHER"
+      ],
+      "citation": "src/GildedRose.Console/Program.cs:41-109"
+    },
+    {
+      "decision_id": "ARB-GRK-003",
+      "question": "Should the cert.* entities named in fixtures/default.json (cert.application_header, cert.fee_schedule) be admitted as domain entities?",
+      "decision": "NO. Excluded entirely. No entity in this artifact derives from any file under fixtures/.",
+      "rationale": "fixtures/ is untracked analysis tooling staged into the source root by the harness, not application source, and the sibling db-archaeology artifact already recorded that every object fixtures/default.json names references a schema that does not exist in or near this application. Admitting them would fabricate a database tier for an application that has none. See review ask 'fixture-artifacts-disregarded'.",
+      "citation": "fixtures/default.json:1"
+    }
+  ],
+  "boundary_violations_carried_forward": [
+    {
+      "violation_id": "BV-GRK-001",
+      "violation": "The Item Quality Rule Set domain has no representation in the code: it is entirely inlined into the control flow of a single 74-line method. There is no seam at which the rule-set domain could be given a separate owner, tested independently, or changed without a rebuild.",
+      "affected_domain": "Item Quality Rule Set",
+      "severity": "high",
+      "carried_to": "data-modeling / decomposition -- materializing ItemCategory and its rule rows as first-class data is a precondition for treating this as a domain at all.",
+      "citation": "src/GildedRose.Console/Program.cs:39-110"
+    },
+    {
+      "violation_id": "BV-GRK-002",
+      "violation": "Documented rule with no implementation: README.md states that Conjured items degrade twice as fast, and Program.cs:26 seeds a 'Conjured Mana Cake', but no branch in UpdateQuality matches 'Conjured'. The rule-set domain's documentary source of truth and its as-built content disagree.",
+      "affected_domain": "Item Quality Rule Set",
+      "severity": "medium",
+      "carried_to": "business-logic extraction and the business owner -- downstream lines must treat the code, not the README, as the as-built rule set.",
+      "citation": "src/GildedRose.Console/Program.cs:26"
+    },
+    {
+      "violation_id": "BV-GRK-003",
+      "violation": "The Inventory Stock Item domain has no egress and therefore no observable state: UpdateQuality() mutates the in-memory list and Main() exits without printing, returning or persisting a single value. Every nightly result is discarded at process exit, so no legacy data format, retention rule or archival schedule exists to preserve.",
+      "affected_domain": "Inventory Stock Item",
+      "severity": "high",
+      "carried_to": "migration planning -- there is no data to migrate. Any target design must ADD the persistence and egress this application never had, which is a build activity, not a data migration.",
+      "citation": "src/GildedRose.Console/Program.cs:33"
+    },
+    {
+      "violation_id": "BV-GRK-004",
+      "violation": "No entity in either domain has an owner. Both 'owner' fields are recorded as UNKNOWN rather than guessed, so the domain model cannot yet support the ownership assignment this skill is meant to produce.",
+      "affected_domain": "both",
+      "severity": "medium",
+      "carried_to": "G-DT review -- see review ask 'domain-owner-unknown'.",
+      "citation": "artifacts/discovery-catalog/catalog.json (business_domain 'unclassified'; open_questions records that no CMDB export or ownership document was supplied)"
+    }
+  ],
+  "deployment_coupling_constraints": [
+    "Both domains compile into a single assembly (GildedRose.Console, .NET Framework 4.5) and are reached through one Main() entry point, so there is no existing deployment seam between them -- separating them is new construction, not a lift.",
+    "No database, queue, scheduler or network listener exists anywhere in the tree, so neither domain has an infrastructure dependency to sequence or a shared datastore to untangle.",
+    "The single test project asserts Assert.True(true) and exercises none of the business logic, so there is no regression net protecting either domain boundary. Capture a characterization/golden-master test over the seeded item set before any transformation."
+  ],
+  "method_notes": {
+    "fan_out_decision": "NOT fanned out, deliberately. The skill's rule fans out per candidate domain above 6 candidates / 4 applications / 100 entities; this dispatch has 2 candidate domains, 1 application and 5 logical entities in a 172-line source tree, so sub-agent coordination would cost more than the single-pass enrichment it replaced.",
+    "consolidation": "Not applicable. This is a single-source dispatch, so no absorbed_sources block is emitted and no many-to-one merge was performed.",
+    "greenfield": "Not applicable -- this is not a 'build' target; a real legacy source tree was read.",
+    "thin_inputs": "The step's input-artifacts directory contained only the dispatch context -- no inherited data-domains.json, and the declared 'database-schema-summary' input does not address a file. Both domains below were therefore derived first-hand from source, per the skill's 'Empty or Thin Inherited Inputs' rule. This is a derived small domain set, not a stub mirroring an empty input.",
+    "negative_results_are_findings": "The empty persistence, empty PII and empty ownership results in this artifact are observed negatives carried forward from three sibling artifacts that each verified them independently, not unfinished analysis.",
+    "profile_note": "The governing client profile for this dispatch is 'faa'. No entity, domain or capability in this artifact could be grounded in an FAA business taxonomy, because the source tree is the public Gilded Rose retail-inventory kata with no NAS, aviation or certification content. The domains are named from the application's own vocabulary rather than mapped to an FAA domain, and the mismatch is escalated rather than papered over -- see review asks 'target-binding-unassigned' and 'fixture-artifacts-disregarded'."
+  },
+  "evidence_provenance": {
+    "primary_source": {
+      "artifact": "application source",
+      "files_read_in_full": [
+        "src/GildedRose.Console/Program.cs",
+        "src/GildedRose.Tests/TestAssemblyTests.cs",
+        "README.md"
+      ],
+      "note": "Program.cs is the entire data model and the entire rule set of this application; there is no other file carrying data semantics."
+    },
+    "sibling_artifacts_relied_on": [
+      {
+        "artifact": "data-flow-trace",
+        "artifact_path": "artifacts/discovery-structural-analysis/data-flow-trace.json",
+        "used_for": "Confirmed the two mutable data elements (Item.Quality DF-GRK-001, Item.SellIn DF-GRK-002), the classification of Item.Name as read-only control data, the empty persistence_points/exit_points, the SellIn read-write ordering coupling, and the Conjured rule gap."
+      },
+      {
+        "artifact": "db-archaeology",
+        "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json",
+        "used_for": "Confirmed zero schemas, tables, stored procedures and triggers, and confirmed that fixtures/default.json describes a different, fabricated application whose cert.* objects must not be admitted here."
+      },
+      {
+        "artifact": "sqlserver-object-inventory",
+        "artifact_path": "artifacts/discovery-structural-analysis/sqlserver-object-inventory.json",
+        "used_for": "Confirmed the System.Data assembly references at GildedRose.Console.csproj:38,:40 are unused default-template references, so no database tier may be re-derived from them."
+      },
+      {
+        "artifact": "identity-landscape",
+        "artifact_path": "artifacts/discovery-structural-analysis/identity-landscape.json",
+        "used_for": "Confirmed the absence of any user, credential, session or authorization entity, which is why the security-classification heuristic yielded no boundary."
+      },
+      {
+        "artifact": "application-catalog-entry",
+        "artifact_path": "artifacts/discovery-catalog/catalog.json",
+        "used_for": "Confirmed business_domain 'unclassified', the absent business owner, and the pre-existing profile/domain mismatch open question."
+      },
+      {
+        "artifact": "structural-analysis",
+        "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json",
+        "used_for": "Confirmed the 22-tracked-file scoping rule that excludes references/, assets/, scripts/ and fixtures/ from application source."
+      }
+    ],
+    "citation_shape": "Source citations are {file}:{line} against the git-tracked source tree. No {catalog-source}:{entity-id} citations appear because no data catalog and no entity inventory exist for this application.",
+    "explicitly_excluded_from_evidence": [
+      {
+        "path": "fixtures/default.json",
+        "reason": "Untracked harness fixture describing a different, fabricated application ('Fixture Certification Portal', ASP.NET WebForms 4.8 / SQL Server 2016, cert.* schema). Not application source; contributed nothing to this artifact."
+      },
+      {
+        "path": "fixtures/domain-boundary-ambiguous.json",
+        "reason": "Untracked harness fixture that contains a PRE-BAKED data-domains.json for a different application, 'fixture-app', asserting target_service_id 'S1', relationship 'refactor' and three domains (Accounts/Billing/Reporting) over entities -- User, Invoice, Dashboard -- that exist nowhere in this source tree. It self-identifies as a mock result for this very skill. It was read only to identify it as a fixture and was NOT used to populate any field; none of its domains, entities, owners or option keys appear in this artifact. Reported so a reviewer can confirm it stays disregarded."
+      },
+      {
+        "path": "scripts/classify_procs_template.sql",
+        "reason": "Untracked, deliberately non-executable dictionary-query template with unresolved TODO placeholders; not application DDL."
+      }
+    ]
+  },
+  "notes": [
+    "This artifact is honest about scale: a 172-line single-class console application has a genuinely small data surface. Two domains and five logical entities is the derived answer, not a truncation.",
+    "Neither domain has any physical footprint. Downstream migration planning should read this as 'nothing to migrate, everything to build', not as an incomplete inventory.",
+    "The recorded two-domain shape is the lower-confidence half of this artifact. If the reviewer collapses DD-GRK-002 into DD-GRK-001, the resulting single-domain model is equally defensible on the evidence.",
+    "target_service_id and relationship are PROVISIONAL placeholders, not decisions -- no architecture-target-plan entry exists for this application. See review ask 'target-binding-unassigned'."
+  ],
+  "open_questions": [
+    {
+      "question": "Is the Item Quality Rule Set a data domain in its own right, or behaviour belonging to Inventory Stock Item?",
+      "blocking": true,
+      "routed_to": "G-DT reviewer via review ask 'domain-boundary-ambiguous'"
+    },
+    {
+      "question": "Which organizational unit owns each domain? No owner could be evidenced for either.",
+      "blocking": false,
+      "routed_to": "business owner / CMBD via review ask 'domain-owner-unknown'"
+    },
+    {
+      "question": "Does application_id d634afdb-97cc-4589-a080-5766d4f377d5 genuinely map to an FAA-owned system? The source tree is the public Gilded Rose kata with no FAA business-domain content. This question was already raised by the catalog and db-archaeology steps and is unresolved; it is restated here because it determines whether these domain boundaries are worth carrying into an FAA target-state design at all.",
+      "blocking": false,
+      "routed_to": "stakeholder confirmation via review ask 'target-binding-unassigned'"
+    },
+    {
+      "question": "Should the 'Conjured' rule documented in README.md but absent from the code be treated as in-scope target behaviour or as stale documentation?",
+      "blocking": false,
+      "routed_to": "business owner; already carried as BV-GRK-002"
+    }
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "domain-boundary-ambiguous",
+      "action": "decide",
+      "title": "Are the item quality rules their own data domain, or part of the stock item domain?",
+      "why": "The choice sets how many domains the target design is built around; collapsing them later means redoing the decomposition, and splitting them later means retrofitting a rule-lookup interface that the first design never made room for.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "Two boundaries are genuinely defensible over the same five entities. We have provisionally recorded TWO domains -- Inventory Stock Item (the item and its nightly sell-in/quality state) and Item Quality Rule Set (which class an item belongs to and how its quality moves) -- because the rules are fixed in the program text while the stock state changes every run, and because pricing policy and inventory operations would plausibly sit with different business owners. The counter-case is equally real: the rules have no existence in the code as data at all, and every rule is read in the same statement as the item it applies to.",
+      "reasoning": "Of the five boundary heuristics, lifecycle and business-owner separate the two domains, queried-together unifies them, and security-classification and ownership are non-discriminating because this application has no PII and no identified owner. So the evidence is genuinely 2-1 with two heuristics silent -- not enough to settle a decision that shapes the whole target decomposition. Confidence in the recorded two-domain shape is 0.58; the stock-item domain itself is solid at 0.86. We are not making this call on the reviewer's behalf.",
+      "confidence": {
+        "level": "low",
+        "score": 0.58,
+        "rationale": "The separating signal (lifecycle) is strong, but the rule-set domain is latent -- it has no declared type, table or config file anywhere in the source, so calling it data rather than behaviour is an interpretation, not an observation."
+      },
+      "evidence_refs": [
+        {
+          "name": "Rules inlined as control flow, not data",
+          "detail": "All four item classes and every quality rule exist only as literal string comparisons and numeric guards inside the 74-line UpdateQuality() method (Program.cs:39-110). There is no enum, lookup table or configuration file for them.",
+          "artifact_path": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "name": "Lifecycle divergence",
+          "detail": "Item.SellIn and Item.Quality are written on every run (Program.cs:47,55,63,71,80,93,99,106); Item.Name and every rule threshold are fixed at compile time and never written.",
+          "artifact_path": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "name": "Independent classification of Name as control data",
+          "detail": "The data-flow trace traced only Quality and SellIn as flows and explicitly recorded Item.Name as 'read-only control data used only for string-equality routing', reaching the same reference-vs-transactional split by a different route.",
+          "artifact_path": "artifacts/discovery-structural-analysis/data-flow-trace.json"
+        },
+        {
+          "name": "Arbitration record",
+          "detail": "ARB-GRK-002 in this artifact records the heuristics weighed on each side and why the decision was escalated rather than settled.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "two-domains-rules-separate",
+          "label": "Keep two domains: treat the quality rules as a separate reference-data domain",
+          "description": "Accepts the artifact as recorded. The target design materializes item categories and their rules as first-class data with their own owner, and the stock-item domain consumes them through a rule-lookup data product. Costs an interface the legacy code never had; buys the ability to change merchandising policy without a rebuild, and a home for the documented-but-unimplemented Conjured rule."
+        },
+        {
+          "key": "one-domain-rules-are-behaviour",
+          "label": "Collapse to one domain: the rules are behaviour of the stock item",
+          "description": "Merges DD-GRK-002 into DD-GRK-001, giving a single Inventory Stock Item domain owning Item, the working set, and the rules as internal logic. Simpler and closer to the as-built code, and to the kata's canonical refactoring (item-type polymorphism). Gives up per-domain ownership of merchandising policy and leaves rule changes as code changes."
+        },
+        {
+          "key": "defer-pending-ownership",
+          "label": "Defer until a business owner is identified for each candidate domain",
+          "description": "Treats the missing owner (see 'domain-owner-unknown') as the real blocker: the business-owner heuristic is the strongest remaining separator and it is currently unevidenced. Holds the domain count open until ownership is confirmed, at the cost of blocking downstream data-modeling."
+        }
+      ]
+    },
+    {
+      "ask_slug": "target-binding-unassigned",
+      "action": "context",
+      "title": "Confirm the target service and disposition for this application -- we had to fill both with placeholders.",
+      "why": "These two fields bind the artifact to a target; if the placeholders are wrong, this domain model gets attributed to a service that was never meant to own it.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "This is a Discovery-line dispatch with no architecture-target-plan entry, so no target service and no modernization disposition have been decided for this application. The schema requires both fields, so we recorded target_service_id 'system' (the cross-cutting umbrella) and relationship 'refactor' (a single source app analysed as itself) as the least-asserting values available. Neither is a decision, and neither should be read as one. Separately and more fundamentally: the source tree is the public Gilded Rose retail-inventory kata, with no NAS, aviation or certification content anywhere in it, so whether this application belongs in the FAA portfolio at all is still unconfirmed.",
+      "reasoning": "We searched the whole workspace for a target-state mapping and found target_service_id mentioned in exactly three places, all of them untracked harness fixtures describing other applications. No target-services-catalog and no architecture-target-plan.json is staged for this dispatch. Rather than adopt the 'S1' that the fixture asserts for a different app, we used the umbrella value and flagged it. The FAA-ownership question is not new -- the catalog and db-archaeology steps both raised it and it remains open; we restate it because it decides whether these boundaries are worth carrying forward at all.",
+      "confidence": {
+        "level": "high",
+        "score": 0.92,
+        "rationale": "The absence of a target plan is directly verifiable, and the absence of FAA domain content in a 172-line kata is unambiguous and independently confirmed by two earlier steps."
+      },
+      "evidence_refs": [
+        {
+          "name": "No target plan staged",
+          "detail": "The step's input-artifacts directory contains only the dispatch context. Its declared_inputs name structural-analysis and database-schema-summary -- no architecture-target-plan entry and no target-services catalog.",
+          "artifact_path": "input-artifacts/discovery-data-domain-discovery/_dispatch-context-discovery-data-domain-discovery.json"
+        },
+        {
+          "name": "Only fixtures mention a target service",
+          "detail": "A workspace-wide search for target_service_id found it only in three untracked files under fixtures/, each describing a different application.",
+          "artifact_path": "fixtures/domain-boundary-ambiguous.json"
+        },
+        {
+          "name": "FAA mismatch already on the record",
+          "detail": "The catalog entry set business_domain to 'unclassified' and recorded that it could not be grounded in the FAA taxonomy; db-archaeology made the same recommendation to confirm FAA ownership before any downstream scope is sized.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "fixture-artifacts-disregarded",
+      "action": "verify",
+      "title": "Confirm the harness test fixtures in the source tree stay excluded from this domain model.",
+      "why": "One of those fixtures is a ready-made answer for this exact step describing a different application; had it been treated as evidence, this artifact would have reported three domains and a dozen entities that do not exist.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "The working tree contains untracked harness material under fixtures/, and we excluded all of it. fixtures/domain-boundary-ambiguous.json is the notable one: it is a pre-baked data-domains.json for an application called 'fixture-app', asserting target_service_id 'S1' and three domains -- Accounts, Billing, Reporting -- over entities such as User, Invoice and Dashboard, none of which exist anywhere in this source tree. It self-identifies as a mock result for the data-domain-patterns skill. Every domain, entity, owner and citation in this artifact derives from the 22 git-tracked application files instead. We believe that exclusion is correct and are asking you to confirm it.",
+      "reasoning": "The structural-analysis step established the scoping rule that references/, assets/, scripts/ and fixtures/ are harness material excluded from application source, and db-archaeology independently established that fixtures/default.json describes a fabricated 'Fixture Certification Portal' whose cert.* objects reference a schema that exists nowhere near this application. The domain-boundary fixture is the same class of file aimed at this step. Note that its content also conflicts with the governing profile binding for this dispatch, which is 'faa' and application d634afdb-97cc-4589-a080-5766d4f377d5 -- the declared binding wins, and the fixture's 'fixture-app' / 'S1' values were not adopted.",
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The fixture states its own purpose in its description field, its entities have zero overlap with the source tree, and two prior Discovery steps reached the same exclusion independently."
+      },
+      "evidence_refs": [
+        {
+          "name": "Fixture self-identifies as a mock for this skill",
+          "detail": "Carries skill_id 'data-domain-patterns' and scenario 'domain-boundary-ambiguous', and describes itself as kept out of the default scenario so mock and demo runs need not answer the ask before gate approval.",
+          "artifact_path": "fixtures/domain-boundary-ambiguous.json"
+        },
+        {
+          "name": "Fixture entities absent from the source",
+          "detail": "It names User, Account, Credential, Invoice, Payment, Subscription, Report, Dashboard and Export. The application declares exactly one type, Item, with three properties.",
+          "artifact_path": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "name": "Independent exclusion by two prior steps",
+          "detail": "db-archaeology recorded fixtures/default.json as describing a different fabricated application and recommended removing it from the analysis tree; structural-analysis excluded all 31 untracked harness files from every count and coupling finding.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "domain-owner-unknown",
+      "action": "context",
+      "title": "Who owns each of these data domains? We could not establish an owner for either.",
+      "why": "Domain ownership is one of the five boundary heuristics and the strongest remaining separator here, so the missing owner is also the reason the domain-count decision cannot be closed on evidence alone.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "Both domains carry owner 'UNKNOWN'. No organizational unit could be evidenced for either, so none was guessed. This step is supposed to produce domain ownership assignments and it cannot: the catalog entry records business_domain 'unclassified', no CMDB export or architecture documentation was supplied at onboarding, and the source tree contains no ownership metadata of any kind. We need the business owner for the inventory/stock data and, if the two-domain shape is kept, for the merchandising rule set.",
+      "reasoning": "We looked for ownership signals in the catalog entry, the structural analysis, the identity landscape and the source tree itself. The identity landscape found no user, role or organizational concept anywhere in the application, so ownership cannot be inferred from access control either -- which is also why the security-classification heuristic produced no boundary. With both the owner and security heuristics silent, only three of the five heuristics actually did work in this analysis.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The absence of ownership evidence is directly verifiable across four artifacts and the source tree; the uncertainty is about the answer, not about whether the gap is real."
+      },
+      "evidence_refs": [
+        {
+          "name": "No owner in the catalog entry",
+          "detail": "business_domain is 'unclassified', and open_questions records that no CMDB export or existing architecture documentation was provided, so business owner and criticality could not be confirmed.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        },
+        {
+          "name": "No organizational concept in the application",
+          "detail": "The identity landscape found no user record, credential store, role or directory integration anywhere in the 22 tracked files, so no owning unit can be inferred from authorization.",
+          "artifact_path": "artifacts/discovery-structural-analysis/identity-landscape.json"
+        },
+        {
+          "name": "Carried forward as a boundary violation",
+          "detail": "BV-GRK-004 records that neither domain has an owner and that the domain model therefore cannot yet support the ownership assignment this step is meant to produce.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "data-domains-recorded",
+      "action": "aware",
+      "title": "Data domain boundaries recorded: two domains over five logical entities, none of them persistent.",
+      "why": "This is the record of what the Data line will build on, including the fact that there is no existing data to migrate.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "Two data domains were derived for this application. Inventory Stock Item owns the Item entity and the run-scoped collection that holds it -- the item's name, days left to sell, and quality score. Item Quality Rule Set owns the item classification and the rules that move quality over time, which today exist only as hardcoded comparisons inside one method. One cross-domain reference runs between them: an item's name is matched against the rule set to pick its rules, which in a target design becomes a category-lookup data product. Neither domain has any physical footprint -- no table, file or queue -- so there is no data to migrate, only data to start keeping.",
+      "reasoning": "No inherited domain artifact and no database schema summary were available, so the domains were derived first-hand from the source rather than refined from an upstream input. The five boundary heuristics were applied to the in-memory model: changes-together and queried-together tie the item's attributes into one entity, lifecycle divergence separates the fixed rules from the nightly state, and the security and ownership heuristics produced no boundary because this application has no PII and no identified owner. Two of the four boundary violations carried forward are high severity: the rule set has no representation in the code at all, and the application discards every result it computes.",
+      "confidence": {
+        "level": "medium",
+        "score": 0.72,
+        "rationale": "The entity inventory is complete and directly verifiable -- there is only one declared type in 172 lines. The uncertainty is concentrated in how many domains those entities form, which is put to the reviewer as a separate decision."
+      },
+      "evidence_refs": [
+        {
+          "name": "Domain model and entity assignment matrix",
+          "detail": "Two domains, five logical entities, one declared and four implicit, zero persistent. Every entity assigned to exactly one domain, with no unassigned entities.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        },
+        {
+          "name": "Reviewer narrative",
+          "detail": "Prose walkthrough of the boundaries, the drivers behind them, and what the reviewer is being asked to settle.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.md"
+        },
+        {
+          "name": "The whole data model in one file",
+          "detail": "The Item class (Program.cs:115-122), the in-memory working set (Program.cs:7), and every rule and bound (Program.cs:39-110) are the complete data surface of this application.",
+          "artifact_path": "src/GildedRose.Console/Program.cs"
+        },
+        {
+          "name": "No persistence, confirmed three ways",
+          "detail": "db-archaeology, sqlserver-object-inventory and data-flow-trace each independently recorded a verified negative: zero tables, zero connection strings, zero ORM usage, zero persistence points and zero exit points.",
+          "artifact_path": "artifacts/discovery-structural-analysis/data-flow-trace.json"
+        }
+      ]
+    }
+  ]
+}
