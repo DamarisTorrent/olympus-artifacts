@@ -1,0 +1,217 @@
+{
+  "$schema": "olympus:artifact:shared-db-analysis:v1",
+  "skill_id": "decomposition-patterns",
+  "step": "shared-db-analysis",
+  "task_type": "shared-database-analysis",
+  "source_app_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "wave_id": "unassigned-discovery",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "generated_at": "2026-09-28",
+  "shared_database_clusters": [],
+  "cross_application_sharing_summary": {
+    "shared_database_clusters_identified": 0,
+    "databases_of_any_kind_identified": 0,
+    "other_applications_sharing_a_store_with_this_app": 0,
+    "shared_tables_identified": 0,
+    "shared_stored_procedures": 0,
+    "triggers_on_shared_tables": 0,
+    "materialized_views_used_as_integration_layer": 0,
+    "database_links": 0,
+    "oracle_rac_clusters_participated_in": 0,
+    "co_wave_constraints_arising_from_shared_data": 0,
+    "result_type": "measured-null-result",
+    "basis": "This application has NO database, therefore it participates in zero shared-database clusters and imposes zero shared-data co-waving constraints on any other application. The empty cluster list is a measured negative result, not an unfinished or failed scan.",
+    "verification_method": "Independent first-hand verification at this dispatch, not inherited assertion. A case-insensitive regex sweep over ALL git-tracked files (git ls-files, 22 files) for connectionstring, 'Data Source=', 'Initial Catalog', SqlConnection, SqlCommand, OleDb, Odbc, EntityFramework, System.Data.SqlClient, NHibernate, Dapper, DbContext, MongoClient, Oracle, 'CREATE TABLE', 'CREATE PROC', DBLINK and DB_LINK returned ZERO matches. No tracked .sql, .ddl, .dbml, .edmx or migration file exists. app.config contains only a startup/supportedRuntime element and no connectionStrings section.",
+    "only_state_store": "An in-memory IList<Item> constructed from six compiled-in literals at src/GildedRose.Console/Program.cs:14-27, mutated once by UpdateQuality(), and discarded at process exit. The sole persistence point in the application's data lineage is the Git source repository holding those literals.",
+    "oracle_rac_applicability": "The FAA shared-DB landscape guidance (schema-level analysis of Oracle RAC clusters, PL/SQL packages, triggers, DB-LINKs, materialized-view integration layers) is INAPPLICABLE to this application: there is no Oracle dependency, no PL/SQL, and no database engine of any kind. No part of that reference material was used to populate this artifact.",
+    "corroborating_artifacts": [
+      "discovery-structural-analysis/structural-analysis.json (database_tables 0, stored_procedures 0, database_triggers 0, connection_strings 0, external_integration_points 0; embedded database-schema-summary all-empty)",
+      "discovery-legacy-database-archaeologist/db-archaeology.json (database_engine 'none (no database engine present)'; schemas/tables/stored_procedures/triggers all empty)",
+      "discovery-structural-analysis/sqlserver-object-inventory.json (server_version 'none-detected' NULL RESULT; every inventory array empty)",
+      "discovery-legacy-data-flow-tracer/data-flow-trace.json (every flow's persistence_points resolve only to 'Gilded Rose source repository (Git)' and 'GildedRose.Console (process memory)' — no external system appears in any flow)",
+      "discovery-catalog/catalog.json (tech_stack.databases empty; table_count null with basis 'No connection strings, ORM configuration, or DB driver references found')"
+    ],
+    "evidence_paths": [
+      "src/GildedRose.Console/Program.cs:14-27",
+      "src/GildedRose.Console/app.config:1-6",
+      "src/GildedRose.Console/GildedRose.Console.csproj:37-41"
+    ]
+  },
+  "top_risks_for_decomposition": [
+    {
+      "risk_id": "RISK-01",
+      "severity": "high",
+      "category": "scope-validity",
+      "summary": "The zero-shared-database finding is bounded by this repository. If application_id d634afdb-97cc-4589-a080-5766d4f377d5 actually denotes a production system whose inventory state persists in a store owned by a DIFFERENT application, that store — and any cluster it sits on — is entirely invisible to a static walk of this tree and this artifact would understate coupling to zero.",
+      "why_it_matters": "A false-negative shared-DB result is the failure mode that causes late wave slippage: co-waving constraints discovered after sequencing are the top cause of cutover rework. Every other conclusion in this artifact is conditional on this one.",
+      "mitigation": "Obtain business-owner confirmation that this repository is the whole system and that no out-of-repo persistent store exists. Until confirmed, do not treat this application as unconstrained for wave-sequencing purposes.",
+      "affected_apps": ["d634afdb-97cc-4589-a080-5766d4f377d5"],
+      "evidence": "src/GildedRose.Console/Program.cs:14-27 (state is in-memory only, with no durability or audit trail); corroborated by structural-analysis.json database-schema-summary open_questions"
+    },
+    {
+      "risk_id": "RISK-02",
+      "severity": "high",
+      "category": "cutover-verifiability",
+      "summary": "There is no executable behavioural baseline for the 75-line UpdateQuality() rules engine. The test assembly declares no ProjectReference to the console project and its single test asserts Assert.True(true), while UpdateQuality is an instance method on the internal class Program reading a private field — so the rules are mechanically unreachable from any other assembly.",
+      "why_it_matters": "This platform's decisive-decomposition bias is explicitly conditional on the target being behaviour-verifiable. With zero coverage of the only business logic present, no data or logic cutover can be verified by replay, which removes the precondition the decisive path depends on.",
+      "mitigation": "Make the rules reachable (extract to a referencable library with a public entry point), then pin today's OBSERVED behaviour with characterisation tests — including the unimplemented 'Conjured' rule and the self-cancelling 'Quality = Quality - Quality' branch — BEFORE any transformation.",
+      "affected_apps": ["d634afdb-97cc-4589-a080-5766d4f377d5"],
+      "evidence": "src/GildedRose.Console/Program.cs:5, :7, :37 (internal class, private field, instance method); src/GildedRose.Tests/TestAssemblyTests.cs:7-11; src/GildedRose.Tests/GildedRose.Tests.csproj:42-58 (no ProjectReference)"
+    },
+    {
+      "risk_id": "RISK-03",
+      "severity": "medium",
+      "category": "input-contamination",
+      "summary": "An untracked fixtures/default.json sits in the source root describing a fabricated, unrelated application with a SQL Server schema (cert.application_header, cert.fee_schedule, trigger trg_ApplicationHeader_DeriveFee). A downstream consumer that greps the source root rather than the git-tracked file set could re-derive a database tier, and a shared-schema cluster, that this application does not have.",
+      "why_it_matters": "Ingesting fixture content as schema evidence would manufacture a decomposition workstream, and a phantom shared cluster, for a store that does not exist — inverting this artifact's central finding.",
+      "mitigation": "Scope all data-layer analysis to git-tracked paths. The untracked staging directories (references/, assets/, scripts/, fixtures/) are Discovery tooling material, not application source. Remove fixtures/default.json from the analysis working tree.",
+      "affected_apps": ["d634afdb-97cc-4589-a080-5766d4f377d5"],
+      "evidence": "fixtures/default.json (untracked); scripts/classify_procs_template.sql (untracked, the only .sql file in the tree, a non-executable dictionary-query template targeting an engine this app lacks)"
+    }
+  ],
+  "open_questions": [
+    "Does a persistent store exist outside this repository? The application has no durability, no audit trail and no record of a nightly inventory run, which is unusual for a system under portfolio management. If the real production system writes inventory to a database owned by another application, that store is invisible to this walk and this artifact's zero-cluster finding would not hold. This is RISK-01 and is the single question that most affects the result.",
+    "GOVERNING-PROFILE DISCREPANCY (recorded, not adopted): the authoritative governing profile for this task is `faa` and this artifact is written under it. The source tree contains no aviation, NAS, certification or FAA business-domain content — it is the publicly published Gilded Rose Refactoring Kata (README.md). Separately, src/GildedRose.Console/Properties/AssemblyInfo.cs:11 and :13 assert AssemblyCompany 'DSHS' and Copyright 'DSHS 2015', a different agency attribution embedded in the shipped assembly metadata. That attribution is reported as an observation about the artifact and is NOT treated as this task's governing profile. Stakeholder confirmation is needed that this application_id maps to an FAA-owned system.",
+    "WAVE BINDING ABSENT: the schema requires a non-empty wave_id, but this Discovery-grain dispatch supplied no wave context — no wave_id, no architecture-target-plan entry and no shared_db_cluster_map were present in the dispatch envelope or any staged input. The value 'unassigned-discovery' is an explicit placeholder recording that absence, NOT a real wave assignment. Rebind this artifact to a concrete wave once Rationalization assigns one.",
+    "NO WAVE-GLOBAL CLUSTER MAP AVAILABLE: no rationalization/wave-{wave_id}/shared-db-cluster-map.json was supplied, so cross-application contention could not be checked against the portfolio-grain authority. For this application the omission is immaterial — an application with no database cannot appear as a write owner on any cluster — but it does mean the 'no other app shares a store with this one' direction of the finding rests on this application's own evidence only, not on a portfolio-wide join.",
+    "DECLARED INPUT NOT STAGED IN THIS DISPATCH'S INPUT DIRECTORY: the dispatch context declares structural-analysis.json as a required input at discovery/{app_id}/structural-analysis.json, but the staged input-artifacts/discovery-shared-database-analysis/ directory contained only the dispatch-context file. The artifact was read instead from the sibling producer directory artifacts/discovery-structural-analysis/structural-analysis.json, and the declared second input 'database-schema-summary' was read from the embedded database-schema-summary block inside it. Flagged so the staging gap is visible and not mistaken for an unread input.",
+    "Because state is in-memory only, the documented invariants (Quality never negative, never above 50, Sulfuras fixed at 80) exist nowhere but as conditionals inside one loop at src/GildedRose.Console/Program.cs:53-106. If a persistent store is later identified, those would need re-checking as data constraints rather than code conditionals."
+  ],
+  "meta": {
+    "analysis_date": "2026-09-28",
+    "governing_profile": "faa",
+    "grain": "source-app",
+    "result_classification": "measured negative result (no database, no shared-database cluster)",
+    "inherited_input_state": "The inherited Discovery data-layer artifacts were present and internally consistent, not thin. Per the skill's empty-input rule the coupling topology was nevertheless re-derived FIRST-HAND at this dispatch from the source schema, connection configuration and structural analysis rather than mirroring an inherited empty artifact.",
+    "scoping_rule": "Only git-tracked paths (22 files) were treated as application source. The 31 untracked files under references/, assets/, scripts/ and fixtures/ are Discovery tooling material staged into the source root by the harness and were excluded from all counts and findings.",
+    "fixture_material_excluded": "Neither fixtures/default.json nor the skill's own fixtures/shared-db-analysis.json scenario content (which describes a synthetic 'fixture-app' with a CLU-CORE-01 / CORE_ODS cluster) was used to populate any field of this artifact. No cluster, table, app name or risk recorded here derives from fixture content.",
+    "rac_guidance_used": "no — no Oracle engine, no PL/SQL, no RAC cluster present"
+  },
+  "review_asks": [
+    {
+      "ask_slug": "out-of-repo-datastore-unconfirmed",
+      "action": "context",
+      "title": "Does this application store its inventory data anywhere outside its own code repository?",
+      "why": "If a production data store exists that this repository does not reference, it could sit on a shared database cluster and force this application into another application's migration wave — the opposite of the no-sharing conclusion recorded here.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "On the evidence in this repository the application has no database at all: it holds its six inventory items in memory, updates them once, and loses them when the process exits. It therefore shares no database with any other application and places no data-related constraints on migration scheduling. That conclusion is only valid if this repository is the entire system.",
+      "reasoning": "Four independent Discovery analyses and a first-hand sweep of all 22 tracked files agree: no connection string, no database driver, no ORM, no schema file, and no configuration section that could point at a database. The one signal that superficially suggests a data tier — a System.Data reference in the project file — is an unused Visual Studio template default with no matching code. The conflicting signal is contextual rather than technical: an application with no durability and no audit trail of its nightly run is an odd thing to find under portfolio management, which is why out-of-repository persistence is worth ruling out explicitly rather than assuming.",
+      "confidence": {
+        "level": "high",
+        "score": 0.92,
+        "rationale": "The absence is measured rather than assumed, verified first-hand, and corroborated by four upstream artifacts. Confidence is held below certainty only because static analysis cannot observe a store that the code does not reference."
+      },
+      "evidence_refs": [
+        {
+          "name": "In-memory-only state construction",
+          "detail": "Six inventory items built as compiled-in literals and discarded at process exit; no read from or write to any external store.",
+          "artifact_path": "src/GildedRose.Console/Program.cs:14-27"
+        },
+        {
+          "name": "Zero database markers across all tracked files",
+          "detail": "Case-insensitive sweep of all 22 git-tracked files for connection strings, SQL client types, ORMs and DDL keywords returned zero matches.",
+          "artifact_path": "src/GildedRose.Console/app.config:1-6"
+        },
+        {
+          "name": "Data lineage terminates in memory",
+          "detail": "Every traced data flow's persistence points resolve only to the Git source repository and process memory; no external system appears in any flow.",
+          "artifact_path": "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json"
+        },
+        {
+          "name": "Independent database archaeology null result",
+          "detail": "Database engine recorded as 'none (no database engine present)' with empty schema, table, procedure and trigger inventories.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "governing-profile-mismatch",
+      "action": "context",
+      "title": "Confirm this application record genuinely belongs to the FAA portfolio before its analysis is used downstream.",
+      "why": "Every downstream sizing, sequencing and compliance decision inherits this application's portfolio membership, so a mis-mapped record would propagate a phantom application through the whole migration plan.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "The governing profile for this task is FAA, but the source code is a publicly published programming exercise about an inn's inventory, with no aviation, air-traffic or certification content of any kind. The application's own compiled metadata additionally credits a different agency entirely. This is recorded as a discrepancy; the FAA profile has been applied as instructed and the artifact's own content was not changed to match the code's apparent origin.",
+      "reasoning": "The repository README identifies it as the widely used Gilded Rose Refactoring Kata, and the shipped assembly metadata asserts a 'DSHS' company and copyright. Neither is evidence of FAA ownership. The same discrepancy was independently flagged by the catalog and structural-analysis passes, so this is a consistent portfolio-level question rather than an artefact of one analysis.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The code's public provenance and its conflicting embedded agency attribution are both directly verifiable in the tree; only the intent behind the portfolio mapping is unknown."
+      },
+      "evidence_refs": [
+        {
+          "name": "Public kata provenance",
+          "detail": "README identifies the repository as the Gilded Rose Refactoring Kata, a retail-inn inventory exercise with no FAA domain content.",
+          "artifact_path": "README.md"
+        },
+        {
+          "name": "Conflicting agency attribution in shipped metadata",
+          "detail": "Assembly metadata asserts company 'DSHS' and copyright 'DSHS 2015' — a different agency from the governing profile.",
+          "artifact_path": "src/GildedRose.Console/Properties/AssemblyInfo.cs:11"
+        },
+        {
+          "name": "Independently flagged upstream",
+          "detail": "Catalog pass set business_domain to 'unclassified' because it could not be grounded in the FAA taxonomy, and raised the same mapping question.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "wave-binding-absent",
+      "action": "context",
+      "title": "No migration wave was supplied for this analysis — a placeholder was recorded instead.",
+      "why": "The artifact must state which wave's landscape it describes, and an unbound analysis can be mistakenly read against the wrong wave when sequencing decisions are made.",
+      "subject": {
+        "kind": "artifact",
+        "id": "shared-db-analysis.json",
+        "label": "Shared Database Analysis — Gilded Rose Refactoring Kata"
+      },
+      "assessment": "This analysis ran without any wave assignment, target plan entry, or portfolio-wide database cluster map in its inputs. A clearly-labelled placeholder was recorded in the wave field rather than inventing a wave number. The analysis itself is unaffected, because an application with no database cannot be entangled with any wave through shared data.",
+      "reasoning": "The dispatch envelope and every staged input were searched for wave and target-plan information and contained none — consistent with this being a Discovery-grain pass that runs before waves are assigned. The output format nonetheless requires a non-empty wave value, so the absence is recorded explicitly rather than silently filled.",
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "Directly verified: no wave or target-plan key appears anywhere in the dispatch context or staged inputs."
+      },
+      "evidence_refs": [
+        {
+          "name": "Dispatch context carries no wave or target-plan data",
+          "detail": "Declares only output schemas and two inputs; no wave id, target plan entry, or cluster map.",
+          "artifact_path": "input-artifacts/discovery-shared-database-analysis/_dispatch-context-discovery-shared-database-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "decomposition-strategy-recorded",
+      "action": "aware",
+      "title": "Shared-database analysis recorded: no database, and therefore no shared-database decomposition required.",
+      "subject": {
+        "kind": "artifact",
+        "id": "shared-db-analysis.json",
+        "label": "Shared Database Analysis — Gilded Rose Refactoring Kata"
+      },
+      "assessment": "The shared-database landscape for this application was analysed and the outcome is a measured null result: zero databases, zero shared-database clusters, zero shared tables, and zero co-waving constraints arising from shared data. No decomposition tactic — database-per-service, strangler fig, or database facade — applies, because there is no shared store to decompose. No facade is proposed and therefore no sunset date is required.",
+      "reasoning": "Recorded for the register so the null result is an explicit, evidenced decision rather than an apparent gap in the analysis. The substantive open question is not which tactic to choose but whether an out-of-repository store exists at all, which is raised separately as the leading ask.",
+      "confidence": {
+        "level": "high",
+        "score": 0.92,
+        "rationale": "Follows directly from the verified absence of any database; the residual uncertainty is entirely the out-of-repository question tracked in the leading ask."
+      },
+      "evidence_refs": [
+        {
+          "name": "Empty shared-database cluster list with measured basis",
+          "detail": "Zero clusters recorded, with the verification method and corroborating artifacts captured alongside the result.",
+          "artifact_path": "artifacts/discovery-shared-database-analysis/shared-db-analysis.json"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,263 @@
+{
+  "$schema": "olympus:artifact:decomposition-strategy:v1",
+  "skill_id": "decomposition-patterns",
+  "step": "decomposition-strategy",
+  "pass": "Discovery Pass 5 - shared-database-analysis",
+  "target_app_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "target_service_id": "system",
+  "relationship": "replatform",
+  "source_app_ids": ["d634afdb-97cc-4589-a080-5766d4f377d5"],
+  "source_app_names": ["Gilded Rose Refactoring Kata"],
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "target_name": "Gilded Rose Refactoring Kata (target state)",
+  "wave_id": "unassigned-discovery",
+  "analysis_date": "2026-09-28",
+  "generated_at": "2026-09-28",
+  "target_pattern": "no-decomposition-warranted (no database of any kind; zero shared-database clusters; nothing to decompose)",
+  "cluster_strategies": [],
+  "rac_guidance_applicable": false,
+  "rac_guidance_rationale": "The FAA Oracle RAC guidance (schema-level cluster analysis, PL/SQL packages, triggers on shared tables, materialized views as integration layers, DB-LINK dependency graphs, semantic-gap remediation at a facade boundary) presupposes an Oracle engine. This application has no database engine of any kind, no Oracle dependency and no PL/SQL. None of that guidance was applied or used to populate this artifact.",
+  "methodology_bias": "AI-native decisive decomposition. The bias is recorded for completeness but is NOT exercised here: the decision tree terminates before any tactic is selected, because the tree's subject — a shared database cluster — does not exist. Notably, the bias is also explicitly conditional on the target being behaviour-verifiable, and that precondition is currently UNMET for this application (see risks_and_mitigations RISK-02): the sole business-logic routine has zero executable coverage and is mechanically unreachable from outside its assembly.",
+  "decision_tree_trace": {
+    "step_0_preconditions": "Enumerate shared-database clusters this target participates in. Result: ZERO clusters, verified first-hand at this dispatch and corroborated by four upstream Discovery artifacts. See shared-db-analysis.json.",
+    "step_1_database_per_service": "NOT EVALUATED — vacuous. Database-per-service presupposes a database to split per service. There is no database and there is only one deployable.",
+    "step_2_strangler_fig": "NOT EVALUATED — vacuous. No legacy data store exists to redirect traffic away from, so no strangler_justification is required or offered.",
+    "step_3_db_facade": "NOT EVALUATED — vacuous. A facade exists to mediate a shared database across waves. With zero sharing applications and zero shared tables there is nothing to place a facade in front of. NO FACADE IS PROPOSED, therefore no facade sunset date is owed. This is recorded explicitly so the 'every facade must have a sunset date' rule is visibly satisfied by having no facade rather than by omission.",
+    "termination": "The decision tree terminates at step 0. No decomposition tactic is selected because the analysis subject does not exist. Emitting a tactic here would assert a shared-database decomposition that has no referent.",
+    "consolidation_path": "NOT APPLICABLE — relationship is not 'consolidate' and source_app_ids has a single entry, so the many-to-one consolidation table does not apply.",
+    "greenfield_path": "NOT APPLICABLE — relationship is not 'build'; this is an existing legacy application with real source, so source_app_ids is correctly non-empty."
+  },
+  "strategy_summary": {
+    "shared_database_clusters_to_decompose": 0,
+    "decomposition_tactics_selected": 0,
+    "facades_proposed": 0,
+    "facade_sunset_dates_owed": 0,
+    "dual_writes_proposed": 0,
+    "write_ownership_conflicts_to_resolve": 0,
+    "co_wave_constraints_arising_from_shared_data": 0,
+    "headline": "There is no shared database to decompose. The real decomposition work for this application is INTRA-ASSEMBLY design debt, not data-tier disentanglement, and it is owned by the code-structure line rather than by this skill.",
+    "where_the_actual_work_lives": "The structural analysis identified three intra-module boundaries and one explicit non-boundary: extract the item rules plus the domain model out of the entry-point class into a referencable library (cut first; it unblocks the others); leave composition, seed-data acquisition and invocation behind as a host concern; re-point the orphaned test assembly at the extracted library with characterisation tests before any refactor; and explicitly NO service decomposition is warranted at 172 lines, one deployable, zero endpoints, zero integrations and zero tables.",
+    "co_wave_constraints": {
+      "count": 0,
+      "basis": "An application with no database cannot be entangled with any other application through shared data, so it constrains nobody and is constrained by nobody on data grounds. An empty constraint set is a meaningful result here, not a missing analysis.",
+      "artifact_note": "No co-wave-constraints.json is emitted by this dispatch: the dispatch declared only shared-db-analysis.json and decomposition-strategy.json as outputs, and no wave binding was supplied to scope a constraints artifact to. The zero-constraint result is recorded here instead."
+    }
+  },
+  "write_ownership_after_cutover": {
+    "shared_tables_with_assigned_write_owner": 0,
+    "basis": "Write ownership is vacuous: there are no tables, therefore no shared table has contested or ambiguous write ownership, and no dual-write arrangement is proposed or needed. The singular-write-ownership rule is satisfied trivially.",
+    "in_process_state_note": "The application's only mutable state is an in-memory item list owned exclusively by the single console process for the duration of one run. The documented invariants (quality never negative, never above 50, Sulfuras pinned at 80) are enforced nowhere but as conditionals inside that one loop, and the domain model exposes unguarded public setters — so the invariants are code-level, not data-level, constraints. If a persistent store is ever introduced they must be re-established as data constraints."
+  },
+  "risks_and_mitigations": [
+    {
+      "risk_id": "RISK-01",
+      "severity": "high",
+      "category": "scope-validity",
+      "risk": "The zero-cluster basis for this strategy is bounded by the repository. If this application record denotes a production system whose inventory persists in a store owned by another application, that store is invisible to a static walk and this strategy would be resolving a decomposition problem that was never actually measured.",
+      "mitigation": "Obtain business-owner confirmation that this repository is the whole system. Until confirmed, do not treat this application as unconstrained for wave sequencing. This risk governs every other conclusion in this artifact.",
+      "owner": "business owner / portfolio",
+      "evidence": "src/GildedRose.Console/Program.cs:14-27"
+    },
+    {
+      "risk_id": "RISK-02",
+      "severity": "high",
+      "category": "cutover-verifiability",
+      "risk": "The platform's decisive-decomposition bias is conditional on behaviour verifiability, and that precondition is unmet. The sole business-logic routine has zero executable coverage: the test assembly declares no reference to the production project and asserts only a tautology, while the routine itself is an instance method on an internal class reading a private field, so it is mechanically uncallable from any other assembly.",
+      "mitigation": "Make the rules reachable by extracting them into a referencable library with a public entry point, then pin today's OBSERVED behaviour with characterisation tests — including the specified-but-unimplemented 'Conjured' rule and the self-cancelling zeroing branch — BEFORE any transformation. This is a precondition, not a follow-up.",
+      "owner": "code-structure / transformation line",
+      "evidence": "src/GildedRose.Console/Program.cs:5, :7, :37; src/GildedRose.Tests/TestAssemblyTests.cs:7-11; src/GildedRose.Tests/GildedRose.Tests.csproj:42-58"
+    },
+    {
+      "risk_id": "RISK-03",
+      "severity": "medium",
+      "category": "input-contamination",
+      "risk": "An untracked fixture file in the source root describes a fabricated application with a SQL Server schema, named tables and a trigger. A downstream consumer scanning the source root rather than the tracked file set could manufacture both a database tier and a phantom shared cluster, inverting this artifact's central finding.",
+      "mitigation": "Scope all data-layer analysis to git-tracked paths only. The four staged tooling directories are Discovery harness material, not application source.",
+      "owner": "downstream data-line consumers",
+      "evidence": "fixtures/default.json (untracked); scripts/classify_procs_template.sql (untracked)"
+    },
+    {
+      "risk_id": "RISK-04",
+      "severity": "medium",
+      "category": "target-runtime-gap",
+      "risk": "Both projects target .NET Framework 4.5/4.5.1 — Windows-only and past Microsoft end of support — while the FAA profile's substrate is a Linux container service and its .NET target is modern. There is no in-place path, and the entry point additionally blocks on an interactive keypress, which makes the process non-terminating under an orchestrator. This is the measured evidence behind the provisional 'replatform' relationship recorded above.",
+      "mitigation": "Confirm the disposition ruling (see the target-disposition-unresolved ask). Any target state requires a runtime port plus removal of the blocking keypress and the hard-coded seed data; both are host concerns rather than domain concerns.",
+      "owner": "disposition / architecture line",
+      "evidence": "src/GildedRose.Console/GildedRose.Console.csproj:12; src/GildedRose.Tests/GildedRose.Tests.csproj:15; src/GildedRose.Console/Program.cs:33; src/GildedRose.Console/Program.cs:16-26"
+    }
+  ],
+  "downstream_projection": {
+    "application_data_pattern": "NO VALUE SHOULD BE PROJECTED. The permitted vocabulary for application.data_pattern is database-per-service, strangler-fig, db-facade, dedicated and shared-read-only. Every one of those asserts a relationship to a database. This application has none, so any value drawn from that whitelist would be false. The correct projection is to leave the column unset rather than to pick the least-wrong token.",
+    "shared_db_cluster_rows": "ZERO ROWS. cluster_strategies is empty, so the projection has nothing to write to the shared_db_cluster table. No cluster_id / role / pattern triple is emitted, because inventing one would create a database-backed record for a cluster that does not exist.",
+    "projection_safety_note": "cluster_strategies is deliberately an EMPTY ARRAY rather than a placeholder entry. A placeholder carrying a synthetic cluster_id would satisfy the contract shape while writing a phantom cluster row into shared_db_cluster — the exact failure the required cluster_id / role / pattern contract exists to prevent.",
+    "no_shared_write_compliance": "Satisfied vacuously and verifiably: zero cluster strategies means zero non-owning write roles, so no transitional pattern and no sunset marker is owed. There is no end-state shared write anywhere in this artifact because there is no store to share.",
+    "activity": "persist_data_side_effects (runs after G-DT approval)"
+  },
+  "methodology_compliance": {
+    "decisive_decomposition_bias": "Not exercised — the decision tree terminates at preconditions with zero clusters. No tactic was selected.",
+    "strangler_fig_justification_required": false,
+    "strangler_fig_used": false,
+    "facade_used": false,
+    "facade_sunset_dates_declared": "N/A — no facade proposed, so no sunset date is owed. Recorded explicitly rather than left silent.",
+    "singular_write_ownership_respected": true,
+    "singular_write_ownership_basis": "Vacuous: zero tables, zero dual-writes proposed.",
+    "empty_inherited_input_rule": "Honoured. The inherited data-layer artifacts were present and mutually consistent rather than thin, but per the skill's rule the coupling topology was nevertheless re-derived FIRST-HAND at this dispatch from the source tree, project files and configuration — not mirrored from an inherited artifact. A first-hand regex sweep over all 22 git-tracked files independently confirmed the null result.",
+    "fixture_content_excluded": "No field in this artifact derives from fixtures/default.json or from this skill's own fixture scenario content (a synthetic 'fixture-app' with a CLU-CORE-01 / CORE_ODS cluster and three participating applications). No cluster, table, application name, phase plan or risk was copied from fixture material."
+  },
+  "inputs_consumed": {
+    "structural-analysis": "artifacts/discovery-structural-analysis/structural-analysis.json — read in full. Declared as a required input at discovery/{app_id}/structural-analysis.json but NOT staged into this dispatch's input-artifacts directory; read from the sibling producer directory instead.",
+    "database-schema-summary": "Read from the embedded database-schema-summary block inside structural-analysis.json (tables, relationships, stored_procedures, triggers, views and database_links all empty).",
+    "db-archaeology": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json — database_engine 'none (no database engine present)'.",
+    "sqlserver-object-inventory": "artifacts/discovery-structural-analysis/sqlserver-object-inventory.json — explicit null result; every inventory array empty.",
+    "data-flow-trace": "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json — all persistence points resolve to the Git source repository or process memory; no external system in any flow.",
+    "catalog": "artifacts/discovery-catalog/catalog.json — tech_stack.databases empty; table_count null.",
+    "first_hand_verification": "Independent regex sweep over all git-tracked files for connection strings, SQL/ODBC/OLE DB client types, ORMs, Oracle references and DDL keywords: zero matches. No tracked .sql/.ddl/.dbml/.edmx or migration file.",
+    "shared_db_cluster_map": "NOT SUPPLIED — no rationalization/wave-{wave_id}/shared-db-cluster-map.json was present. Immaterial for this target: an application with no database cannot appear as a write owner on any cluster. No global view was re-derived, per the skill's prohibition.",
+    "target_plan_entry": "NOT SUPPLIED — no architecture-target-plan.json entry was present in the dispatch envelope. target_service_id, relationship and source_app_ids were therefore derived as described in open_questions rather than read from an authoritative plan."
+  },
+  "references": {
+    "shared_db_analysis": "artifacts/discovery-shared-database-analysis/shared-db-analysis.json",
+    "shared_db_analysis_narrative": "artifacts/discovery-shared-database-analysis/shared-db-analysis.md",
+    "narrative_sidecar": "artifacts/discovery-shared-database-analysis/decomposition-strategy.md",
+    "faa_shared_db_landscape_guidance": "references/faa-shared-db-landscape.md — reviewed and found INAPPLICABLE (no Oracle, no PL/SQL, no RAC cluster)."
+  },
+  "metadata": {
+    "governing_profile": "faa",
+    "grain": "target",
+    "result_classification": "measured negative result — no decomposition tactic applicable",
+    "target_binding_provenance": "DERIVED, NOT AUTHORITATIVE. No architecture-target-plan entry was supplied to this Discovery-grain dispatch, so the four required target-binding fields were derived: target_app_id from the dispatch application id; target_service_id as 'system' because no service decomposition is warranted and no S-numbered target service has been defined; source_app_ids as the application itself; and relationship as the provisional 'replatform' described in open_questions. See the target-disposition-unresolved review ask."
+  },
+  "open_questions": [
+    "PROVISIONAL RELATIONSHIP VALUE — the single most important caveat on this artifact. No architecture-target-plan entry was supplied, so no disposition has actually been ruled for this application. The output format requires one of a fixed set of relationship values, and 'replatform' was recorded because it is the only value the measured evidence directly supports: the application targets an end-of-support, Windows-only runtime while the governing profile's substrate is a Linux container service on a modern .NET target, and the structural analysis found there is no in-place path. 'retain' was rejected because it would actively contradict that evidence. This is NOT a disposition decision by this skill — the retain / replatform / retire-replace ruling belongs to the disposition line and is raised as a decide ask.",
+    "TARGET SERVICE ID DERIVED: target_service_id is 'system' rather than an S-numbered service because no target service decomposition has been defined for this application, and the structural analysis explicitly recorded 'no-service-decomposition-warranted' at 172 lines, one deployable, zero endpoints, zero integrations and zero tables. Rebind if a target service catalogue later assigns one.",
+    "WAVE BINDING ABSENT: wave_id 'unassigned-discovery' is an explicit placeholder recording that no wave assignment, target plan entry or portfolio cluster map was supplied to this dispatch. It is not a real wave. Rebind once Rationalization assigns a wave.",
+    "GOVERNING-PROFILE DISCREPANCY (recorded, not adopted): the authoritative governing profile is `faa` and has been applied. The source tree contains no aviation, NAS or certification content — it is the publicly published Gilded Rose Refactoring Kata — and the shipped assembly metadata asserts a different agency ('DSHS'). Reported as an observation about the artifact, NOT adopted as this task's profile. Stakeholder confirmation of FAA ownership is needed before downstream consumption.",
+    "Does a persistent store exist outside this repository? If the real production system writes inventory to a database owned by another application, that store is invisible here and the zero-cluster basis for this strategy would not hold. This is RISK-01 and is the question that most affects the result.",
+    "The real decomposition work for this application is intra-assembly design debt — extracting the rules engine and domain model out of the entry-point class — and is owned by the code-structure line, not by shared-database decomposition. Confirm that the three intra-module boundaries recommended by the structural analysis are picked up there and not dropped because this data-line artifact reports nothing to do."
+  ],
+  "regeneration_note": "If a persistent or out-of-repository data store is later identified for this application (RISK-01), this artifact must be regenerated from scratch rather than amended: every conclusion here, including the zero-row database projection and the vacuous write-ownership result, rests on the premise that no database exists.",
+  "review_asks": [
+    {
+      "ask_slug": "target-disposition-unresolved",
+      "action": "decide",
+      "title": "What is the migration disposition for this application? A provisional value was recorded because none was supplied.",
+      "why": "The recorded disposition drives downstream sizing, sequencing and cost, and this one was derived from technical evidence rather than ruled by anyone — so an unreviewed placeholder could harden into a plan of record.",
+      "subject": {
+        "kind": "application",
+        "id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+        "label": "Gilded Rose Refactoring Kata"
+      },
+      "assessment": "No target plan was supplied to this analysis, so no disposition has actually been decided for this application. The output format requires one, and 'replatform' was recorded as the only option the evidence supports: the application runs on a Windows-only framework that left Microsoft support in 2016, while the target environment is a Linux container platform on a modern runtime, and there is no in-place upgrade path. Recording 'retain' would have contradicted that evidence. The decision itself belongs to the disposition line, not to this analysis.",
+      "reasoning": "Two measured facts force a platform move: the end-of-support Windows-only runtime, and an entry point that blocks waiting for a keypress, which would never terminate under a container orchestrator. Those point away from 'retain'. What the evidence cannot settle is the choice between porting a 172-line program and simply retiring or rewriting it — at this size, replacement may well cost less than a port, and that is a portfolio judgment about whether the capability is still needed at all, which no amount of code reading can answer.",
+      "confidence": {
+        "level": "medium",
+        "score": 0.5,
+        "rationale": "High confidence that a platform move is unavoidable and that 'retain' is wrong; low confidence in 'replatform' specifically over retire-or-replace, because that turns on business need and cost rather than on code evidence."
+      },
+      "evidence_refs": [
+        {
+          "name": "End-of-support Windows-only runtime",
+          "detail": "Both projects target .NET Framework 4.5/4.5.1, out of Microsoft support since January 2016, against a Linux container target substrate.",
+          "artifact_path": "src/GildedRose.Console/GildedRose.Console.csproj:12"
+        },
+        {
+          "name": "Process cannot run unattended",
+          "detail": "The entry point blocks on an interactive keypress, so the process never terminates under an orchestrator; the six inventory items are also hard-coded, making the run non-parameterisable.",
+          "artifact_path": "src/GildedRose.Console/Program.cs:33"
+        },
+        {
+          "name": "Size argues that replacement may beat porting",
+          "detail": "172 lines of code, one deployable, zero endpoints, zero integrations, zero tables.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "No target plan entry supplied",
+          "detail": "Dispatch context declares output schemas and two inputs only; no target plan entry, relationship or service id.",
+          "artifact_path": "input-artifacts/discovery-shared-database-analysis/_dispatch-context-discovery-shared-database-analysis.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "replatform",
+          "label": "Replatform — port to the modern runtime and keep the behaviour",
+          "description": "Confirms the provisional value. Requires a runtime port, removal of the blocking keypress, and externalising the hard-coded inventory. Characterisation tests become a hard prerequisite, since no behavioural baseline exists today."
+        },
+        {
+          "key": "retire-or-replace",
+          "label": "Retire or replace — do not port this codebase",
+          "description": "Treats a 172-line program as cheaper to rebuild or drop than to migrate. Needs confirmation that the capability is either no longer required or is already covered elsewhere in the portfolio."
+        },
+        {
+          "key": "retain",
+          "label": "Retain as-is",
+          "description": "Leaves the application on an unsupported Windows-only runtime. Contradicts the runtime evidence and would need an explicit accepted-risk ruling to stand."
+        },
+        {
+          "key": "defer-pending-ownership",
+          "label": "Defer until FAA ownership is confirmed",
+          "description": "Blocks the disposition until it is settled whether this application record belongs to the FAA portfolio at all. Appropriate if the portfolio-membership discrepancy is judged unresolved."
+        }
+      ]
+    },
+    {
+      "ask_slug": "no-data-pattern-projection",
+      "action": "verify",
+      "title": "Confirm that no database records should be written for this application after approval.",
+      "why": "Writing a data-tier record for an application that has no database would create a phantom database dependency that later planning would treat as real work.",
+      "subject": {
+        "kind": "artifact",
+        "id": "decomposition-strategy.json",
+        "label": "Decomposition Strategy — Gilded Rose Refactoring Kata"
+      },
+      "assessment": "Because this application has no database, the correct outcome is that nothing is recorded about its data tier: no data pattern on the application record, and no database cluster rows. Every available data-pattern value asserts some relationship to a database, so recording any of them would be inaccurate. The right action is to leave it unset rather than pick the least-wrong label.",
+      "reasoning": "The cluster strategy list was left genuinely empty rather than filled with a placeholder. A placeholder would have satisfied the required format while quietly creating a database cluster record for a cluster that does not exist — which is precisely the error that requiring those fields is meant to prevent. This ask exists because 'write nothing' is an easy outcome to mistake for 'the analysis produced nothing'.",
+      "confidence": {
+        "level": "high",
+        "score": 0.93,
+        "rationale": "Follows directly from the verified absence of any database and from the fixed data-pattern vocabulary, none of whose values can be true here."
+      },
+      "evidence_refs": [
+        {
+          "name": "Empty cluster strategy list",
+          "detail": "Zero cluster strategies, so the projection has no cluster identity, role or pattern to write.",
+          "artifact_path": "artifacts/discovery-shared-database-analysis/decomposition-strategy.json"
+        },
+        {
+          "name": "Verified absence of any database",
+          "detail": "Zero clusters, zero tables, zero connection strings, confirmed first-hand and by four upstream analyses.",
+          "artifact_path": "artifacts/discovery-shared-database-analysis/shared-db-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "decomposition-strategy-recorded",
+      "action": "aware",
+      "title": "Decomposition strategy recorded: no shared-database decomposition applies to this application.",
+      "subject": {
+        "kind": "artifact",
+        "id": "decomposition-strategy.json",
+        "label": "Decomposition Strategy — Gilded Rose Refactoring Kata"
+      },
+      "assessment": "The decomposition decision tree was run and terminated at its first step: with zero shared-database clusters there is nothing to decompose, so no tactic was selected. No database facade is proposed, and therefore no facade sunset date is owed. No shared writes and no dual-writes are proposed. The application places no data-related co-waving constraints on any other application. The genuine restructuring work for this application is internal code design debt and belongs to the code-structure line rather than to shared-database decomposition.",
+      "reasoning": "Recorded for the register so the empty result reads as an evidenced decision rather than an unfinished analysis, and so the facade-sunset and single-write-owner rules are visibly satisfied by having no facade and no shared write rather than by silence.",
+      "confidence": {
+        "level": "high",
+        "score": 0.92,
+        "rationale": "Determined by the verified zero-cluster input; the residual uncertainty is the out-of-repository store question tracked as RISK-01."
+      },
+      "evidence_refs": [
+        {
+          "name": "Decision tree terminated at preconditions",
+          "detail": "All three tactics recorded as not evaluated and vacuous, with the reason captured for each.",
+          "artifact_path": "artifacts/discovery-shared-database-analysis/decomposition-strategy.json"
+        },
+        {
+          "name": "Where the real work lives",
+          "detail": "Three intra-module boundaries plus an explicit 'no service decomposition warranted' finding, owned by the code-structure line.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        }
+      ]
+    }
+  ]
+}
