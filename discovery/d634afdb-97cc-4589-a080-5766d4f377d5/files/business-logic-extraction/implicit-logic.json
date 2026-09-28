@@ -1,0 +1,278 @@
+{
+  "$schema": "olympus:artifact:implicit-logic:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "Twenty-seven implicit behaviours recovered from src/GildedRose.Console/Program.cs — magic numbers, magic strings, ordering dependencies, absent guards and emergent rates. None is documented in the code: the application contains zero comments, zero named constants and zero configuration values, so every threshold below is an inline literal. Each entry names the business rule (BR-*) it underpins in business-logic.json. Implicit behaviour IS business logic here: because the quality ceiling, the zero floor and the demand thresholds exist only as inline literals inside one 75-line method, a re-implementation that does not reproduce them exactly changes what the inn charges for its stock.",
+  "count": 27,
+  "implicit_rules": [
+    {
+      "id": "IL-001",
+      "name": "magic_number_50_quality_ceiling",
+      "module": "gildedrose-console",
+      "category": "magic-number",
+      "description": "The maximum quality of 50 is an inline literal repeated at four comparison sites with no named constant. Changing the cap means finding all four. It is expressed as a pre-increment guard (Quality < 50) rather than a post-increment clamp, which is what makes the no-overshoot property of BR-007 hold.",
+      "source": "src/GildedRose.Console/Program.cs:53, :61, :69, :104",
+      "related_rules": ["BR-007"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-002",
+      "name": "magic_number_0_quality_floor",
+      "module": "gildedrose-console",
+      "category": "magic-number",
+      "description": "The zero floor is an inline literal in two guards (Quality > 0) rather than a clamp. It is correct only because every decrement step happens to be exactly 1; the first multi-step degradation added to this code will undershoot it. The guard tests > 0 rather than != 0, so a negative seeded Quality is never corrected upward.",
+      "source": "src/GildedRose.Console/Program.cs:43, :89",
+      "related_rules": ["BR-003", "BR-MISSING-001"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-003",
+      "name": "magic_number_11_ten_day_demand_threshold",
+      "module": "gildedrose-console",
+      "category": "off-by-one-threshold",
+      "description": "The literal 11 encodes the documented '10 days or less' correctly only because it is evaluated before the SellIn decrement. Read in isolation the line looks like an off-by-one bug; it is not, and 'fixing' it to 10 would change pricing on the boundary day. This is the single most likely mis-transcription in any re-implementation.",
+      "source": "src/GildedRose.Console/Program.cs:59",
+      "related_rules": ["BR-010", "BR-016"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-004",
+      "name": "magic_number_6_five_day_demand_threshold",
+      "module": "gildedrose-console",
+      "category": "off-by-one-threshold",
+      "description": "The literal 6 encodes the documented '5 days or less', again only under the pre-decrement reading of SellIn. Same trap as IL-003, one tier lower.",
+      "source": "src/GildedRose.Console/Program.cs:67",
+      "related_rules": ["BR-011", "BR-016"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-005",
+      "name": "magic_number_80_legendary_quality_exists_only_as_seed_data",
+      "module": "gildedrose-console",
+      "category": "magic-number",
+      "description": "The legendary quality of 80 appears exactly once in the application — in the seed list — and never in any rule. No code asserts it, defaults to it, or restores it, so the value survives only because nothing touches Sulfuras. It also sits 30 above the documented maximum of 50, making the two documented statements (README.md:23 and README.md:44-45) mutually inconsistent as written.",
+      "source": "src/GildedRose.Console/Program.cs:19",
+      "related_rules": ["BR-008"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-006",
+      "name": "degradation_rate_hardcoded_as_plus_or_minus_one",
+      "module": "gildedrose-console",
+      "category": "magic-number",
+      "description": "There is no rate variable anywhere. Every adjustment is literally 1, and 'twice as fast' is expressed by executing a second separate ±1 statement in the same iteration rather than by multiplying a rate. That design is why the Conjured requirement (BR-MISSING-001) cannot be added as a simple multiplier.",
+      "source": "src/GildedRose.Console/Program.cs:47, :55, :63, :71, :93, :106",
+      "related_rules": ["BR-002", "BR-013", "BR-014", "BR-MISSING-001"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-007",
+      "name": "business_category_encoded_in_the_display_name",
+      "module": "gildedrose-console",
+      "category": "magic-string",
+      "description": "The Item model has no category, type or SKU field. Three customer-facing display-name literals carry the entire business taxonomy across eight comparison sites, so the pricing rules are coupled to marketing copy: renaming the concert in the catalogue silently deletes its demand pricing.",
+      "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91",
+      "related_rules": ["BR-017"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-008",
+      "name": "case_sensitive_whole_string_matching_only",
+      "module": "gildedrose-console",
+      "category": "string-comparison-semantics",
+      "description": "All name tests use C# operator == / != on string, which is ordinal, case-sensitive, culture-insensitive whole-string equality. There is no Trim, ToLower, StartsWith, Contains or comparer anywhere. 'aged brie', 'Aged Brie ' and 'AGED BRIE' are all standard goods.",
+      "source": "src/GildedRose.Console/Program.cs:41, :45, :57, :85, :87, :91",
+      "related_rules": ["BR-017", "BR-023"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-009",
+      "name": "sell_in_read_before_and_after_its_own_decrement",
+      "module": "gildedrose-console",
+      "category": "ordering-dependency",
+      "description": "The highest-risk implicit behaviour in the application. Lines 59 and 67 read SellIn before the line 80 decrement; line 83 reads it after. One field therefore means two different things within one iteration, and the most natural cleanup a developer would make — hoisting the decrement — silently shifts outcomes on the boundary days SellIn 11, 6 and 0. No test detects it, because the only test asserts Assert.True(true).",
+      "source": "src/GildedRose.Console/Program.cs:59, :67, :80, :83",
+      "related_rules": ["BR-016", "BR-010", "BR-011", "BR-013"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-010",
+      "name": "self_cancelling_expression_used_instead_of_zero_assignment",
+      "module": "gildedrose-console",
+      "category": "obfuscated-idiom",
+      "description": "Expired backstage passes are zeroed by `Items[i].Quality = Items[i].Quality - Items[i].Quality` rather than `= 0`. Any reader or tool searching for an assignment of literal zero will miss the rule entirely, and the expression reads like arithmetic rather than a business cliff.",
+      "source": "src/GildedRose.Console/Program.cs:99",
+      "related_rules": ["BR-015"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-011",
+      "name": "ceiling_re_tested_before_every_single_increment",
+      "module": "gildedrose-console",
+      "category": "emergent-invariant",
+      "description": "Because the Quality < 50 test is repeated before each of the three backstage increments rather than applied once at the end, a pass gaining +3 saturates at exactly 50 and can never reach 51 or 52. A re-implementation that computes a delta first and clamps afterwards produces the same result here, but only by coincidence of the numbers.",
+      "source": "src/GildedRose.Console/Program.cs:53, :61, :69",
+      "related_rules": ["BR-007", "BR-010", "BR-011"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-012",
+      "name": "concert_day_bonus_computed_then_discarded",
+      "module": "gildedrose-console",
+      "category": "dead-computation",
+      "description": "On the concert day a pass earns up to +3 at lines 55/63/71 and is then zeroed at line 99 in the same iteration. The work is wasted, and it repeats on every later day too: an already-worthless pass climbs to 3 and is reset to 0 each run. Net external behaviour is unaffected, but any re-implementation that logs, audits, publishes events or commits between phases would expose the non-zero intermediate as a real value.",
+      "source": "src/GildedRose.Console/Program.cs:53-73, :99",
+      "related_rules": ["BR-015", "BR-009", "BR-010", "BR-011"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-013",
+      "name": "aged_brie_plus_two_per_day_is_emergent_not_stated",
+      "module": "gildedrose-console",
+      "category": "emergent-rate",
+      "description": "Nothing in code or documentation says Aged Brie appreciates faster once expired. The +2 per day arises because the generic appreciation at line 55 and the expiry-branch appreciation at line 106 both fire in the same iteration. A reader checking the documentation alone would never predict it.",
+      "source": "src/GildedRose.Console/Program.cs:55, :106",
+      "related_rules": ["BR-014"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-014",
+      "name": "legendary_sell_in_frozen_so_expiry_branch_is_unreachable",
+      "module": "gildedrose-console",
+      "category": "emergent-invariant",
+      "description": "Because Sulfuras is never decremented and is seeded at SellIn 0, its SellIn never becomes negative and it never enters the expiry branch. Its immutability is therefore doubly protected in practice — and one of those protections is invisible, resting on a seed value rather than on logic.",
+      "source": "src/GildedRose.Console/Program.cs:19, :78-81, :83",
+      "related_rules": ["BR-004", "BR-005"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-015",
+      "name": "legendary_guard_in_expiry_branch_is_data_dependent_dead_code",
+      "module": "gildedrose-console",
+      "category": "conditional-dead-code",
+      "description": "The Sulfuras guard at line 91 is never evaluated for the seeded inventory (see IL-014), so it looks removable. It is not: a Sulfuras seeded with a negative SellIn reaches line 91 every single day, and that guard is the only thing preventing its quality from degrading. Whether the line is dead depends entirely on seed data — an invisible coupling between the rules engine and the item list.",
+      "source": "src/GildedRose.Console/Program.cs:91",
+      "related_rules": ["BR-004"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-016",
+      "name": "one_invocation_equals_one_business_day_with_no_clock",
+      "module": "gildedrose-console",
+      "category": "temporal-semantics",
+      "description": "No DateTime, timer, scheduler or date parameter exists anywhere in the application. 'A day' is defined purely as one call to UpdateQuality, and 'the sell-by date' is a countdown integer with no calendar anchor. Nothing can answer which real-world date an item expires on.",
+      "source": "src/GildedRose.Console/Program.cs:31",
+      "related_rules": ["BR-020", "BR-001"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-017",
+      "name": "repeat_execution_is_not_idempotent_and_is_unguarded",
+      "module": "gildedrose-console",
+      "category": "missing-guard",
+      "description": "Running the revaluation twice advances the inventory two days. There is no run-date record, no already-processed check and no lock, so in any variant of this system that did persist its results, a retry after a partial failure would double-apply a day of depreciation with no way to detect it.",
+      "source": "src/GildedRose.Console/Program.cs:31",
+      "related_rules": ["BR-020"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-018",
+      "name": "computed_results_are_never_emitted_anywhere",
+      "module": "gildedrose-console",
+      "category": "missing-output",
+      "description": "The only console output in the entire application is the literal \"OMGHAI!\", printed BEFORE the calculation runs. No quality value is ever printed, returned, written or persisted, and the in-memory list dies with the process. The business output of the nightly revaluation is, today, unobservable.",
+      "source": "src/GildedRose.Console/Program.cs:10, :33-35",
+      "related_rules": ["BR-020"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-019",
+      "name": "int_typing_admits_impossible_business_values",
+      "module": "gildedrose-console",
+      "category": "type-coercion",
+      "description": "SellIn and Quality are plain System.Int32 auto-properties with public setters and no range attribute or clamp, so Quality -100 or 9999 constructs cleanly and is never normalized. Every business constraint lives in the loop, not the type, so the model cannot be trusted by any future consumer.",
+      "source": "src/GildedRose.Console/Program.cs:119, :121",
+      "related_rules": ["BR-018", "BR-008"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-020",
+      "name": "sell_in_decrements_without_a_floor_or_archival_path",
+      "module": "gildedrose-console",
+      "category": "unbounded-value",
+      "description": "Only the sign of SellIn is ever tested, never its magnitude, so it falls indefinitely: -1, -2, -365. Nothing archives, writes off or removes a long-expired item, and no overflow guard exists. A downstream store using a narrower integer type would overflow where this code does not.",
+      "source": "src/GildedRose.Console/Program.cs:80, :83",
+      "related_rules": ["BR-022"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-021",
+      "name": "null_name_never_throws_and_silently_prices_as_standard_goods",
+      "module": "gildedrose-console",
+      "category": "null-handling",
+      "description": "C# string equality is null-safe, so a null Name does not raise at any of the eight comparison sites — it simply satisfies every 'is not a special item' test and falls through to the default depreciation path. The failure is silent: no exception, no log, no validation error. A default-constructed Item (Name null, SellIn 0, Quality 0) is processed as ordinary merchandise.",
+      "source": "src/GildedRose.Console/Program.cs:41, :45, :85, :87, :91",
+      "related_rules": ["BR-023", "BR-018"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-022",
+      "name": "rules_engine_is_unreachable_from_outside_the_assembly",
+      "module": "gildedrose-console",
+      "category": "accessibility-constraint",
+      "description": "UpdateQuality is declared public but sits on the internal class Program and operates on the private instance field Items, so its effective accessibility is assembly-internal and it takes no parameters. The business rules cannot be invoked, tested or reused by any other assembly — which is precisely why the test project, though present, cannot exercise them.",
+      "source": "src/GildedRose.Console/Program.cs:5, :7, :37",
+      "related_rules": ["BR-024"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-023",
+      "name": "inventory_model_has_no_quantity_or_stock_count",
+      "module": "gildedrose-console",
+      "category": "domain-model-gap",
+      "description": "An 'inventory system' with no quantity field. Each Item instance represents exactly one unit, duplicates are not aggregated, and two identical goods with different quality must exist as two list entries. Nothing in the code can express 'twelve wheels of Aged Brie'.",
+      "source": "src/GildedRose.Console/Program.cs:115-122",
+      "related_rules": ["BR-018", "BR-019"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-024",
+      "name": "conjured_never_compared_despite_a_conjured_item_in_stock",
+      "module": "gildedrose-console",
+      "category": "specified-but-absent",
+      "description": "The string \"Conjured\" appears in the seed list (Program.cs:26) and in the business documentation (README.md:34) but nowhere in the rules. The item is silently priced as standard goods, so the documented doubled degradation is simply not happening. Recorded here as well as at BR-MISSING-001 because the absence is only visible by comparing three separate places.",
+      "source": "src/GildedRose.Console/Program.cs:26; absent from src/GildedRose.Console/Program.cs:37-111; required by README.md:34",
+      "related_rules": ["BR-MISSING-001", "BR-017"],
+      "requires_sme_review": true
+    },
+    {
+      "id": "IL-025",
+      "name": "no_audit_trail_of_any_valuation_change",
+      "module": "gildedrose-console",
+      "category": "missing-audit",
+      "description": "The revaluation mutates Quality at 13 sites and SellIn at 1 site with no before/after capture, no logging framework, no event and no versioning. Once a day is applied, the previous valuation is unrecoverable — there is no way to answer why an item is worth what it is worth.",
+      "source": "src/GildedRose.Console/Program.cs:37-111",
+      "related_rules": ["BR-024", "BR-020"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-026",
+      "name": "every_rule_in_this_catalog_is_untested",
+      "module": "gildedrose-tests",
+      "category": "coverage-gap",
+      "description": "The test project contains one method whose body is Assert.True(true) and holds no reference to GildedRose.Console, so behavioural coverage of the rules engine is exactly zero. This is what makes every implicit behaviour above dangerous rather than merely untidy: nothing would fail if a re-implementation changed any of them. A golden-master test over the seeded items is the prerequisite for touching this code.",
+      "source": "src/GildedRose.Tests/TestAssemblyTests.cs:7-11",
+      "related_rules": ["BR-016"],
+      "requires_sme_review": false
+    },
+    {
+      "id": "IL-027",
+      "name": "index_based_in_place_mutation_of_a_shared_list",
+      "module": "gildedrose-console",
+      "category": "mutation-pattern",
+      "description": "The loop re-reads Items[i] on roughly 25 separate lines instead of binding a local, and mutates the caller's list in place through public setters. Items.Count is re-evaluated every iteration, so concurrent modification is unsupported, and there is no lock, snapshot or copy — a rule change must be applied consistently across all ~25 access sites.",
+      "source": "src/GildedRose.Console/Program.cs:39-110",
+      "related_rules": ["BR-001", "BR-018"],
+      "requires_sme_review": false
+    }
+  ]
+}

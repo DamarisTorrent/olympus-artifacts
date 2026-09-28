@@ -1,0 +1,219 @@
+{
+  "$schema": "olympus:artifact:state-machines:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "description": "Five state machines recovered from src/GildedRose.Console/Program.cs:37-111. IMPORTANT PROVENANCE NOTE: none of these is declared in the code. The application has no status field, no enum, no state column and no transition table — data-flow-trace.json confirms Item.Name is read-only control data and the only two data flows are the integers Quality and SellIn. Every machine below is RECONSTRUCTED from the thresholds that the nested conditionals test, which is why each state is labelled with the integer predicate that defines it. They are offered as the behavioural model a re-implementation should make explicit, not as structures a reader will find named in the source.",
+  "state_machines": [
+    {
+      "name": "ItemSellByLifecycle",
+      "description": "The master machine every non-legendary item traverses, driven solely by the sign of SellIn. It has exactly one behavioural boundary: the day SellIn goes below zero, after which the past-sell-by rule set is applied in addition to the pre-sell-by rules. The state is not stored; it is recomputed from SellIn on every iteration.",
+      "modules": ["gildedrose-console"],
+      "states": [
+        "WithinSellByWindow (SellIn >= 1 at start of day)",
+        "FinalSellDay (SellIn == 0 at start of day)",
+        "PastSellBy (SellIn <= -1 at start of day; absorbing — no rule ever returns an item to an earlier state)"
+      ],
+      "transitions": [
+        {
+          "from": "WithinSellByWindow",
+          "to": "WithinSellByWindow",
+          "trigger": "UpdateQuality invoked while SellIn >= 2",
+          "effect": "SellIn decrements by 1; only the pre-sell-by quality rules apply",
+          "governed_by": ["BR-012"],
+          "source": "src/GildedRose.Console/Program.cs:80"
+        },
+        {
+          "from": "WithinSellByWindow",
+          "to": "FinalSellDay",
+          "trigger": "UpdateQuality invoked while SellIn == 1",
+          "effect": "SellIn becomes 0. The expiry test at line 83 is FALSE (0 is not < 0), so this is the last day of single-rate treatment — the most commonly mis-implemented boundary in the whole algorithm",
+          "governed_by": ["BR-012", "BR-016"],
+          "source": "src/GildedRose.Console/Program.cs:80-83"
+        },
+        {
+          "from": "FinalSellDay",
+          "to": "PastSellBy",
+          "trigger": "UpdateQuality invoked while SellIn == 0",
+          "effect": "SellIn becomes -1 and the expiry test at line 83 becomes TRUE, so a second quality adjustment is applied in the same iteration: -1 more for standard goods, +1 more for Aged Brie, or zeroing for Backstage passes",
+          "governed_by": ["BR-012", "BR-013", "BR-014", "BR-015"],
+          "source": "src/GildedRose.Console/Program.cs:83"
+        },
+        {
+          "from": "PastSellBy",
+          "to": "PastSellBy",
+          "trigger": "UpdateQuality invoked while SellIn <= -1",
+          "effect": "SellIn decrements without limit; the expired rule set applies every day. There is no archival, removal or write-off transition out of this state",
+          "governed_by": ["BR-013", "BR-014", "BR-015", "BR-022"],
+          "source": "src/GildedRose.Console/Program.cs:80-109"
+        }
+      ]
+    },
+    {
+      "name": "StandardGoodsValuationLifecycle",
+      "description": "The quality trajectory of any item that matches none of the three special names. Two rates (-1 per day, then -2 per day) and one absorbing floor. Applies to +5 Dexterity Vest, Elixir of the Mongoose, and — incorrectly, per BR-MISSING-001 — Conjured Mana Cake.",
+      "modules": ["gildedrose-console"],
+      "states": [
+        "DepreciatingSingleRate (SellIn >= 0 after decrement, Quality >= 1; -1 per day)",
+        "DepreciatingDoubleRate (SellIn < 0 after decrement, Quality >= 1; -2 per day, or -1 when Quality is exactly 1)",
+        "Worthless (Quality == 0; absorbing — no rule ever raises a standard good's quality)"
+      ],
+      "transitions": [
+        {
+          "from": "DepreciatingSingleRate",
+          "to": "DepreciatingDoubleRate",
+          "trigger": "SellIn falls below 0",
+          "effect": "A second guarded decrement at line 93 executes in the same iteration as the first at line 47",
+          "governed_by": ["BR-013"],
+          "source": "src/GildedRose.Console/Program.cs:83-96"
+        },
+        {
+          "from": "DepreciatingSingleRate",
+          "to": "Worthless",
+          "trigger": "Quality reaches 0 while still within the sell-by window",
+          "effect": "The Quality > 0 guard at line 43 blocks all further decrements",
+          "governed_by": ["BR-003"],
+          "source": "src/GildedRose.Console/Program.cs:43"
+        },
+        {
+          "from": "DepreciatingDoubleRate",
+          "to": "Worthless",
+          "trigger": "Quality reaches 0. Note the asymmetry: from Quality 1 the net loss for the day is 1, not 2, because the line 89 guard blocks the second decrement",
+          "effect": "Both guards (lines 43 and 89) block all further decrements",
+          "governed_by": ["BR-003", "BR-013"],
+          "source": "src/GildedRose.Console/Program.cs:89"
+        },
+        {
+          "from": "Worthless",
+          "to": "Worthless",
+          "trigger": "Any further invocation",
+          "effect": "Quality stays 0; SellIn keeps falling. The item remains in inventory indefinitely",
+          "governed_by": ["BR-003", "BR-022"],
+          "source": "src/GildedRose.Console/Program.cs:43-93"
+        }
+      ]
+    },
+    {
+      "name": "AppreciatingGoodsValuationLifecycle",
+      "description": "The quality trajectory of \"Aged Brie\". Mirror image of the standard-goods machine: two appreciation rates and an absorbing ceiling. The acceleration after the sell-by date is emergent — the business documentation states only that Brie improves with age, never that it improves faster once expired.",
+      "modules": ["gildedrose-console"],
+      "states": [
+        "AppreciatingSingleRate (SellIn >= 0 after decrement, Quality <= 49; +1 per day)",
+        "AppreciatingDoubleRate (SellIn < 0 after decrement, Quality <= 49; +2 per day, or +1 when Quality is exactly 49)",
+        "Saturated (Quality == 50; absorbing under all code paths — nothing ever reduces Aged Brie's quality)"
+      ],
+      "transitions": [
+        {
+          "from": "AppreciatingSingleRate",
+          "to": "AppreciatingDoubleRate",
+          "trigger": "SellIn falls below 0",
+          "effect": "A second guarded increment at line 106 executes in the same iteration as the first at line 55",
+          "governed_by": ["BR-014"],
+          "source": "src/GildedRose.Console/Program.cs:102-108"
+        },
+        {
+          "from": "AppreciatingSingleRate",
+          "to": "Saturated",
+          "trigger": "Quality reaches 50 while still within the sell-by window",
+          "effect": "The Quality < 50 guard at line 53 blocks all further increments",
+          "governed_by": ["BR-007"],
+          "source": "src/GildedRose.Console/Program.cs:53"
+        },
+        {
+          "from": "AppreciatingDoubleRate",
+          "to": "Saturated",
+          "trigger": "Quality reaches 50. From Quality 49 the net gain for the day is 1, not 2, because the line 104 guard blocks the second increment",
+          "effect": "Both guards (lines 53 and 104) block all further increments",
+          "governed_by": ["BR-007", "BR-014"],
+          "source": "src/GildedRose.Console/Program.cs:104"
+        },
+        {
+          "from": "Saturated",
+          "to": "Saturated",
+          "trigger": "Any further invocation",
+          "effect": "Quality stays 50 forever; SellIn keeps falling without limit",
+          "governed_by": ["BR-007", "BR-022"],
+          "source": "src/GildedRose.Console/Program.cs:53-106"
+        }
+      ]
+    },
+    {
+      "name": "BackstagePassValuationLifecycle",
+      "description": "The richest machine in the application: four demand tiers selected by SellIn thresholds, then a cliff to zero. Every tier boundary is evaluated against the PRE-decrement SellIn (BR-016), which is the only reason the literals 11 and 6 express '10 days or less' and '5 days or less'. Note the final self-loop: after the concert the pass is not removed from inventory, so every subsequent day it accrues up to +3 and is then zeroed again — churn that is invisible from outside the iteration but real inside it.",
+      "modules": ["gildedrose-console"],
+      "states": [
+        "BaseDemand (SellIn >= 11 at start of day; +1 per day)",
+        "TenDayWindow (6 <= SellIn <= 10 at start of day; +2 per day)",
+        "FiveDayWindow (1 <= SellIn <= 5 at start of day; +3 per day)",
+        "ConcertDay (SellIn == 0 at start of day; +3 computed, then discarded — net Quality 0)",
+        "Worthless (SellIn <= -1; net Quality 0, absorbing in observable terms)",
+        "Saturated (Quality == 50; reachable from any of the appreciating tiers and exited only by the concert-day cliff)"
+      ],
+      "transitions": [
+        {
+          "from": "BaseDemand",
+          "to": "TenDayWindow",
+          "trigger": "SellIn < 11 at the moment line 59 is evaluated",
+          "effect": "The 10-day bonus engages: total +2 for the day",
+          "governed_by": ["BR-009", "BR-010", "BR-016"],
+          "source": "src/GildedRose.Console/Program.cs:59-65"
+        },
+        {
+          "from": "TenDayWindow",
+          "to": "FiveDayWindow",
+          "trigger": "SellIn < 6 at the moment line 67 is evaluated",
+          "effect": "The 5-day bonus stacks on top: total +3 for the day",
+          "governed_by": ["BR-009", "BR-010", "BR-011", "BR-016"],
+          "source": "src/GildedRose.Console/Program.cs:67-73"
+        },
+        {
+          "from": "FiveDayWindow",
+          "to": "ConcertDay",
+          "trigger": "SellIn reaches 0 at start of day",
+          "effect": "+3 is applied at lines 55/63/71, SellIn becomes -1 at line 80, and line 99 then sets Quality to 0 via Quality - Quality. The day's entire gain is discarded",
+          "governed_by": ["BR-011", "BR-012", "BR-015"],
+          "source": "src/GildedRose.Console/Program.cs:97-100"
+        },
+        {
+          "from": "ConcertDay",
+          "to": "Worthless",
+          "trigger": "The same iteration completes",
+          "effect": "Quality is 0 and SellIn is negative. The pass stays in inventory; nothing removes it",
+          "governed_by": ["BR-015", "BR-022"],
+          "source": "src/GildedRose.Console/Program.cs:99"
+        },
+        {
+          "from": "Worthless",
+          "to": "Worthless",
+          "trigger": "Any further invocation",
+          "effect": "IMPLICIT CHURN: the pass is still matched by the appreciation branch at line 41, so Quality rises 0 -> 1 -> 2 -> 3 across lines 55, 63 and 71 (both thresholds are satisfied by a negative SellIn), and line 99 then zeroes it again. Net observable Quality remains 0, but a mid-iteration observer, a logger, or any re-implementation that splits these phases across transactions would see the non-zero intermediate",
+          "governed_by": ["BR-009", "BR-010", "BR-011", "BR-015"],
+          "source": "src/GildedRose.Console/Program.cs:53-99"
+        },
+        {
+          "from": "TenDayWindow",
+          "to": "Saturated",
+          "trigger": "Quality reaches 50",
+          "effect": "Each of the three increments is independently gated on Quality < 50, so the pass lands on exactly 50 and never overshoots",
+          "governed_by": ["BR-007"],
+          "source": "src/GildedRose.Console/Program.cs:53-72"
+        },
+        {
+          "from": "Saturated",
+          "to": "Worthless",
+          "trigger": "SellIn falls below 0",
+          "effect": "A pass worth the maximum 50 drops to 0 in one day — the largest single-day value change the application can produce",
+          "governed_by": ["BR-015"],
+          "source": "src/GildedRose.Console/Program.cs:99"
+        }
+      ]
+    },
+    {
+      "name": "LegendaryItemStasis",
+      "description": "DEGENERATE BY DESIGN — recorded because its emptiness is the finding. \"Sulfuras, Hand of Ragnaros\" has exactly one state and no transitions: its Quality is exempted at both decrement sites and its SellIn is never decremented, so it cannot leave the state it is seeded in. Seeded at SellIn 0 / Quality 80, it never even reaches the expiry branch, which means the legendary guard at line 91 is dead code for the seeded data and load-bearing only for a Sulfuras seeded with a negative SellIn.",
+      "modules": ["gildedrose-console"],
+      "states": [
+        "PermanentStasis (SellIn and Quality both frozen at their seeded values, 0 and 80)"
+      ],
+      "transitions": []
+    }
+  ]
+}

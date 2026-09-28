@@ -1,0 +1,22 @@
+{
+  "step": "business-logic-extraction",
+  "artifacts": [
+    "Done. Four declared outputs, nothing else in the directory \u2014 no scratch intermediates.\n\n**Outputs** (all three JSON files validated clean against their binding schemas with `jsonschema` Draft 2020-12, no nulls, no dangling rule references, all `totals` cross-checked against actual array contents):\n\n| File | Contents |\n|---|---|\n| `business-logic.json` | 25 rules \u2014 10 calculation, 8 constraint, 4 workflow, 2 validation, 1 authorization |\n| `state-machines.json` | 5 reconstructed machines |\n| `implicit-logic.json` | 27 implicit behaviours (used the required key `implicit_rules`, per LIVE-10) |\n| `business-logic.md` | Report with 3 Mermaid diagrams, findings, regulatory determination |\n\n**What the code actually is:** 172 LOC, 4 `.cs` files, 2 modules. The entire business logic is 75 lines in `Program.cs:37-111`. No database tier, no validation layer, no authorization logic. I extracted in a single pass (the skill's small-codebase exemption) and instead spent the parallelism on two verification sub-agents \u2014 one swept every non-`src/` file, one digested the six Pass 1 artifacts.\n\n**Four findings worth your attention:**\n\n- **BR-MISSING-001 \u2014 a documented rule isn't implemented.** `README.md:34` requires Conjured items to degrade twice as fast, a \"Conjured Mana Cake\" is seeded at `Program.cs:26`, and the string `\"Conjured\"` appears nowhere in the rules. Stock is mispriced on every run. Needs an owner ruling: intended unfinished kata state, or live defect? The answer determines whether a characterization test should lock in current behaviour.\n- **BR-016 \u2014 `SellIn` means two different things inside one iteration.** Backstage thresholds read it pre-decrement; the expiry test reads it post-decrement. The literals `11` and `6` are correct *only* under that ordering, and the obvious \"cleanup\" of hoisting the decrement silently changes pricing on boundary days. Nothing catches it \u2014 the sole test asserts `Assert.True(true)`, so all 25 rules have zero coverage.\n- **The README contradicts itself** (`never more than 50` vs. `Sulfuras is 80`), and the code satisfies both by never applying the ceiling to legendary items. Any downstream consumer assuming `[0,50]` breaks on day one.\n- **F-1, governing-profile discrepancy.** I kept `faa` as governing and recorded rather than adopted the conflict: the source is the public Gilded Rose kata with no FAA content, `AssemblyInfo.cs:11` asserts a *third* attribution (`DSHS`), and `fixtures/default.json` describes a different application again \u2014 note its contents also don't match how the staged `catalog.json` describes them. I cited none of it as evidence about this app.\n\n**One judgement call to flag:** no FAA `applicable_systems` in `compliance.yaml` matches an inn-inventory system, so I performed the code\u2192regulation sweep, recorded all 25 rules as `not_applicable` with rationale, and deliberately created **zero** `BR-MISSING-NNN` regulatory gap records. Fabricating Part 61/67 gaps here would have invented a compliance risk and polluted rationalization's gap statistics. The one `BR-MISSING` record is a documentation gap and labels itself as such."
+  ],
+  "file_artifacts": [
+    "business-logic.json",
+    "business-logic.md",
+    "implicit-logic.json",
+    "state-machines.json"
+  ],
+  "model_used": "claude-opus-5",
+  "duration_ms": 985288,
+  "token_usage": {
+    "input": 1069,
+    "output": 94406
+  },
+  "cost_estimate_usd": 5.1414335,
+  "timestamp": "2026-09-28T18:32:01.877744+00:00",
+  "pass": "business-logic-extraction",
+  "skill_id": "legacy-business-rule-extractor"
+}

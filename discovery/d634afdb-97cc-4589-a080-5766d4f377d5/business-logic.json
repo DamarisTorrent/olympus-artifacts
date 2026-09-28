@@ -1,0 +1,1437 @@
+{
+  "$schema": "olympus:artifact:business-logic:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "discovery_pass": "pass-2-business-logic-extraction",
+  "extraction_date": "2026-09-28T00:00:00Z",
+  "source_root": "src/GildedRose.Console",
+  "totals": {
+    "total_rules": 25,
+    "by_category": {
+      "calculation": 10,
+      "constraint": 8,
+      "workflow": 4,
+      "validation": 2,
+      "authorization": 1
+    },
+    "by_severity": {
+      "critical": 10,
+      "standard": 14,
+      "advisory": 1
+    },
+    "by_complexity": {
+      "extreme": 0,
+      "high": 1,
+      "medium": 8,
+      "low": 16
+    },
+    "implicit_rules": 9,
+    "rules_requiring_sme_review": 6,
+    "rules_mapped_to_a_regulation": 0,
+    "regulation_sections_with_no_implementation": 0,
+    "documented_requirements_with_no_implementation": 1,
+    "modules_analyzed": 2,
+    "modules_containing_business_logic": 1,
+    "source_files_containing_business_logic": 1,
+    "database_objects_containing_business_logic": 0,
+    "state_machines_recovered": 5,
+    "implicit_logic_entries": 27,
+    "test_methods_covering_business_logic": 0
+  },
+  "module_summary": {
+    "gildedrose-console": {
+      "path": "src/GildedRose.Console",
+      "module_id_source": "structural-analysis.json modules[].id",
+      "loc": 160,
+      "rule_count": 25,
+      "business_logic_locus": "src/GildedRose.Console/Program.cs:37-111 (UpdateQuality, 75 lines)",
+      "max_nested_conditional_depth": 5,
+      "method_level_cyclomatic_complexity_estimate": 20,
+      "complexity_measurement_basis": "Counted by this pass: 19 decision predicates in UpdateQuality (the for loop, the two comparisons on line 41, and the single predicates on lines 43, 45, 53, 57, 59, 61, 67, 69, 78, 83, 85, 87, 89, 91, 104) + 1. No upstream artifact reported a cyclomatic figure; structural-analysis.json reports only max_nested_conditional_depth_in_update_quality = 5.",
+      "notes": "Entire application: console entry point (Program.cs:8-35), rules engine (Program.cs:37-111), and the Item domain model (Program.cs:115-122) in one file and one namespace. No validation layer, no persistence, no authorization. Rules are interleaved by item type rather than separated, so the method must be read as one unit.",
+      "reachability": "UpdateQuality is a public instance method on the internal class Program and reads the private field Items (Program.cs:5, :7, :37), so the rules engine is unreachable from outside the assembly."
+    },
+    "gildedrose-tests": {
+      "path": "src/GildedRose.Tests",
+      "module_id_source": "structural-analysis.json modules[].id",
+      "loc": 12,
+      "rule_count": 0,
+      "business_logic_locus": "none",
+      "notes": "xUnit assembly structurally disconnected from the application: no reference to GildedRose.Console, one test method asserting Assert.True(true) (src/GildedRose.Tests/TestAssemblyTests.cs:10). Every rule in this catalog is unguarded by any test, so all of them are characterization-test candidates before any re-implementation."
+    }
+  },
+  "rules": [
+    {
+      "id": "BR-001",
+      "name": "nightly_inventory_revaluation_sweep",
+      "description": "One invocation of UpdateQuality revalues the entire inventory exactly once, representing the passage of one business day. It iterates the item list by index and mutates each Item in place; there is no scheduler, no loop over days, no clock read, and no return value. The unit of time is 'one call', not 'one calendar day'.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Single counted loop over an IList with no early exit, but it is the orchestration point on which all 24 remaining rules depend, and the order in which it applies them is itself load-bearing (see BR-016).",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "UpdateQuality() is invoked (exactly once per process run, from Main)",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        },
+        {
+          "condition": "For each index i from 0 to Items.Count - 1",
+          "source": "src/GildedRose.Console/Program.cs:39"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Apply the quality-adjustment phase, then decrement SellIn, then apply the past-sell-by phase, mutating Items[i] in place",
+          "source": "src/GildedRose.Console/Program.cs:41-109"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "37-111",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:31 (sole call site)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-019"],
+        "downstream_rules": ["BR-002", "BR-003", "BR-004", "BR-005", "BR-006", "BR-007", "BR-009", "BR-010", "BR-011", "BR-012", "BR-013", "BR-014", "BR-015", "BR-016", "BR-017"]
+      },
+      "test_hints": {
+        "happy_path": "Seed the six documented items, call UpdateQuality once, and assert the full (Name, SellIn, Quality) tuple of every item — a golden-master snapshot.",
+        "error_paths": [
+          "Items is null — NullReferenceException at Program.cs:39 (Items.Count); no guard exists",
+          "An element of Items is null — NullReferenceException at Program.cs:41"
+        ],
+        "boundary_conditions": [
+          "Empty item list — loop body never executes, no output, exit code unchanged",
+          "Calling UpdateQuality N times in one process advances the inventory N days (see BR-020)",
+          "Mutating Items during the loop is unsupported: the count is re-read every iteration at Program.cs:39"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "No regulatory_sources entry in profiles/faa/compliance.yaml applies. The five FAA sources (14 CFR Parts 47, 61, 63, 67, 183) list applicable_systems covering aircraft registration, airman/crew certification, medical certification and designee management; this application revalues retail inn merchandise and matches none of them.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-002",
+      "name": "standard_goods_degrade_one_quality_per_day",
+      "description": "Any item that is not Aged Brie and not a Backstage pass loses exactly 1 Quality per day before its sell-by date passes. This is the default class: an item qualifies by failing to match the three special name literals, so newly introduced goods inherit this behaviour automatically.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Three nested single-predicate guards (not-special, quality above floor, not-legendary) around one decrement; no loops or interacting state.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name is neither \"Aged Brie\" nor \"Backstage passes to a TAFKAL80ETC concert\"",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        },
+        {
+          "condition": "Quality > 0",
+          "source": "src/GildedRose.Console/Program.cs:43"
+        },
+        {
+          "condition": "Name is not \"Sulfuras, Hand of Ragnaros\"",
+          "source": "src/GildedRose.Console/Program.cs:45"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality - 1",
+          "source": "src/GildedRose.Console/Program.cs:47"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "41-50",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:16, :18, :26 (seeded standard goods: +5 Dexterity Vest, Elixir of the Mongoose, Conjured Mana Cake)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001", "BR-017"],
+        "downstream_rules": ["BR-003", "BR-013"]
+      },
+      "test_hints": {
+        "happy_path": "\"+5 Dexterity Vest\" SellIn 10 / Quality 20 becomes SellIn 9 / Quality 19 after one day.",
+        "error_paths": [
+          "An item whose name differs from a special literal only by case or whitespace silently degrades as a standard good (see BR-017)"
+        ],
+        "boundary_conditions": [
+          "Quality 1 → 0 (last degrading day)",
+          "Quality 0 → 0 (guard at Program.cs:43 blocks the decrement)",
+          "Quality seeded negative, e.g. -5 → unchanged, because the guard tests > 0 rather than != 0"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Retail merchandise depreciation; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-003",
+      "name": "quality_never_falls_below_zero",
+      "description": "Quality is never decremented below 0. The floor is not an assertion or a clamp on the Item model; it is enforced only by the two `Quality > 0` guards that precede the two decrement sites. It therefore holds only because every decrement step is exactly 1 — any future rule that subtracts 2 or more would undershoot the floor undetected.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Two identical single-predicate guards; the risk is structural (guard-based rather than clamp-based), not branching complexity.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A degradation is about to be applied and Quality > 0 (pre-sell-by path)",
+          "source": "src/GildedRose.Console/Program.cs:43"
+        },
+        {
+          "condition": "A degradation is about to be applied and Quality > 0 (past-sell-by path)",
+          "source": "src/GildedRose.Console/Program.cs:89"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Allow the decrement; otherwise leave Quality untouched at 0",
+          "source": "src/GildedRose.Console/Program.cs:47"
+        },
+        {
+          "action": "Allow the second decrement; otherwise leave Quality untouched at 0",
+          "source": "src/GildedRose.Console/Program.cs:93"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "43-49",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:89-95", "README.md:21 (documented as \"The Quality of an item is never negative\")"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-002", "BR-013"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "An expired standard item at Quality 1 lands on 0 and stays 0 across further days.",
+        "error_paths": [
+          "The floor is bypassed for any decrement step greater than 1 — the unimplemented Conjured rule (BR-MISSING-001) is exactly such a change and would need its own clamp"
+        ],
+        "boundary_conditions": [
+          "Quality 1, expired: the pre-sell-by decrement takes it to 0, then the past-sell-by guard blocks the second decrement — net -1, not -2",
+          "Quality 2, expired: full -2 applies",
+          "Quality seeded negative is never corrected upward; the code has no normalization path"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Merchandise valuation floor; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-004",
+      "name": "legendary_item_quality_is_immutable",
+      "description": "\"Sulfuras, Hand of Ragnaros\" never changes Quality. The exemption is implemented negatively — as a `!=` guard in front of each of the two degradation sites — rather than as an early exit for legendary items, so every future rule must remember to re-state the exemption. The item also falls into the standard-goods branch at line 41, which means its immunity depends entirely on those two inner guards.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Two negated string comparisons guarding two decrements; low branching but duplicated, which is the maintenance risk.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name == \"Sulfuras, Hand of Ragnaros\" (guard evaluated negatively, pre-sell-by path)",
+          "source": "src/GildedRose.Console/Program.cs:45"
+        },
+        {
+          "condition": "Name == \"Sulfuras, Hand of Ragnaros\" (guard evaluated negatively, past-sell-by path)",
+          "source": "src/GildedRose.Console/Program.cs:91"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Skip the Quality decrement, leaving the value exactly as seeded",
+          "source": "src/GildedRose.Console/Program.cs:45-48"
+        },
+        {
+          "action": "Skip the second Quality decrement on the past-sell-by path",
+          "source": "src/GildedRose.Console/Program.cs:91-94"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "45-48",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:91-94", "src/GildedRose.Console/Program.cs:19 (seeded at Quality 80)", "README.md:24-25", "README.md:44-45"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-017"],
+        "downstream_rules": ["BR-005", "BR-008"]
+      },
+      "test_hints": {
+        "happy_path": "Sulfuras at SellIn 0 / Quality 80 is still SellIn 0 / Quality 80 after any number of days.",
+        "error_paths": [
+          "The guard at Program.cs:91 is never reached for the seeded Sulfuras (its SellIn never becomes negative, per BR-005), so that guard is exercised only by a Sulfuras seeded with a negative SellIn — an untested path"
+        ],
+        "boundary_conditions": [
+          "Sulfuras seeded with SellIn -1: line 83 is true, and immutability then rests solely on the line 91 guard",
+          "Sulfuras seeded with Quality 0: unchanged, since the line 43 guard short-circuits first"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Merchandise classification convention; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-005",
+      "name": "legendary_item_sell_in_never_advances",
+      "description": "SellIn is not decremented for \"Sulfuras, Hand of Ragnaros\", so a legendary item's sell-by counter is frozen at whatever value it was seeded with. Combined with the seed value of 0 (Program.cs:19), Sulfuras never enters the past-sell-by branch at all, which is why its immutability is double-protected in practice.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "One negated string comparison guarding one decrement.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name is not \"Sulfuras, Hand of Ragnaros\"",
+          "source": "src/GildedRose.Console/Program.cs:78"
+        }
+      ],
+      "actions": [
+        {
+          "action": "SellIn = SellIn - 1 (skipped entirely for Sulfuras)",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "78-81",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:19", "README.md:24-25 (\"never has to be sold\")"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-012", "BR-017"],
+        "downstream_rules": ["BR-004"]
+      },
+      "test_hints": {
+        "happy_path": "Sulfuras seeded at SellIn 0 reports SellIn 0 after 10 days.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "Sulfuras seeded at SellIn 5 stays at 5 forever — it never reaches the expiry branch",
+          "Sulfuras seeded at SellIn -1 stays at -1 and evaluates the expiry branch every single day"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Merchandise classification convention; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-006",
+      "name": "aged_brie_appreciates_one_quality_per_day",
+      "description": "\"Aged Brie\" gains 1 Quality per day instead of losing any. It shares the appreciation branch with Backstage passes: the two names are tested together on line 41, and the shared `else` body applies the common +1 before any pass-specific bonus.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "One ceiling guard around one increment, on a branch selected by an exact name match.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name == \"Aged Brie\" (reaches the else branch of the line 41 test)",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        },
+        {
+          "condition": "Quality < 50",
+          "source": "src/GildedRose.Console/Program.cs:53"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality + 1",
+          "source": "src/GildedRose.Console/Program.cs:55"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "51-56",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:17 (seeded at SellIn 2 / Quality 0)", "README.md:22"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001", "BR-017"],
+        "downstream_rules": ["BR-007", "BR-014"]
+      },
+      "test_hints": {
+        "happy_path": "Aged Brie SellIn 2 / Quality 0 becomes SellIn 1 / Quality 1 after one day.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "Quality 49 → 50",
+          "Quality 50 → 50 (guard blocks)",
+          "Quality 51 or above (only reachable by seeding) is never reduced toward the cap"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Merchandise appreciation convention; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-007",
+      "name": "quality_ceiling_of_fifty_on_appreciation",
+      "description": "No appreciation step may raise Quality above 50. The ceiling is re-tested immediately before each of the four increment sites rather than clamped once at the end, so a Backstage pass gaining +3 in one day saturates at exactly 50 and never overshoots to 51 or 52. The ceiling constrains increments only: it is never applied to seeded values and never applied to Sulfuras (see BR-008).",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "One predicate repeated at four sites with different surrounding nesting (lines 53, 61, 69 inside the pre-sell-by branch; line 104 inside the past-sell-by Brie branch); correctness of the no-overshoot property depends on all four being present.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Quality < 50, tested before the base appreciation step",
+          "source": "src/GildedRose.Console/Program.cs:53"
+        },
+        {
+          "condition": "Quality < 50, re-tested before the 10-day Backstage bonus",
+          "source": "src/GildedRose.Console/Program.cs:61"
+        },
+        {
+          "condition": "Quality < 50, re-tested before the 5-day Backstage bonus",
+          "source": "src/GildedRose.Console/Program.cs:69"
+        },
+        {
+          "condition": "Quality < 50, tested before the past-sell-by Aged Brie appreciation",
+          "source": "src/GildedRose.Console/Program.cs:104"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Permit the +1 increment only while Quality is strictly below 50; otherwise skip it and leave Quality unchanged",
+          "source": "src/GildedRose.Console/Program.cs:53-55"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "53-55",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:61-64", "src/GildedRose.Console/Program.cs:69-72", "src/GildedRose.Console/Program.cs:104-107", "README.md:23", "README.md:44-45"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-006", "BR-009", "BR-010", "BR-011", "BR-014"],
+        "downstream_rules": ["BR-008"]
+      },
+      "test_hints": {
+        "happy_path": "A Backstage pass at Quality 48 with SellIn 5 rises to exactly 50, not 51.",
+        "error_paths": [
+          "The cap is not an invariant of the Item model (Program.cs:121 accepts any int), so it cannot be relied on by any consumer of Item"
+        ],
+        "boundary_conditions": [
+          "Quality 49 with a +3 opportunity → 50",
+          "Quality 50 → 50 with every increment skipped",
+          "Quality 80 (Sulfuras) → never tested against the cap at all"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Merchandise valuation ceiling; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-008",
+      "name": "legendary_quality_exempt_from_the_fifty_ceiling",
+      "description": "The effective rule is that the 50 ceiling binds only items that pass through an appreciation branch. Sulfuras is seeded at Quality 80 (Program.cs:19) and is never incremented, never decremented, and never normalized, so a value 30 above the documented maximum persists indefinitely. The code contains no statement of 80 as a legendary constant and no assertion that legendary Quality equals 80 — the number exists only as seed data, so a mis-seeded legendary item would carry any value forever.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Emergent from the absence of code: the ceiling is only ever tested on increment paths that Sulfuras cannot reach. No branching of its own.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Name == \"Sulfuras, Hand of Ragnaros\", which routes to the standard-goods branch and is then exempted from both decrements, and never to an appreciation branch",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality remains at its seeded value of 80, above the documented maximum of 50, with no clamp or warning",
+          "source": "src/GildedRose.Console/Program.cs:19"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "19",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:41-49", "src/GildedRose.Console/Program.cs:91-94", "README.md:23 (\"never more than 50\")", "README.md:44-45 (\"its Quality is 80 and it never alters\")"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-004", "BR-007"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Sulfuras reports Quality 80 on day 0 and on day 100.",
+        "error_paths": [
+          "A consumer that assumes Quality is in [0, 50] — a database column, a UI gauge, or a validation rule added later — will be violated by legendary items"
+        ],
+        "boundary_conditions": [
+          "Sulfuras seeded at Quality 42 stays 42; nothing raises or lowers it to 80",
+          "Sulfuras seeded at Quality 1000 stays 1000"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "No FAA regulatory source applies. Recorded as a contradiction against the application's own business documentation (README.md:23 versus README.md:44-45), not against a regulation.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-009",
+      "name": "backstage_pass_base_appreciation",
+      "description": "\"Backstage passes to a TAFKAL80ETC concert\" gain a base +1 Quality per day, on the same shared branch as Aged Brie, before any proximity bonus is considered. The base increment applies on every day including the concert day itself, when it is subsequently discarded by BR-015.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Shared single-guard increment; the pass-specific complexity lives in BR-010 and BR-011.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name == \"Backstage passes to a TAFKAL80ETC concert\" (reaches the else branch of the line 41 test)",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        },
+        {
+          "condition": "Quality < 50",
+          "source": "src/GildedRose.Console/Program.cs:53"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality + 1",
+          "source": "src/GildedRose.Console/Program.cs:55"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "51-56",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:22-24 (seeded at SellIn 15 / Quality 20)", "README.md:26-29"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001", "BR-017"],
+        "downstream_rules": ["BR-007", "BR-010", "BR-011", "BR-015"]
+      },
+      "test_hints": {
+        "happy_path": "A pass at SellIn 15 / Quality 20 becomes SellIn 14 / Quality 21 after one day.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "SellIn 11 at the start of the day: base +1 only, because neither bonus threshold is met yet",
+          "Quality 50: no increment at all, and no bonus either"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Event-ticket demand pricing; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-010",
+      "name": "backstage_pass_ten_day_demand_bonus",
+      "description": "A Backstage pass gains an additional +1 Quality (total +2 for the day) when SellIn is below 11 at the start of the day. The literal 11 correctly expresses the documented '10 days or less' only because it is evaluated before the SellIn decrement of BR-012; if the decrement were moved earlier, the threshold would silently shift by one day.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "Three levels of nesting (name match, threshold, ceiling re-check) and a correctness dependency on the evaluation order captured in BR-016.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name == \"Backstage passes to a TAFKAL80ETC concert\"",
+          "source": "src/GildedRose.Console/Program.cs:57"
+        },
+        {
+          "condition": "SellIn < 11, read before the day's SellIn decrement",
+          "source": "src/GildedRose.Console/Program.cs:59"
+        },
+        {
+          "condition": "Quality < 50",
+          "source": "src/GildedRose.Console/Program.cs:61"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality + 1, in addition to the base increment of BR-009",
+          "source": "src/GildedRose.Console/Program.cs:63"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "57-65",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-55 (base increment)", "README.md:26-29"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-009", "BR-016"],
+        "downstream_rules": ["BR-007"]
+      },
+      "test_hints": {
+        "happy_path": "A pass at SellIn 10 / Quality 20 becomes SellIn 9 / Quality 22.",
+        "error_paths": [
+          "Re-ordering the SellIn decrement ahead of this test changes the outcome on the boundary day with no test to catch it"
+        ],
+        "boundary_conditions": [
+          "SellIn 11 at start of day → +1 only",
+          "SellIn 10 at start of day → +2",
+          "SellIn 6 at start of day → +2 (the 5-day bonus has not yet engaged)",
+          "Quality 49 → 50, with the second increment skipped"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Event-ticket demand pricing; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-011",
+      "name": "backstage_pass_five_day_demand_bonus",
+      "description": "A Backstage pass gains a further +1 Quality (total +3 for the day) when SellIn is below 6 at the start of the day. This bonus stacks on top of BR-009 and BR-010 as a third independent increment; there is no combined rate, so the documented 'increases by 3' is an emergent sum of three separate +1 operations, each independently capped.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "Three levels of nesting plus a stacking interaction with BR-010, and the same pre-decrement SellIn dependency as BR-016.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name == \"Backstage passes to a TAFKAL80ETC concert\"",
+          "source": "src/GildedRose.Console/Program.cs:57"
+        },
+        {
+          "condition": "SellIn < 6, read before the day's SellIn decrement",
+          "source": "src/GildedRose.Console/Program.cs:67"
+        },
+        {
+          "condition": "Quality < 50",
+          "source": "src/GildedRose.Console/Program.cs:69"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality + 1, in addition to BR-009 and BR-010",
+          "source": "src/GildedRose.Console/Program.cs:71"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "67-73",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-65", "README.md:26-29"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-009", "BR-010", "BR-016"],
+        "downstream_rules": ["BR-007"]
+      },
+      "test_hints": {
+        "happy_path": "A pass at SellIn 5 / Quality 20 becomes SellIn 4 / Quality 23.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "SellIn 6 at start of day → +2",
+          "SellIn 5 at start of day → +3",
+          "SellIn 0 at start of day → +3 computed and then entirely discarded by BR-015",
+          "Quality 48 → 50 rather than 51: the third increment is skipped"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Event-ticket demand pricing; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-012",
+      "name": "sell_in_decrements_one_day_per_run",
+      "description": "Every item except Sulfuras has its SellIn reduced by 1 per invocation. This single statement is the boundary between the two halves of the algorithm: quality rules before it read the pre-decrement SellIn, and the expiry test after it reads the post-decrement value.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "One guarded decrement; its significance is positional rather than logical.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Name is not \"Sulfuras, Hand of Ragnaros\"",
+          "source": "src/GildedRose.Console/Program.cs:78"
+        }
+      ],
+      "actions": [
+        {
+          "action": "SellIn = SellIn - 1",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "78-81",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:83 (the value is immediately re-read here)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001"],
+        "downstream_rules": ["BR-005", "BR-013", "BR-014", "BR-015", "BR-016", "BR-022"]
+      },
+      "test_hints": {
+        "happy_path": "Any non-legendary item's SellIn falls by exactly 1 per run.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "SellIn 0 → -1, which is the day the expiry rules first engage",
+          "SellIn -1 → -2, decrementing without limit (see BR-022)"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Shelf-life counter; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-013",
+      "name": "expired_standard_goods_degrade_twice_as_fast",
+      "description": "Once SellIn has gone below 0, standard goods lose a second Quality point in the same iteration, giving the documented 'twice as fast' behaviour. The doubling is implemented as a second, independently guarded -1 rather than as a rate of 2, and it re-states the legendary exemption a second time.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "The deepest path in the method: five nested predicates (SellIn < 0, not Brie, not Backstage, Quality > 0, not Sulfuras) before a single decrement.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "SellIn < 0 after the day's decrement",
+          "source": "src/GildedRose.Console/Program.cs:83"
+        },
+        {
+          "condition": "Name is not \"Aged Brie\"",
+          "source": "src/GildedRose.Console/Program.cs:85"
+        },
+        {
+          "condition": "Name is not \"Backstage passes to a TAFKAL80ETC concert\"",
+          "source": "src/GildedRose.Console/Program.cs:87"
+        },
+        {
+          "condition": "Quality > 0",
+          "source": "src/GildedRose.Console/Program.cs:89"
+        },
+        {
+          "condition": "Name is not \"Sulfuras, Hand of Ragnaros\"",
+          "source": "src/GildedRose.Console/Program.cs:91"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality - 1 (second decrement of the same iteration)",
+          "source": "src/GildedRose.Console/Program.cs:93"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "83-96",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:41-50 (the first decrement)", "README.md:20"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-002", "BR-012", "BR-017"],
+        "downstream_rules": ["BR-003"]
+      },
+      "test_hints": {
+        "happy_path": "A standard item at SellIn 0 / Quality 10 becomes SellIn -1 / Quality 8.",
+        "error_paths": [
+          "At Quality 1 the total loss is 1 rather than 2, because the floor guard blocks the second decrement — an easily missed asymmetry"
+        ],
+        "boundary_conditions": [
+          "SellIn 1 → 0: single degradation only, because the post-decrement value is 0, not below 0",
+          "SellIn 0 → -1: double degradation begins",
+          "Quality 1 → 0: net -1, not -2",
+          "Quality 0 → 0"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Post-sell-by depreciation; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-014",
+      "name": "expired_aged_brie_appreciates_twice_as_fast",
+      "description": "Aged Brie gains a second +1 Quality once SellIn is below 0, so it appreciates at +2 per day after its sell-by date. This mirror-image of BR-013 is never stated in the business documentation, which says only that Brie 'increases in Quality the older it gets' — the acceleration is emergent from the code's structure.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Two nested predicates and one guarded increment, on the innermost else of the expiry branch.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "SellIn < 0 after the day's decrement",
+          "source": "src/GildedRose.Console/Program.cs:83"
+        },
+        {
+          "condition": "Name == \"Aged Brie\" (reached as the else of the line 85 test)",
+          "source": "src/GildedRose.Console/Program.cs:102"
+        },
+        {
+          "condition": "Quality < 50",
+          "source": "src/GildedRose.Console/Program.cs:104"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality + 1 (second increment of the same iteration)",
+          "source": "src/GildedRose.Console/Program.cs:106"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "102-108",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-55 (the first increment)", "README.md:22"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-006", "BR-012", "BR-017"],
+        "downstream_rules": ["BR-007"]
+      },
+      "test_hints": {
+        "happy_path": "Aged Brie at SellIn 0 / Quality 10 becomes SellIn -1 / Quality 12.",
+        "error_paths": [],
+        "boundary_conditions": [
+          "SellIn 1 → 0: +1 only",
+          "SellIn 0 → -1: +2 begins",
+          "Quality 49 with an expired Brie → 50, not 51",
+          "Quality 50 → 50"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Post-sell-by appreciation; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-015",
+      "name": "backstage_pass_becomes_worthless_after_the_concert",
+      "description": "Once SellIn is below 0 a Backstage pass is zeroed. It is written as the self-cancelling expression `Quality = Quality - Quality` rather than an assignment to 0, so any reader searching for a literal zero assignment will miss it. Because this runs after the appreciation phase, the up-to-3 points the pass earned earlier in the same iteration are computed and then thrown away — and the same wasted churn repeats on every subsequent day the pass stays in inventory.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Three nested predicates and one assignment; the subtlety is the idiom and the ordering, not the branching.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "SellIn < 0 after the day's decrement",
+          "source": "src/GildedRose.Console/Program.cs:83"
+        },
+        {
+          "condition": "Name is not \"Aged Brie\"",
+          "source": "src/GildedRose.Console/Program.cs:85"
+        },
+        {
+          "condition": "Name == \"Backstage passes to a TAFKAL80ETC concert\" (reached as the else of the line 87 test)",
+          "source": "src/GildedRose.Console/Program.cs:97"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Quality = Quality - Quality, i.e. set to 0 regardless of the value accumulated earlier in the iteration",
+          "source": "src/GildedRose.Console/Program.cs:99"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "97-100",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:53-73 (the increments that are discarded)", "README.md:26-29"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-009", "BR-010", "BR-011", "BR-012"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "A pass at SellIn 0 / Quality 20 becomes SellIn -1 / Quality 0 in a single day.",
+        "error_paths": [
+          "No ordering guard exists: applying the zeroing before the appreciation phase would produce a non-zero Quality on concert day"
+        ],
+        "boundary_conditions": [
+          "SellIn 1 → 0: the pass is still worth +3 more, not zeroed",
+          "SellIn 0 → -1: +3 applied then discarded, ending at 0",
+          "SellIn -1 → -2: Quality rises to 3 mid-iteration and is zeroed again; the net observable value stays 0 forever",
+          "A negative seeded Quality becomes 0 here, the one place the code raises a negative Quality"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Event-ticket expiry; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-016",
+      "name": "sell_in_means_two_different_things_within_one_iteration",
+      "description": "The algorithm's correctness depends on an undocumented evaluation order. Quality rules that read SellIn (the Backstage thresholds at lines 59 and 67) execute BEFORE the decrement at line 80, while the expiry test at line 83 executes AFTER it. So within a single iteration 'SellIn' denotes days-remaining-at-start-of-day for the bonus rules and days-remaining-at-end-of-day for the expiry rules. Re-ordering the decrement — the most natural cleanup a developer would make — silently shifts outcomes on the boundary days SellIn 11, 6 and 0, and no test detects it.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "high",
+      "complexity_rationale": "Not a single branch but an invariant over the whole 75-line method: it spans three phases, five nesting levels and roughly 25 Items[i] accesses, and it is invisible from any one line in isolation. It remains within one module, so it does not meet the extreme threshold of cyclomatic > 30 within a single rule or more than three modules touched.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any iteration in which a Backstage threshold and the expiry test both participate",
+          "source": "src/GildedRose.Console/Program.cs:59"
+        },
+        {
+          "condition": "The SellIn decrement sits textually between the two groups of readers",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        },
+        {
+          "condition": "The expiry test re-reads the already-decremented value",
+          "source": "src/GildedRose.Console/Program.cs:83"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The literal thresholds 11 and 6 correctly express '10 days or less' and '5 days or less' only under this ordering; the expiry threshold 0 correctly expresses 'the sell-by date has passed' only under this ordering",
+          "source": "src/GildedRose.Console/Program.cs:59-83"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "41-109",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:59", "src/GildedRose.Console/Program.cs:67", "src/GildedRose.Console/Program.cs:80", "src/GildedRose.Console/Program.cs:83", "src/GildedRose.Tests/TestAssemblyTests.cs:10 (the only test, which asserts nothing about this)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-012"],
+        "downstream_rules": ["BR-010", "BR-011", "BR-013", "BR-014", "BR-015"]
+      },
+      "test_hints": {
+        "happy_path": "A golden-master test over the six seeded items across at least 20 days pins the ordering before any refactor.",
+        "error_paths": [
+          "Moving the SellIn decrement to the top of the loop shifts both Backstage bonus thresholds one day earlier and makes items expire one day sooner",
+          "Extracting the expiry branch into a method that recomputes SellIn from source data reintroduces the pre-decrement value and changes behaviour"
+        ],
+        "boundary_conditions": [
+          "Backstage pass at SellIn 11: +1 under current ordering, +2 if the decrement moves first",
+          "Backstage pass at SellIn 6: +2 under current ordering, +3 if the decrement moves first",
+          "Standard item at SellIn 1: single degradation under current ordering, double if the decrement moves first"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "An implementation-ordering invariant, not a regulated requirement; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-017",
+      "name": "item_category_is_derived_from_the_exact_display_name",
+      "description": "There is no category, type or SKU field. An item's entire pricing behaviour is selected by exact, case-sensitive, whole-string equality against three hardcoded display names, at eight comparison sites. Any variation — different casing, a trailing space, a renamed concert, a localised or reworded label — silently reclassifies the item as standard goods with no error. The business taxonomy is therefore coupled to marketing copy.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "One conceptual dispatch scattered across eight comparisons on six lines with negated and nested forms, so a single category change requires coordinated edits at all eight sites.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Two comparisons select the appreciation branch: Name != \"Aged Brie\" && Name != \"Backstage passes to a TAFKAL80ETC concert\"",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        },
+        {
+          "condition": "Legendary exemption comparisons",
+          "source": "src/GildedRose.Console/Program.cs:45"
+        },
+        {
+          "condition": "Backstage bonus selection",
+          "source": "src/GildedRose.Console/Program.cs:57"
+        },
+        {
+          "condition": "Expiry-branch re-classification comparisons",
+          "source": "src/GildedRose.Console/Program.cs:85"
+        },
+        {
+          "condition": "Expiry-branch Backstage comparison",
+          "source": "src/GildedRose.Console/Program.cs:87"
+        },
+        {
+          "condition": "Expiry-branch legendary comparison",
+          "source": "src/GildedRose.Console/Program.cs:91"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Route the item to one of four behaviour sets (standard, appreciating, event-ticket, legendary) with no default-case diagnostic and no validation that the name is a known category",
+          "source": "src/GildedRose.Console/Program.cs:41-109"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "41-91",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:117 (Name is a plain settable string)", "src/GildedRose.Console/Program.cs:16-26 (the only known-good spellings)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001"],
+        "downstream_rules": ["BR-002", "BR-004", "BR-005", "BR-006", "BR-009", "BR-013", "BR-014", "BR-015", "BR-023", "BR-MISSING-001"]
+      },
+      "test_hints": {
+        "happy_path": "Each of the three special names, spelled exactly as seeded, selects its own behaviour.",
+        "error_paths": [
+          "\"aged brie\" (lowercase) degrades instead of appreciating",
+          "\"Aged Brie \" (trailing space) degrades instead of appreciating",
+          "\"Backstage passes to a DIFFERENT concert\" is treated as standard goods, losing all demand pricing",
+          "\"Sulfuras\" without the full suffix loses legendary immunity and begins degrading"
+        ],
+        "boundary_conditions": [
+          "Name matching only a prefix or substring of a special literal is standard goods: no prefix or Contains matching exists anywhere",
+          "\"Conjured Mana Cake\" matches no literal at all (see BR-MISSING-001)"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "A classification mechanism internal to the application; no FAA regulatory source in profiles/faa/compliance.yaml addresses it. SME confirmation is wanted on the intended category taxonomy, not on any regulation.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-018",
+      "name": "item_model_enforces_no_invariants",
+      "description": "Item is a three-property POCO with public setters and no validation, no constructor guard and no range check. Quality and SellIn are plain ints, so any value — negative Quality, Quality above 50, a null Name — can be constructed and will be accepted. Every constraint in this catalog lives in the update loop rather than in the model, which means nothing prevents a caller from writing an out-of-range value directly.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Zero branches; the rule is the documented absence of validation on a three-property type.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any assignment to Item.Name, Item.SellIn or Item.Quality by any in-assembly caller",
+          "source": "src/GildedRose.Console/Program.cs:117"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The value is stored unchecked: no clamp to [0, 50], no non-null or non-empty check on Name, no rejection of negative SellIn",
+          "source": "src/GildedRose.Console/Program.cs:115-122"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "115-122",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:19 (a seeded Quality of 80 that no validation rejects)"]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": ["BR-003", "BR-007", "BR-008", "BR-023"]
+      },
+      "test_hints": {
+        "happy_path": "new Item { Name = \"x\", SellIn = 0, Quality = 0 } constructs without error.",
+        "error_paths": [
+          "new Item { Quality = -100 } is accepted, and only BR-015's zeroing path can ever raise it",
+          "new Item { Quality = 9999 } is accepted and is never brought down to the ceiling"
+        ],
+        "boundary_conditions": [
+          "Default-constructed Item has Name null, SellIn 0, Quality 0 — a state BR-023 silently treats as standard goods",
+          "README.md:36-40 forbids altering the Item class, so any validation must be added outside it"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Absence of model-level validation in a non-regulated domain; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-019",
+      "name": "inventory_is_a_hardcoded_six_item_seed_list",
+      "description": "The inventory is not loaded from anywhere. Six items with fixed names, SellIn and Quality values are constructed inline in Main as an object-initializer list assigned to a private field. There is no file, database, argument or stdin input, so the application can only ever revalue these six items, and every run starts from the same values.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Straight-line construction with no conditionals.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Process start reaches Main",
+          "source": "src/GildedRose.Console/Program.cs:8"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Construct the fixed list of six Items and assign it to the private Items field",
+          "source": "src/GildedRose.Console/Program.cs:14-29"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "14-29",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:7 (the private IList<Item> field)"]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": ["BR-001", "BR-020"]
+      },
+      "test_hints": {
+        "happy_path": "The list contains exactly six items in the documented order: +5 Dexterity Vest, Aged Brie, Elixir of the Mongoose, Sulfuras, Backstage passes, Conjured Mana Cake.",
+        "error_paths": [
+          "args is accepted at Program.cs:8 and never read, so command-line input cannot supply an inventory"
+        ],
+        "boundary_conditions": [
+          "Sulfuras is seeded at Quality 80, above the documented ceiling (see BR-008)",
+          "Aged Brie is seeded at Quality 0, the floor",
+          "Conjured Mana Cake is seeded but no rule matches it (see BR-MISSING-001)"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Test-harness seed data; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-020",
+      "name": "one_run_equals_one_day_with_no_persistence_and_no_idempotence",
+      "description": "The effective business calendar is the process lifecycle. UpdateQuality is called exactly once per run, there is no clock read, no run-date record and no persistence, so the computed results are discarded at process exit and the next run restarts from the same seed values. Nothing prevents a double run from advancing the inventory two days, and nothing records that a given day was already processed.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "No branching, but it defines the temporal semantics every other rule is expressed in, and its absence of a run-date guard is the highest-consequence gap for a nightly process.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "UpdateQuality is invoked once, with no date parameter and no DateTime read anywhere in the application",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Mutate the in-memory list only; no value is printed, returned, written or persisted, and the process then exits",
+          "source": "src/GildedRose.Console/Program.cs:33-35"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "31-35",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:7", "src/GildedRose.Console/Program.cs:10 (the only console output, emitted before the calculation)", "src/GildedRose.Console/Program.cs:14-29"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-019"],
+        "downstream_rules": ["BR-001", "BR-021", "BR-022"]
+      },
+      "test_hints": {
+        "happy_path": "Calling UpdateQuality twice in one process is equivalent to two days elapsing.",
+        "error_paths": [
+          "A re-run after a failure silently double-applies a day's depreciation in any variant that does persist",
+          "No output means no way to verify externally that the run did anything at all"
+        ],
+        "boundary_conditions": [
+          "Zero invocations leave the seed values untouched",
+          "There is no upper bound on invocations; SellIn simply keeps falling (see BR-022)"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Batch-execution semantics of a non-regulated application; no FAA regulatory source in profiles/faa/compliance.yaml addresses it. SME confirmation is wanted on whether a real inventory store exists outside this repository.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-021",
+      "name": "interactive_keypress_blocks_unattended_execution",
+      "description": "After the revaluation, Main calls System.Console.ReadKey() and waits for a human keystroke before exiting. A nightly inventory process therefore cannot complete unattended: in a scheduler or container it blocks indefinitely on a console that will never receive input. This is an operational business rule imposed by a single line.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "A single statement with no branching, but with a disproportionate operational effect.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "UpdateQuality has returned",
+          "source": "src/GildedRose.Console/Program.cs:31"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Block until a key is pressed, then exit; no timeout, no non-interactive fallback, no check for a redirected console",
+          "source": "src/GildedRose.Console/Program.cs:33"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "33",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:8-35"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-020"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Run interactively: output \"OMGHAI!\", then the process waits for a keypress and exits.",
+        "error_paths": [
+          "Run with stdin redirected or under a scheduler: ReadKey throws InvalidOperationException or blocks, depending on host",
+          "Run in a container with no console: the process hangs and the scheduled window is missed"
+        ],
+        "boundary_conditions": [
+          "The revaluation itself has already completed before the block, so the hang does not corrupt the calculation — it only prevents a clean exit code"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Operational constraint of a console host; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-022",
+      "name": "sell_in_is_unbounded_below",
+      "description": "SellIn has no floor and no archival path. It decrements indefinitely on repeated runs, so an item that is 30 days past its sell-by reports SellIn -30. Nothing removes, archives or flags a long-expired item, and there is no int-overflow guard, so the only theoretical limit is int.MinValue.",
+      "category": "constraint",
+      "severity": "advisory",
+      "complexity": "low",
+      "complexity_rationale": "Emergent from an unguarded decrement; no branching of its own.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any non-legendary item is processed on any day, including days long after expiry",
+          "source": "src/GildedRose.Console/Program.cs:78"
+        }
+      ],
+      "actions": [
+        {
+          "action": "SellIn decrements without limit; only the sign is ever tested, never the magnitude",
+          "source": "src/GildedRose.Console/Program.cs:80"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "80",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:83 (the only test of the value is SellIn < 0)", "src/GildedRose.Console/Program.cs:119"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-012", "BR-020"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "After 20 days a standard item seeded at SellIn 10 reports SellIn -10 with Quality 0.",
+        "error_paths": [
+          "A downstream consumer storing SellIn in a narrower type (tinyint, byte) would overflow where this code does not"
+        ],
+        "boundary_conditions": [
+          "SellIn 0 → -1 is the only transition with behavioural meaning; every further decrement changes nothing about the rules applied",
+          "int.MinValue would wrap on the next decrement — unreachable in practice but unguarded"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Numeric range behaviour in a non-regulated domain; no FAA regulatory source in profiles/faa/compliance.yaml addresses it.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-023",
+      "name": "unknown_or_null_name_is_silently_treated_as_standard_goods",
+      "description": "The name dispatch has no default-case diagnostic. Because every special-category test is an equality comparison, an item with a null, empty or unrecognised Name falls through to the standard-goods path and quietly depreciates. C# string equality is null-safe, so a null Name does not even raise an exception — it is simply 'not Aged Brie', 'not Backstage passes' and 'not Sulfuras'. Mis-typed or newly introduced merchandise is therefore mispriced without any error, log or warning.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Emergent from the absence of an else/default arm; no branching of its own.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Name is null, empty, or any string not exactly equal to one of the three special literals",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Apply the standard-goods rules (BR-002, BR-013) with no validation error, log entry or exception",
+          "source": "src/GildedRose.Console/Program.cs:41-50"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "41-50",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:85-95", "src/GildedRose.Console/Program.cs:117 (Name has no non-null guarantee)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-017", "BR-018"],
+        "downstream_rules": ["BR-002", "BR-013"]
+      },
+      "test_hints": {
+        "happy_path": "An item named \"Elixir of the Mongoose\" — not a special literal — correctly depreciates as standard goods.",
+        "error_paths": [
+          "Name null: no NullReferenceException is raised at the comparisons; the item depreciates silently",
+          "Name \"\": same silent depreciation"
+        ],
+        "boundary_conditions": [
+          "A null-Name item still has its SellIn decremented at Program.cs:80 and is still subject to double degradation after expiry",
+          "Because there is no logging anywhere in the application, a mispriced item leaves no trace"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "Default-case behaviour in a non-regulated domain; no FAA regulatory source in profiles/faa/compliance.yaml addresses it. SME confirmation is wanted on whether unknown merchandise should depreciate by default or be rejected.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-024",
+      "name": "inventory_revaluation_is_unauthenticated_and_unaudited",
+      "description": "There is no authorization rule of any kind: no user, role, permission check, approval step or audit trail governs the revaluation of the entire inventory. The effective rule is that any caller within the assembly may revalue every item, and no record of who changed what is kept. The only access limit is an accidental one — UpdateQuality is public on an internal class and reads a private field, so it is reachable only from inside the assembly.",
+      "category": "authorization",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Zero branches; the rule is the documented absence of any access-control or audit logic in the whole application.",
+      "module": "gildedrose-console",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any in-assembly call to UpdateQuality; no identity, role or permission is consulted",
+          "source": "src/GildedRose.Console/Program.cs:37"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Mutate the Quality and SellIn of every item with no approval step, no before/after record and no log entry",
+          "source": "src/GildedRose.Console/Program.cs:39-110"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "37-111",
+        "secondary_sources": ["src/GildedRose.Console/Program.cs:5 (internal class)", "src/GildedRose.Console/Program.cs:7 (private field)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-001"],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "UpdateQuality succeeds with no credential supplied, because none is required.",
+        "error_paths": [
+          "No negative authorization test is possible: there is no code path that can deny the operation"
+        ],
+        "boundary_conditions": [
+          "Making the class or field more accessible during modernization would widen an unguarded mutation surface",
+          "Adding an audit requirement means adding a capability that does not exist today, not modifying one"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "not_applicable",
+        "fidelity_rationale": "No FAA regulatory source in profiles/faa/compliance.yaml governs this application's business rules. Note for the compliance line: the absence of AC-3 access enforcement and AU-2/AU-12 audit generation is a NIST 800-53 control-coverage observation handled by the security pass, not a business-rule-to-regulation mapping.",
+        "sme_review_required": false,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-MISSING-001",
+      "name": "conjured_items_degrade_twice_as_fast",
+      "description": "SPECIFIED BUT NOT IMPLEMENTED. The application's own business documentation requires that \"Conjured\" items degrade in Quality twice as fast as normal items (README.md:34), and a \"Conjured Mana Cake\" is seeded into the live inventory at Program.cs:26. But the string \"Conjured\" appears nowhere in UpdateQuality (Program.cs:37-111) and no branch matches it, so conjured items are currently revalued as ordinary standard goods: -1 per day before the sell-by date and -2 after, instead of the required -2 and -4. The item is being mispriced today, on every run.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Implementing it correctly means introducing the first multi-step degradation, which breaks the assumption BR-003 relies on — that every decrement is exactly 1 — so the zero floor must become a clamp rather than a guard, at two sites.",
+      "module": "gildedrose-console",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "REQUIRED: item name identifies a Conjured item. No such condition exists in the code — verified by the absence of any \"Conjured\" comparison in UpdateQuality",
+          "source": "README.md:34 (requirement); absent from src/GildedRose.Console/Program.cs:37-111"
+        },
+        {
+          "condition": "ACTUAL: \"Conjured Mana Cake\" fails every special-name test and falls through to the standard-goods branch",
+          "source": "src/GildedRose.Console/Program.cs:41"
+        }
+      ],
+      "actions": [
+        {
+          "action": "REQUIRED: Quality decreases by 2 per day before the sell-by date and by 4 per day after it, floored at 0",
+          "source": "README.md:34"
+        },
+        {
+          "action": "ACTUAL: Quality decreases by 1 per day, and by 2 per day after the sell-by date",
+          "source": "src/GildedRose.Console/Program.cs:47"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "src/GildedRose.Console/Program.cs",
+        "line_range": "37-111",
+        "secondary_sources": ["README.md:34 (the requirement)", "src/GildedRose.Console/Program.cs:26 (the affected seeded item)", "src/GildedRose.Console/Program.cs:41-50 (the branch that wrongly claims it)"]
+      },
+      "dependencies": {
+        "upstream_rules": ["BR-017"],
+        "downstream_rules": ["BR-002", "BR-003", "BR-013"]
+      },
+      "test_hints": {
+        "happy_path": "Once implemented: \"Conjured Mana Cake\" at SellIn 3 / Quality 6 should become SellIn 2 / Quality 4.",
+        "error_paths": [
+          "Today the same input yields Quality 5 — the current, incorrect behaviour that a characterization test will lock in unless the gap is resolved first",
+          "A naive fix that subtracts 2 without a clamp will drive Quality to -1 from Quality 1, breaking BR-003"
+        ],
+        "boundary_conditions": [
+          "Quality 1 with a required -2: must land on 0, not -1",
+          "Quality 3 expired with a required -4: must land on 0, not -1",
+          "Does the rule match by \"Conjured\" prefix, by substring, or only the exact name \"Conjured Mana Cake\"? The code gives no answer, and BR-017 shows the codebase has no prefix-matching precedent"
+        ]
+      },
+      "regulatory_traceability": {
+        "implementation_fidelity": "missing",
+        "requirement_authority": "Application business documentation (README.md:34). NOT a regulation: no FAA regulatory source in profiles/faa/compliance.yaml applies to this application, so this is a documentation-to-code gap, not a regulatory compliance gap.",
+        "fidelity_rationale": "The requirement is stated in the application's own specification and a matching item exists in the live inventory, but no implementing branch exists. Recorded as missing rather than out-of-scope so that no downstream line silently accepts the current behaviour as correct. The business owner must rule on whether this is the intended unfinished state of a refactoring exercise or a live defect.",
+        "sme_review_required": true,
+        "last_verified": "2026-09-28T00:00:00Z"
+      },
+      "requires_sme_review": true
+    }
+  ]
+}
