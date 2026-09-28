@@ -1,0 +1,28 @@
+{
+  "$schema": "olympus:artifact:tco-baseline:v1",
+  "application_id": "d634afdb-97cc-4589-a080-5766d4f377d5",
+  "application_name": "Gilded Rose Refactoring Kata",
+  "cost_context": {
+    "mode": "baseline"
+  },
+  "baseline_period": "FY2026 (heuristic estimate — no measured billing period available)",
+  "annual_total": 560,
+  "breakdown": {
+    "cloud_infra_hosting_usd": 60,
+    "om_labor_usd": 500,
+    "shared_hosting_usd": 0
+  },
+  "formula_applied": "Application cost = Cloud/Infra hosting + O&M + hosting, per the FAA definition in the Announcement (Element 7 footnote); operational costs only, excluding one-time development/modernization-factory costs (profiles/faa/config/tco-analyzer.yaml, profiles/faa/references/faa-tco-definition.md).",
+  "confidence": "low",
+  "data_sources": [
+    "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/catalog.json (Discovery.catalog)",
+    "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/structural-analysis.json (Discovery.structural-analysis)"
+  ],
+  "assumptions": [
+    "No cloud billing export, CMDB extract, contract/license inventory, or O&M staffing data was staged as an input artifact for this dispatch — only catalog.json and structural-analysis.json were available. annual_total and breakdown are therefore heuristic estimates derived from architecture evidence (archetype, absence of DB/endpoints/integrations), not measured invoices or actuals. confidence is set to low for this reason and this baseline should be replaced with metered figures once a billing/CMDB source is onboarded.",
+    "cloud_infra_hosting_usd (60) models a minimal scheduled/on-demand compute footprint (no persistent database, no HTTP endpoints, no external integrations, no CI/CD pipeline per structural-analysis.json summary_metrics) rather than an always-on service — consistent with the app's 'cli' archetype and single batch-shaped entry point that blocks on a keypress and exits.",
+    "om_labor_usd (500) models a minimal prorated support allocation for a 172-LOC, zero-incident-history, zero-authentication-surface application (structural-analysis.json interface-inventory shows no identity/authorization mechanism), not measured ticket or SRE time-tracking data.",
+    "shared_hosting_usd (0) reflects that structural-analysis.json documents zero database access, zero integration points, and no identity-provider usage for this application, so there is no shared platform service (identity broker, API gateway, shared DB/RAC cluster) cost to apportion to it.",
+    "Both source artifacts flag that this application_id's mapping to a genuine FAA production system is unconfirmed: the repository is the publicly published 'Gilded Rose Refactoring Kata' (a retail-inventory exercise) with unrelated AssemblyCompany/Copyright metadata ('DSHS 2015') embedded in the built assembly, and a fixtures/default.json test-fixture file describing yet another, different fabricated system. That prior discrepancy is carried forward here, not re-asserted as fact and not resolved by this skill. This baseline is produced under the faa governing profile as directed by dispatch, but any downstream budget or portfolio decision built on these dollar figures should first confirm the application's actual ownership and FAA-system status."
+  ]
+}

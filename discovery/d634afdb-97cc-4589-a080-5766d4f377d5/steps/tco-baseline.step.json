@@ -1,0 +1,19 @@
+{
+  "step": "tco-baseline",
+  "artifacts": [
+    "Validated against the schema. Summary of what I did for the `tco-analyzer` skill dispatch (Discovery, mode=baseline) on app `d634afdb-97cc-4589-a080-5766d4f377d5`:\n\n**Inputs read:** `catalog.json` and `structural-analysis.json` from `input-artifacts/discovery-tco-baseline/`, plus the FAA profile's `config/tco-analyzer.yaml` and `references/faa-tco-definition.md` (found under `/seed/vista/profiles/faa/`, not under the source repo's `profiles/faa/`).\n\n**Key finding driving the approach:** this application is the public \"Gilded Rose Refactoring Kata\" \u2014 a 172-LOC C# console app with no database, no HTTP endpoints, no integrations, no CI/CD, and no billing/CMDB/license data staged as input. Both upstream Discovery artifacts already flag that its mapping to a real FAA system is unconfirmed (kata content + unrelated `AssemblyCompany(\"DSHS\")` metadata). Per the governing-profile rule, I kept `faa` authoritative and did not adopt that discrepancy as fact \u2014 I carried it forward as an `assumptions` entry instead.\n\n**Output written:** `artifacts/discovery-tco-baseline/discovery/d634afdb-97cc-4589-a080-5766d4f377d5/tco-baseline.json`, applying the FAA formula (`Cloud/Infra hosting + O&M + hosting`, operational-only) verbatim from the profile:\n- `annual_total`: 560 (USD)\n- `breakdown`: `cloud_infra_hosting_usd: 60`, `om_labor_usd: 500`, `shared_hosting_usd: 0`\n- `confidence`: `low` \u2014 no billing export/CMDB/license inventory was available; figures are heuristic estimates grounded in the structural-analysis evidence (no DB, no endpoints, no integrations, no identity usage), not measured actuals\n- `data_sources`: the two staged Discovery artifacts only\n- `assumptions`: documents the estimation basis for each line item and the unresolved FAA-ownership discrepancy\n\nValidated the output programmatically against `schemas/discovery/tco-baseline.schema.json` constraints (required fields present, no extra properties, `breakdown` values are integers, `confidence` enum valid, breakdown sums to `annual_total`)."
+  ],
+  "file_artifacts": [
+    "discovery/d634afdb-97cc-4589-a080-5766d4f377d5/tco-baseline.json"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 117446,
+  "token_usage": {
+    "input": 1051,
+    "output": 8886
+  },
+  "cost_estimate_usd": 0.4378556,
+  "timestamp": "2026-09-28T19:10:39.275206+00:00",
+  "pass": "tco-baseline",
+  "skill_id": "tco-analyzer"
+}
