@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "generated_date": "2026-10-02",
+    "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+    "scope": "cross-app",
+    "governing_profile": "faa",
+    "analyst": "redundancy-analyzer skill, regulatory-redundancy lens",
+    "applications_in_wave": 1,
+    "regulated_applications_analyzed": 0
+  },
+  "determination": "NO REGULATORY VARIANCE COMPUTABLE — and no regulatory implementation detected at all.",
+  "determination_detail": "Regulatory variance is measured by grouping applications that implement the same regulation and comparing their implementations section by section. That analysis requires (a) two or more applications and (b) at least one regulation implemented by more than one of them. Neither condition holds in this wave. The wave contains a single application, and that application implements no regulation at all. Both arrays below are therefore empty by measurement, not by omission.",
+  "regulation_groups": [],
+  "variance_findings": [],
+  "consolidation_opportunities": [],
+  "findings": [
+    {
+      "finding_id": "RV-1",
+      "title": "Wave contains a single application, so no regulation can be implemented by two or more applications",
+      "severity": "informational",
+      "applications": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "detail": "The wave roster names exactly one application id. Cross-application regulatory variance is by definition a comparison between two or more implementations of the same regulation section; with one application there is no second implementation to diverge from. This is a stated finding, not an analysis failure.",
+      "evidence": [
+        {
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/_dispatch-context-wave-cross-app-redundancy.json",
+          "field_path": "app_ids",
+          "shows": "A single entry: c70846ac-0948-4953-990c-c68a2be292d9."
+        }
+      ]
+    },
+    {
+      "finding_id": "RV-2",
+      "title": "No business rule in the wave's one application carries a regulatory citation",
+      "severity": "informational",
+      "applications": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "detail": "All 60 extracted business rules (BR-001 through BR-096) omit regulatory_traceability. Discovery records this as a deliberate determination rather than an unfilled field: regulatory_traceability was omitted from every rule rather than populated with a fabricated citation or a blanket not_applicable stub, and no BR-MISSING records were generated on the stated reasoning that a regulation the application does not implement cannot have gaps in it. rules_missing_from_regulation is 0. Every rule in the catalog is a business convention, a defect, or an implementation artifact.",
+      "evidence": [
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+          "field_path": "totals.regulatory_applicability.determination",
+          "shows": "\"NOT APPLICABLE — no regulatory cross-reference was performed, and this is a finding rather than an omission.\""
+        },
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+          "field_path": "totals.rules_missing_from_regulation",
+          "shows": "0"
+        }
+      ]
+    },
+    {
+      "finding_id": "RV-3",
+      "title": "Governing-profile discrepancy: the application has no aviation or FAA business content, so the faa regulatory lens yields no signal",
+      "severity": "medium",
+      "applications": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "detail": "The governing client profile for this task is 'faa', resolved from the application's own record and treated here as authoritative. The faa profile's regulatory sources — 14 CFR Part 47 (aircraft registration), Part 61 (pilot certification), Part 63 (other flight crewmembers), Part 67 (medical standards) and Part 183 (representatives of the Administrator) — were checked against the application and matched on no entry. The application is a standalone VB.NET WinForms student-record manager over a single 10-column Microsoft Access table; it contains no airman, certificate, rating, medical, endorsement, aircraft, registration, designee or examiner concept in its schema or its 461 hand-written lines of code. Discovery raised the same mismatch independently in both the catalog and the business-logic artifacts. Two readings are open: either this application is mis-assigned to the faa profile and to this wave, or the faa profile's regulatory_sources need an entry covering non-aviation administrative systems. Discovery additionally notes that the faa profile's Part 47 applicable_systems list still carries an unresolved TODO(human) marker and is therefore self-described as unconfirmed.",
+      "disposition": "The faa declaration is retained as governing for this run. No alternative governing profile was adopted and no profile value from an input artifact was substituted. The discrepancy is recorded here for the engagement owner, who should confirm the wave assignment before this artifact or the redundancy matrix is used for FAA-specific gating such as safety tiering, NAS impact assessment or compliance mapping.",
+      "evidence": [
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+          "field_path": "totals.regulatory_applicability.match_result",
+          "shows": "\"No match on any entry.\" plus the explicit absence of every aviation domain concept."
+        },
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+          "field_path": "totals.regulatory_applicability.discrepancy_finding",
+          "shows": "Discovery's own statement of the same mismatch, and the unresolved TODO(human) marker on the faa profile's Part 47 applicable_systems list."
+        },
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+          "field_path": "open_questions[0]",
+          "shows": "\"...this application's source, README, and project report describe a generic student-record-management desktop tool with no detectable aviation, NAS, or FAA business relevance.\""
+        }
+      ]
+    },
+    {
+      "finding_id": "RV-4",
+      "title": "Two compliance obligations are named in Discovery but are not regulatory implementations and so cannot vary",
+      "severity": "informational",
+      "applications": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "detail": "Discovery attaches a Section 508 / WCAG 2.1 AA obligation to all human-facing interfaces, noting that 0 of 137 controls carry an AccessibleName or AccessibleDescription annotation. It also records that a live dataset of minors' personal data sits in public source control, and that the single table has no actor, audit or provenance column, which Discovery flags as a material constraint on any modernization that must demonstrate data lineage or support data-subject requests. These are unmet obligations on one application, not competing implementations of a shared regulation across several applications, so they produce no variance row. They are surfaced here so the regulatory lens does not read as having found nothing of compliance interest. Discovery deliberately left PII and safety classification unset, and this skill does not classify them either. Accessibility is the subject of the parallel compare-ux-overlap skill at sequence 1c, not of this artifact.",
+      "evidence": [
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+          "field_path": "coupling_indicators.accessibility-surface-unannotated",
+          "shows": "Section 508 / WCAG 2.1 AA obligation on all four human-facing interfaces; accessible_name_annotations is 0 across 137 controls."
+        },
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+          "field_path": "coupling_indicators.unprotected-pii-in-source-control",
+          "shows": "A live dataset of minors' personal data in public source control; Discovery reports the structural fact and declines to classify it."
+        },
+        {
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+          "field_path": "rules.BR-095",
+          "shows": "No created, modified, actor, version or status column exists anywhere in the schema."
+        }
+      ]
+    }
+  ],
+  "caveats": [
+    "This result is scoped to the applications supplied in this wave. It is not evidence that no other portfolio application implements an overlapping regulation; it is evidence that no such comparison was possible here.",
+    "The two Discovery artifacts contradict each other on several load-bearing schema facts — whether the students table carries a primary key index, what the column data types are, and whether the dashboard issues ten or twelve COUNT queries. None of these affects the empty regulatory-variance result, but all would need resolving before this application's rules could be compared against a peer implementation in a future multi-application wave.",
+    "If this application is reassigned to a wave containing other administrative or student-record systems, the regulatory lens should be re-run: a shared-regulation grouping may become computable even though it is not computable today."
+  ]
+}

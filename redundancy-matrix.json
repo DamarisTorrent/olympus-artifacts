@@ -1,0 +1,74 @@
+{
+  "$schema": "olympus:artifact:redundancy-matrix:v1",
+  "review_asks": [
+    {
+      "ask_slug": "redundancy-scan-inventory",
+      "action": "aware",
+      "title": "Cross-application redundancy scan found nothing to consolidate: this wave contains only one application, so there is no second system to compare it against",
+      "why": "A reviewer seeing an empty redundancy matrix needs to know it is empty because the wave holds a single application, not because the comparison was skipped or failed — the two look identical in the data but mean opposite things for the consolidation decision.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The zero-pair conclusion follows directly from the wave roster, which names exactly one application id, and is corroborated by the application's own measured integration profile: zero HTTP endpoints, zero message queues, zero scheduled jobs, zero database links and zero inbound interfaces. There is no plausible reading of these inputs under which a second wave application exists."
+      },
+      "assessment": "Application c70846ac-0948-4953-990c-c68a2be292d9 (Student Management System, VB.NET WinForms, 2,787 LOC of which 461 hand-written) is the only application in wave 3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe. Cross-application redundancy is computed over unordered pairs of applications, and a one-application wave yields zero pairs. Accordingly: no entity overlap, no operation overlap, no high-overlap pairs, no source-of-truth conflicts between applications, and no consolidation clusters are reported. This is a complete and correct result for the inputs supplied, not a partial one. Scanned for the record: the application manages a single business entity (Student) in a single Microsoft Access table ('students', 10 columns) and performs create, read, list, search, update, delete and a ten-tile counting dashboard. It has no peer-application integrations at all — its only outbound dependencies are a local Access database file, the Microsoft Access Database Engine COM provider, and a hardcoded GitHub URL opened in a browser. Two findings are recorded here for the reviewer's awareness but are deliberately NOT raised as consolidation candidates, because neither is a cross-application redundancy: (1) substantial duplication exists INSIDE this application — the insert and edit forms are near-identical ten-field record editors with byte-for-byte identical 24-control layouts, the grid-load capability is implemented three times in the view form, and the course/gender/year value domains are restated in roughly eight places; that is the proper subject of the separate intra-app dispatch, whose output feeds Modernization rather than this artifact. (2) The committed Access database is not the file the running program opens — the connection string hardcodes an absolute developer path — and the same file is openable directly in Microsoft Access by anyone who can read it, an uncontrolled second access path that bypasses the application; this is a data-governance exposure, not a dual-master conflict between two wave applications, so it is not recorded as a source-of-truth conflict.",
+      "reasoning": "Branching on scope first, as the methodology requires: this is a cross-app dispatch, so the unit of comparison is the application and the roster is authoritative. The dispatch context names one app_id and stages Discovery artifacts for that id alone, giving one qualifying application and therefore zero pairs. The guard's explicit prohibition was the operative constraint on how this was reported: the single application decomposes into six internal modules and four forms, and counting those as 'applications' would have produced a populated five- or six-way matrix that validated cleanly against the schema while meaning something entirely different from what its consumers read. Downstream consumers resolve app ids against the wave roster, so module names such as 'view-form' would resolve to nothing and the one real application would read as uncovered. The honest count of 1 is reported instead, with the application named in coverage_exclusions so the G-RR coverage check can excuse it as a stated finding rather than flag it as a silent gap. Three caveats a reviewer should carry forward. First, a governing-profile discrepancy: the authoritative profile for this engagement is 'faa', and both Discovery artifacts independently report that this application has no aviation, NAS or FAA business content whatsoever — no airman, certificate, rating, medical, endorsement, aircraft or examiner concept exists in its one table or its 461 hand-written lines. The faa declaration is retained as governing here and no alternative profile was adopted, but the mismatch means the regulatory-redundancy lens produced no signal and may indicate the application is mis-assigned to this wave; the engagement owner should confirm before this artifact is used for FAA-specific gating. Second, the two Discovery artifacts contradict each other on load-bearing schema facts — whether the students table carries a primary key index, what the column data types are, and whether the dashboard issues ten or twelve COUNT queries. None of these affects a zero-pair result, but all three would have to be resolved before any future multi-application wave could score entity overlap against this app's data model. Third, this result is scoped strictly to the supplied wave. It is evidence that this application has no redundancy against the applications it was compared with; it is not evidence that no comparable student-record or administrative system exists elsewhere in the portfolio, and it should not be read as clearing the app for a standalone disposition on redundancy grounds.",
+      "evidence_refs": [
+        {
+          "name": "Wave roster names a single application",
+          "detail": "app_ids contains exactly one entry, c70846ac-0948-4953-990c-c68a2be292d9, and declared_inputs stages catalog, business-logic, structural-analysis and ux-accessibility for that id only. No second application id appears anywhere in the dispatch context.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/_dispatch-context-wave-cross-app-redundancy.json"
+        },
+        {
+          "name": "Application is standalone with no peer-application integrations",
+          "detail": "Measured zeros, not unmeasured values: http_endpoints 0, message_queues 0, scheduled_jobs 0, database_links 0, ci_cd_pipelines 0, and no inbound interface of any kind. All three declared integration points are infrastructure (local .accdb file, ACE OLEDB provider, a browser-launched GitHub URL), none is a peer application.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Single business entity and single persistence store",
+          "detail": "One entity (Student) in one Access table 'students' with 10 columns; 0 views, 0 stored procedures, 0 triggers. 16 inline SQL statements across 4 of 6 modules constitute the entire data-access surface.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Intra-app duplication exists but is out of scope for this artifact",
+          "detail": "Insert and edit forms declare identical 24-control sets with the same value domains and a field-to-parameter mapping written twice (373 vs 371 Designer lines); the view form exposes three entry points to one grid-load behaviour; the course taxonomy lives in roughly eight places. Routed to the intra-app dispatch, which feeds Modernization.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "No regulatory traceability on any business rule",
+          "detail": "All 60 business rules (BR-001..BR-096) omit regulatory_traceability, declared in the artifact as a deliberate finding rather than an omission; rules_missing_from_regulation is 0. The faa profile's sources (14 CFR Parts 47, 61, 63, 67, 183) were checked and returned no match on any entry, so the regulatory-variance lens has no input.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Regulatory variance companion artifact",
+          "detail": "Records the empty regulatory-variance result and the governing-profile discrepancy in full, including the unresolved TODO(human) marker on the faa profile's Part 47 applicable_systems list.",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/regulatory-variance.json"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "generated_date": "2026-10-02",
+    "applications_analyzed": 1,
+    "analyst": "redundancy-analyzer skill, scope=cross-app, wave 3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe, governing profile faa. SINGLE-APPLICATION WAVE: applications_analyzed is 1 because the wave roster names exactly one application (c70846ac-0948-4953-990c-c68a2be292d9) and Discovery artifacts were staged for that application alone. Cross-application overlap is defined over unordered pairs of applications; one application yields zero pairs, so entity_overlap, operation_overlap, high_overlap_pairs, data_sot_conflicts and consolidation_candidates are all legitimately empty and the single application is named in coverage_exclusions with its reason. These arrays are empty because there was nothing to compare, NOT because the comparison was skipped. The count was deliberately NOT inflated to clear the old minimum of 2: this application decomposes into six internal modules and four WinForms forms, and reporting those as applications would have yielded a populated matrix that validated against the schema while misrepresenting the portfolio, with every module name resolving to nothing against the wave roster. Real intra-application duplication was observed (near-duplicate insert/edit record editors, three entry points to one grid-load behaviour, a course/gender/year taxonomy restated in roughly eight sites) and is routed to the separate scope=intra-app dispatch, which writes intra-app-redundancy.json for Modernization; it is not recorded as a cross-app consolidation candidate here. The regulatory-redundancy lens returned no signal: no business rule in this application carries a regulatory citation, and the faa profile's sources (14 CFR Parts 47, 61, 63, 67, 183) matched nothing, which is itself reported as a governing-profile discrepancy in the companion regulatory-variance.json. The faa declaration remains governing for this run; no alternative profile was adopted."
+  },
+  "entity_overlap": [],
+  "operation_overlap": [],
+  "high_overlap_pairs": [],
+  "data_sot_conflicts": [],
+  "consolidation_candidates": [],
+  "coverage_exclusions": [
+    {
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "reason": "Single-application wave: no peer application exists to compare against, so no pairwise overlap is computable for this application. Cross-application overlap is defined over unordered pairs of applications, and a one-application roster yields zero pairs.",
+      "rationale": "The wave roster (_dispatch-context-wave-cross-app-redundancy.json, app_ids) names only c70846ac-0948-4953-990c-c68a2be292d9, and Discovery artifacts were staged for that application alone. The application's own measured profile corroborates isolation: zero HTTP endpoints, zero message queues, zero scheduled jobs, zero database links and no inbound interface, with its only outbound dependencies being a local Access file, the ACE OLEDB provider and a browser-launched GitHub URL. The application WAS fully read and scanned for all three lenses (entity, operation, persona) and its inventory is recorded in the redundancy-scan-inventory review ask; what is absent is a counterparty, not the analysis. Intra-application duplication was found and is routed to the scope=intra-app dispatch. This exclusion covers cross-app redundancy only and does not excuse the application from any other wave-grain analysis.",
+      "justification": "Declared so that the G-RR coverage check records this as a stated finding rather than a silent coverage gap. The alternative — counting this application's six internal modules as applications to reach a non-empty matrix — was explicitly rejected as a misrepresentation of the portfolio."
+    }
+  ]
+}
