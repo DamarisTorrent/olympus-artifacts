@@ -1,0 +1,1584 @@
+{
+  "$schema": "olympus:artifact:srs:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "srs": {
+    "version": "1.0.0",
+    "application": "Student Management System (VB.NET)",
+    "generation_date": "2026-10-02",
+    "discovery_gate_date": "NOT YET GATED \u2014 this SRS was derived in the same Discovery Synthesis pass that produced the findings it traces to, ahead of the G-DC gate review. It is therefore a DRAFT prescription conditional on that review, and on the scope decision requested by the synthesis review ask 'analysis-scope-unconfirmed'. It MUST NOT be treated as derived from gate-approved findings until G-DC is decided, and if the gate rescopes the application then every requirement here describes the wrong subject.",
+    "accessibility_standard": "WCAG 2.1 Level AA and Section 508 as incorporated by the ICT Final Rule at 36 CFR 1194.1, carried forward from the applicable standards the UX and accessibility pass identified for this application."
+  },
+  "detail_files": {
+    "functional_requirements": "srs-requirements-functional.json",
+    "non_functional_requirements": "srs-requirements-nonfunctional.json",
+    "data_model": "srs-data-model.json",
+    "accessibility_compliance": "srs-accessibility-compliance.json",
+    "anomaly_resolution_log": "srs-anomaly-resolution-log.json"
+  },
+  "id_scheme": {
+    "modules": "MOD-NNN, assigned in this index; every requirement names its module in module_hint.",
+    "functional_requirements": "REQ-NNN, globally unique across both requirement files, held in srs-requirements-functional.json.",
+    "non_functional_and_constraint_requirements": "NFR-NNN, globally unique across both requirement files, held in srs-requirements-nonfunctional.json.",
+    "anomalies": "ANOM-NNN, held in srs-anomaly-resolution-log.json; each names the requirement it affects.",
+    "discovery_citations": "traces_to.discovery_finding carries an upstream id in one of three namespaces \u2014 BR-NNN (business-logic.json:rules), A11Y-NNN (ux-accessibility.json:accessibility_findings.findings) or SYN-*-NNN (synthesis.json:summary) \u2014 plus the source file and line the originating pass measured. The reference resolves in two hops: the id is found in the upstream artifact, and that artifact carries the file and line evidence."
+  },
+  "modules": [
+    {
+      "id": "MOD-001",
+      "name": "Student Record Management",
+      "description": "Create, retrieve, amend, search and remove individual student academic records. This is the application's one genuine business capability; in the legacy system it is spread across three WinForms screens with inline SQL and no service layer, so the target must CREATE this boundary rather than port it.",
+      "actor_names": [
+        "Student Records Operator",
+        "Student Records Service"
+      ],
+      "data_entities": [
+        "Student",
+        "StudentContactPoint",
+        "GuardianReference",
+        "Enrolment"
+      ],
+      "state_machines": [
+        "StudentRecord"
+      ],
+      "requirement_count": 25,
+      "requirement_ids_selector": "Select from srs-requirements-functional.json:requirements[] and srs-requirements-nonfunctional.json:requirements[] where module_hint == 'MOD-001'.",
+      "notable_findings": [
+        "SYN-HCF-002 \u2014 the live SQL-injection path in the legacy search, closed by REQ-010",
+        "SYN-HCF-005 \u2014 no data-access layer; all sixteen legacy statements sat in presentation event handlers",
+        "SYN-HCF-014 \u2014 physical unrecoverable deletion with no audit column, replaced by REQ-014",
+        "SYN-HCF-015 \u2014 culture-dependent date-of-birth round trip, closed by REQ-017",
+        "SYN-MCF-006 \u2014 roll number is a key enforced nowhere; silent multi-row update and delete"
+      ]
+    },
+    {
+      "id": "MOD-002",
+      "name": "Student Population Statistics",
+      "description": "Read-only aggregate reporting over the student population by gender, course and academic year. Separates cleanly from the CRUD path and is the natural second service, but its legacy aggregate definitions are defective and must be re-specified rather than reimplemented as found.",
+      "actor_names": [
+        "Student Records Operator",
+        "Student Records Service"
+      ],
+      "data_entities": [
+        "StudentPopulationStatistics"
+      ],
+      "state_machines": [],
+      "requirement_count": 9,
+      "requirement_ids_selector": "Select from srs-requirements-functional.json:requirements[] and srs-requirements-nonfunctional.json:requirements[] where module_hint == 'MOD-002'.",
+      "notable_findings": [
+        "SYN-HCF-006 \u2014 hardcoded 2023 year baseline; every academic-year statistic wrong since 2024",
+        "SYN-HCF-013 \u2014 gender census counts two of three storable values with no reconciling total",
+        "SYN-MCF-004 \u2014 the academic-year reference set expired in 2023"
+      ]
+    },
+    {
+      "id": "MOD-003",
+      "name": "Persistence and Data Access",
+      "description": "The data-access seam the legacy system does not have. Owns connection lifecycle, transactions, the physical schema and the migration of legacy data. In the legacy system this module is thirteen lines holding one shared global connection and zero queries.",
+      "actor_names": [
+        "Student Records Service"
+      ],
+      "data_entities": [
+        "Student",
+        "StudentContactPoint",
+        "GuardianReference",
+        "Enrolment",
+        "CourseCode",
+        "GenderCode",
+        "IntakeYear"
+      ],
+      "state_machines": [
+        "DatabaseConnection"
+      ],
+      "requirement_count": 15,
+      "requirement_ids_selector": "Select from srs-requirements-functional.json:requirements[] and srs-requirements-nonfunctional.json:requirements[] where module_hint == 'MOD-003'.",
+      "notable_findings": [
+        "SYN-HCF-004 \u2014 one process-wide never-disposed connection that a child view unilaterally closed",
+        "SYN-HCF-008 \u2014 zero externalized configuration; a clean checkout cannot reach its own database",
+        "SYN-MCF-008 \u2014 out-of-support file database, 32-bit client, no transactions, no conflict detection",
+        "SYN-LCF-001 \u2014 legacy column types, nullability and key definitions NOT ESTABLISHED and disputed between passes"
+      ]
+    },
+    {
+      "id": "MOD-004",
+      "name": "Identity, Access Control and Audit",
+      "description": "Authentication, authorization and audit. Wholly absent from the legacy system \u2014 there is no login form, no user concept, no role, no permission check and no audit column anywhere \u2014 so every requirement here is a new prescription correcting a security violation, not a carried-forward behaviour.",
+      "actor_names": [
+        "Student Records Operator",
+        "Student Records Service"
+      ],
+      "data_entities": [
+        "Student"
+      ],
+      "state_machines": [],
+      "requirement_count": 5,
+      "requirement_ids_selector": "Select from srs-requirements-functional.json:requirements[] and srs-requirements-nonfunctional.json:requirements[] where module_hint == 'MOD-004'.",
+      "notable_findings": [
+        "SYN-HCF-001 \u2014 no authentication or authorization anywhere in the legacy system",
+        "SYN-HCF-003 \u2014 unencrypted personal data with no access control, in a public repository (escalation ESC-1)",
+        "SYN-HCF-014 \u2014 no actor to attribute any change to, because there is no identity"
+      ]
+    },
+    {
+      "id": "MOD-005",
+      "name": "Application Shell, Navigation and Accessibility",
+      "description": "Navigation between functional areas and conformance of every human-facing surface to the prescribed accessibility standard. Owns the three legacy dependency cycles and the default-instance aliasing defect; the parent-child refresh contract must be re-specified because the legacy code does not express what its UI appears to do.",
+      "actor_names": [
+        "Student Records Operator"
+      ],
+      "data_entities": [],
+      "state_machines": [
+        "NavigationContext"
+      ],
+      "requirement_count": 16,
+      "requirement_ids_selector": "Select from srs-requirements-functional.json:requirements[] and srs-requirements-nonfunctional.json:requirements[] where module_hint == 'MOD-005'.",
+      "notable_findings": [
+        "SYN-HCF-007 \u2014 zero accessibility annotations across all 137 controls; gate decision FAIL",
+        "SYN-HCF-011 \u2014 default-instance aliasing; post-write refreshes landed on off-screen instances",
+        "SYN-MCF-005 \u2014 three dependency cycles, all through the shell"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "name": "Student Records Operator",
+      "type": "human",
+      "authentication": "Prescribed: an authenticated session established before any record or statistic is accessible (REQ-028), expiring after a declared period of inactivity (NFR-023). The legacy system had NO authentication of any kind \u2014 no login form, no user concept, no credential store \u2014 so this actor's authentication is a new prescription, not a carried-forward behaviour.",
+      "permissions": [
+        "create a student record",
+        "retrieve and search student records",
+        "amend a student record",
+        "remove a student record subject to authorization (REQ-029)",
+        "view population statistics"
+      ],
+      "target_assurance": "Prescribed target: a single-factor authenticated session at minimum, with authorization evaluated per operation and every mutation audited. The legacy assurance level was assessed as below-AAL1 \u2014 no authentication event occurred at all. The target level is stated as a prescription and is NOT a measurement; the authoritative level must be set by the client's identity authority, and this SRS does not assert one on their behalf.",
+      "modules": [
+        "MOD-001",
+        "MOD-002",
+        "MOD-004",
+        "MOD-005"
+      ],
+      "endpoints_accessed": [
+        "record create form",
+        "record list and search",
+        "record amendment form",
+        "statistics view"
+      ],
+      "evidence": "Derived from the UX pass's single observed persona and from the structural and identity findings that no role or permission model exists anywhere in the legacy source. Cited as ux-accessibility.json:personas and BR-090. NOTE: the persona is an inference from the ABSENCE of role enforcement in code, not a measurement of real usage (synthesis SYN-LCF-003); whether a second role exists is routed as synthesis open question OQ-011, which is why REQ-029 prescribes authorization against permissions without presupposing a role set."
+    },
+    {
+      "name": "Student Records Service",
+      "type": "system",
+      "authentication": "Prescribed: a service identity holding the sole credential for the data store (NFR-013). No human or other process may open the store directly.",
+      "permissions": [
+        "read and write the student record store under transaction control",
+        "write audit entries",
+        "read reference data"
+      ],
+      "target_assurance": "Prescribed: a managed service credential, externally configured and never present in source (NFR-035 is carried as REQ-035; NFR-014 forbids credentials in the repository).",
+      "modules": [
+        "MOD-001",
+        "MOD-002",
+        "MOD-003",
+        "MOD-004"
+      ],
+      "endpoints_accessed": [
+        "student record store",
+        "audit store",
+        "reference data"
+      ],
+      "evidence": "Prescribed to close the second access path the legacy system left open: the legacy store carried no password, so anyone with filesystem read access was effectively an unaudited second user class with full read access to all personal data. Cited as structural-analysis.json:interface-inventory.interfaces and synthesis contradiction CON-007."
+    }
+  ],
+  "state_machines": [
+    {
+      "entity": "StudentRecord",
+      "module": "MOD-001",
+      "description": "The prescribed lifecycle of a student record. The legacy system had NO persisted lifecycle state \u2014 no status column, no state enumeration, no transition table \u2014 so a record's state was its existence and 'enrolled', 'graduated' and 'withdrawn' were indistinguishable. This machine is therefore a prescription, derived from the legacy record-lifecycle machine the business-rule pass reconstructed from code paths.",
+      "states": [
+        {
+          "name": "Draft",
+          "description": "Entered but not yet persisted. Exists only within an operator's unsaved form and has no representation in the store."
+        },
+        {
+          "name": "Active",
+          "description": "Persisted and current. The only state in which a record appears in the standard list, in search results and in the population statistics."
+        },
+        {
+          "name": "Removed",
+          "description": "Removed by an authorized operator. Retained with its field values, the acting operator, the timestamp and the prior values, and excluded from the standard list, search and statistics (REQ-014)."
+        }
+      ],
+      "initial_state": "Draft",
+      "terminal_states": [
+        "Removed"
+      ],
+      "transitions": [
+        {
+          "from": "Draft",
+          "to": "Active",
+          "trigger": "operator submits a create",
+          "guard": "every mandatory field present (REQ-002), every field valid (REQ-003), roll number not already in use (REQ-004)",
+          "action": "persist the record, write an audit entry (REQ-030), refresh the operator's visible list and statistics (REQ-024, REQ-025)",
+          "traces_to": {
+            "discovery_finding": "BR-010",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 4
+          }
+        },
+        {
+          "from": "Draft",
+          "to": "Draft",
+          "trigger": "operator submits an invalid create",
+          "guard": "any mandatory field absent or any field invalid",
+          "action": "reject, name the offending field, persist nothing (REQ-002, REQ-040)",
+          "traces_to": {
+            "discovery_finding": "BR-011",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 18
+          }
+        },
+        {
+          "from": "Active",
+          "to": "Active",
+          "trigger": "operator saves an amendment",
+          "guard": "operator authorized (REQ-029), every field valid, no conflicting concurrent change (REQ-032), roll number unchanged (REQ-007)",
+          "action": "update exactly one record, report the affected count, write an audit entry recording prior and new values (REQ-006, REQ-030)",
+          "traces_to": {
+            "discovery_finding": "BR-032",
+            "source_file": "Flat Design/EditForm.vb",
+            "source_line": 49
+          }
+        },
+        {
+          "from": "Active",
+          "to": "Removed",
+          "trigger": "operator confirms a removal",
+          "guard": "operator authorized to remove (REQ-029), confirmation accepted (REQ-012), the identifier matches exactly one record (REQ-013)",
+          "action": "mark the record removed retaining its values, write an audit entry, refresh the visible list and statistics (REQ-014, REQ-024, REQ-030)",
+          "traces_to": {
+            "discovery_finding": "BR-057",
+            "source_file": "Flat Design/ViewForm.vb",
+            "source_line": 90
+          }
+        },
+        {
+          "from": "Active",
+          "to": "Active",
+          "trigger": "operator declines the removal confirmation",
+          "guard": "confirmation declined",
+          "action": "no change to any record (REQ-012)",
+          "traces_to": {
+            "discovery_finding": "BR-056",
+            "source_file": "Flat Design/ViewForm.vb",
+            "source_line": 88
+          }
+        },
+        {
+          "from": "Removed",
+          "to": "Active",
+          "trigger": "authorized operator restores a removed record",
+          "guard": "operator authorized, the roll number is not in use by an active record",
+          "action": "restore the record with its field values intact and write an audit entry (REQ-014, REQ-030)",
+          "traces_to": {
+            "discovery_finding": "BR-057",
+            "source_file": "Flat Design/ViewForm.vb",
+            "source_line": 90
+          }
+        }
+      ],
+      "dead_states_removed": [
+        {
+          "state": "PartiallyLoaded",
+          "reason": "An accidental legacy state in which a record whose stored categorical value fell outside the offered set loaded with that field blank, so saving overwrote the real value and the record became permanently un-editable. REQ-008 prescribes displaying and preserving the out-of-set value, so the state cannot arise.",
+          "evidence": "BR-033 (Flat Design/EditForm.vb:27)"
+        },
+        {
+          "state": "BlankEdit",
+          "reason": "An accidental legacy state in which a non-existent record produced an editable blank form whose save reported success while updating zero rows. REQ-005 prescribes an explicit not-found report and REQ-006 prescribes surfacing the affected-row count, so the state cannot arise.",
+          "evidence": "BR-036 (Flat Design/EditForm.vb:20)"
+        },
+        {
+          "state": "Deleted (physical)",
+          "reason": "The legacy terminal state was physical, immediate and unrecoverable destruction with no audit \u2014 while forensics nonetheless recovered six deleted rows from page slack, so the data was neither recoverable by the operator nor actually destroyed. Replaced by the retained, audited, reversible Removed state (REQ-014). Retained deliberately in this log because a reader must be able to see that the legacy terminal behaviour was dropped on purpose rather than overlooked.",
+          "evidence": "BR-057 (Flat Design/ViewForm.vb:90); data-domains.json:boundary_violations_carried_forward"
+        }
+      ]
+    },
+    {
+      "entity": "NavigationContext",
+      "module": "MOD-005",
+      "description": "The prescribed navigation contract between the shell and the functional views. Re-specified rather than translated: the legacy mechanism reparented child forms into a single host panel, only hid them, and refreshed siblings through language default-instance properties that resolved to objects other than the displayed ones, so the legacy code did not express what its interface appeared to do.",
+      "states": [
+        {
+          "name": "StatisticsView",
+          "description": "The population statistics are presented. The initial state after authentication."
+        },
+        {
+          "name": "RecordListView",
+          "description": "The bounded, ordered record list with search is presented."
+        },
+        {
+          "name": "RecordEntryView",
+          "description": "The create form is presented."
+        },
+        {
+          "name": "RecordAmendmentView",
+          "description": "The amendment form is presented for one identified record."
+        }
+      ],
+      "initial_state": "StatisticsView",
+      "terminal_states": [],
+      "transitions": [
+        {
+          "from": "StatisticsView",
+          "to": "RecordListView",
+          "trigger": "operator opens the record list",
+          "guard": "operator authorized to read records (REQ-029)",
+          "action": "present a bounded ordered page and release the resources of the previous view (REQ-009, REQ-026)",
+          "traces_to": {
+            "discovery_finding": "BR-078",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 102
+          }
+        },
+        {
+          "from": "StatisticsView",
+          "to": "RecordEntryView",
+          "trigger": "operator opens the create form",
+          "guard": "operator authorized to create (REQ-029)",
+          "action": "present an empty form with every field cleared (REQ-016, REQ-026)",
+          "traces_to": {
+            "discovery_finding": "BR-078",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 102
+          }
+        },
+        {
+          "from": "RecordListView",
+          "to": "RecordAmendmentView",
+          "trigger": "operator opens a selected record for amendment",
+          "guard": "exactly one record selected (REQ-044) and it exists (REQ-005)",
+          "action": "present the record's stored values; if it does not exist, report that and remain in RecordListView (REQ-005)",
+          "traces_to": {
+            "discovery_finding": "BR-063",
+            "source_file": "Flat Design/ViewForm.vb",
+            "source_line": 60
+          }
+        },
+        {
+          "from": "RecordEntryView",
+          "to": "RecordListView",
+          "trigger": "operator completes or cancels a create",
+          "guard": "unsaved entry confirmed discardable (REQ-027)",
+          "action": "present the list reflecting any committed change, in the view the operator is actually looking at (REQ-025)",
+          "traces_to": {
+            "discovery_finding": "BR-019",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 27
+          }
+        },
+        {
+          "from": "RecordAmendmentView",
+          "to": "RecordListView",
+          "trigger": "operator completes or cancels an amendment",
+          "guard": "unsaved entry confirmed discardable (REQ-027)",
+          "action": "present the list reflecting any committed change and release the amendment view's resources (REQ-024, REQ-026)",
+          "traces_to": {
+            "discovery_finding": "BR-038",
+            "source_file": "Flat Design/EditForm.vb",
+            "source_line": 66
+          }
+        },
+        {
+          "from": "RecordListView",
+          "to": "StatisticsView",
+          "trigger": "operator returns to the statistics view",
+          "guard": "operator authorized to read statistics (REQ-029)",
+          "action": "recompute every statistic from current data and current date, and present the as-at time (REQ-018, REQ-024)",
+          "traces_to": {
+            "discovery_finding": "BR-077",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 121
+          }
+        }
+      ],
+      "dead_states_removed": [
+        {
+          "state": "DefaultInstance",
+          "reason": "A legacy absorbing state: a parallel invisible view instance materialised by the language's default-instance feature when a view was addressed by type name rather than through a stored reference. Nothing ever left it, and post-write refreshes landed there instead of on the visible view. The target language has no equivalent mechanism and REQ-025 prescribes refreshing the view in use, so the state cannot arise.",
+          "evidence": "BR-019 (Flat Design/InsertForm.vb:27); structural-analysis.json:coupling_indicators.default-instance-aliasing"
+        },
+        {
+          "state": "Hidden",
+          "reason": "A legacy state in which a navigated-away-from view was hidden but never released, so instances and event subscriptions accumulated across navigations. REQ-026 prescribes releasing the resources of a view no longer in use, so the state cannot arise.",
+          "evidence": "BR-062 (Flat Design/ViewForm.vb:60); BR-078 (Flat Design/Form1.vb:102)"
+        },
+        {
+          "state": "Terminated-by-exception",
+          "reason": "A legacy transition whose stated destination was wrong under a reachable condition: after a removal had closed the shared connection, returning to the statistics view threw an unhandled exception and the process exited instead. REQ-034 and REQ-041 prescribe that no component can render the data layer unusable and that a data failure does not terminate the system.",
+          "evidence": "BR-004 (Flat Design/ViewForm.vb:83)"
+        }
+      ]
+    }
+  ],
+  "anomaly_resolution_log_summary": {
+    "total": 66,
+    "by_action": {
+      "FIX": 60,
+      "CONSOLIDATE": 2,
+      "MAKE_EXPLICIT": 3,
+      "RENAME": 1
+    },
+    "by_type": {
+      "implicit_behavior": 11,
+      "performance_antipattern": 18,
+      "data_integrity_risk": 10,
+      "security_violation": 7,
+      "duplicate_logic": 3,
+      "error_handling_gap": 4,
+      "dead_code": 3,
+      "accessibility_violation": 10
+    },
+    "by_source": {
+      "business-logic": 46,
+      "ux-accessibility": 10,
+      "synthesis": 10,
+      "note": "Every anomaly derives from a measured Discovery finding in one of the three citation namespaces; none was invented here. Full detail in srs-anomaly-resolution-log.json."
+    },
+    "sme_confirmation_required": [
+      "ANOM-001",
+      "ANOM-003",
+      "ANOM-004",
+      "ANOM-006",
+      "ANOM-010",
+      "ANOM-013",
+      "ANOM-014",
+      "ANOM-015",
+      "ANOM-021",
+      "ANOM-022",
+      "ANOM-024",
+      "ANOM-026",
+      "ANOM-028",
+      "ANOM-030",
+      "ANOM-031",
+      "ANOM-033",
+      "ANOM-034",
+      "ANOM-035",
+      "ANOM-040",
+      "ANOM-059"
+    ],
+    "detail": "srs-anomaly-resolution-log.json",
+    "interpretation": "An anomaly is a measured legacy behaviour this specification deliberately does NOT carry forward unchanged. 66 of the 70 requirements replace one. 20 of the 66 anomalies derive from a business rule the extraction pass itself flagged as requiring subject-matter confirmation, so their prescribed behaviour is this specification's proposal rather than a settled decision and must be confirmed before build. The security_violation and accessibility_violation entries are the ones that matter most: carrying either forward silently is the outcome this log exists to prevent."
+  },
+  "traceability_matrix": {
+    "srs_to_discovery": {
+      "REQ-001": {
+        "discovery_finding": "BR-010",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 4,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-002": {
+        "discovery_finding": "BR-011",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 18,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-003": {
+        "discovery_finding": "BR-012",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-004": {
+        "discovery_finding": "BR-023",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-005": {
+        "discovery_finding": "BR-036",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 20,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-006": {
+        "discovery_finding": "BR-032",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 49,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-007": {
+        "discovery_finding": "BR-031",
+        "source_file": "Flat Design/EditForm.Designer.vb",
+        "source_line": 201,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-008": {
+        "discovery_finding": "BR-033",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 27,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-009": {
+        "discovery_finding": "BR-050",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 37,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-010": {
+        "discovery_finding": "BR-052",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 50,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-011": {
+        "discovery_finding": "BR-051",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 47,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-012": {
+        "discovery_finding": "BR-056",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 88,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-013": {
+        "discovery_finding": "BR-037",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 51,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-014": {
+        "discovery_finding": "BR-057",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 90,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-015": {
+        "discovery_finding": "BR-059",
+        "source_file": "Flat Design/ViewForm.Designer.vb",
+        "source_line": 110,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-016": {
+        "discovery_finding": "BR-020",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 41,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-017": {
+        "discovery_finding": "BR-016",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 23,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-018": {
+        "discovery_finding": "BR-072",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 59,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-019": {
+        "discovery_finding": "BR-070",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 23,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-020": {
+        "discovery_finding": "BR-071",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 37,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-021": {
+        "discovery_finding": "BR-074",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 62,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-022": {
+        "discovery_finding": "BR-075",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 22,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-023": {
+        "discovery_finding": "BR-076",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 15,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-024": {
+        "discovery_finding": "BR-077",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 121,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-025": {
+        "discovery_finding": "BR-019",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 27,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-026": {
+        "discovery_finding": "BR-078",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 102,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-027": {
+        "discovery_finding": "BR-079",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 96,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-028": {
+        "discovery_finding": "BR-090",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 26,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-029": {
+        "discovery_finding": "BR-055",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 60,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-030": {
+        "discovery_finding": "BR-095",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-031": {
+        "discovery_finding": "BR-093",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-032": {
+        "discovery_finding": "BR-094",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 27,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-033": {
+        "discovery_finding": "BR-001",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-034": {
+        "discovery_finding": "BR-004",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 83,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-035": {
+        "discovery_finding": "BR-002",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-036": {
+        "discovery_finding": "BR-096",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-037": {
+        "discovery_finding": "BR-017",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 16,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-038": {
+        "discovery_finding": "BR-015",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 87,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-039": {
+        "discovery_finding": "BR-095",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-040": {
+        "discovery_finding": "BR-022",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-041": {
+        "discovery_finding": "BR-035",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 7,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-042": {
+        "discovery_finding": "BR-061",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-043": {
+        "discovery_finding": "BR-053",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 48,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-044": {
+        "discovery_finding": "BR-060",
+        "source_file": "Flat Design/ViewForm.Designer.vb",
+        "source_line": 110,
+        "discovery_artifact": "business-logic"
+      },
+      "REQ-045": {
+        "discovery_finding": "BR-080",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 155,
+        "discovery_artifact": "business-logic"
+      },
+      "NFR-001": {
+        "discovery_finding": "A11Y-001",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 173,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-002": {
+        "discovery_finding": "A11Y-001",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 85,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-003": {
+        "discovery_finding": "A11Y-002",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-004": {
+        "discovery_finding": "A11Y-003",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 442,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-005": {
+        "discovery_finding": "A11Y-004",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 167,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-006": {
+        "discovery_finding": "A11Y-005",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 528,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-007": {
+        "discovery_finding": "A11Y-006",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 960,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-008": {
+        "discovery_finding": "A11Y-007",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 131,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-009": {
+        "discovery_finding": "A11Y-008",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 168,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-010": {
+        "discovery_finding": "A11Y-009",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 97,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "NFR-011": {
+        "discovery_finding": "SYN-MCF-008",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-012": {
+        "discovery_finding": "BR-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 4,
+        "discovery_artifact": "business-logic"
+      },
+      "NFR-013": {
+        "discovery_finding": "SYN-HCF-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-014": {
+        "discovery_finding": "SYN-HCF-003",
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 1,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-015": {
+        "discovery_finding": "SYN-HCF-005",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 1,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-016": {
+        "discovery_finding": "SYN-MCF-005",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 104,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-017": {
+        "discovery_finding": "BR-091",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 45,
+        "discovery_artifact": "business-logic"
+      },
+      "NFR-018": {
+        "discovery_finding": "BR-092",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 48,
+        "discovery_artifact": "business-logic"
+      },
+      "NFR-019": {
+        "discovery_finding": "SYN-LCF-001",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-020": {
+        "discovery_finding": "SYN-HCF-009",
+        "source_file": "Student Management System Siddharth Jain.sln",
+        "source_line": 6,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-021": {
+        "discovery_finding": "SYN-HCF-008",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 64,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-022": {
+        "discovery_finding": "BR-022",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31,
+        "discovery_artifact": "business-logic"
+      },
+      "NFR-023": {
+        "discovery_finding": "SYN-HCF-001",
+        "source_file": "Flat Design/My Project/Application.myapp",
+        "source_line": 8,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-024": {
+        "discovery_finding": "SYN-HCF-007",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 1072,
+        "discovery_artifact": "synthesis"
+      },
+      "NFR-025": {
+        "discovery_finding": "BR-081",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 518,
+        "discovery_artifact": "business-logic"
+      }
+    },
+    "discovery_to_srs": {
+      "BR-001": {
+        "requirements": [
+          "REQ-033"
+        ],
+        "status": "covered"
+      },
+      "BR-002": {
+        "requirements": [
+          "REQ-035"
+        ],
+        "status": "covered"
+      },
+      "BR-003": {
+        "requirements": [
+          "NFR-012"
+        ],
+        "status": "covered"
+      },
+      "BR-004": {
+        "requirements": [
+          "REQ-034"
+        ],
+        "status": "covered"
+      },
+      "BR-010": {
+        "requirements": [
+          "REQ-001"
+        ],
+        "status": "covered"
+      },
+      "BR-011": {
+        "requirements": [
+          "REQ-002"
+        ],
+        "status": "covered"
+      },
+      "BR-012": {
+        "requirements": [
+          "REQ-003"
+        ],
+        "status": "covered"
+      },
+      "BR-013": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The three-value gender set is prescribed as stored reference data by REQ-038 and its reporting consequence by REQ-019; a separate requirement restating the legacy value list would re-embed the taxonomy this SRS removes from code."
+      },
+      "BR-014": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The course set is prescribed as stored reference data by REQ-038 and derived reporting by REQ-020, for the same reason as BR-013."
+      },
+      "BR-015": {
+        "requirements": [
+          "REQ-038"
+        ],
+        "status": "covered"
+      },
+      "BR-016": {
+        "requirements": [
+          "REQ-017"
+        ],
+        "status": "covered"
+      },
+      "BR-017": {
+        "requirements": [
+          "REQ-037"
+        ],
+        "status": "covered"
+      },
+      "BR-018": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "FIX",
+        "reason": "Positional rather than named parameter binding is a defect of the legacy data client. It is eliminated by the data-access layer required by NFR-015 and the parameterization required by REQ-010, and no target-visible behaviour corresponds to it."
+      },
+      "BR-019": {
+        "requirements": [
+          "REQ-025"
+        ],
+        "status": "covered"
+      },
+      "BR-020": {
+        "requirements": [
+          "REQ-016"
+        ],
+        "status": "covered"
+      },
+      "BR-021": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The unbounded date-of-birth default and range are prescribed by the plausibility rule in REQ-017; the legacy default-to-today behaviour is not carried forward."
+      },
+      "BR-022": {
+        "requirements": [
+          "NFR-022",
+          "REQ-040"
+        ],
+        "status": "covered"
+      },
+      "BR-023": {
+        "requirements": [
+          "REQ-004"
+        ],
+        "status": "covered"
+      },
+      "BR-030": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Retrieval of a single record for amendment is prescribed by REQ-005, which supersedes it by adding the missing-record branch the legacy path lacked."
+      },
+      "BR-031": {
+        "requirements": [
+          "REQ-007"
+        ],
+        "status": "covered"
+      },
+      "BR-032": {
+        "requirements": [
+          "REQ-006"
+        ],
+        "status": "covered"
+      },
+      "BR-033": {
+        "requirements": [
+          "REQ-008"
+        ],
+        "status": "covered"
+      },
+      "BR-034": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The read side of the culture-dependent date-of-birth round trip is prescribed by REQ-017, whose acceptance criteria cover both directions by requiring that a date entered in one locale present identically in another and that an untouched value round-trip unchanged. Splitting the write and read halves into separate requirements would let a build satisfy one and not the other, which is exactly how the legacy defect arose."
+      },
+      "BR-035": {
+        "requirements": [
+          "REQ-041"
+        ],
+        "status": "covered"
+      },
+      "BR-036": {
+        "requirements": [
+          "REQ-005"
+        ],
+        "status": "covered"
+      },
+      "BR-037": {
+        "requirements": [
+          "REQ-013"
+        ],
+        "status": "covered"
+      },
+      "BR-038": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Post-amendment refresh is prescribed by REQ-024 and REQ-025, which replace all three inconsistent legacy refresh paths with one mechanism."
+      },
+      "BR-050": {
+        "requirements": [
+          "REQ-009"
+        ],
+        "status": "covered"
+      },
+      "BR-051": {
+        "requirements": [
+          "REQ-011"
+        ],
+        "status": "covered"
+      },
+      "BR-052": {
+        "requirements": [
+          "REQ-010"
+        ],
+        "status": "covered"
+      },
+      "BR-053": {
+        "requirements": [
+          "REQ-043"
+        ],
+        "status": "covered"
+      },
+      "BR-054": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The narrow legacy search scope is addressed by REQ-011, which prescribes search across the fields an operator needs including the course and year axes the legacy system omitted."
+      },
+      "BR-055": {
+        "requirements": [
+          "REQ-029"
+        ],
+        "status": "covered"
+      },
+      "BR-056": {
+        "requirements": [
+          "REQ-012"
+        ],
+        "status": "covered"
+      },
+      "BR-057": {
+        "requirements": [
+          "REQ-014"
+        ],
+        "status": "covered"
+      },
+      "BR-058": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The missing refresh after removal is prescribed by REQ-024, which requires refresh after every mutation by one consistent mechanism."
+      },
+      "BR-059": {
+        "requirements": [
+          "REQ-015"
+        ],
+        "status": "covered"
+      },
+      "BR-060": {
+        "requirements": [
+          "REQ-044"
+        ],
+        "status": "covered"
+      },
+      "BR-061": {
+        "requirements": [
+          "REQ-042"
+        ],
+        "status": "covered"
+      },
+      "BR-062": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "FIX",
+        "reason": "Accumulated event subscriptions on view reuse are eliminated by the resource-release requirement in REQ-026; no target-visible behaviour corresponds to the legacy leak."
+      },
+      "BR-063": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Launching amendment from the list is prescribed by the navigation contract in REQ-026, which replaces the legacy mechanism of a child view mutating its host's control tree."
+      },
+      "BR-070": {
+        "requirements": [
+          "REQ-019"
+        ],
+        "status": "covered"
+      },
+      "BR-071": {
+        "requirements": [
+          "REQ-020"
+        ],
+        "status": "covered"
+      },
+      "BR-072": {
+        "requirements": [
+          "REQ-018"
+        ],
+        "status": "covered"
+      },
+      "BR-073": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The fixed five-cohort cardinality and the absent residual bucket are prescribed by REQ-018 and REQ-019 together; a separate requirement would re-fix the cardinality this SRS makes data-driven."
+      },
+      "BR-074": {
+        "requirements": [
+          "REQ-021"
+        ],
+        "status": "covered"
+      },
+      "BR-075": {
+        "requirements": [
+          "REQ-022"
+        ],
+        "status": "covered"
+      },
+      "BR-076": {
+        "requirements": [
+          "REQ-023"
+        ],
+        "status": "covered"
+      },
+      "BR-077": {
+        "requirements": [
+          "REQ-024"
+        ],
+        "status": "covered"
+      },
+      "BR-078": {
+        "requirements": [
+          "REQ-026"
+        ],
+        "status": "covered"
+      },
+      "BR-079": {
+        "requirements": [
+          "REQ-027"
+        ],
+        "status": "covered"
+      },
+      "BR-080": {
+        "requirements": [
+          "REQ-045"
+        ],
+        "status": "covered"
+      },
+      "BR-081": {
+        "requirements": [
+          "NFR-025"
+        ],
+        "status": "covered"
+      },
+      "BR-090": {
+        "requirements": [
+          "REQ-028"
+        ],
+        "status": "covered"
+      },
+      "BR-091": {
+        "requirements": [
+          "NFR-017"
+        ],
+        "status": "covered"
+      },
+      "BR-092": {
+        "requirements": [
+          "NFR-018"
+        ],
+        "status": "covered"
+      },
+      "BR-093": {
+        "requirements": [
+          "REQ-031"
+        ],
+        "status": "covered"
+      },
+      "BR-094": {
+        "requirements": [
+          "REQ-032"
+        ],
+        "status": "covered"
+      },
+      "BR-095": {
+        "requirements": [
+          "REQ-030",
+          "REQ-039"
+        ],
+        "status": "covered"
+      },
+      "BR-096": {
+        "requirements": [
+          "REQ-036"
+        ],
+        "status": "covered"
+      },
+      "A11Y-001": {
+        "requirements": [
+          "NFR-001",
+          "NFR-002"
+        ],
+        "status": "covered"
+      },
+      "A11Y-002": {
+        "requirements": [
+          "NFR-003"
+        ],
+        "status": "covered"
+      },
+      "A11Y-003": {
+        "requirements": [
+          "NFR-004"
+        ],
+        "status": "covered"
+      },
+      "A11Y-004": {
+        "requirements": [
+          "NFR-005"
+        ],
+        "status": "covered"
+      },
+      "A11Y-005": {
+        "requirements": [
+          "NFR-006"
+        ],
+        "status": "covered"
+      },
+      "A11Y-006": {
+        "requirements": [
+          "NFR-007"
+        ],
+        "status": "covered"
+      },
+      "A11Y-007": {
+        "requirements": [
+          "NFR-008"
+        ],
+        "status": "covered"
+      },
+      "A11Y-008": {
+        "requirements": [
+          "NFR-009"
+        ],
+        "status": "covered"
+      },
+      "A11Y-009": {
+        "requirements": [
+          "NFR-010"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-001": {
+        "requirements": [
+          "NFR-023"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-002": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The injection path is prescribed against by REQ-010, which forbids concatenating operator input into any query."
+      },
+      "SYN-HCF-003": {
+        "requirements": [
+          "NFR-013",
+          "NFR-014"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-004": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The shared global connection is prescribed against by REQ-033 and REQ-034."
+      },
+      "SYN-HCF-005": {
+        "requirements": [
+          "NFR-015"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-006": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The hardcoded year baseline is prescribed against by REQ-018."
+      },
+      "SYN-HCF-007": {
+        "requirements": [
+          "NFR-024"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-008": {
+        "requirements": [
+          "NFR-021"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-009": {
+        "requirements": [
+          "NFR-020"
+        ],
+        "status": "covered"
+      },
+      "SYN-HCF-010": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The single-table, not-shared topology is the premise of this specification's data model rather than a finding needing its own requirement; it is expressed in srs-data-model.json and in REQ-036 through REQ-039."
+      },
+      "SYN-HCF-011": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Default-instance aliasing is prescribed against by REQ-025 and REQ-026."
+      },
+      "SYN-HCF-012": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "The governing-profile and analysis-scope discrepancy is not a property of the system to be built and cannot be resolved by a requirement. It is an engagement-scope decision routed as synthesis open question OQ-001 and the gate review ask 'analysis-scope-unconfirmed'. THIS SRS IS CONDITIONAL ON THAT DECISION."
+      },
+      "SYN-HCF-013": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The gender domain mismatch is prescribed by REQ-019, which requires every record to fall in exactly one bucket with a reconciling total, and by REQ-038."
+      },
+      "SYN-HCF-014": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Physical deletion with no audit is prescribed by REQ-014 and REQ-030 together."
+      },
+      "SYN-HCF-015": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The culture-dependent date round-trip is prescribed by REQ-017, with the typing half carried by REQ-037."
+      },
+      "SYN-HCF-016": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "A Discovery pipeline-ordering defect, in which the capability pass ran before its required input existed. Routed as synthesis open question OQ-002 for a re-run; it prescribes nothing about the target system."
+      },
+      "SYN-MCF-001": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "OMIT",
+        "reason": "The legacy technical-debt score is a measurement of the system being replaced. It informs disposition and sizing and has no prescriptive content for the target."
+      },
+      "SYN-MCF-002": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The sixty-rule catalog is the source of the functional requirements in this specification rather than a finding needing its own requirement; its coverage is accounted for rule by rule in this matrix."
+      },
+      "SYN-MCF-003": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The mobile-number type ceiling is prescribed by REQ-037, which requires every field to be stored in a type that can represent every value the interface accepts."
+      },
+      "SYN-MCF-004": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The expired academic-year list is prescribed by REQ-038, which requires reference sets to be stored data with no code change needed for a new intake year."
+      },
+      "SYN-MCF-005": {
+        "requirements": [
+          "NFR-016"
+        ],
+        "status": "covered"
+      },
+      "SYN-MCF-006": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The weak record key is prescribed by REQ-036, which requires an enforced unique identifier declared in the schema, and by REQ-004 and REQ-013."
+      },
+      "SYN-MCF-007": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "The data decomposition strategy and its provisional target binding are a disposition decision, routed as synthesis open question OQ-010. This SRS prescribes the target's behaviour and deliberately does not presuppose the disposition."
+      },
+      "SYN-MCF-008": {
+        "requirements": [
+          "NFR-011"
+        ],
+        "status": "covered"
+      },
+      "SYN-MCF-009": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "Zero in-source regulatory citations is a traceability gap in the legacy artifact, not a target requirement. The applicable obligations are routed as synthesis open question OQ-006; the accessibility obligation this SRS does prescribe is carried by NFR-001."
+      },
+      "SYN-MCF-010": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "OMIT",
+        "reason": "The measured two-row payload is a migration-sizing and criticality input, accounted for by the migration reconciliation in REQ-039. It prescribes no target behaviour of its own."
+      },
+      "SYN-MCF-011": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "The absence of persisted lifecycle state is prescribed by REQ-014, which replaces physical deletion with an audited reversible state change, together with the audit requirement REQ-030."
+      },
+      "SYN-MCF-012": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "The three logical bounded contexts are a target-state design proposal the originating pass itself puts to a reviewer at its lowest internal confidence, and it states the domains are physically indivisible. Routed as synthesis open question OQ-013; this SRS models the entities without presupposing a service split."
+      },
+      "SYN-LCF-001": {
+        "requirements": [
+          "NFR-019"
+        ],
+        "status": "covered"
+      },
+      "SYN-LCF-002": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "That the legacy accessibility findings are a floor rather than a ceiling is a statement about Discovery method confidence. The target obligation is prescribed in full by NFR-001, whose acceptance criteria require screen-reader and keyboard verification against a rendered build \u2014 which is exactly what the legacy audit could not do."
+      },
+      "SYN-LCF-003": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "The persona and role model is unconfirmed and is routed as synthesis open question OQ-011. REQ-029 prescribes authorization against permissions without presupposing a role set, so the gap does not block this specification."
+      },
+      "SYN-LCF-004": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "OMIT",
+        "reason": "The absent legacy adoption baseline is an instrumentation gap in the system being replaced; no measurement exists to carry forward. Target observability is prescribed by NFR-022."
+      },
+      "SYN-LCF-005": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "CONSOLIDATE",
+        "reason": "Undetectable out-of-band access to the store is prescribed against by NFR-013, which restricts store access to the application's service identity and requires encryption at rest."
+      },
+      "SYN-LCF-006": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "OMIT",
+        "reason": "The superseded column layout retained in the legacy file is dead residue the application never reads. It is handled as a migration concern by REQ-039 rather than carried into the target schema."
+      },
+      "SYN-LCF-007": {
+        "requirements": [],
+        "status": "defer",
+        "action": "DEFER",
+        "reason": "The unparsed project document is a Discovery evidence gap routed as synthesis open question OQ-012. It may add or revise requirements once read; recording it as unresolved rather than closed is what keeps this specification honest about its own completeness."
+      },
+      "SYN-LCF-008": {
+        "requirements": [],
+        "status": "accounted",
+        "action": "OMIT",
+        "reason": "Discovery-skill scaffolding staged into the source tree is an upstream pipeline defect with no bearing on the target system. Routed as synthesis open question OQ-007; NFR-014 independently requires a clean repository."
+      }
+    },
+    "coverage": {
+      "total_requirements": 70,
+      "requirements_with_evidence": 70,
+      "requirements_without_evidence": 0,
+      "total_discovery_findings": 105,
+      "findings_with_requirements": 66,
+      "findings_accounted_without_own_requirement": 39,
+      "findings_unresolved": 0,
+      "denominator_definition": "The discovery-finding universe for this SRS is the union of three enumerated, id-bearing sets: all 60 business rules (business-logic.json:rules), all 9 accessibility findings (ux-accessibility.json:accessibility_findings.findings) and all 36 synthesized findings (synthesis.json:summary). That is 105 findings and every one is listed individually in discovery_to_srs above with its status. The 34 implicit-logic findings are deliberately NOT added to the denominator: they carry no machine-readable cross-reference to the rule ids and the business-rule pass states that 37 of its 60 rules are themselves implicit, so counting both sets would double-count the same behaviours and inflate the denominator. Each implicit-logic finding's substance reaches this SRS through the rule that carries it.",
+      "accounted_without_own_requirement_definition": "A finding with no requirement of its own is NOT a dropped finding. Each carries an explicit action and reason in discovery_to_srs: CONSOLIDATE where a single requirement prescribes behaviour that several findings describe (splitting them would let a build satisfy one half and not the other), OMIT where the finding measures the legacy system and prescribes nothing about the target, FIX where the target design eliminates the defect so no target-visible behaviour corresponds to it, and DEFER where the finding is an engagement, disposition or pipeline decision that no requirement can resolve and which is routed to a named synthesis open question.",
+      "caveat": "PRECONDITION NOT YET MET, STATED HERE RATHER THAN BURIED: every figure in this matrix describes the accounting of discovery findings against requirements, and that accounting is complete \u2014 all 105 findings are either covered by a requirement or carry a recorded action. It does NOT mean the specification is ready to build from. The legacy column data types, nullability, declared widths, key and index definitions and authoritative row count are NOT ESTABLISHED, and two Discovery passes disagree about them (synthesis contradictions CON-001 and CON-002). REQ-036 and REQ-037 prescribe what the target schema must guarantee, but the legacy side of that mapping cannot be written and NO TARGET SCHEMA MAY BE GENERATED until synthesis open question OQ-003 is answered by one session against the store through a database engine. A requirement that prescribes a target type with no confirmed source type is an unverifiable mapping, and counting it as covered would hide that."
+    }
+  },
+  "summary": {
+    "total_modules": 5,
+    "total_requirements": 70,
+    "total_functional": 45,
+    "total_non_functional": 14,
+    "total_constraints": 11,
+    "total_must": 61,
+    "total_should": 9,
+    "total_could": 0,
+    "requirements_per_module": {
+      "MOD-001": 25,
+      "MOD-002": 9,
+      "MOD-005": 16,
+      "MOD-004": 5,
+      "MOD-003": 15
+    },
+    "total_state_machines": 2,
+    "total_states": 7,
+    "total_transitions": 12,
+    "total_dead_states_removed": 6,
+    "total_actors": 2,
+    "total_human_actors": 1,
+    "total_system_actors": 1,
+    "total_anomalies_resolved": 66,
+    "total_anomalies_requiring_sme_confirmation": 20,
+    "total_data_entities": 7,
+    "headline": "70 requirements over 5 modules, every one traced to a measured Discovery finding. 61 are MUST. 66 replace a legacy anomaly rather than carrying it forward, and 20 of those need subject-matter confirmation first. The two largest bodies of new prescription are the identity module, which replaces nothing because the legacy system had no authentication at all, and the accessibility requirements, which replace a measured zero."
+  },
+  "open_questions": [
+    "BLOCKING: Is this the right application? The governing profile is declared as 'faa' and the application has no aviation relevance; seven Discovery passes raised this independently. If the gate rescopes, every requirement in this SRS describes the wrong subject. See synthesis open question OQ-001 and the review ask 'analysis-scope-unconfirmed'.",
+    "NO TARGET SCHEMA MAY BE GENERATED YET. Legacy column data types, nullability, declared widths, key and index definitions and the authoritative row count are not established and two Discovery passes disagree. One session against the store through a database engine closes it. See synthesis open question OQ-003 and contradictions CON-001 and CON-002.",
+    "Are the statistics definitions prescribed in REQ-018 through REQ-021 the intended ones? Three legacy defects are ambiguous between bug and intent \u2014 the hardcoded year baseline, the gender census counting two of three storable values, and the post-create refresh landing on off-screen instances \u2014 and no behavioural baseline exists to adjudicate from. This SRS prescribes the corrected reading; stakeholders must confirm it. See synthesis open question OQ-008.",
+    "Does any retention, auditability or erasure obligation apply to this student data? REQ-014 prescribes retained, reversible, audited removal, which is the safe default, but a retention schedule and an erasure path must be set by the data owner \u2014 particularly for the guardian's name, which is personal data about a second, unconsented data subject held inside the student's row. See synthesis open question OQ-009.",
+    "Is there more than one operator role? REQ-029 prescribes authorization against permissions without presupposing a role set, precisely because the single persona is inferred from the absence of role enforcement in code rather than measured. The permission-to-role mapping cannot be completed until this is answered. See synthesis open question OQ-011.",
+    "Is a student permitted more than one enrolment, and what should happen to intakes after 2023? REQ-038 makes the reference sets data-driven, which unblocks later intake years, but the cardinality of student to enrolment is a data-model decision this SRS does not presume. See synthesis open question OQ-013.",
+    "Should this application be modernized at all? This SRS prescribes the behaviour of a target system and deliberately does not presuppose the disposition. The structural argument for retire or replace is substantial \u2014 461 hand-written lines, one table, two live rows, one genuine capability \u2014 and is routed as synthesis open question OQ-010.",
+    "The 868-kilobyte author-credited project document at the repository root was parsed by no Discovery pass. If it states design intent, some requirements here that correct a defect may turn out to be correcting documented intent. See synthesis open question OQ-012.",
+    "The target assurance level stated for the operator actor is a prescription, not a measurement, and this SRS does not assert an authoritative level on the client identity authority's behalf. Confirm the required level before build."
+  ]
+}

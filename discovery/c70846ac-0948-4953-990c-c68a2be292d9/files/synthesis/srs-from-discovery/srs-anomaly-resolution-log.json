@@ -1,0 +1,1173 @@
+{
+  "$schema": "olympus:artifact:srs-anomaly-resolution-log:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "Every legacy anomaly this SRS ruled on, the action taken, and whether a subject-matter expert must confirm it. An anomaly here is a measured legacy behaviour the specification deliberately does NOT carry forward unchanged. Security violations are listed first in the by_type tally because carrying one forward silently is the outcome this log exists to prevent.",
+  "total": 66,
+  "by_action": {
+    "FIX": 60,
+    "CONSOLIDATE": 2,
+    "MAKE_EXPLICIT": 3,
+    "RENAME": 1
+  },
+  "by_source": {
+    "business-logic": 46,
+    "ux-accessibility": 10,
+    "synthesis": 10
+  },
+  "by_type": {
+    "implicit_behavior": 11,
+    "performance_antipattern": 18,
+    "data_integrity_risk": 10,
+    "security_violation": 7,
+    "duplicate_logic": 3,
+    "error_handling_gap": 4,
+    "dead_code": 3,
+    "accessibility_violation": 10
+  },
+  "sme_confirmation_required": [
+    "ANOM-001",
+    "ANOM-003",
+    "ANOM-004",
+    "ANOM-006",
+    "ANOM-010",
+    "ANOM-013",
+    "ANOM-014",
+    "ANOM-015",
+    "ANOM-021",
+    "ANOM-022",
+    "ANOM-024",
+    "ANOM-026",
+    "ANOM-028",
+    "ANOM-030",
+    "ANOM-031",
+    "ANOM-033",
+    "ANOM-034",
+    "ANOM-035",
+    "ANOM-040",
+    "ANOM-059"
+  ],
+  "anomalies": [
+    {
+      "anomaly_id": "ANOM-001",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy made three dropdowns mandatory only by accident: an unselected combo threw NullReferenceException into a catch-all handler and was reported to the user as a database error. Presence is prescribed explicitly and attributed to the offending field.",
+      "prescribed_behavior": "The system MUST reject a create or amend request in which any mandatory field is absent, rather than relying on a runtime exception to enforce presence.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-002"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-011",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 18
+      }
+    },
+    {
+      "anomaly_id": "ANOM-002",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy performed no validation on any free-text field and set no MaxLength on any text box, so an all-empty-string record was persistable. Validation is a NEW requirement here, not a port.",
+      "prescribed_behavior": "The system MUST validate every field against an explicit, declared rule before persisting it, covering presence, maximum length, and format for the two mobile-number fields and the roll number.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-003"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-012",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12
+      }
+    },
+    {
+      "anomaly_id": "ANOM-003",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy performed no duplicate check on the create path and relied on an index whose existence two Discovery passes disputed; see synthesis contradiction CON-001.",
+      "prescribed_behavior": "The system MUST reject a create request whose roll number already identifies an existing student record, reporting the collision to the operator.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-004"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-023",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12
+      }
+    },
+    {
+      "anomaly_id": "ANOM-004",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy read the result set with an If-without-Else, so a missing record silently yielded a blank edit form whose subsequent save reported success while updating zero rows.",
+      "prescribed_behavior": "The system MUST retrieve exactly one student record by roll number for amendment, and MUST report explicitly when no record matches rather than presenting an empty form.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-005"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-036",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 20
+      }
+    },
+    {
+      "anomaly_id": "ANOM-005",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy discarded the affected-row count from every mutation, so a zero-row update reported 'Record updated successfully'. The target must surface the count.",
+      "prescribed_behavior": "The system MUST amend the mutable fields of exactly one student record identified by roll number, and MUST NOT modify any other record.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-006"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-032",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 49
+      }
+    },
+    {
+      "anomaly_id": "ANOM-006",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy assigned the stored value to a dropdown's selected item; an unlisted value failed silently and left the control blank, so saving overwrote the real value and the record became permanently un-editable.",
+      "prescribed_behavior": "The system MUST permit amendment of a record whose stored categorical value falls outside the currently offered value set, and MUST NOT silently discard that value.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-008"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-033",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 27
+      }
+    },
+    {
+      "anomaly_id": "ANOM-007",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy bound SELECT * with no ORDER BY and no paging straight to a grid, so order was engine-defined and the whole table was read on every refresh.",
+      "prescribed_behavior": "The system MUST list student records in a stable, explicitly declared order, and MUST page or bound the result set rather than returning the whole table.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-009"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-050",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 37
+      }
+    },
+    {
+      "anomaly_id": "ANOM-008",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "Legacy concatenated the search box verbatim into an equality clause and a LIKE clause \u2014 the application's only attacker-controlled unparameterized statement and a live data-disclosure path. It is also an availability defect: a legitimate apostrophe crashed the process.",
+      "prescribed_behavior": "The system MUST search student records using parameterized queries only; it MUST NOT construct any query by concatenating operator input.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-010"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-052",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 50
+      }
+    },
+    {
+      "anomaly_id": "ANOM-009",
+      "action": "CONSOLIDATE",
+      "type": "duplicate_logic",
+      "legacy_behavior": "Legacy applied exact equality to roll number and partial LIKE to first name from a single box, ignored the other seven stored fields, and offered no filter by course or year even though those are the dashboard's primary reporting axes.",
+      "prescribed_behavior": "The system SHOULD offer search and filtering across the fields an operator needs to find a record, with the semantics of each search field declared, and SHOULD NOT silently mix exact and partial matching in one undifferentiated input.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-011"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-051",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 47
+      }
+    },
+    {
+      "anomaly_id": "ANOM-010",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy keyed update and delete on a roll number with no enforced uniqueness, so duplicates would cause every matching row to be rewritten or removed while success was reported.",
+      "prescribed_behavior": "The system MUST remove exactly the one student record identified for removal, and MUST NOT remove any other record.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-013"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-037",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 51
+      }
+    },
+    {
+      "anomaly_id": "ANOM-011",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy deletion was physical, immediate and unrecoverable with no audit, archive or retention, while forensics nonetheless recovered six deleted rows from page slack \u2014 so the data was neither recoverable by the operator nor actually destroyed. Subject to the retention ruling in synthesis open question OQ-009.",
+      "prescribed_behavior": "The system MUST implement removal as a reversible, audited state change that retains the record and its history, rather than as an immediate physical deletion.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-014"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-057",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 90
+      }
+    },
+    {
+      "anomaly_id": "ANOM-012",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy reset routine could not clear a drop-down-list combo by assigning its text property, so the second and subsequent inserts silently inherited the previous record's gender, course and year.",
+      "prescribed_behavior": "The system MUST clear every field of the record-entry form after a successful create, including all selection fields, so that no value carries over into the next entry.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-016"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-020",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 41
+      }
+    },
+    {
+      "anomaly_id": "ANOM-013",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy wrote the date from a culture-formatted display string and read it back with a culture-free parse under OptionStrict Off, making day/month transposition possible across workstation locales. No plausibility check existed; the two live records carry a 2009 date of birth against a 2019 admission year.",
+      "prescribed_behavior": "The system MUST record the student's date of birth as a date value, independent of the display culture of any client, and MUST reject an implausible date.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-017"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-016",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 23
+      }
+    },
+    {
+      "anomaly_id": "ANOM-014",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy derived all five academic-year statistics by subtraction from a hardcoded constant 2023 and never read the clock, so every cohort has been mislabelled since 1 January 2024. The error was silent: no exception, no reconciling total, and changing the workstation clock had no effect. Intended definition subject to synthesis open question OQ-008.",
+      "prescribed_behavior": "The system MUST derive every academic-year statistic from the current date at the time the statistic is computed, and MUST NOT use a compiled-in year constant.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-018"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-072",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 59
+      }
+    },
+    {
+      "anomaly_id": "ANOM-015",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy counted only two of the three storable gender values and reported no grand total, so any record recorded as the third value was invisible in every statistic and the undercount was undetectable from the screen. The same defect applies to admissions before the earliest recognised cohort.",
+      "prescribed_behavior": "The system MUST count every stored record in exactly one bucket of each reported statistical breakdown, and MUST present a reconciling total against which each breakdown can be checked.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-019"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-070",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 23
+      }
+    },
+    {
+      "anomaly_id": "ANOM-016",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy hardcoded each course as its own COUNT query with no GROUP BY, restating the course taxonomy in at least eight places, so adding a course required editing two interface definition files and the dashboard query set.",
+      "prescribed_behavior": "The system MUST derive the set of reported course and academic-year breakdowns from the stored reference data, and MUST NOT require a code or query change to report on a newly added course or intake year.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-020"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-071",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 37
+      }
+    },
+    {
+      "anomaly_id": "ANOM-017",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy stored the admission year as text and matched it by concatenating a literal into the query, so comparison was lexical rather than arithmetic. This was also the application's second site of query concatenation, non-injectable only because the interpolated value was an integer.",
+      "prescribed_behavior": "The system MUST compare academic-year values arithmetically against a numeric or date-typed stored value, and MUST NOT match them as text.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-021"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-074",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 62
+      }
+    },
+    {
+      "anomaly_id": "ANOM-018",
+      "action": "MAKE_EXPLICIT",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy statistics were whole-table and all-time with no status, enrolment or date scope, and the absence of scope was nowhere stated.",
+      "prescribed_behavior": "The system SHOULD allow a statistic to be scoped, and MUST state the scope of every statistic it presents.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-022"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-075",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 22
+      }
+    },
+    {
+      "anomaly_id": "ANOM-019",
+      "action": "FIX",
+      "type": "error_handling_gap",
+      "legacy_behavior": "Legacy statistics defaulted to the literal zero in non-editable labels and the load path was wholly unguarded, so any query failure left a screen of plausible zeros indistinguishable from a real empty population.",
+      "prescribed_behavior": "The system MUST distinguish a statistic of zero from a statistic that could not be computed, and MUST NOT present an unavailable value as a zero.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-023"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-076",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 15
+      }
+    },
+    {
+      "anomaly_id": "ANOM-020",
+      "action": "CONSOLIDATE",
+      "type": "duplicate_logic",
+      "legacy_behavior": "Legacy had three mutation paths with three mutually inconsistent refresh behaviours and omitted the refresh entirely after removal, so the statistics silently diverged from the records.",
+      "prescribed_behavior": "The system MUST refresh every presented statistic after any operation that changes the underlying records, by a single consistent mechanism.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-024"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-077",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 121
+      }
+    },
+    {
+      "anomaly_id": "ANOM-021",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy refreshed siblings through language default-instance properties that resolved to different objects than the displayed ones, so after a successful create the application updated two off-screen forms while the visible list and statistics stayed stale. The target language has no equivalent mechanism, so the navigation and refresh contract must be re-specified rather than translated.",
+      "prescribed_behavior": "The system MUST reflect the result of every completed operation in the interface the operator is actually looking at.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-025"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-019",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 27
+      }
+    },
+    {
+      "anomaly_id": "ANOM-022",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy navigation reparented child forms into a single host panel and only hid them, never releasing them; it is recorded as the single highest-complexity behaviour in the application and accumulated event subscriptions on each reuse.",
+      "prescribed_behavior": "The system MUST allow the operator to move between the statistics view, the record list and the record-entry and amendment forms, and MUST release the resources of a view that is no longer in use.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-026"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-078",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 102
+      }
+    },
+    {
+      "anomaly_id": "ANOM-023",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy suppressed the window control box entirely, making a single in-application button the only way to exit, with no unsaved-data prompt at any point.",
+      "prescribed_behavior": "The system SHOULD allow the operator to close the application from the standard window control as well as from an in-application control, and MUST warn before discarding unsaved entry.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-027"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-079",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 96
+      }
+    },
+    {
+      "anomaly_id": "ANOM-024",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "Legacy had no authentication of any kind: no login form, no user concept, no roles, no permission check and no audit column, so anyone who launched the executable had unrestricted create, read, update and delete over all personal data. Every requirement in this module is a new prescription correcting a security violation.",
+      "prescribed_behavior": "The system MUST authenticate every operator before granting access to any student record data or any statistic.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-028"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-090",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 26
+      }
+    },
+    {
+      "anomaly_id": "ANOM-025",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "The closest thing to an access check in the legacy system was a test that a grid row had been selected. Permission semantics and the role set are subject to synthesis open question OQ-011, which asks whether more than one operator role exists.",
+      "prescribed_behavior": "The system MUST authorize each operation against the authenticated operator's permissions, and MUST refuse an operation the operator is not permitted to perform.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-029"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-055",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 60
+      }
+    },
+    {
+      "anomaly_id": "ANOM-026",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "The legacy schema carried no audit, provenance, soft-delete or row-version column of any kind, and with no authentication there was no actor to attribute a change to. No change to any record in the legacy system can be reconstructed, and that history is already unrecoverable.",
+      "prescribed_behavior": "The system MUST record an audit entry for every create, amend and remove operation, capturing the acting operator, the timestamp, the record affected and the values before and after.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-030"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-095",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3
+      }
+    },
+    {
+      "anomaly_id": "ANOM-027",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy used no transaction anywhere: each mutation was a single autocommitted statement with no atomicity beyond one statement.",
+      "prescribed_behavior": "The system MUST execute each unit of work in an explicit transaction that commits as a whole or not at all.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-031"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-093",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3
+      }
+    },
+    {
+      "anomaly_id": "ANOM-028",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy permitted concurrent instances against one file database with last-write-wins, no row version and no conflict detection of any kind.",
+      "prescribed_behavior": "The system MUST detect a conflicting concurrent change to a student record and MUST refuse the later write rather than overwriting silently.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-032"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-094",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 27
+      }
+    },
+    {
+      "anomaly_id": "ANOM-029",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy held one process-wide connection opened lazily and never disposed, with no using block anywhere; a single unclosed reader blocked every other operation.",
+      "prescribed_behavior": "The system MUST acquire a database connection per unit of work and MUST release it deterministically when that unit of work ends, including on failure.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-033"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-001",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3
+      }
+    },
+    {
+      "anomaly_id": "ANOM-030",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "In the legacy system the removal path closed the shared global connection and no reopen was paired with it, so a subsequent statistics refresh threw an unhandled exception. The connection helper also tested only for the closed state, so a broken or connecting state fell through and every caller proceeded against it.",
+      "prescribed_behavior": "The system MUST ensure that no component can render the data layer unusable for other components.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-034"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-004",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 83
+      }
+    },
+    {
+      "anomaly_id": "ANOM-031",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy pinned an absolute path on the original author's drive as the only database binding, declared no connection-string configuration section and left its settings store empty, so a clean checkout could not connect to the database shipped beside it.",
+      "prescribed_behavior": "The system MUST obtain its database location and credentials from external configuration, and MUST NOT embed them in compiled code.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-035"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-002",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7
+      }
+    },
+    {
+      "anomaly_id": "ANOM-032",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "The legacy key was a text column admitting the empty string, ordering lexically so that a roll number of ten sorted before two, with no uniqueness enforced in code. Two Discovery passes disputed whether any key index existed at all; see synthesis contradiction CON-001 and open question OQ-003.",
+      "prescribed_behavior": "The system MUST declare an enforced unique identifier for a student record in the database schema itself, not in application code alone.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-036"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-096",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3
+      }
+    },
+    {
+      "anomaly_id": "ANOM-033",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "The legacy mobile-number columns were a four-byte integer type that cannot hold a ten-digit number at all, while the interface accepted one without complaint. Note that the legacy types themselves are contested \u2014 see synthesis contradiction CON-002 \u2014 so the target schema MUST NOT be generated until open question OQ-003 is closed.",
+      "prescribed_behavior": "The system MUST store each field in a data type that can represent every value the interface accepts, and MUST declare the type, nullability and length of every column explicitly.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-037"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-017",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 16
+      }
+    },
+    {
+      "anomaly_id": "ANOM-034",
+      "action": "FIX",
+      "type": "duplicate_logic",
+      "legacy_behavior": "Legacy restated the academic-year set in four places and the course set in at least eight, enforced all three sets only in the interface and never in the database, and the academic-year list expired at 2023 so no later intake could be recorded at all. Cardinality and intent are subject to synthesis open question OQ-013.",
+      "prescribed_behavior": "The system MUST hold the course, gender and academic-year reference sets as stored reference data with a single system of record, and MUST NOT restate them in interface or query code.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-038"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-015",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 87
+      }
+    },
+    {
+      "anomaly_id": "ANOM-035",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "The legacy store holds a superseded column layout alongside the live one, carries deleted rows recoverable from page slack, and has no authoritative row count agreed between Discovery passes \u2014 see synthesis contradictions CON-003 and CON-012. Migration must establish the baseline rather than assume it.",
+      "prescribed_behavior": "The system MUST migrate the existing student records into the target schema with no silent alteration of any value, and MUST reconcile the migrated record count and field values against the source.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-039"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-095",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 3
+      }
+    },
+    {
+      "anomaly_id": "ANOM-036",
+      "action": "FIX",
+      "type": "error_handling_gap",
+      "legacy_behavior": "Legacy wrapped each mutation in a catch-all that displayed the raw provider exception text in a message box, with no logging and no field attribution, so a missing dropdown selection was reported to the operator as a database error.",
+      "prescribed_behavior": "The system MUST report a failed operation to the operator in terms of the business action attempted, and MUST NOT surface raw provider or exception text.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-040"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-022",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31
+      }
+    },
+    {
+      "anomaly_id": "ANOM-037",
+      "action": "FIX",
+      "type": "error_handling_gap",
+      "legacy_behavior": "Legacy performed unguarded database input and output inside a form constructor, so every load failure terminated the application.",
+      "prescribed_behavior": "The system MUST remain available and MUST NOT terminate when a data operation fails.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-041"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-035",
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 7
+      }
+    },
+    {
+      "anomaly_id": "ANOM-038",
+      "action": "FIX",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy bound the grid with automatic column generation over SELECT *, so the physical schema defined the operator-visible contract, column headers were raw database field names, and cell lookups by name failed at runtime rather than at build time.",
+      "prescribed_behavior": "The system MUST determine the fields presented in the record list from an explicit declared contract, and MUST NOT derive them from the physical schema at runtime.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-042"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-061",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14
+      }
+    },
+    {
+      "anomaly_id": "ANOM-039",
+      "action": "MAKE_EXPLICIT",
+      "type": "implicit_behavior",
+      "legacy_behavior": "Legacy discarded an active filter silently on every refresh path, and an empty search was the only way to clear a filter.",
+      "prescribed_behavior": "The system SHOULD retain an active search filter across a refresh, or MUST state that the filter has been cleared.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-043"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-053",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 48
+      }
+    },
+    {
+      "anomaly_id": "ANOM-040",
+      "action": "FIX",
+      "type": "dead_code",
+      "legacy_behavior": "The legacy grid was read-only yet retained its default add-row affordance, so an empty phantom row was selectable and its null identifier cell crashed both the amend and the remove paths.",
+      "prescribed_behavior": "The system MUST present only rows that correspond to stored records in the record list, and MUST NOT present a placeholder row that can be selected for an operation.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "REQ-044"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-060",
+        "source_file": "Flat Design/ViewForm.Designer.vb",
+        "source_line": 110
+      }
+    },
+    {
+      "anomaly_id": "ANOM-041",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "The legacy report control generated nothing: it launched the operator's browser at a hardcoded public third-party URL for the author's project document, which was the application's only outbound network call and left any genuine reporting requirement unimplemented. Confirmed as a requirements gap rather than an integration to migrate.",
+      "prescribed_behavior": "The system SHOULD provide the reporting output its reporting affordance offers, generated from current data, and MUST NOT present an external document as a system report.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "REQ-045"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-080",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 155
+      }
+    },
+    {
+      "anomaly_id": "ANOM-042",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "The legacy baseline is a measured zero: no accessible name or description on any of 137 controls across all four surfaces, producing a critical violation and an accessibility gate decision of FAIL.",
+      "prescribed_behavior": "Every human-facing surface MUST conform to WCAG 2.1 Level AA and Section 508 as incorporated by the ICT Final Rule at 36 CFR 1194.1.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-001"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-001",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 173
+      }
+    },
+    {
+      "anomaly_id": "ANOM-043",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "Zero accessible names and zero accessible descriptions existed across the whole application, so controls without inherent text had no programmatic name at all.",
+      "prescribed_behavior": "Every interactive control MUST expose a programmatic accessible name, and a control conveying meaning without text MUST expose an accessible description.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-002"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-001",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 85
+      }
+    },
+    {
+      "anomaly_id": "ANOM-044",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "Legacy automatic column generation exposed raw field names as headings, including unexpanded abbreviations for first name, last name and year of admission.",
+      "prescribed_behavior": "The record list MUST present human-readable column headings, and MUST NOT expose raw database field names or unexpanded abbreviations.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-003"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-002",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14
+      }
+    },
+    {
+      "anomaly_id": "ANOM-045",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "All five academic-year statistics carried the identical caption and were distinguished only by a decorative coloured numeral image with no accessible name, so a user who could not perceive the image could not tell them apart.",
+      "prescribed_behavior": "Information MUST NOT be conveyed by colour or by image alone; every statistic MUST carry a distinct text label identifying what it counts.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-004"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-003",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 442
+      }
+    },
+    {
+      "anomaly_id": "ANOM-046",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "Two pairs of navigation controls in the legacy shell shared duplicate focus positions, making focus order through the primary navigation implementation-defined.",
+      "prescribed_behavior": "Keyboard focus order MUST be unique, deterministic and follow the logical reading order of each surface.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-005"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-004",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 167
+      }
+    },
+    {
+      "anomaly_id": "ANOM-047",
+      "action": "FIX",
+      "type": "dead_code",
+      "legacy_behavior": "Two duplicate statistic tiles remained in the legacy shell, one overlapping a real tile and one outside the visible area, both still in the control collection and focus order and never written by the loader.",
+      "prescribed_behavior": "Every surface MUST contain only controls that are part of its intended presentation; orphaned, duplicated and off-position controls MUST NOT remain in the control collection or the focus order.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-006"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-005",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 528
+      }
+    },
+    {
+      "anomaly_id": "ANOM-048",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "Two legacy surfaces used a theme-dependent system colour whose rendered value, and therefore its contrast against hardcoded black text, was not fixed or verifiable at design time. The legacy finding is qualitative only; no ratio was measured, so verification requires a rendered build.",
+      "prescribed_behavior": "Text and interface colours MUST meet the WCAG 2.1 AA contrast minimum against explicitly chosen colour values, and MUST NOT depend on the operating-system theme for conformance.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-007"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-006",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 960
+      }
+    },
+    {
+      "anomaly_id": "ANOM-049",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "No legacy text input declared a maximum length and no field-specific validation existed; the only error surfaced was one generic message tied to the raw exception.",
+      "prescribed_behavior": "Every input MUST declare its expected format and maximum length to the operator in advance, and a validation failure MUST be associated with the specific field at fault.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-008"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-007",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 131
+      }
+    },
+    {
+      "anomaly_id": "ANOM-050",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "No legacy control caption carried an accelerator anywhere in the application, removing the accelerator efficiency path that keyboard-only and some motor-impaired users rely on. All controls remained reachable by sequential focus, which is why this is a lower priority than the naming defect.",
+      "prescribed_behavior": "Primary actions SHOULD provide a keyboard accelerator, and no two controls on the same surface may share one.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-009"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-008",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 168
+      }
+    },
+    {
+      "anomaly_id": "ANOM-051",
+      "action": "RENAME",
+      "type": "accessibility_violation",
+      "legacy_behavior": "Legacy identifiers were overwhelmingly generated sequences. Visible captions were descriptive in nearly every case, so this is a maintainability and fallback-announcement concern, lower priority than the accessible-name defect.",
+      "prescribed_behavior": "Control identifiers SHOULD describe their purpose so that any identifier exposed to assistive technology is meaningful.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-010"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-009",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 97
+      }
+    },
+    {
+      "anomaly_id": "ANOM-052",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "The legacy engine reached end of support in 2017, forced a 32-bit build, required a per-workstation redistributable and offered no credential or encryption story over a personal-data store.",
+      "prescribed_behavior": "The system MUST use a database engine that is within vendor support and MUST NOT depend on a file-based store reached through an out-of-band client component.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-011"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-MCF-008",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7
+      }
+    },
+    {
+      "anomaly_id": "ANOM-053",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy permitted multiple instances against one file store with only page locking, no transactions and no conflict detection, which set a hard ceiling on concurrent use.",
+      "prescribed_behavior": "The system MUST support concurrent use by multiple operators without data loss, and MUST NOT rely on file-level locking for isolation.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-012"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 4
+      }
+    },
+    {
+      "anomaly_id": "ANOM-054",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "The legacy store carried no database password, so filesystem permissions were the only control over the entire personal-data set and the file was directly openable by any user who could read it, bypassing the application completely. The file was additionally committed to a public repository; remediation of that exposure is routed separately as synthesis open question OQ-005 and must not wait on this requirement.",
+      "prescribed_behavior": "Personal data MUST be encrypted at rest and in transit, and access to the data store MUST be restricted to the application's service identity.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-013"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7
+      }
+    },
+    {
+      "anomaly_id": "ANOM-055",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "The legacy repository committed the populated database, a stale database lock file, an absolute developer path and a reference to a signing key that the repository excludes and does not contain, so a clean checkout could neither build with a signed manifest nor reach its data.",
+      "prescribed_behavior": "No persisted personal data MUST be committed to source control, and no credential or environment-specific value MUST appear in the source tree.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-014"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-003",
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 1
+      }
+    },
+    {
+      "anomaly_id": "ANOM-056",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "All sixteen legacy statements were inline in presentation event handlers while the nominal data-access module held thirteen lines and zero queries, so there was no seam at which to intercept, test, retarget or audit data access. The target must create this layer rather than port it.",
+      "prescribed_behavior": "Every data access MUST pass through an explicit data-access layer, and no query MUST be constructed in presentation code.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-015"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-005",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 1
+      }
+    },
+    {
+      "anomaly_id": "ANOM-057",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy had three dependency cycles, all through the shell, so no presentation component was a leaf except by accident and there was no acyclic extraction order among the four screens.",
+      "prescribed_behavior": "The system MUST NOT contain a circular dependency between its components.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-016"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-MCF-005",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 104
+      }
+    },
+    {
+      "anomaly_id": "ANOM-058",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "Legacy disabled strict type checking project-wide, so implicit narrowing and late binding compiled silently; combined with reader access by string name and automatic grid column generation, the entire column contract resolved at runtime. Enabling it is expected to surface a backlog of real defects and should be budgeted rather than treated as a flag change.",
+      "prescribed_behavior": "The system MUST be built with strict type checking enabled, and MUST NOT resolve a data contract at runtime where it can be resolved at build time.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-017"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-091",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 45
+      }
+    },
+    {
+      "anomaly_id": "ANOM-059",
+      "action": "MAKE_EXPLICIT",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "Legacy selected case-sensitive comparison in the application while the database engine compared case-insensitively, so the same comparison could yield different results on either side of the boundary.",
+      "prescribed_behavior": "String comparison semantics MUST be declared explicitly and MUST be consistent between the application and the database engine.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating rule is flagged by the business-rule pass as requiring subject-matter confirmation, so the prescribed behaviour below is this specification's proposal and not a settled decision \u2014 it must be confirmed before build.",
+      "affected_requirements": [
+        "NFR-018"
+      ],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-092",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 48
+      }
+    },
+    {
+      "anomaly_id": "ANOM-060",
+      "action": "FIX",
+      "type": "data_integrity_risk",
+      "legacy_behavior": "The legacy schema declared one casing convention while every query and every reader lookup used another. The engine's case-insensitivity made this harmless in place, but it breaks on a case-sensitive target and it breaks precisely at the sites resolved at runtime rather than at build time.",
+      "prescribed_behavior": "Identifier naming MUST be consistent between the application and the schema, and MUST NOT depend on the engine being case-insensitive.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-019"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-LCF-001",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14
+      }
+    },
+    {
+      "anomaly_id": "ANOM-061",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "The legacy repository contained no test project, no test file, no pipeline and no build script, with a single-commit history, so there was no executable specification of current behaviour and no migration could be verified by regression. The sixty extracted business rules each carry a test-hints block which is prescriptive rather than observational and is the natural seed for the characterization suite; see synthesis contradiction CON-012.",
+      "prescribed_behavior": "The system MUST have an automated test suite covering every requirement in this specification, executed by a continuous integration pipeline on every change.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-020"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-009",
+        "source_file": "Student Management System Siddharth Jain.sln",
+        "source_line": 6
+      }
+    },
+    {
+      "anomaly_id": "ANOM-062",
+      "action": "FIX",
+      "type": "performance_antipattern",
+      "legacy_behavior": "The legacy clean checkout failed manifest signing against a key the repository excludes and does not contain, mapped its debug configuration to release so no debug build existed, and bound its database to a path absent from the repository layout, so even a successful build could not reach its data.",
+      "prescribed_behavior": "The system MUST build and run from a clean checkout of the repository using only artifacts the repository contains or configuration it documents.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-021"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-008",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 64
+      }
+    },
+    {
+      "anomaly_id": "ANOM-063",
+      "action": "FIX",
+      "type": "error_handling_gap",
+      "legacy_behavior": "Legacy had no logging of any kind; the only diagnostic was a message box showing the raw provider exception to the operator, so no failure could be diagnosed after the fact.",
+      "prescribed_behavior": "The system MUST log every operation with sufficient detail to diagnose a failure without reproducing it, and MUST NOT record personal data in any log.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-022"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-022",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31
+      }
+    },
+    {
+      "anomaly_id": "ANOM-064",
+      "action": "FIX",
+      "type": "security_violation",
+      "legacy_behavior": "Legacy had no session concept at all: one connection was held open for the entire process lifetime, so an unattended instance was a permanently privileged window onto the personal-data store with no timeout and no re-authentication.",
+      "prescribed_behavior": "A session MUST expire after a declared period of inactivity and MUST require re-authentication thereafter.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-023"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-001",
+        "source_file": "Flat Design/My Project/Application.myapp",
+        "source_line": 8
+      }
+    },
+    {
+      "anomaly_id": "ANOM-065",
+      "action": "FIX",
+      "type": "accessibility_violation",
+      "legacy_behavior": "The legacy shell was fixed at a hardcoded size with absolutely positioned controls and no layout adaptation, which is also why two duplicate tiles could sit outside the visible area while remaining in the focus order.",
+      "prescribed_behavior": "The interface SHOULD adapt to the display it is presented on and SHOULD remain usable at the operator's configured text size.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-024"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "SYN-HCF-007",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 1072
+      }
+    },
+    {
+      "anomaly_id": "ANOM-066",
+      "action": "FIX",
+      "type": "dead_code",
+      "legacy_behavior": "The legacy application title was misspelled on the operator-facing shell, and the five academic-year statistics shared one caption restated in five separate definitions.",
+      "prescribed_behavior": "Operator-visible text MUST be correct and MUST be maintained in one place.",
+      "justification": "Carrying this forward unchanged would reproduce a defect the Discovery passes measured, so the SRS prescribes the corrected behaviour and records the legacy behaviour it replaces. The originating evidence is unambiguous and the correction does not change intended business meaning, so no subject-matter confirmation is required.",
+      "affected_requirements": [
+        "NFR-025"
+      ],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-081",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 518
+      }
+    }
+  ]
+}

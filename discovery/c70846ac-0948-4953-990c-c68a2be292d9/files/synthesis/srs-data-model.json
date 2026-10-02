@@ -1,0 +1,524 @@
+{
+  "$schema": "olympus:artifact:srs-data-model:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "The entity model this SRS prescribes. The legacy system stores everything in ONE physical table of ten columns with no relationships, no foreign keys and no reference tables; the entities below are the logical model the target must realise, derived from the data-domain pass's bounded contexts and the structural pass's column-level evidence. The split of the single legacy row into Student, StudentContactPoint and GuardianReference is a target-state design, not a description of a separable present state.",
+  "schema_limitation": "CRITICAL AND LOAD-BEARING: the legacy column data types, nullability, declared widths, validation rules, key and index definitions are NOT ESTABLISHED, and two Discovery passes disagree about them \u2014 one reports them unknown and refuses to guess, another asserts declared types recovered from binary type bytes (synthesis contradictions CON-001 and CON-002). The attribute types below are therefore the types this SRS PRESCRIBES for the target, chosen to satisfy REQ-037, and they are NOT a transcription of the source schema. NO TARGET DDL MAY BE GENERATED AND NO MIGRATION MAPPING MAY BE WRITTEN until one session against the store through a database engine resolves the source side (synthesis open question OQ-003). Two further source-side facts must be settled in the same session: whether duplicate or empty roll numbers exist, which REQ-039 requires to be resolved before load, and the authoritative row count, which the passes dispute (CON-003).",
+  "entities": [
+    {
+      "entity": "Student",
+      "module": "MOD-001",
+      "description": "The record subject. Identity and demographic attributes of one student. Corresponds to the data-domain pass's Student aggregate root in the Student Identity and Contact context.",
+      "attributes": [
+        {
+          "name": "student_id",
+          "type": "integer surrogate key",
+          "nullable": false,
+          "constraints": [
+            "enforced unique primary key declared in the schema (REQ-036)",
+            "system-generated, never operator-supplied"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW. The legacy table had no surrogate key and no autonumber column; its key was the business roll number itself, which is a text column admitting the empty string and ordering lexically.",
+          "evidence": "REQ-036; BR-096"
+        },
+        {
+          "name": "roll_number",
+          "type": "string, fixed maximum length, declared format",
+          "nullable": false,
+          "constraints": [
+            "enforced unique (REQ-004, REQ-036)",
+            "non-empty \u2014 the empty string is not an admissible value",
+            "immutable once the record exists (REQ-007)",
+            "format validated on entry (REQ-003)"
+          ],
+          "traces_to_column": "studentDB.students.RollNo",
+          "evidence": "BR-023; BR-031; structural-analysis.json:coupling_indicators.unenforced-identity"
+        },
+        {
+          "name": "first_name",
+          "type": "string, declared maximum length",
+          "nullable": false,
+          "constraints": [
+            "presence and maximum length validated before persistence (REQ-003)"
+          ],
+          "traces_to_column": "studentDB.students.FName",
+          "evidence": "BR-012; data-domains.json:domains"
+        },
+        {
+          "name": "last_name",
+          "type": "string, declared maximum length",
+          "nullable": false,
+          "constraints": [
+            "presence and maximum length validated before persistence (REQ-003)"
+          ],
+          "traces_to_column": "studentDB.students.LName",
+          "evidence": "BR-012"
+        },
+        {
+          "name": "gender_code",
+          "type": "reference to GenderCode",
+          "nullable": false,
+          "constraints": [
+            "must reference a stored GenderCode (REQ-038)",
+            "every value participates in exactly one statistical bucket with a reconciling total (REQ-019)"
+          ],
+          "traces_to_column": "studentDB.students.Gender",
+          "evidence": "BR-013; BR-070"
+        },
+        {
+          "name": "date_of_birth",
+          "type": "date (no time component, culture-independent)",
+          "nullable": false,
+          "constraints": [
+            "stored and compared as a date value independent of any client display culture (REQ-017)",
+            "plausibility validated \u2014 not in the future, and consistent with the admission year (REQ-017)"
+          ],
+          "traces_to_column": "studentDB.students.DOB",
+          "evidence": "BR-016; BR-034; BR-021"
+        },
+        {
+          "name": "lifecycle_state",
+          "type": "enumeration: Draft, Active, Removed",
+          "nullable": false,
+          "constraints": [
+            "only Active records appear in the standard list, search and statistics (REQ-014)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW. The legacy schema had no status column at all, so a record's state was its existence and enrolled, graduated and withdrawn were indistinguishable.",
+          "evidence": "REQ-014; BR-095; synthesis SYN-MCF-011"
+        },
+        {
+          "name": "created_by, created_at, modified_by, modified_at, row_version",
+          "type": "audit and concurrency metadata",
+          "nullable": false,
+          "constraints": [
+            "written by the system on every mutation, never operator-supplied (REQ-030)",
+            "row_version drives optimistic concurrency detection (REQ-032)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW. The legacy schema carried no audit, provenance, soft-delete or row-version column, and with no authentication there was no actor to attribute a change to.",
+          "evidence": "REQ-030; REQ-032; BR-095; structural-analysis.json:database-schema-summary.open_questions"
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "StudentContactPoint",
+          "foreign_key": "StudentContactPoint.student_id",
+          "cascade_behavior": "contact points follow the student's lifecycle state; removal is the retained audited state change, never a physical cascade delete (REQ-014)"
+        },
+        {
+          "type": "one-to-many",
+          "target_entity": "GuardianReference",
+          "foreign_key": "GuardianReference.student_id",
+          "cascade_behavior": "as above"
+        },
+        {
+          "type": "one-to-many",
+          "target_entity": "Enrolment",
+          "foreign_key": "Enrolment.student_id",
+          "cascade_behavior": "as above. CARDINALITY UNCONFIRMED: modelled as one-to-many so the model does not foreclose a second enrolment, but whether a student may hold more than one is routed as synthesis open question OQ-013. The legacy system could express only one, because course and admission year were columns on the student's own row."
+        }
+      ],
+      "constraints": [
+        {
+          "description": "Roll number is unique across all records and cannot be the empty string.",
+          "type": "unique",
+          "enforcement": "database",
+          "traces_to": {
+            "discovery_finding": "BR-023",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 12
+          }
+        },
+        {
+          "description": "Date of birth must be plausible relative to the admission year.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {
+            "discovery_finding": "BR-021",
+            "source_file": "Flat Design/InsertForm.Designer.vb",
+            "source_line": 286
+          }
+        }
+      ]
+    },
+    {
+      "entity": "StudentContactPoint",
+      "module": "MOD-001",
+      "description": "A telephone contact for a student, modelled as its own entity so that a second number is a row rather than a second column, and so that each number can carry its own type and data subject. The legacy system held exactly two mobile-number columns on the student row.",
+      "attributes": [
+        {
+          "name": "contact_point_id",
+          "type": "integer surrogate key",
+          "nullable": false,
+          "constraints": [
+            "primary key"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "REQ-036"
+        },
+        {
+          "name": "student_id",
+          "type": "reference to Student",
+          "nullable": false,
+          "constraints": [
+            "foreign key to Student, enforced in the schema"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW. The legacy database declared no foreign key at all, having only one table.",
+          "evidence": "structural-analysis.json:database-schema-summary.relationships"
+        },
+        {
+          "name": "telephone_number",
+          "type": "string, declared maximum length, declared format",
+          "nullable": false,
+          "constraints": [
+            "MUST be stored in a type able to represent every value the interface accepts (REQ-037)",
+            "format validated for the configured locale (REQ-003)"
+          ],
+          "traces_to_column": "studentDB.students.MobNo, studentDB.students.AltMobNo",
+          "evidence": "BR-017; synthesis SYN-MCF-003. The legacy columns were reported as a four-byte integer type that cannot hold a ten-digit number at all, while the interface accepted one without complaint \u2014 the single clearest reason this attribute must not be typed by copying the source."
+        },
+        {
+          "name": "is_primary",
+          "type": "boolean",
+          "nullable": false,
+          "constraints": [
+            "exactly one primary contact point per student"
+          ],
+          "traces_to_column": "derived from the legacy column position \u2014 MobNo was primary by convention only, never declared",
+          "evidence": "BR-017"
+        },
+        {
+          "name": "data_subject",
+          "type": "enumeration: student, guardian, other",
+          "nullable": false,
+          "constraints": [
+            "MUST be recorded explicitly, never inferred from column position"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "data-domains.json:open_questions \u2014 whose telephone number the alternate number is was raised as an open question and is unresolved; routed as synthesis open question OQ-009. Recording the subject explicitly is what makes an erasure request answerable."
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Student",
+          "foreign_key": "student_id",
+          "cascade_behavior": "follows the student's lifecycle state"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "A telephone number must be storable in full; no value the interface accepts may overflow or be truncated.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {
+            "discovery_finding": "BR-017",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 16
+          }
+        }
+      ]
+    },
+    {
+      "entity": "GuardianReference",
+      "module": "MOD-001",
+      "description": "Personal data about a named third party held in relation to a student. Modelled as a separate entity because it concerns a DIFFERENT DATA SUBJECT from the record subject, which the legacy single-row design made impossible to express.",
+      "attributes": [
+        {
+          "name": "guardian_reference_id",
+          "type": "integer surrogate key",
+          "nullable": false,
+          "constraints": [
+            "primary key"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "REQ-036"
+        },
+        {
+          "name": "student_id",
+          "type": "reference to Student",
+          "nullable": false,
+          "constraints": [
+            "foreign key to Student"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "data-domains.json:boundary_arbitration_decisions"
+        },
+        {
+          "name": "guardian_name",
+          "type": "string, declared maximum length",
+          "nullable": true,
+          "constraints": [
+            "presence and maximum length validated when supplied (REQ-003)"
+          ],
+          "traces_to_column": "studentDB.students.FatherName",
+          "evidence": "BR-012; data-domains.json:domains"
+        },
+        {
+          "name": "relationship_to_student",
+          "type": "string or reference to a stored relationship type",
+          "nullable": true,
+          "constraints": [],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW. The legacy column name presumed the relationship rather than recording it.",
+          "evidence": "data-domains.json:domains"
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Student",
+          "foreign_key": "student_id",
+          "cascade_behavior": "follows the student's lifecycle state"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "Guardian data is personal data about a second, unconsented data subject and MUST be separately identifiable so that a retention or erasure obligation can be applied to it independently of the student record.",
+          "type": "business-rule",
+          "enforcement": "both",
+          "traces_to": {
+            "discovery_finding": "SYN-HCF-014",
+            "source_file": "Flat Design/InsertForm.vb",
+            "source_line": 15
+          }
+        }
+      ]
+    },
+    {
+      "entity": "Enrolment",
+      "module": "MOD-001",
+      "description": "A student's enrolment on a course in an intake year. The data-domain pass's Student Enrolment context, and the weakest boundary in that pass's own assessment \u2014 it concedes this is its lowest-confidence arbitration. The legacy system expressed it as two columns on the student's own row, so only one enrolment per student could exist.",
+      "attributes": [
+        {
+          "name": "enrolment_id",
+          "type": "integer surrogate key",
+          "nullable": false,
+          "constraints": [
+            "primary key"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "REQ-036"
+        },
+        {
+          "name": "student_id",
+          "type": "reference to Student",
+          "nullable": false,
+          "constraints": [
+            "foreign key to Student"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "data-domains.json:cross_domain_reference_map"
+        },
+        {
+          "name": "course_code",
+          "type": "reference to CourseCode",
+          "nullable": false,
+          "constraints": [
+            "must reference a stored CourseCode (REQ-038)"
+          ],
+          "traces_to_column": "studentDB.students.Course",
+          "evidence": "BR-014; BR-071"
+        },
+        {
+          "name": "intake_year",
+          "type": "integer (or reference to IntakeYear)",
+          "nullable": false,
+          "constraints": [
+            "compared and sorted arithmetically, never as text (REQ-021)",
+            "must reference a stored intake year with no code change required for a new one (REQ-038)"
+          ],
+          "traces_to_column": "studentDB.students.YOA",
+          "evidence": "BR-015; BR-074. The legacy column stored the year as text and the interface offered a static list that expired at 2023, so no later intake could be recorded at all."
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Student",
+          "foreign_key": "student_id",
+          "cascade_behavior": "follows the student's lifecycle state"
+        },
+        {
+          "type": "one-to-many",
+          "target_entity": "CourseCode",
+          "foreign_key": "course_code",
+          "cascade_behavior": "restrict \u2014 a course in use may not be removed from the reference data"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "Intake year must be stored and compared as a number so that ordering and range queries are arithmetic.",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {
+            "discovery_finding": "BR-074",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 62
+          }
+        }
+      ]
+    },
+    {
+      "entity": "CourseCode",
+      "module": "MOD-003",
+      "description": "Reference data: the courses a student may enrol on. PRESCRIBED NEW AS STORED DATA. In the legacy system this set had no system of record at all \u2014 it was restated as literals in at least eight places across two interface definition files and the statistics queries, so adding a course required a code change in every one of them.",
+      "attributes": [
+        {
+          "name": "course_code",
+          "type": "string, short code",
+          "nullable": false,
+          "constraints": [
+            "primary key"
+          ],
+          "traces_to_column": "none \u2014 the legacy values were interface literals, not stored data",
+          "evidence": "BR-014; data-domains.json:domains"
+        },
+        {
+          "name": "course_name",
+          "type": "string",
+          "nullable": false,
+          "constraints": [
+            "human-readable; used for operator-visible labels (NFR-003)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "A11Y-002"
+        },
+        {
+          "name": "is_active",
+          "type": "boolean",
+          "nullable": false,
+          "constraints": [
+            "an inactive course remains referencable by historical enrolments but is not offered for new ones",
+            "a course with no enrolments is still reported, as zero (REQ-020)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "REQ-020"
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Enrolment",
+          "foreign_key": "Enrolment.course_code",
+          "cascade_behavior": "restrict"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "The reference set has exactly one system of record and is not restated in interface or query code.",
+          "type": "business-rule",
+          "enforcement": "both",
+          "traces_to": {
+            "discovery_finding": "BR-014",
+            "source_file": "Flat Design/InsertForm.Designer.vb",
+            "source_line": 99
+          }
+        }
+      ]
+    },
+    {
+      "entity": "GenderCode",
+      "module": "MOD-003",
+      "description": "Reference data: the gender values a student record may carry. PRESCRIBED NEW AS STORED DATA. The legacy set was enforced in two interface files and nowhere in the database, and critically the statistics counted only two of its three values with no reconciling total, so a record holding the third was storable and invisible in every statistic.",
+      "attributes": [
+        {
+          "name": "gender_code",
+          "type": "string, short code",
+          "nullable": false,
+          "constraints": [
+            "primary key"
+          ],
+          "traces_to_column": "none \u2014 the legacy values were interface literals",
+          "evidence": "BR-013"
+        },
+        {
+          "name": "gender_label",
+          "type": "string",
+          "nullable": false,
+          "constraints": [
+            "human-readable"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "NFR-003"
+        },
+        {
+          "name": "include_in_statistics",
+          "type": "boolean",
+          "nullable": false,
+          "constraints": [
+            "EVERY value, including any excluded one, participates in exactly one bucket of the reported breakdown, and the breakdown reconciles to the total record count (REQ-019)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "BR-070; SYN-HCF-013"
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Student",
+          "foreign_key": "Student.gender_code",
+          "cascade_behavior": "restrict"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "The statistical breakdown over this reference set must sum to the total record count, with an explicit residual bucket for absent, empty or out-of-set values.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {
+            "discovery_finding": "BR-070",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 23
+          }
+        }
+      ]
+    },
+    {
+      "entity": "IntakeYear",
+      "module": "MOD-003",
+      "description": "Reference data: the academic intake years a student may be admitted in. PRESCRIBED NEW AS STORED DATA, and the single clearest case for doing so: the legacy set was a static interface list of 2019 to 2023 duplicated across four locations, so no intake after 2023 could be recorded at all, and the statistics derived their cohort buckets by subtraction from a separate hardcoded constant.",
+      "attributes": [
+        {
+          "name": "intake_year",
+          "type": "integer",
+          "nullable": false,
+          "constraints": [
+            "primary key",
+            "arithmetic comparison and ordering (REQ-021)"
+          ],
+          "traces_to_column": "none \u2014 the legacy values were interface literals",
+          "evidence": "BR-015; BR-074"
+        },
+        {
+          "name": "is_open_for_admission",
+          "type": "boolean",
+          "nullable": false,
+          "constraints": [
+            "a new intake year becomes selectable by adding a row, with no code change (REQ-038)"
+          ],
+          "traces_to_column": "none \u2014 PRESCRIBED NEW",
+          "evidence": "BR-015"
+        }
+      ],
+      "relationships": [
+        {
+          "type": "one-to-many",
+          "target_entity": "Enrolment",
+          "foreign_key": "Enrolment.intake_year",
+          "cascade_behavior": "restrict"
+        }
+      ],
+      "constraints": [
+        {
+          "description": "Academic-year statistics are derived from the current date at computation time and from this stored set, never from a compiled-in year constant.",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {
+            "discovery_finding": "BR-072",
+            "source_file": "Flat Design/Form1.vb",
+            "source_line": 59
+          }
+        }
+      ]
+    }
+  ]
+}
