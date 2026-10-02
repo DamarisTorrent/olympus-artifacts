@@ -1,0 +1,220 @@
+{
+  "$schema": "olympus:artifact:ux-accessibility:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "assessment_date": "2026-10-02",
+  "measurement_window": "Not applicable — no telemetry source exists for this application anywhere in the source tree, the onboarding package, or a CMDB export, so no measurement window could be established. See adoption_baseline and training_state for the per-persona instrumentation-gap detail rather than a window-bounded figure.",
+  "scope_caveat": "GOVERNING-PROFILE DISCREPANCY, carried forward and corroborated, not resolved, by this pass. The governing client profile for this task is declared authoritative as 'faa' (FAA legacy-modernization program: NAS safety, air traffic, pilot certification, per profiles/faa/). This application's source, README, GPL license, single-commit public GitHub history, and author-credited academic project report describe a single-developer VB.NET WinForms student-records desktop tool with no aviation, NAS, air-traffic, or FAA-adjacent content of any kind. The Pass 0 catalog (application-catalog-entry.md/catalog.json open_questions) and the Pass 1 structural-analysis (structural-analysis.json open_questions) and the identity-landscape-analyzer (identity-landscape.json discrepancies_and_findings) each independently raised this same mismatch. This assessment does not adopt an alternative governing profile and does not restate one as fact; personas, accessibility findings, and the review ask below are built from this application's own evidence, and the FAA profile's accessibility-checker reference material (faa-visualization-contrast-notes.md) was used only for its generic contrast/color-coding methodology, not as a claim that this is an FAA system. The engagement owner must resolve this before any FAA-specific gating (safety tiering, NAS impact assessment, user_experience_readiness scoring) consumes this artifact.",
+  "ui_inventory": [
+    {
+      "surface_id": "form1-dashboard",
+      "name": "Form1 — Dashboard, Navigation Shell & Statistics View",
+      "platform": "Windows desktop (WinForms), .NET Framework 4.8, single x86 EXE, manually installed per workstation — no web/HTTP surface",
+      "technology": "VB.NET WinForms; inline ADO.NET/OleDb SQL (ten COUNT(*) aggregate queries); hosts InsertForm/ViewForm/EditForm by reparenting them into Panel5 (TopLevel=False)",
+      "user_population": "local-workstation-operator",
+      "screens_in_repo": 1,
+      "notes": "Largest and most structurally complex surface: 1,211-line Designer file, 77 controls (21 Labels, 20 Panels, 17 PictureBoxes). Simultaneously the application's startup form, its navigation shell, its child-form host, and its only reporting/statistics view — see structural-analysis.json coupling_indicators 'god-form' and recommended_decomposition_boundaries 'ui-shell-and-navigation'. The dashboard's 'Project Report' button is not an in-app report: it shells out via Process.Start to a hardcoded public GitHub URL for a PDF (Form1.vb:155-157); recorded here as a UI affordance, not a generated report. Evidence: Flat Design/Form1.vb:1, Flat Design/Form1.Designer.vb:1, structural-analysis.json modules[0]."
+    },
+    {
+      "surface_id": "insert-form",
+      "name": "InsertForm — New Student Record Entry",
+      "platform": "Windows desktop (WinForms), .NET Framework 4.8",
+      "technology": "VB.NET WinForms; parameterized INSERT via inline OleDb SQL",
+      "user_population": "local-workstation-operator",
+      "screens_in_repo": 1,
+      "notes": "24 controls across 10 data-entry fields (Roll No, First Name, Last Name, Father Name, Gender combo, Date of Birth picker, Mob No, Alt Mob No, Course combo, Session/YOA combo) plus Save/Cancel. Reparented into Form1.Panel5 by btnNew_Click. No field validation, no MaxLength on any TextBox, and the post-save refresh calls Form1.LoadData()/ViewForm.LoadData() through VB default-instance aliasing rather than the on-screen instances (structural-analysis.json coupling_indicators 'default-instance-aliasing') — a correctness defect, not an accessibility one, but it affects what a screen-reader user is told happened after Save. Evidence: Flat Design/InsertForm.vb:1, Flat Design/InsertForm.Designer.vb:1."
+    },
+    {
+      "surface_id": "edit-form",
+      "name": "EditForm — Existing Student Record Editor",
+      "platform": "Windows desktop (WinForms), .NET Framework 4.8",
+      "technology": "VB.NET WinForms; parameterized SELECT-by-rollno and UPDATE via inline OleDb SQL",
+      "user_population": "local-workstation-operator",
+      "screens_in_repo": 1,
+      "notes": "Near-identical 24-control layout to InsertForm (same 10 fields), reached only from ViewForm's Update button with a roll number constructor argument. The one form in the application with a non-default constructor, so it is exempt from the default-instance aliasing defect but ViewForm must special-case it. Evidence: Flat Design/EditForm.vb:1, Flat Design/EditForm.Designer.vb:1."
+    },
+    {
+      "surface_id": "view-form",
+      "name": "ViewForm — Student Record Grid, Search & Delete",
+      "platform": "Windows desktop (WinForms), .NET Framework 4.8",
+      "technology": "VB.NET WinForms DataGridView bound to an OleDbDataAdapter DataSet, AutoGenerateColumns=True; free-text search (string-concatenated SQL, the application's one SQL-injection point); parameterized DELETE",
+      "user_population": "local-workstation-operator",
+      "screens_in_repo": 1,
+      "notes": "12 controls: search textbox, Search button, the grid, Update and Delete buttons. Launches EditForm and reaches into Form1.Panel5.Controls directly to host it. Column headers are the raw database field names (RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB) because AutoGenerateColumns=True with no explicit HeaderText — see accessibility_findings A11Y-002. Evidence: Flat Design/ViewForm.vb:1, Flat Design/ViewForm.Designer.vb:1."
+    }
+  ],
+  "personas": [
+    {
+      "persona_id": "local-workstation-operator",
+      "name": "Student-Records Operator (sole user class — no role differentiation observed)",
+      "estimated_headcount": "Unknown — no CMDB export, org chart, or user-count figure was provided at onboarding (catalog.json open_questions records the same gap). The application's own README and project report frame it as a single-developer academic/portfolio project; if ever deployed operationally this persona could plausibly range from 1 to a small back-office team, but no authoritative source confirms real-world deployment scale, and this is explicitly NOT a measurement.",
+      "evidence": "No role or permission model exists anywhere in source. AuthenticationMode.Windows is declared (Flat Design/My Project/Application.Designer.vb:26; Application.myapp:8) but My.User is never read by any form — identity-landscape.json identity_models[0] confirms this and rates the application boundary 'below-AAL1'. There is no login form, no users/credentials table, and no role or audit column on the single 'students' table (structural-analysis.json database-schema-summary). All four human-facing screens are reachable by anyone who launches the EXE and expose unrestricted create/read/update/delete over all student PII (structural-analysis.json coupling_indicators 'unprotected-pii-in-source-control'; identity-landscape.json assurance_gaps[0] 'no-mfa', severity high). The README's feature list (Dashboard, Insert, View, Update, Delete) and all three screenshots show one undifferentiated operator performing every function; no second role, approval step, or screen restricted from any user was found anywhere in the tree.",
+      "typical_workflow": "Launch the EXE → Form1 loads and immediately runs ten COUNT(*) aggregate queries to populate the dashboard tiles (no login step precedes this) → operator uses the left navigation rail to open Insert (add a new student's 10 fields and Save), View (search/browse the full grid, Delete a row, or launch Edit for a specific roll number), or returns to Dashboard. No session concept, no workflow approval gate, and no step-up/re-authentication exists at any point (Flat Design/Form1.vb:15; identity-landscape.json assurance_gaps 'no-session-timeout', 'no-step-up')."
+    }
+  ],
+  "adoption_baseline": {
+    "instrumentation_present": false,
+    "measurement_window_assessed": "none — no telemetry source exists to define a window against",
+    "data_sources_checked": [
+      "Full read of all 13 .vb source files and 4 config/manifest files: no logging framework, no analytics SDK, no telemetry call, and no event-tracking table referenced anywhere",
+      "catalog.json open_questions: 'No CMDB export or ownership/criticality documentation was provided at onboarding; business owner and operational criticality are unconfirmed'",
+      "The single 'students' table has no audit columns (no created_by, modified_by, last_login, or timestamp columns) per structural-analysis.json database-schema-summary, so even retroactive usage inference from the data itself is unavailable",
+      "git history is a single commit (structural-analysis.json summary_metrics.git_commits_in_history: 1), so no deployment or release cadence signal exists either"
+    ],
+    "local-workstation-operator": [
+      "active_user_count: unmeasured, instrumentation gap — no login mechanism exists to count distinct users; AuthenticationMode.Windows is set but My.User is never read anywhere in source (identity-landscape.json identity_models[0] evidence_citations)",
+      "feature_usage_frequency: unmeasured, instrumentation gap — no event logging, no analytics call, and no usage-tracking table exist in the application or its database schema",
+      "session_duration_distribution: unmeasured, instrumentation gap — the application has no session concept at all (identity-landscape.json assurance_gaps 'no-session-timeout'); a single module-level OleDbConnection is held open for the entire process lifetime, so a session boundary could not be defined from telemetry even if any existed",
+      "explicit distinction per methodology: the three gaps above are 'no instrumentation present', not 'no usage observed' — this assessment makes no claim, measured or inferred, about whether the application has ever been run outside its original author's development machine"
+    ]
+  },
+  "training_state": {
+    "training_materials_found": "none — no help pages, in-app help/tooltip text, user guide, onboarding wizard, or LMS reference exists anywhere in the source tree or the onboarding package",
+    "documentation_inventory": [
+      "README.md: a feature list (Dashboard, Insert Form, View Form, Update Form, Delete Functionality) plus the three screenshots and setup/build instructions aimed at a developer, not an end-user guide — contains no task-level 'how to add a student' instructions",
+      "Siddharth Jain Project Report.pdf (868 KB, committed at repo root): an academic project report. NOT parsed by this assessment or by the upstream Pass 1 structural-analysis (structural-analysis.json methodology_note explicitly scopes this out) — its content, and whether it contains any user-facing training material, is unknown and recorded as an evidence gap, not assumed empty"
+    ],
+    "documentation_staleness": "README.md and the project report are the only user-facing documents and neither carries an independent last-updated date; the repository's entire history is one git commit (structural-analysis.json summary_metrics.git_commits_in_history: 1), so the documentation is effectively undated and has never been revised since initial authorship — there has been no opportunity for it to go stale relative to a changing application, because the application itself has not changed either",
+    "completion_rate": "unmeasured, instrumentation gap — no LMS, training-tracking table, or completion-record mechanism exists anywhere; the application has no user-account concept at all (see personas[0].evidence), so a per-user training-completion metric has no subject to attach to even in principle",
+    "login_vs_training_caveat": "Per methodology, completion is deliberately not inferred from login counts or vice versa. Neither signal exists here (no login mechanism, no training record), so this is a double instrumentation gap rather than a measured zero on either axis — a future deployment could have fully trained users who never generate a login event, or untrained users operating the tool with no record of either fact."
+  },
+  "accessibility_findings": {
+    "applicable_standards": [
+      "WCAG 2.1 AA",
+      "Section 508 (ICT Final Rule, 36 CFR 1194.1, which incorporates WCAG 2.0/2.1 AA by reference)"
+    ],
+    "composed_from": "cross-cutting accessibility-checker skill, dispatched at Discovery stage per ux-accessibility-assessor Methodology §4. Output written verbatim (no severity re-classification) from artifacts/discovery-ux-accessibility-assessment/accessibility-checker/accessibility-audit.json, validated against schemas/validation/accessibility-audit.schema.json. The checker could not run its normal axe-core/DOM workflow — this is a WinForms desktop application with no HTML, DOM, URL, or running build — so it adapted its methodology to a manual, source-code-based read of all four Designer.vb files (control-level AccessibleName/AccessibleDescription/TabIndex/BackColor/ForeColor properties) cross-referenced against the three application screenshots. See gate_decision_note and manual_review_required for what this method could not verify.",
+    "tool": "Manual source-code accessibility review (Designer.vb property inspection + screenshot review) — axe-core not applicable, no DOM/build/URL available for a WinForms desktop app",
+    "surfaces_reviewed_of_total": "4 of 4 human-facing WinForms screens reviewed (form1-dashboard, insert-form, edit-form, view-form). One additional human-facing interface recorded in Pass 1's interface-inventory — the outbound 'Project Report' browser link (Form1.vb:155-157) — is listed in out_of_scope_surfaces because it launches the user's own default browser rather than rendering application-owned UI.",
+    "out_of_scope_surfaces": [
+      "Outbound 'Project Report' browser link (Form1.vb:155-157) — opens an external GitHub-hosted PDF in the user's default browser; not application-rendered UI",
+      "studentDB.accdb / studentDB.laccdb — the data file itself; not a UI surface"
+    ],
+    "gate_decision": "FAIL",
+    "gate_decision_note": "Driven by one critical finding (A11Y-001: zero AccessibleName/AccessibleDescription across all 137 controls in all four forms — the application's only non-visual access mechanism is entirely absent) plus two serious findings. Per the accessibility-audit.json schema's own invariant, a critical violation forces the fail verdict; this is a legacy-baseline measurement for modernization comparison, not a Validation-stage gate on shipped code. Because the checker's method was a manual source read rather than an automated DOM scan, confidence is lower than a normal axe-core run (which itself only catches ~30-40% of issues) — treat every finding below as a floor, not a ceiling, on the true violation count.",
+    "finding_counts": {
+      "critical": 1,
+      "serious": 2,
+      "moderate": 4,
+      "minor": 2
+    },
+    "manual_review_required": [
+      "Live screen-reader pass (NVDA/JAWS/Windows Narrator) against a compiled build once one can be produced — this source-only audit cannot verify actual runtime announcement behavior, especially given the duplicate-TabIndex and overlapping-panel issues (A11Y-004, A11Y-005) that could affect live focus/reading order in ways source inspection alone cannot confirm",
+      "Pixel-level contrast measurement of rendered colors once a build exists — A11Y-006's contrast finding on the theme-dependent SystemColors.ActiveCaption tile is qualitative only; no pixel-sampled or tool-measured ratio was produced",
+      "End-to-end keyboard-only interaction test to confirm whether the duplicate TabIndex values (A11Y-004) and the two overlapping duplicate dashboard panels (A11Y-005) produce an actual keyboard trap or merely an inefficient tab order"
+    ],
+    "verified_non_issues": [
+      "Most dashboard tile color/text combinations use fixed, light pastel ARGB backgrounds (e.g. FromArgb(192,255,255), FromArgb(255,192,192), FromArgb(255,255,192)) paired with black text, which the checker judged unlikely to fail 1.4.3 Contrast Minimum on their qualitative review of the screenshots — the one exception found (Panel6 'Male Students' tile and the ViewForm grid background, which use theme-dependent SystemColors.ActiveCaption instead) is flagged separately as A11Y-006."
+    ],
+    "findings": [
+      {
+        "id": "A11Y-001",
+        "wcag": "4.1.2",
+        "level": "A",
+        "surface_id": "form1-dashboard",
+        "summary": "A full read of all four Designer.vb files confirms zero AccessibleName and zero AccessibleDescription property assignments across all 137 controls in the application (corroborating the prior structural-analysis pass). For controls that render visible .Text (buttons, labels) Windows UI Automation generally falls back to Text for a name, which is usually adequate, but for controls without inherent text content — ComboBox, DateTimePicker, DataGridView, PictureBox, TextBox — there is no reliable programmatic name at all, since WinForms has no formal label-for association comparable to HTML; adjacency to a Label is only a heuristic some screen readers use, and it is undermined here by the duplicate-TabIndex and overlapping-panel issues documented in A11Y-004/A11Y-005. This is the only mechanism (keyboard + screen reader) a non-visual user has to operate the application at all, so its total absence is classified critical. Location evidence: Form1.Designer.vb:173-215; InsertForm.Designer.vb:85-331; EditForm.Designer.vb:53-330; ViewForm.Designer.vb:42-171."
+      },
+      {
+        "id": "A11Y-002",
+        "wcag": "1.3.1",
+        "level": "A",
+        "surface_id": "view-form",
+        "summary": "DataGridView1 is bound directly to the raw 'students' table with AutoGenerateColumns=True and no explicit Columns/HeaderText configuration in either ViewForm.vb or ViewForm.Designer.vb, so the rendered column headers are the literal database field names — confirmed in the application screenshot as RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB. Abbreviations like 'YOA' and 'FName'/'LName' are not expanded anywhere in code or markup, so a screen reader announces the raw DB token with no explanation. Location evidence: ViewForm.vb:14, 37-45, 47-58; ViewForm.Designer.vb:81-130."
+      },
+      {
+        "id": "A11Y-003",
+        "wcag": "1.4.1",
+        "level": "A",
+        "surface_id": "form1-dashboard",
+        "summary": "The five 'Year Wise' dashboard tiles (1st–5th year) all carry the identical generic text caption \"Year Students\" (Label27/Label17/Label23/Label25/Label12); the only element that actually distinguishes which year a given tile represents is a decorative numeral graphic rendered in a different color per tile, and none of those PictureBoxes has an AccessibleName. A user who cannot perceive the image/color has no way to tell the five tiles apart. Location evidence: Form1.Designer.vb:442-454, 491-503, 689-701, 738-750, 787-799 (labels); 456-464, 505-513, 703-711, 752-760, 801-809 (paired numeral PictureBoxes)."
+      },
+      {
+        "id": "A11Y-004",
+        "wcag": "2.4.3",
+        "level": "A",
+        "surface_id": "form1-dashboard",
+        "summary": "In the left navigation rail of Form1, btnReport and btnView both declare TabIndex = 6, and btnNew and btnHome both declare TabIndex = 7. Duplicate TabIndex values make the keyboard focus order through the primary navigation ambiguous/implementation-defined, which is a focus-order defect for keyboard-only users. Location evidence: Form1.Designer.vb:167, 189, 211, 254."
+      },
+      {
+        "id": "A11Y-005",
+        "wcag": "1.3.2",
+        "level": "A",
+        "surface_id": "form1-dashboard",
+        "summary": "Panel11 (duplicate 'IIMCA Students' tile) and Panel13 (duplicate 'BCA Students' tile) are nested inside Panel10 with Location offsets that resolve to absolute positions overlapping the real Panel9 ('MCA Students') tile and sitting at the edge of the visible dashboard area respectively — leftover duplicate controls that remain part of the form's control collection and tab order. A keyboard/screen-reader user tabbing through the dashboard can land on content that does not correspond to anything sensible at that point in the reading sequence. Location evidence: Form1.Designer.vb:528-537, 577-586."
+      },
+      {
+        "id": "A11Y-006",
+        "wcag": "1.4.3",
+        "level": "AA",
+        "surface_id": "form1-dashboard",
+        "summary": "Most dashboard tiles use fixed, very light pastel ARGB values paired with black text, which the checker judged unlikely to fail contrast. The 'Male Students' tile (Panel6) and the ViewForm DataGridView background are exceptions: they use the theme-dependent SystemColors.ActiveCaption instead of a fixed color, which renders as a noticeably darker steel-blue in the screenshot and — more importantly — varies by Windows theme/accent color and OS version, so its actual contrast against the hard-coded black text is not fixed or verifiable at design time; a different theme or Windows high-contrast mode could produce a combination that fails AA even where the screenshot's rendering happens to pass. No pixel-sampled ratio was measured; this is a qualitative, source-grounded flag, not a measured failure. Location evidence: Form1.Designer.vb:960, 989; ViewForm.Designer.vb:89."
+      },
+      {
+        "id": "A11Y-007",
+        "wcag": "3.3.2",
+        "level": "A",
+        "surface_id": "insert-form",
+        "summary": "No TextBox in InsertForm or EditForm has MaxLength set, and neither code-behind file performs field-specific input validation before submitting to the database — the only error surfaced is a single generic MsgBox tied to the raw exception message, not to the offending field. Assistive-technology users get no advance indication of expected input length/format and no way to associate a validation failure with a specific field. Location evidence: InsertForm.Designer.vb:131-158, 193-200, 213-220, 222-229, 275-282; EditForm.Designer.vb:105-112, 125-132, 166-173, 186-193, 249-256; InsertForm.vb:4-34; EditForm.vb:49-73."
+      },
+      {
+        "id": "A11Y-008",
+        "wcag": "2.1.1",
+        "level": "A",
+        "surface_id": "form1-dashboard",
+        "summary": "No Button.Text in any of the four forms contains an ampersand ('&'), confirming the prior structural-analysis pass's finding that there are no keyboard-shortcut/access-key (mnemonic) annotations anywhere in the application. All buttons remain reachable via Tab, so this is not a blocking keyboard failure, but it removes the Alt+accelerator efficiency path that keyboard-only and some motor-impaired users rely on. Location evidence: Form1.Designer.vb:168, 190, 212, 233, 255; InsertForm.Designer.vb:303, 318; EditForm.Designer.vb:64, 79; ViewForm.Designer.vb:68, 143, 158."
+      },
+      {
+        "id": "A11Y-009",
+        "wcag": "2.4.6",
+        "level": "AA",
+        "surface_id": "form1-dashboard",
+        "summary": "Internal control Name values are overwhelmingly generic/auto-generated (Label1 through Label27, Button8, Panel1 through Panel20, PictureBox1 through PictureBox17), but in nearly every case the VISIBLE .Text caption actually rendered to a sighted user is descriptive, so 2.4.6 is largely satisfied at the visual layer. The generic internal names only become a user-facing problem in combination with A11Y-001: for controls that have no .Text at all, Windows UI Automation has no visible caption to fall back on and may expose the literal internal Name to a screen reader. Lower priority than A11Y-001. Location evidence: Form1.Designer.vb:97, 217; InsertForm.Designer.vb:49, 324-331; EditForm.Designer.vb:28, 84-92; ViewForm.Designer.vb:37, 162-171."
+      }
+    ]
+  },
+  "open_questions": [
+    "GOVERNING-PROFILE DISCREPANCY — see scope_caveat. Flagged independently by the Pass 0 catalog, Pass 1 structural-analysis, and the identity-landscape-analyzer; this assessment adds no new resolution, only corroboration from the UX/accessibility angle: an application with no authentication, no roles, and one undifferentiated persona has no FAA user-segment taxonomy to map onto, and none was fabricated here.",
+    "Siddharth Jain Project Report.pdf (868 KB) was NOT parsed by this assessment, by Pass 0, or by Pass 1. If it contains any user-facing instructional content, training_state.documentation_inventory understates the true documentation posture. Recommend a future pass extract and assess it specifically.",
+    "No live NVDA/JAWS/Narrator screen-reader session, no pixel-measured contrast ratio, and no live keyboard-interaction test were performed — see accessibility_findings.manual_review_required. All nine accessibility findings rest on a source-code read plus static screenshot review, which the checker's own audit_method_note states is a lower-confidence method than even a standard automated DOM scan.",
+    "fixtures/default.json and 25 other untracked scaffolding files (assets/, references/, scripts/) found inside this application's source tree were independently flagged by the Pass 0 catalog and Pass 1 structural-analysis as Olympus skill contamination, not application artifacts. This assessment did not draw on any of them as evidence about the application; noted here only so a reader of this artifact knows why they were disregarded.",
+    "No CMDB export, no business-owner identification, and no operational-criticality classification exist for this application (catalog.json open_questions), which is the root cause of every 'unmeasured, instrumentation gap' entry in adoption_baseline and training_state above. Populating any of adoption_baseline's three metrics requires either retrofitting telemetry into a future build or obtaining stakeholder/CMDB input — neither is something a source-only Discovery pass can produce.",
+    "safety_tier is null in the Pass 0 catalog and is explicitly stated to require stakeholder/Safety Board input rather than code inference; this assessment inherits that gap and does not infer a tier. Rationalization's user_experience_readiness scoring that consumes this artifact should treat the accessibility FAIL verdict as tier-independent (a critical WCAG violation fails at any tier) rather than waiting on tier resolution."
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "personas-confirmed",
+      "action": "verify",
+      "title": "We found exactly one undifferentiated user type for this application — can you confirm that's the real picture?",
+      "why": "If a real deployment actually has more than one role (e.g. a supervisor who approves deletes, or a read-only reporting user), the accessibility and adoption-baseline findings in this artifact — and everything Deployment later compares post-cutover usage against — would be built on an incomplete persona model.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "medium",
+        "score": 0.55,
+        "rationale": "High confidence that the SOURCE CODE enforces no role distinction (zero authentication, zero permission checks, one table with no role column — this is a direct, exhaustive read of all 13 source files). Only low-to-medium confidence that this reflects actual real-world usage, because there is no telemetry, no CMDB, and no stakeholder input: the single persona is an inference from the absence of any role-enforcement mechanism in code, not a measurement of who actually uses the application or how many of them there are."
+      },
+      "assessment": "This application has no login, no role model, and no permission checks anywhere in its source. Every screen (dashboard, insert, view/search, edit, delete) is reachable by anyone who launches the executable, with full read/write/delete access to all student records including PII (name, father's name, two phone numbers, date of birth). Because of this, the persona catalogue in this artifact contains exactly one entry — 'Student-Records Operator (sole user class)' — with an unknown headcount. This is an INFERENCE FROM CODE STRUCTURE, not a measurement: there is no usage telemetry, no CMDB entry, and no org chart for this application, so we cannot independently confirm how many people use it, whether they are in fact one undifferentiated group, or whether this is even in active use anywhere. A reviewer confirming this persona is confirming an inference presented honestly as an inference, not a measured fact.",
+      "reasoning": "The identity-landscape-analyzer pass independently reached the same single-persona conclusion from the identity/auth angle (user_classes: ['local-workstation-operator'] for both of the application's identity models). The structural-analysis pass reached it from the module/access-control angle (no authentication mechanism found anywhere; coupling_indicators 'unprotected-pii-in-source-control'). This assessment corroborates both from the UX/workflow angle: the README's own feature list and all three screenshots show one person doing everything. No conflicting signal was found anywhere, but the absence of a signal for a second persona is not proof that none exists in whatever real-world context this application runs in — the governing-profile mismatch (scope_caveat) means we also don't actually know what that real-world context is.",
+      "evidence_refs": [
+        {
+          "name": "identity-landscape.json identity_models",
+          "detail": "Both identity models for this application record user_classes: ['local-workstation-operator'] with below-AAL1 assurance and no authentication event of any kind.",
+          "artifact_path": "artifacts/discovery-identity-landscape-analyzer/identity-landscape.json"
+        },
+        {
+          "name": "structural-analysis.json coupling_indicators.unprotected-pii-in-source-control / my-project-infrastructure module 'no-authentication' signal",
+          "detail": "AuthenticationMode=0 (Windows, unused) with no login form anywhere; every operator has unrestricted CRUD over all student records.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "README.md feature list and application screenshots",
+          "detail": "Describes Dashboard/Insert/View/Update/Delete as flat features with no mention of roles, approval steps, or restricted screens; all three screenshots show the same left-navigation rail with every function available.",
+          "artifact_path": "source/README.md"
+        }
+      ]
+    }
+  ]
+}
