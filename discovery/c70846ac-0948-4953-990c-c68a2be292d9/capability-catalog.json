@@ -1,0 +1,55 @@
+{
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "legacy_system": {
+    "name": "Student Management System (standalone VB.NET/Access application)",
+    "description": "A single-developer, single-assembly VB.NET WinForms desktop application over a local Microsoft Access (.accdb) file database. It is a bespoke, self-contained tool with no network, web, batch, or integration surface, and does not correspond to any known legacy system family or strategy-of-record system (FAA or otherwise).",
+    "evidence_refs": [
+      "application-catalog-entry.json:architecture.archetype_rationale",
+      "application-catalog-entry.json:application_name",
+      "structural-analysis.json:architecture.style",
+      "structural-analysis.json:open_questions[Finding 0 — Governing-profile discrepancy]"
+    ]
+  },
+  "system_application_role": "primary",
+  "business_domains": [
+    {
+      "name": "Student Records Administration",
+      "description": "Internal administrative management of individual student academic and contact records plus basic population statistics; corresponds to the Pass 0 catalog's free-text business_domain of 'Admin', itself a forced fit since the application documents no actual business owner or sponsoring office."
+    }
+  ],
+  "capabilities": [
+    {
+      "name": "personnel-records-management",
+      "description": "Provides create, read, update, and delete operations on individual academic records in the single 'students' table, covering identity and contact details (name, father's name, two phone numbers, date of birth), gender, enrolled course, and year of admission. Implemented across three WinForms screens (InsertForm, EditForm, ViewForm) that issue inline, mostly-parameterized OleDb SQL directly against a local Access file with no service or data-access layer. This is the application's one genuine CRUD capability; the governed capability vocabulary has no student-records-specific entry, so 'personnel-records-management' is used as the closest available proxy for person-record CRUD (see open_questions).",
+      "business_domain_names": [
+        "Student Records Administration"
+      ],
+      "evidence_refs": [
+        "structural-analysis.json:database-schema-summary.tables[students]",
+        "structural-analysis.json:interface-inventory.interfaces[InsertForm — new student record entry]",
+        "structural-analysis.json:interface-inventory.interfaces[EditForm — existing student record editor]",
+        "structural-analysis.json:interface-inventory.interfaces[ViewForm — student record grid, search and delete]"
+      ],
+      "confidence": 0.6
+    },
+    {
+      "name": "reporting-and-analytics",
+      "description": "Computes and displays ten COUNT(*) aggregate tiles on the Form1 dashboard, breaking the student population down by gender (Male/Female), enrolled course (BCA/MCA/IIMCA), and five academic-year buckets derived from a hardcoded current year. It is read-only, derives entirely from the same single 'students' table, and is the application's only analytics surface — the dashboard's 'Report' button is a dead link to an external PDF and implements no actual reporting.",
+      "business_domain_names": [
+        "Student Records Administration"
+      ],
+      "evidence_refs": [
+        "structural-analysis.json:interface-inventory.interfaces[Form1 — dashboard, navigation shell and statistics view]",
+        "structural-analysis.json:architecture.major_components[Form1 (dashboard shell / MDI-style host)]"
+      ],
+      "confidence": 0.75
+    }
+  ],
+  "open_questions": [
+    "GOVERNING-PROFILE DISCREPANCY (recorded as a finding, not adopted as fact). The governing client profile declared for this task is 'faa', but this application — catalogued as 'Student Management System (VB.NET)', business_domain 'Admin' — shows no aviation, NAS, air-traffic, certification, or other FAA-adjacent relevance anywhere in its source, README, or project report. Both upstream Discovery passes (application-catalog-entry.json open_questions; structural-analysis.json Finding 0) independently raised the same mismatch. This skill does not adopt an alternative governing profile and does not restate one as fact; it maps the capability/system/domain grain as found and flags the discrepancy for the engagement owner to resolve before any FAA-specific gating (safety tiering, NAS impact assessment, compliance mapping, Rationalization consolidation against FAA strategy-of-record systems) consumes this catalog.",
+    "REQUIRED INPUT data-domains.json WAS NOT AVAILABLE. The dispatch contract for this skill declares data-domains.json (produced by Discovery.data-domain-discovery) as a required input and the strongest signal for capability boundaries, but the sibling task's own work log showed zero of four checklist items complete and its output directory was empty at execution time. This catalog was built from application-catalog-entry.json and structural-analysis.json (including its interface-inventory and database-schema-summary sections) only. Recommend re-running this skill once data-domains.json exists, to confirm or refine the single business domain and two capabilities extracted here — the idempotency contract (stable names/external_ids) means a re-run should land on the same rows rather than duplicate them, provided no capability/domain names are renamed.",
+    "NO CLIENT-PROFILE REFERENCE CATALOG WAS ACCESSIBLE. No strategy-of-record capability/system reference catalog for the 'faa' profile was reachable from this skill's working directories, so no attempt could be made to bind legacy_system or any capability to an external_id — all such fields are left unset (equivalent to NULL) rather than guessed. If a reference catalog exists and is wired up correctly on a future run, binding should be attempted then, though given the profile-mismatch finding above it is unlikely this application binds to any FAA-domain row.",
+    "GOVERNED CAPABILITY VOCABULARY HAS NO CLOSE MATCH FOR THIS APPLICATION. The capability name enum is aviation/FAA-oriented (personnel-certification, aircraft-registration, airspace-management, etc.) and has no entry for generic student/academic-records administration. 'personnel-records-management' was chosen as the closest available governed label for the record CRUD capability, and 'reporting-and-analytics' for the dashboard, but neither precisely describes a student-records system. Flag for the vocabulary owner if non-FAA applications are expected to continue flowing through this pipeline.",
+    "THE 'PROJECT REPORT' LINK AND THE .accdb FILE ARE DELIBERATELY NOT MODELED AS CAPABILITIES. The dashboard's 'Report' button only launches a hardcoded public GitHub URL in the default browser and implements no reporting logic (structural-analysis.json interface-inventory), and the local Access file is modeled as the persistence substrate for personnel-records-management rather than as its own capability. Both are infrastructure/integration facts, not business capabilities, and are recorded in legacy_system/evidence rather than in the capabilities array."
+  ]
+}
