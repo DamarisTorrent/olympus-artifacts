@@ -1,0 +1,19 @@
+{
+  "step": "tco-baseline",
+  "artifacts": [
+    "TCO baseline for application `c70846ac-0948-4953-990c-c68a2be292d9` (Student Management System, VB.NET) is complete.\n\n**Output:** `artifacts/discovery-tco-baseline/discovery/c70846ac-0948-4953-990c-c68a2be292d9/tco-baseline.json` \u2014 validated against `schemas/discovery/tco-baseline.schema.json`.\n\n**Formula applied:** FAA profile's canonical formula (`profiles/faa/config/tco-analyzer.yaml` \u2192 `faa-tco-definition.md`): *Cloud/Infra hosting + O&M + hosting*, operational costs only, per Announcement Element 7 footnote.\n\n**Result: `annual_total = $0`, confidence = low.** This isn't a placeholder \u2014 it's the honest output of applying the formula to the evidence:\n- **Cloud/Infra hosting = $0** \u2014 structural-analysis.json confirms the only deployment surface is a single Windows desktop `.exe` installed per workstation against a local `.accdb` file. No server, VM, container, or cloud resource exists for FAA to host.\n- **Shared hosting = $0** \u2014 zero use of shared middleware, databases, identity, or gateways; no network surface at all.\n- **O&M = $0** \u2014 no business owner, criticality rating, support staff, or CMDB record exists anywhere in Discovery's artifacts for this app (both catalog.json and structural-analysis.json flag this gap independently); it's documented as a single-developer, GPL-licensed academic project with a one-commit git history and no CI/CD.\n- No license cost: GPL-licensed, Access/Jet file-based, no FAA-paid license identified.\n\n**Finding carried forward (not newly adjudicated):** Both upstream Discovery artifacts (catalog.json, structural-analysis.json) independently flag that this application \u2014 a generic student-record desktop tool \u2014 has no detectable aviation/NAS/FAA relevance, creating a likely scope/profile mismatch. Per the governing-profile instruction, I did not adopt or restate an alternative profile; I applied the `faa` TCO formula as directed and recorded this discrepancy as an assumption in the output for the engagement owner to resolve before this baseline feeds P6.2/P6.3 governance decisions.\n\nNo cost figures were fabricated \u2014 every zero reflects a confirmed absence of the underlying cost driver (no server, no shared infra, no support contract), not a missing lookup."
+  ],
+  "file_artifacts": [
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/tco-baseline.json"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 104482,
+  "token_usage": {
+    "input": 1056,
+    "output": 7932
+  },
+  "cost_estimate_usd": 0.43095900000000004,
+  "timestamp": "2026-10-02T19:17:52.229465+00:00",
+  "pass": "tco-baseline",
+  "skill_id": "tco-analyzer"
+}
