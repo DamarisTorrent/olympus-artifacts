@@ -1,0 +1,283 @@
+{
+  "$schema": "olympus:artifact:srs-accessibility-compliance:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "prescribed_standard": "WCAG 2.1 and Section 508 of the Rehabilitation Act as implemented by the ICT Final Rule, 36 CFR 1194.1, which incorporates WCAG 2.0/2.1 Level AA by reference",
+  "conformance_target": "WCAG 2.1 Level AA (all surfaces, no exceptions)",
+  "source_note": "RESOLVED FROM THE DISCOVERY ARTEFACT, NOT FROM THE CLIENT PROFILE — this is a finding, not a silent substitution. The skill directs that the required conformance level be resolved from the active client profile's compliance configuration at profiles/faa/compliance.yaml. That path, and the whole of profiles/faa/, is NOT present in or readable from this execution workspace; the only directories available are the staged input artefacts and the application source tree. The standard recorded above is therefore taken verbatim from ux-accessibility.json applicable_standards (lines 82-85) and accessibility-audit.json standard (line 4), which independently assert the same pair. The ux-accessibility assessment confirms the same gap from its own side: it contains no reference to compliance.yaml or to any agency accessibility overlay document, and it records the standard as a bare assertion with no cited source document. One FAA profile artefact IS cited by the audit — profiles/faa/skills/accessibility-checker/references/faa-visualization-contrast-notes.md, used in A11Y-006 — but the audit states it was used 'only for its generic contrast/color-coding methodology, not as a claim that this is an FAA system'. CONSEQUENCE: if the faa profile mandates a level above AA, or an agency-specific overlay beyond Section 508, this document understates the target and must be regenerated once the profile is mounted. The engagement owner must confirm the conformance target before this document is used to gate delivery.",
+  "prescribed_requirement": "The modernized system SHALL conform to WCAG 2.1 Level AA on every user-facing surface, and SHALL satisfy Section 508 as implemented by 36 CFR 1194.1. Every finding listed below SHALL be resolved. Conformance SHALL be demonstrated by (a) an automated accessibility scan appropriate to the delivered platform, (b) a manual assistive-technology pass using at least two screen readers against a compiled build, and (c) measured contrast ratios for every foreground/background pair. No surface may be released against an unmeasured conformance claim: the baseline assessment returned a null conformance percentage rather than estimating one, and the modernized system SHALL report a measured percentage instead.",
+  "governing_profile_declared": "faa",
+  "governing_profile_resolvable_in_workspace": false,
+  "unassessed_gaps": [
+    "Live screen-reader behaviour was never observed. No NVDA, JAWS or Windows Narrator session was run, because no compiled build existed in the assessment sandbox. Actual runtime announcement behaviour is therefore unverified, which matters most for the duplicate-TabIndex finding (A11Y-004) and the overlapping-panel finding (A11Y-005), where source inspection cannot determine the live focus and reading order.",
+    "No automated tooling ran at all. axe-core and the standard audit script are browser-and-DOM based and the application is a WinForms desktop executable with no HTML, no DOM, no URL and no running build, so there was nothing to point a scanner at. The audit records that zero per cent of findings came from automated tooling, against a normal expectation that automated tools catch only thirty to forty per cent of WCAG issues even when they do run. The nine findings below are therefore explicitly a FLOOR on the true violation count, not a ceiling.",
+    "No contrast ratio was measured anywhere. A11Y-006 is a qualitative, source-grounded flag that a theme-dependent system colour makes contrast unverifiable at design time; the audit explicitly declined to pixel-sample the screenshot or assert a fabricated ratio. Every colour pair in the application remains unmeasured, including the pastel tile backgrounds the audit judged likely to pass.",
+    "No end-to-end keyboard-only interaction test was performed, so it is not established whether the duplicate TabIndex values and the two overlapping duplicate panels produce an actual keyboard trap or merely an inefficient tab order.",
+    "High-contrast mode and Windows theme interactions with the theme-dependent system colours were not exercised and cannot be determined from source.",
+    "Dynamic and asynchronous content changes were not assessed; the method could only read statically declared control properties.",
+    "Success criterion 1.1.1 (Non-text Content) was never assessed as a finding. It appears only inside the remediation text of A11Y-001, concerning decorative images. The seventeen PictureBox controls on the dashboard and the five decorative cohort numerals have not been formally evaluated against 1.1.1, and the audit's own remediation implies they would need to be.",
+    "No category-level count breakdown exists in either source artefact. The by_category block below is derived by this SRS from the per-finding WCAG success criteria and is labelled as derived; it is not an assertion carried forward from the assessment.",
+    "The project report PDF (868 KB) was not parsed by this or any prior Discovery pass, so any accessibility obligation it might document is unknown.",
+    "No safety tier was ever established for this application. The catalogue records safety_tier as null and states tier must come from stakeholder or Safety Board input. The assessment resolves this by asserting the accessibility verdict is tier-independent — 'a critical WCAG violation fails at any tier' — which this SRS adopts as the governing framing."
+  ],
+  "baseline_posture": {
+    "method": "Manual source-code accessibility review — WinForms Designer property inspection across all four Designer.vb files plus their code-behind, reading control-level AccessibleName, AccessibleDescription, TabIndex, BackColor, ForeColor, Font, Text and control type directly from source, cross-referenced against three static application screenshots. axe-core was not applicable: no DOM, no URL and no running build exist for a WinForms desktop application.",
+    "method_confidence": "low — lower than a standard automated DOM scan, per the audit's own statement; manual assistive-technology testing against a compiled build is required before these findings can be considered conclusive or complete",
+    "assessment_date": "2026-10-02",
+    "surfaces_reviewed": "4 of 4 human-facing application surfaces: form1-dashboard (Form1 — Dashboard, Navigation Shell & Statistics View; 1,211-line Designer file, 77 controls comprising 21 Labels, 20 Panels, 17 PictureBoxes), insert-form (InsertForm — New Student Record Entry; 24 controls across 10 data-entry fields plus Save and Cancel), edit-form (EditForm — Existing Student Record Editor; near-identical 24-control layout over the same 10 fields), view-form (ViewForm — Student Record Grid, Search & Delete; 12 controls comprising a search box, Search button, the grid, and Update and Delete buttons). 137 controls in total across the four surfaces.",
+    "out_of_scope_surfaces": "The outbound Project Report browser link (Form1.vb:155-157) was recorded in the Pass 1 interface inventory as a fifth human-facing interface but excluded from accessibility scope because it launches the user's own default browser rather than rendering application-owned user interface. The studentDB.accdb and studentDB.laccdb files are not user-interface surfaces. Note that this SRS omits that control entirely under ANOM-053, so no accessibility requirement attaches to it.",
+    "platform_assessed": "Windows desktop (WinForms), .NET Framework 4.8, single x86 executable, manually installed per workstation, no web or HTTP surface",
+    "gate_decision": "FAIL",
+    "gate_decision_note": "Section 508 compliance assessed as fail; 9 total violations. The verdict is driven by one critical finding (A11Y-001: zero AccessibleName and zero AccessibleDescription across all 137 controls in all four surfaces — the application's only non-visual access mechanism is entirely absent) plus two serious findings. A critical violation forces a fail verdict under the audit schema's own invariant. The assessment frames this as a legacy-baseline measurement for modernization comparison, not as a Validation-stage gate on shipped code. This SRS adopts the FAIL as the baseline against which the modernized system's conformance is to be measured, and adopts the assessment's framing that the verdict is tier-independent.",
+    "total_findings": {
+      "critical": 1,
+      "serious": 2,
+      "moderate": 4,
+      "minor": 2,
+      "total": 9
+    },
+    "by_level": {
+      "A": 7,
+      "AA": 2,
+      "AAA": 0
+    },
+    "by_category": {
+      "perceivable": 4,
+      "operable": 3,
+      "understandable": 1,
+      "robust": 1
+    },
+    "by_category_note": "DERIVED BY THIS SRS from the per-finding success criteria, grouped by WCAG principle: Perceivable covers 1.3.1, 1.3.2, 1.4.1 and 1.4.3; Operable covers 2.1.1, 2.4.3 and 2.4.6; Understandable covers 3.3.2; Robust covers 4.1.2. Neither source artefact states a category breakdown, so this is not a figure carried forward. Success criterion 3.3.2 has two contributors because A11Y-002 maps to both 1.3.1 and 3.3.2 while A11Y-007 maps to 3.3.2 as its primary criterion; the counts above attribute each finding to its primary criterion only, so they sum to 9.",
+    "by_surface": {
+      "form1-dashboard": 7,
+      "view-form": 1,
+      "insert-form": 1,
+      "edit-form": 0
+    },
+    "by_surface_note": "DERIVED BY THIS SRS from each finding's PRIMARY recorded surface_id, which is why the counts sum to 9 but materially understate the real spread. A11Y-001 is recorded against form1-dashboard yet its location evidence spans all four Designer files and all 137 controls; A11Y-007's locations include edit-form as well as insert-form; A11Y-006's locations include view-form as well as form1-dashboard; A11Y-008 and A11Y-009 are recorded against form1-dashboard but their evidence covers all four surfaces. The edit-form count of 0 is therefore an artefact of primary attribution and must NOT be read as 'the amendment surface is conformant' — it is covered by A11Y-001, A11Y-007 and A11Y-009. Use the surfaces_affected array on each finding, not this tally, when scoping remediation.",
+    "measured_conformance_percentage": "NOT MEASURED — the baseline assessment deliberately returned a null conformance percentage rather than estimating one, because no automated or rendered measurement was possible: there is no percentage to compute without a running build. This SRS records the absence as an absence rather than substituting a derived number. The modernized system MUST report a measured percentage instead, per verification_requirements.",
+    "measured_accessibility_score": "NOT MEASURED — same basis as measured_conformance_percentage. The baseline assessment returned a null score deliberately.",
+    "measurement_null_rationale": "Both figures above were returned as null by the source assessment rather than estimated, and both are rendered here as an explicit NOT MEASURED statement rather than as a bare null, so that no consumer can mistake an unmeasured value for a zero or for a missing field. The distinction matters because it is the same class of defect the application itself exhibits: anomaly ANOM-026, drawn from BR-076 and IM-022, records that the legacy statistics tiles displayed a plausible '0' where no value had been computed, so a genuinely empty table and a total failure looked identical. Reporting an unmeasured figure as a number would repeat that error at the document level.",
+    "corroborating_findings": "The quality-risk assessment independently recorded code smell CS-05 'accessibility-unannotated' with a count of 77 against the form1-dashboard module, and the structural assessment recorded coupling indicator 'accessibility-surface-unannotated' at medium severity citing zero AccessibleName and zero AccessibleDescription against 137 controls, with summary metric accessible_name_annotations = 0. The CS-05 count of 77 is Form1-scoped; the remediation scope for the modernized system is 137, the figure covering all four surfaces."
+  },
+  "findings": [
+    {
+      "id": "A11Y-001",
+      "wcag": "4.1.2",
+      "level": "A",
+      "severity": "critical",
+      "rule_id": "winforms-missing-accessible-name",
+      "surface_id": "form1-dashboard",
+      "surfaces_affected": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "elements_affected": 137,
+      "summary": "Zero AccessibleName and zero AccessibleDescription assignments exist across all 137 controls in all four surfaces; the audit verified that neither string occurs anywhere in any Designer file. Non-text controls — the three reference-value selectors, the date picker, the grid, every image and every text box — therefore have no reliable programmatic name, and WinForms offers no label-association equivalent to fall back on. This is the application's only mechanism for non-visual operation and it is entirely absent.",
+      "prescribed_fix": "Every interactive and informational element SHALL expose a programmatic name, and a programmatic description where the name alone is ambiguous, sufficient for assistive technology to identify and operate it without reference to visual layout. Purely decorative images SHALL be marked so assistive technology skips them. Remediation scope is all 137 controls, beginning with the ten data-entry fields on the create and amend surfaces, the search box, grid and action buttons on the list surface, and the navigation buttons and images on the dashboard.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:173-215",
+        "additional": [
+          "Flat Design/InsertForm.Designer.vb:85-331",
+          "Flat Design/EditForm.Designer.vb:53-330",
+          "Flat Design/ViewForm.Designer.vb:42-171"
+        ],
+        "verification_method": "No occurrence of the strings 'AccessibleName' or 'AccessibleDescription' was found in any Designer file."
+      },
+      "section_508": "Section 508 (ICT Final Rule, 36 CFR 1194.1) incorporates WCAG 2.0/2.1 AA 4.1.2 by reference",
+      "resolves_to_requirement": ["REQ-100", "REQ-108"],
+      "anomaly_id": "ANOM-055"
+    },
+    {
+      "id": "A11Y-002",
+      "wcag": "1.3.1",
+      "additional_criteria": ["3.3.2"],
+      "level": "A",
+      "severity": "serious",
+      "rule_id": "datagridview-autogenerated-raw-column-headers",
+      "surface_id": "view-form",
+      "elements_affected": 1,
+      "summary": "The record grid is bound to the raw students table with AutoGenerateColumns enabled and no explicit column collection or header text, so headers render as literal database field names — RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB — and abbreviations are never expanded. A screen reader announces the raw database token rather than a human-readable label.",
+      "prescribed_fix": "The record list SHALL define its columns explicitly, each carrying a human-readable, fully expanded header label — 'Year of Admission' rather than 'YOA', 'Father's Name' rather than 'FatherName', 'First Name' rather than 'FName'. Column identity, order and labelling SHALL be a declared property of the presentation layer and SHALL NOT be derived from the datastore result-set shape, so that a schema change cannot silently alter the user-facing report or expose a newly added attribute.",
+      "legacy_evidence": {
+        "primary": "Flat Design/ViewForm.vb:14",
+        "additional": [
+          "Flat Design/ViewForm.vb:37-45",
+          "Flat Design/ViewForm.vb:47-58",
+          "Flat Design/ViewForm.Designer.vb:81-130"
+        ]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.3.1 and 3.3.2 by reference",
+      "resolves_to_requirement": ["REQ-101", "REQ-033"],
+      "anomaly_id": "ANOM-056",
+      "related_anomaly": "ANOM-043 — the same raw-token problem is also a naming-consistency defect, since three vocabularies describe two concepts across the interface."
+    },
+    {
+      "id": "A11Y-003",
+      "wcag": "1.4.1",
+      "level": "A",
+      "severity": "serious",
+      "rule_id": "year-tiles-indistinguishable-without-color-image",
+      "surface_id": "form1-dashboard",
+      "elements_affected": 5,
+      "summary": "All five cohort tiles carry the identical caption 'Year Students'. The only thing distinguishing first-year from fifth-year is a decorative numeral image in a different colour per tile, and none of those images has an accessible name, so the five statistics are indistinguishable non-visually. No string literal for first, second, third, fourth or fifth year exists anywhere in the source — the ordinal is carried solely by image resources and internal control names.",
+      "prescribed_fix": "Each cohort tile SHALL carry distinct, specific visible text naming the cohort it reports, and any accompanying image SHALL carry a matching accessible name. Information distinguishing one statistic from another SHALL NOT be conveyed by colour or image alone. Cohort labels SHALL be derived from the same reference data that defines the cohort, so they cannot drift from the figure they caption.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:799",
+        "additional": [
+          "Flat Design/Form1.Designer.vb:442-454",
+          "Flat Design/Form1.Designer.vb:491-503",
+          "Flat Design/Form1.Designer.vb:689-701",
+          "Flat Design/Form1.Designer.vb:738-750",
+          "Flat Design/Form1.Designer.vb:456-464"
+        ]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.4.1 by reference",
+      "resolves_to_requirement": ["REQ-102", "REQ-043"],
+      "anomaly_id": "ANOM-056",
+      "related_anomaly": "IM-033 and BR-081 record the same defect from the business-logic side: the tiles are 'not distinguishable from their text, not localizable and not greppable'."
+    },
+    {
+      "id": "A11Y-004",
+      "wcag": "2.4.3",
+      "level": "A",
+      "severity": "moderate",
+      "rule_id": "duplicate-tabindex-nav-rail",
+      "surface_id": "form1-dashboard",
+      "elements_affected": 4,
+      "summary": "In the dashboard navigation rail, the Report and View buttons both declare TabIndex 6, and the Insert and Dashboard buttons both declare TabIndex 7, making keyboard focus order ambiguous and implementation-defined.",
+      "prescribed_fix": "Focus order SHALL be unique, deterministic and documented on every surface, and SHALL follow the surface's logical reading and operation order. No two elements on a surface may declare the same focus position. Focus order SHALL be verified by an end-to-end keyboard-only test against a compiled build.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:167",
+        "additional": [
+          "Flat Design/Form1.Designer.vb:211",
+          "Flat Design/Form1.Designer.vb:189",
+          "Flat Design/Form1.Designer.vb:254"
+        ]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.4.3 by reference",
+      "resolves_to_requirement": ["REQ-103"],
+      "anomaly_id": "ANOM-056"
+    },
+    {
+      "id": "A11Y-005",
+      "wcag": "1.3.2",
+      "level": "A",
+      "severity": "moderate",
+      "rule_id": "overlapping-duplicate-dashboard-panels",
+      "surface_id": "form1-dashboard",
+      "elements_affected": 2,
+      "summary": "Two leftover duplicate tiles — a second IIMCA Students tile and a second BCA Students tile, each with its own count label and image — are nested in the wrong parent panel at relative offsets of plus and minus 373 pixels, resolving to absolute positions one of which overlaps the real MCA Students tile. They remain in the control collection and the tab order, so a keyboard or screen-reader user can land on '0', 'BCA Students', 'IIMCA Students' out of sequence.",
+      "prescribed_fix": "These elements SHALL be removed entirely rather than hidden by geometry, visibility or z-order. No element may remain in the focus order or the accessibility tree that is not intended to be presented. Meaningful sequence SHALL be programmatically determinable and SHALL match the visual presentation order.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:528-537",
+        "additional": ["Flat Design/Form1.Designer.vb:577-586"]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.3.2 by reference",
+      "resolves_to_requirement": ["REQ-104", "REQ-048"],
+      "anomaly_id": "ANOM-049",
+      "related_anomaly": "ANOM-049 omits these tiles from the SRS as dead code. This finding is why the omission must be a removal rather than a hiding: BR-081 and IM-032 record that they are currently hidden only by being pushed outside their parent's bounds, so any layout change would expose them."
+    },
+    {
+      "id": "A11Y-006",
+      "wcag": "1.4.3",
+      "level": "AA",
+      "severity": "moderate",
+      "rule_id": "theme-dependent-color-coded-tile",
+      "surface_id": "form1-dashboard",
+      "surfaces_affected": ["form1-dashboard", "view-form"],
+      "elements_affected": 2,
+      "summary": "The Male Students tile and the record grid background use the theme-dependent system colour ActiveCaption rather than a fixed value, so their contrast against hardcoded black text is not fixed or verifiable at design time and could fail Level AA under a different Windows theme, accent colour or high-contrast mode. This is a qualitative, source-grounded flag: no pixel-sampled or tool-measured ratio was produced.",
+      "prescribed_fix": "Every foreground and background colour pair SHALL be an explicitly chosen fixed value, SHALL NOT be inherited from an operating-system theme, and SHALL be verified with a contrast-measurement tool against the Level AA minimum ratio before release. The measured ratio for every pair SHALL be recorded. The system SHALL additionally be verified under high-contrast mode.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:960",
+        "additional": [
+          "Flat Design/Form1.Designer.vb:989",
+          "Flat Design/ViewForm.Designer.vb:89"
+        ],
+        "measurement_caveat": "No ratio was measured. The audit flagged this qualitatively per the FAA contrast-reviewer guidance in profiles/faa/skills/accessibility-checker/references/faa-visualization-contrast-notes.md, used for its generic colour-coding methodology only, and explicitly declined to assert a fabricated number."
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.4.3 by reference",
+      "resolves_to_requirement": ["REQ-105", "NFR-041"],
+      "anomaly_id": "ANOM-056",
+      "verified_non_issue_note": "The audit separately judged the remaining tile colour pairs — fixed pastel ARGB backgrounds paired with black text — unlikely to fail 1.4.3 on qualitative screenshot review. That judgement is also unmeasured, so the modernized system must measure every pair rather than only the two flagged here."
+    },
+    {
+      "id": "A11Y-007",
+      "wcag": "3.3.2",
+      "level": "A",
+      "severity": "moderate",
+      "rule_id": "no-maxlength-no-field-validation",
+      "surface_id": "insert-form",
+      "surfaces_affected": ["insert-form", "edit-form"],
+      "elements_affected": 10,
+      "summary": "No text box on the create or amend surface sets a maximum length — the string MaxLength occurs zero times in either Designer file — and neither code-behind performs field-specific validation. The only error surfaced is a single generic message box carrying the raw exception text, not tied to the offending field. Assistive-technology users receive no advance format or length cue and no field association when a submission fails.",
+      "prescribed_fix": "Every input SHALL declare its expected format and maximum length at the surface, programmatically and visibly, before submission. Every validation failure SHALL be reported with a message attributed to the specific field it concerns and expressed in terms of the expected form. A single generic message carrying runtime exception text SHALL NOT be used.",
+      "legacy_evidence": {
+        "primary": "Flat Design/InsertForm.Designer.vb:131-158",
+        "additional": [
+          "Flat Design/EditForm.Designer.vb:105-112",
+          "Flat Design/InsertForm.vb:4-34",
+          "Flat Design/EditForm.vb:49-73"
+        ]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 3.3.2 by reference",
+      "resolves_to_requirement": ["REQ-106", "REQ-003", "REQ-009", "REQ-083"],
+      "anomaly_id": "ANOM-056",
+      "related_anomaly": "This finding is the accessibility face of ANOM-016, ANOM-023 and ANOM-034 — the absent input validation, the blanket exception handler and the schema-only length cap are the same omissions seen from three assessments."
+    },
+    {
+      "id": "A11Y-008",
+      "wcag": "2.1.1",
+      "level": "A",
+      "severity": "minor",
+      "rule_id": "no-access-key-mnemonics",
+      "surface_id": "form1-dashboard",
+      "surfaces_affected": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "elements_affected": 11,
+      "summary": "No button caption in any of the four surfaces contains a mnemonic marker, so there are no access keys anywhere. All buttons remain reachable by sequential keyboard navigation, so this is not a blocking keyboard failure, but the accelerator path relied on by keyboard-only and some motor-impaired users is absent and the omission is inconsistent with platform convention.",
+      "prescribed_fix": "Every command control SHALL expose a keyboard accelerator, and no two controls reachable on the same surface may share one. All functionality SHALL remain operable by keyboard alone without requiring specific timings for individual keystrokes.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:168",
+        "additional": [
+          "Flat Design/Form1.Designer.vb:190",
+          "Flat Design/InsertForm.Designer.vb:303",
+          "Flat Design/EditForm.Designer.vb:79",
+          "Flat Design/ViewForm.Designer.vb:68"
+        ]
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.1.1 by reference",
+      "resolves_to_requirement": ["REQ-107"],
+      "anomaly_id": "ANOM-056"
+    },
+    {
+      "id": "A11Y-009",
+      "wcag": "2.4.6",
+      "level": "AA",
+      "severity": "minor",
+      "rule_id": "generic-internal-names-vs-visible-text",
+      "surface_id": "form1-dashboard",
+      "surfaces_affected": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "elements_affected": 137,
+      "summary": "Internal element names are overwhelmingly auto-generated — Label1 through Label27, Button8, Panel1 through Panel20, PictureBox1 through PictureBox17 — with one name reused across three different surfaces. Visible captions are descriptive, so 2.4.6 is largely satisfied at the visual layer; the generic names harm users only in combination with A11Y-001, where the platform may expose the literal internal name such as 'PictureBox14' or 'cmbyoa' to a screen reader in the absence of an accessible name.",
+      "prescribed_fix": "Headings and labels SHALL describe their topic or purpose. Element identifiers SHALL denote purpose and actual type rather than being auto-generated, and SHALL be unique within their surface. Priority is lower than A11Y-001: setting explicit accessible names on non-text elements is what actually reaches assistive technology, and doing so removes the mechanism by which this finding causes harm.",
+      "legacy_evidence": {
+        "primary": "Flat Design/Form1.Designer.vb:97",
+        "additional": [
+          "Flat Design/Form1.Designer.vb:217",
+          "Flat Design/InsertForm.Designer.vb:49",
+          "Flat Design/EditForm.Designer.vb:28",
+          "Flat Design/ViewForm.Designer.vb:37"
+        ],
+        "note": "The dashboard title caption is misspelled 'Sudent Management System' in the source, and a second label hardcodes the original author's name and cohort. Both are user-visible and are addressed under ANOM-044."
+      },
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.4.6 by reference",
+      "resolves_to_requirement": ["REQ-108", "REQ-100"],
+      "anomaly_id": "ANOM-056"
+    }
+  ],
+  "verification_requirements": [
+    "An automated accessibility scan appropriate to the delivered platform SHALL run in the build pipeline and SHALL fail the build on any Level A or Level AA violation. The legacy baseline had no pipeline and no scan of any kind.",
+    "A manual assistive-technology pass SHALL be performed against a compiled build using at least two screen readers, covering every surface and every operation, before release. The legacy baseline was never exercised with any screen reader.",
+    "Measured contrast ratios SHALL be recorded for every foreground and background colour pair, including pairs the baseline assessment judged likely to pass without measuring them.",
+    "An end-to-end keyboard-only interaction test SHALL confirm that focus order is unique and deterministic and that no keyboard trap exists.",
+    "Conformance SHALL be re-measured and reported as a percentage. The baseline deliberately reported null; a null conformance figure SHALL NOT be accepted from the modernized system.",
+    "Because the baseline is explicitly a floor rather than a ceiling, the modernized system SHALL be assessed against the full WCAG 2.1 Level AA criterion set rather than only against the nine findings listed here. In particular, success criterion 1.1.1 was never assessed in the baseline and SHALL be assessed."
+  ]
+}

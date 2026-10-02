@@ -1,0 +1,625 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "section": "non-functional",
+  "evidence_discipline_note": "READ THIS BEFORE USING ANY NUMBER BELOW. Discovery produced NO performance, latency, throughput, availability, recovery or usage measurement for this application, and no telemetry source exists anywhere in the source tree, the onboarding package or a CMDB export from which one could be derived. The ux assessment is explicit that active user count, feature usage frequency and session duration are 'unmeasured, instrumentation gap' and that this means 'no instrumentation present', not 'no usage observed'. Test coverage is recorded as method=unavailable with high confidence and the artefact forbids reading it as nought per cent. Consequently every numeric target below is labelled with a basis: 'derived' where it is computed from a figure Discovery actually measured, or 'prescribed-target' where it is a new engineering target with no observed baseline. Every prescribed-target carries sme_confirmation_required and appears in the SRS open questions. Nothing here is presented as a legacy baseline that was not measured as one. The figures Discovery DID measure, and which are therefore safe to build on, are: 2,787 total lines of VB source of which 461 are hand-written and 2,326 Designer-generated; 13 source files; 6 logical modules; 137 user-interface controls across 4 surfaces with 77 in the largest; a 1,211-line largest file; 1 table, 10 columns, 2 live rows and 6 recoverable deleted rows; 16 inline SQL statements of which 6 are unparameterized and 1 interpolates user input; 0 HTTP endpoints, 0 scheduled jobs, 0 message queues, 0 authentication mechanisms, 0 stored procedures, 0 triggers, 0 views, 0 tests, 0 pipelines; 3 circular module dependency cycles; 21 code smells; a technical debt score of 74 on a 0-100 scale; maximum cyclomatic complexity of approximately 4 and maximum afferent coupling of 4; and 1 commit in git history.",
+  "requirements": [
+    {
+      "id": "NFR-001",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-006",
+      "description": "The system MUST authenticate every principal at NIST SP 800-63B Authenticator Assurance Level 2 or higher before rendering any surface that reads or writes student data. Authentication MUST require a second factor that is not an emailed code, because NIST SP 800-63B section 5.1.3.3 excludes the email channel from out-of-band authenticators, so an emailed code remains AAL1 however it is marketed. Time-based one-time passwords or stronger MUST be accepted.",
+      "acceptance_criteria": [
+        {"criterion": "AAL2 enforced before any data surface", "given": "An unauthenticated principal who can launch the client", "when": "The client starts", "then": "No surface displaying or accepting student data is rendered until authentication completes at AAL2, and an attempt to reach such a surface directly is denied and audited as an AuthorizationDenial"},
+        {"criterion": "Email codes rejected as a second factor", "given": "The authenticator catalogue configured for the deployment", "when": "It is inspected against this requirement", "then": "No emailed one-time code is registered as a permitted second factor, and the configured factors are TOTP or stronger"},
+        {"criterion": "Ambient OS session is not an authentication event", "given": "A principal with an active interactive desktop session on the host", "when": "The client starts", "then": "Authentication is still required; possession of the desktop session grants no access"}
+      ],
+      "measurement_basis": "derived — the target level is taken verbatim from the identity assessment's own recommendation, not invented here",
+      "observed_baseline": "nist_aal = below-AAL1 at the application boundary on both identity models; mfa_type = none; phishing_resistant = false; authentication_mechanisms = 0",
+      "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[below-aal2]", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 26, "corroborating": ["BR-090", "identity-landscape.retire_recommendations[0].replacement_model"], "discovery_artifact": "identity-landscape"},
+      "proposed_anomaly": "ANOM-002",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The floor comes from the identity assessment's retire recommendation, which specifies 'OIDC authorization-code flow with PKCE for the desktop client at AAL2 minimum, with per-user authentication enforced before any form loads'. CONDITIONAL ESCALATION: the assessment states that a Tier 1 safety classification would instead demand a phishing-resistant AAL3 authenticator such as FIDO2 or PIN-unlocked PIV. Safety tier is null and must come from stakeholder or Safety Board input, so AAL2 is a floor pinned to a non-authoritative Tier 3 lean and is subject to upward revision.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-002",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-006",
+      "description": "Authentication MUST be performed through a federated identity broker rather than by credential handling inside the application, and the ambient operating-system identity binding MUST be removed in the same change that introduces the authentication gate, not afterwards.",
+      "acceptance_criteria": [
+        {"criterion": "No credential store in the application", "given": "The delivered application", "when": "It is inspected for credential handling", "then": "It contains no password store, no credential verification logic and no user account table; authentication is delegated entirely to the broker"},
+        {"criterion": "No unauthenticated fallback survives", "given": "The release that introduces authentication", "when": "The ambient identity path is probed after deployment", "then": "The ambient path no longer grants access, and no code path accepts an operating-system session in place of a broker-issued assertion"}
+      ],
+      "measurement_basis": "derived",
+      "traces_to": {"discovery_finding": "identity-landscape.broker_recommendation", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 26, "corroborating": ["identity-landscape.retire_recommendations[0].retire_reason", "identity-landscape.proliferation_findings[legacy-directory-without-sso]"], "discovery_artifact": "identity-landscape"},
+      "proposed_anomaly": "ANOM-002",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The simultaneity clause is prescribed verbatim from the assessment's retire reason: 'The ambient binding must be removed in the same change that introduces the authentication gate, otherwise the old path remains as an unauthenticated fallback.' The recommended pattern is broker-staff-only with one user class and no public surface. IMPORTANT SCOPE LIMIT: the assessment names a concrete broker technology only 'SUBJECT TO PROFILE CONFIRMATION' and refuses to name upstream identity providers, stating that the faa profile's technology and analyzer configuration were not readable from its sandbox and that 'naming concrete FAA IDPs would be fabrication'. This SRS inherits that refusal: it prescribes the pattern and the assurance level, not the product. The provider inventory must be completed from the profile before the broker design is acted on.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-003",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "All student personal data MUST be encrypted at rest and in transit using a currently supported algorithm and key length, and keys MUST be managed outside the application artefact.",
+      "acceptance_criteria": [
+        {"criterion": "Encryption at rest", "given": "A deployed datastore holding student records", "when": "Its storage is inspected outside the datastore process", "then": "No personal-data value is readable in plaintext"},
+        {"criterion": "Encryption in transit", "given": "A client-to-service and service-to-datastore connection", "when": "Traffic is captured", "then": "No personal-data value is readable, and the transport uses a currently supported protocol version"},
+        {"criterion": "No key material in the artefact", "given": "The build output and the source repository", "when": "They are scanned for key material", "then": "No key, password or connection secret is present"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "No encryption of any kind. The .accdb file carries no database password, Jet workgroup security is unused with the default Admin account, and the connection string contains no credential token at all — negative evidence the identity assessment uses to establish that the file itself is unprotected.",
+      "traces_to": {"discovery_finding": "BR-090", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["DF-SMS cross_flow_findings[3]", "quality-risk.regulatory_surface_flags", "ESC-1", "db-schema.json:78"], "discovery_artifact": "business-rules + identity-landscape + quality-risk"},
+      "proposed_anomaly": "ANOM-003",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-004",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "No access path to student data may exist that bypasses the application's authorization layer. The datastore MUST authenticate every connecting principal, and the authenticated end-user identity MUST be propagated to the data tier rather than replaced by a shared service identity.",
+      "acceptance_criteria": [
+        {"criterion": "No bypass path", "given": "A principal with filesystem or network access to the datastore host but no application authorization", "when": "They attempt to read student data with a general-purpose database client", "then": "Access is denied by the datastore itself"},
+        {"criterion": "End-user identity reaches the data tier", "given": "An authenticated principal performing a read", "when": "The datastore's own audit is inspected", "then": "The operation is attributed to that principal, not to a shared application account"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The identity assessment records the bypass explicitly: 'this path is reachable WITHOUT the application: any OLEDB client, or Microsoft Access itself, pointed at the same .accdb obtains the same full read/write access, so any authentication added to the WinForms client alone would be a bypassable control.' The interface inventory records the same file as an uncontrolled second access path.",
+      "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[shared-credentials]", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["interface-inventory.interfaces[studentDB.accdb — local Access database file]", "identity-landscape.retire_recommendations[1]"], "discovery_artifact": "identity-landscape + interface-inventory"},
+      "proposed_anomaly": "ANOM-003",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "This requirement is why NFR-001 alone is insufficient. The identity assessment directs that the data-tier migration be sequenced 'BEFORE or WITH the ambient-Windows retirement, never after', and that the replacement is a 'server-hosted RDBMS with per-user principal authentication and token-scoped data access via the broker'.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-005",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-006",
+      "description": "An authenticated session MUST expire after a configurable period of inactivity and after a configurable absolute maximum lifetime, after either of which the principal MUST re-authenticate before any further student-data operation. The timeout MUST be scoped to the authenticated session and MUST NOT be implemented at the datastore connection layer.",
+      "acceptance_criteria": [
+        {"criterion": "Idle expiry", "given": "An authenticated session configured with an idle timeout of T", "when": "No principal interaction occurs for longer than T", "then": "The session is invalidated, any displayed personal data is cleared from the surface, and the next operation requires re-authentication"},
+        {"criterion": "Absolute expiry", "given": "A continuously active session configured with an absolute lifetime of L", "when": "L elapses since authentication", "then": "The session is invalidated regardless of recent activity"},
+        {"criterion": "Not connection-scoped", "given": "The implementation", "when": "Session expiry is traced", "then": "Expiry is enforced by the session component and is independent of the lifetime of any datastore connection"}
+      ],
+      "measurement_basis": "prescribed-target — the timeout values are client policy and no artefact supplies them",
+      "observed_baseline": "No session concept of any kind. A single connection is opened on dashboard load and held for the lifetime of the process, so there is no idle timeout, no maximum lifetime, no re-authentication interval and no token to expire. An unattended workstation leaves the full personal-data surface live indefinitely.",
+      "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4, "corroborating": ["BR-001", "BR-090"], "discovery_artifact": "identity-landscape"},
+      "proposed_anomaly": "ANOM-005",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The connection-layer exclusion is prescribed verbatim from the assessment's remediation: 'Do not set the timeout at the connection layer — scope it to the authenticated session.' Concrete values require SME confirmation.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-010",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-003",
+      "description": "The statistics dashboard SHOULD render all its figures within 2 seconds at the 95th percentile, measured at a data volume of 100,000 student records, and SHOULD issue at most one datastore round trip per reporting axis.",
+      "acceptance_criteria": [
+        {"criterion": "Latency at volume", "given": "A datastore seeded with 100,000 synthetic student records", "when": "The dashboard is requested 100 times", "then": "The 95th-percentile elapsed time from request to all figures rendered is at or below 2 seconds"},
+        {"criterion": "Round-trip budget", "given": "The same request", "when": "Datastore calls are counted", "then": "At most one aggregation query is issued per reporting axis, and no axis issues one query per expected value"}
+      ],
+      "measurement_basis": "prescribed-target — NO LATENCY WAS EVER MEASURED for this application and no telemetry exists to derive one from. The 2-second figure and the 100,000-record volume are new engineering targets, not observed values, and both require confirmation.",
+      "observed_baseline": "Structurally measurable only: the dashboard issues twelve independent COUNT queries with no GROUP BY — two for gender, three for course, five for year buckets — each a separate round trip executed sequentially from the startup path, against a live table of 2 rows. No timing was captured. The legacy volume is 2 records, so the prescribed volume is a target for the modernized system and not a scaled baseline.",
+      "traces_to": {"discovery_finding": "BR-071", "source_file": "Flat Design/Form1.vb", "source_line": 62, "corroborating": ["BR-072", "BR-073", "BR-074", "CS-02", "db-archaeology[logic-in-proc]"], "discovery_artifact": "business-rules + db-archaeology"},
+      "proposed_anomaly": "ANOM-046",
+      "anomaly_resolution": "OPTIMIZE",
+      "anomaly_details": "The round-trip clause is the enforceable part and is derived from a measured structural fact — twelve queries where grouped aggregation needs three. The latency figure is the prescribed part and is flagged accordingly.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-011",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-002",
+      "description": "A page of student records SHOULD be retrieved and rendered within 1 second at the 95th percentile at a data volume of 100,000 records, with a maximum page size of 100 records. No operation may read the entire table into memory at any volume.",
+      "acceptance_criteria": [
+        {"criterion": "Latency at volume", "given": "A datastore seeded with 100,000 synthetic student records", "when": "A page of records is requested 100 times", "then": "The 95th-percentile elapsed time is at or below 1 second"},
+        {"criterion": "Bounded result set", "given": "Any list or search request", "when": "The issued query is inspected", "then": "It carries an explicit row limit no greater than 100 and an offset or cursor, and no code path issues an unbounded select against the student table"},
+        {"criterion": "Deterministic ordering", "given": "Two consecutive identical page requests with no intervening mutation", "when": "Their results are compared", "then": "The records appear in the same order"}
+      ],
+      "measurement_basis": "prescribed-target for the latency and volume figures; derived for the bounded-result-set and ordering clauses, which follow from measured structural facts",
+      "observed_baseline": "The list binds the whole table via an unbounded select with no where clause, no order by, no row limit and no paging, and the grid grows without bound as the table grows. Display order is whatever physical order the engine returns, which is not guaranteed stable across inserts and deletes. Every refresh creates a new result set and discards the previous one without disposing it. No timing was captured.",
+      "traces_to": {"discovery_finding": "BR-050", "source_file": "Flat Design/ViewForm.vb", "source_line": 39, "corroborating": ["coupling_signals.unbounded-full-table-read", "BR-061"], "discovery_artifact": "business-rules + structural-analysis"},
+      "proposed_anomaly": "ANOM-047",
+      "anomaly_resolution": "OPTIMIZE",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-012",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The datastore MUST support point-in-time recovery with a recovery point objective of at most 15 minutes and a recovery time objective of at most 4 hours. A restore MUST be tested on a documented schedule and the test result recorded.",
+      "acceptance_criteria": [
+        {"criterion": "Recovery point", "given": "A datastore failure at time F", "when": "Recovery completes", "then": "No committed change made more than 15 minutes before F is lost"},
+        {"criterion": "Recovery time", "given": "A declared total loss of the primary datastore", "when": "The documented recovery procedure is executed", "then": "Service is restored within 4 hours"},
+        {"criterion": "Restore is tested, not assumed", "given": "The operational record", "when": "It is inspected", "then": "It contains a dated, successful restore test within the documented interval"}
+      ],
+      "measurement_basis": "prescribed-target — both objectives are new engineering targets. No recovery objective, backup schedule or availability figure exists in any Discovery artefact.",
+      "observed_baseline": "No backup, no replication, no transaction log and no retention policy. The data-flow assessment rates this critical and states that the complete personal-data corpus 'is one unversioned 784 KB file on one workstation' and that 'loss or corruption of that file is unrecoverable total data loss'.",
+      "traces_to": {"discovery_finding": "DF-SMS cross_flow_findings[2]", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["BR-002", "db-archaeology[orphan-object: datastore]", "RISK-02"], "discovery_artifact": "data-flow-trace"},
+      "proposed_anomaly": "ANOM-057",
+      "anomaly_resolution": "FIX",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-013",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system MUST run on a datastore platform and application runtime that are both within their vendor-supported lifecycle at the time of release, and MUST NOT depend on any component that has reached end of life.",
+      "acceptance_criteria": [
+        {"criterion": "No end-of-life dependency", "given": "The dependency manifest of the release", "when": "Each component's lifecycle status is checked", "then": "No component is past its vendor end-of-support date"},
+        {"criterion": "No 32-bit-only out-of-process data provider", "given": "The delivered data access", "when": "It is inspected", "then": "It does not depend on a 32-bit-only out-of-process provider and does not pin the process to x86"}
+      ],
+      "measurement_basis": "derived — the end-of-life date is a measured fact from db-archaeology",
+      "observed_baseline": "The engine reached end of life on 2017-10-10. The provider is 32-bit only and out-of-process, is not supported by modern .NET, and requires the release platform target to be pinned to x86 to match. The runtime is .NET Framework 4.8 and the project uses a legacy non-SDK MSBuild format with ten GAC assembly references and no package manager.",
+      "traces_to": {"discovery_finding": "db-archaeology[eol-engine]", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["Flat Design/Student Management System Siddharth Jain.vbproj:35", "structural-analysis.technology"], "discovery_artifact": "db-archaeology + structural-analysis"},
+      "proposed_anomaly": "ANOM-057",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-014",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-009",
+      "description": "Every functional requirement's acceptance criteria MUST be covered by at least one automated test, and the test suite MUST execute in an automated pipeline that gates release. The pipeline MUST fail on a failing test, a type-checking diagnostic or an accessibility violation at Level A or AA.",
+      "acceptance_criteria": [
+        {"criterion": "Criterion coverage is complete and demonstrable", "given": "The requirement set in srs-requirements-functional.json and srs-requirements-nonfunctional.json", "when": "The test suite is mapped against it", "then": "Every acceptance criterion maps to at least one automated test, and the mapping is published as a build artefact"},
+        {"criterion": "Pipeline gates release", "given": "A change that breaks any test, introduces a type diagnostic or introduces a Level A or AA accessibility violation", "when": "It is submitted", "then": "The pipeline fails and the change cannot be released"}
+      ],
+      "measurement_basis": "derived — the absence being corrected is a measured zero with high confidence",
+      "observed_baseline": "No test project, test file, test runner configuration, build script or pipeline exists anywhere in the repository; 13 source files were found with no corresponding test assembly. Coverage is recorded as method=unavailable with high confidence, and the artefact states this must be reported as unavailable rather than as nought per cent. The structural assessment adds that no behavioural baseline and no executable specification of current behaviour exists to migrate against.",
+      "traces_to": {"discovery_finding": "coupling_indicators.no-automated-verification", "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj", "source_line": 1, "corroborating": ["quality-risk.test_coverage[method=unavailable]", "structural-analysis.open_questions[NO BEHAVIOURAL BASELINE EXISTS]", "summary_metrics.ci_cd_pipelines=0"], "discovery_artifact": "quality-risk + structural-analysis"},
+      "proposed_anomaly": "ANOM-057",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "This requirement carries unusual weight for this application. Because no behavioural baseline exists, the acceptance criteria in this SRS ARE the specification rather than a restatement of one, so a test suite derived from them is the only mechanism by which the modernized system's correctness can be judged against anything at all. NOTE the deliberate absence of a coverage percentage target: the quality-risk artefact explicitly forbids reading its coverage gap subscore as a measured percentage, so prescribing a numeric coverage threshold here would launder a scoring assumption into a requirement. Criterion coverage is prescribed instead, which is both stronger and honestly traceable.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-015",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-011",
+      "description": "The system MUST build and run from a clean clone of its repository with no manual intervention beyond supplying documented configuration values, and MUST NOT require any artefact absent from source control.",
+      "acceptance_criteria": [
+        {"criterion": "Clean clone builds", "given": "A fresh clone on a machine with only the documented toolchain installed", "when": "The documented build command is run", "then": "The build succeeds with no missing-file error and no manual step"},
+        {"criterion": "Clean clone runs", "given": "The build output and the documented configuration values", "when": "The application is started", "then": "It connects to its configured datastore and renders its first surface successfully"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The clean-clone build is broken: a signing certificate referenced by the project is excluded by .gitignore, the solution maps Debug to Release, and the platform is pinned to x86. Separately, the database committed to the repository is not the one the application opens, because the connection string hardcodes an absolute path on the author's D: drive, so a clean clone cannot connect to its own bundled database without a source change. The configuration mechanism exists as a generated accessor over an empty settings store and is entirely unused.",
+      "traces_to": {"discovery_finding": "coupling_indicators.broken-clean-clone-build", "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj", "source_line": 35, "corroborating": ["BR-002", "CS-21", "coupling_signals.empty-settings-store", "structural-analysis.open_questions[THE BUILD DOES NOT RECONSTRUCT FROM A CLEAN CLONE]"], "discovery_artifact": "structural-analysis"},
+      "proposed_anomaly": "ANOM-006",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-016",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-009",
+      "description": "The modernized system SHOULD reduce its measured technical-debt indicators against the recorded legacy baseline: code-smell density SHOULD fall below 10 findings per thousand lines of hand-written code, and no module SHOULD carry a high debt band at release.",
+      "acceptance_criteria": [
+        {"criterion": "Smell density target", "given": "The modernized codebase at release", "when": "The same manual smell inventory method used for the baseline is applied, or an equivalent static-analysis tool is run", "then": "Density is below 10 findings per thousand hand-written lines, against a legacy baseline of 21 findings across 461 lines, approximately 45 per thousand"},
+        {"criterion": "No high-debt module", "given": "The per-module debt assessment at release", "when": "Each module is banded", "then": "No module is banded high, against a legacy baseline of three high and one medium-high of six modules"}
+      ],
+      "measurement_basis": "derived — both the baseline figures and the method are taken from the quality-risk assessment; the target thresholds are prescribed",
+      "observed_baseline": "Technical debt score 74 of 100, band high. Smell density 21 findings across 461 hand-written lines, approximately 45 per thousand, subscore 85 of 100. Per-module bands: module1-db-connection high, view-form high, form1-dashboard high, insert-form medium-high, edit-form medium, my-project-infrastructure low. The method was a reproducible manual count by full-file read, not a tool score, at medium confidence; no linter or static-analysis tool was invoked.",
+      "traces_to": {"discovery_finding": "quality-risk.technical_debt_score", "source_file": "Flat Design/Form1.vb", "source_line": 1, "corroborating": ["CS-01 through CS-21", "quality-risk.technical_debt_score.per_module"], "discovery_artifact": "quality-risk"},
+      "anomaly_resolution": "OPTIMIZE",
+      "anomaly_details": "The target thresholds are prescribed, but unusually for this document the baseline is genuinely measured, so progress against it is verifiable. The one caveat to carry forward is that the baseline method was manual rather than tool-based, so a tool-measured follow-up will not be numerically comparable unless the same manual method is repeated alongside it.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-020",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "No SQL or other query text may be assembled by concatenating or interpolating any value that originated outside the application. All data access MUST use parameterized statements with bound parameters, verified by an automated check that fails the build on any dynamically concatenated query.",
+      "acceptance_criteria": [
+        {"criterion": "Zero concatenated queries", "given": "The delivered codebase", "when": "An automated check scans for query text assembled by concatenation or interpolation", "then": "It finds none, against a legacy baseline of 6 unparameterized statements of 16, one of which interpolates raw user keystrokes"},
+        {"criterion": "Injection attempt is inert", "given": "An authenticated principal on the search surface", "when": "They submit a term containing a quote character followed by a disjunctive predicate", "then": "The term is matched literally, no additional records are returned, and no error occurs"},
+        {"criterion": "Build gate", "given": "A change introducing a concatenated query", "when": "It is submitted", "then": "The pipeline fails"}
+      ],
+      "measurement_basis": "derived — the baseline counts are measured facts from the structural assessment",
+      "observed_baseline": "16 inline SQL statements across 4 of 6 modules, of which 6 are built by string concatenation and 1 interpolates raw user input, constituting a live injection point against the whole dataset. The 5 dashboard concatenations are not currently injectable because the interpolated value is an integer. The engine does not support stacked statements, which bounds the exposure to unauthorized read rather than removing it.",
+      "traces_to": {"discovery_finding": "BR-052", "source_file": "Flat Design/ViewForm.vb", "source_line": 50, "corroborating": ["BR-074", "CS-18", "CS-04", "coupling_indicators.unsafe-sql-construction", "summary_metrics.unparameterized_sql_statements=6", "ESC-1"], "discovery_artifact": "business-rules + structural-analysis"},
+      "proposed_anomaly": "ANOM-001",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-021",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-006",
+      "description": "Every authorization decision MUST be enforced on the server side of the trust boundary. The system MUST NOT rely on the client hiding, disabling or omitting a control as an access control.",
+      "acceptance_criteria": [
+        {"criterion": "Server-side enforcement", "given": "A principal not authorized for an operation", "when": "They invoke it directly, bypassing the client surface", "then": "The operation is denied by the service and the denial is audited"},
+        {"criterion": "Client state is not a control", "given": "The delivered client", "when": "Its authorization logic is traced", "then": "No operation's authorization depends solely on a control's enabled, visible or read-only state"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The closest thing to an authorization control in the legacy system is the grid row-selection test, described in BR-055 as 'the closest thing the application has to an authorization check'. Roll-number immutability is enforced by a read-only text box property which, as BR-031 notes, leaves the control tab-reachable and its value still posting.",
+      "traces_to": {"discovery_finding": "BR-055", "source_file": "Flat Design/ViewForm.vb", "source_line": 61, "corroborating": ["BR-090", "BR-031", "identity-landscape.assurance_gaps[no-step-up]"], "discovery_artifact": "business-rules"},
+      "proposed_anomaly": "ANOM-002",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-022",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-011",
+      "description": "The system MUST NOT store, commit or distribute production personal data inside its source repository, build artefacts or deployment package. Non-production environments MUST be seeded only with synthetic or de-identified data.",
+      "acceptance_criteria": [
+        {"criterion": "No personal data in the repository", "given": "The repository and the build output", "when": "They are scanned for personal data", "then": "None is present, and an automated check in the pipeline fails any change that would add a datastore file or data export"},
+        {"criterion": "Synthetic seed data only", "given": "Any non-production environment", "when": "Its data is inspected", "then": "No record corresponds to a real individual"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "An 802,816-byte datastore holding live personal data for named individuals is committed to a public repository, together with a stale lock file recording the capture machine and user. ESC-1 is an open, critical, stakeholder-required escalation describing this as 'an active, ongoing public exposure of real PII (not a latent or hypothetical risk) layered with a working injection vector and no access control of any kind'.",
+      "traces_to": {"discovery_finding": "ESC-1", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["coupling_indicators.unprotected-pii-in-source-control", "ET-1", "quality-risk.regulatory_surface_flags"], "discovery_artifact": "escalation-record + quality-risk"},
+      "proposed_anomaly": "ANOM-004",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "This requirement prescribes the forward control only. Remediating the existing exposure — purging the file from history, restricting repository visibility, or recording an accepted-risk disposition — is an action owned outside this SRS and is carried in the srs.json open questions as ESC-1 remains open."
+    },
+    {
+      "id": "NFR-023",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-011",
+      "description": "All environment-specific values MUST be supplied by external configuration resolved at startup. No absolute filesystem path, endpoint address, credential or external URL may appear in source or in a compiled artefact.",
+      "acceptance_criteria": [
+        {"criterion": "No hardcoded environment binding", "given": "The delivered source and build output", "when": "They are scanned", "then": "No absolute filesystem path, no credential and no external host address is present, against a legacy baseline of 2 hardcoded absolute paths and 1 hardcoded external URL"},
+        {"criterion": "Same artefact across environments", "given": "One build artefact", "when": "It is deployed to two environments with different configuration", "then": "It operates correctly in both with no rebuild"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "2 hardcoded absolute filesystem paths, 1 hardcoded external GitHub URL, 1 connection string in the whole repository, 4 config files of which 0 bind the database, and a publish location pinned to the author's D: drive. The connection string embeds the original developer's absolute workstation path with no configuration entry, no relative path and no environment override.",
+      "traces_to": {"discovery_finding": "BR-002", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["IM-034", "BR-080", "CS-21", "coupling_indicators.hardcoded-environment-binding", "summary_metrics.hardcoded_absolute_filesystem_paths=2", "summary_metrics.config_files_binding_the_database=0"], "discovery_artifact": "business-rules + structural-analysis"},
+      "proposed_anomaly": "ANOM-006",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-024",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-011",
+      "description": "Startup MUST validate that every required configuration value is present and resolvable, and MUST fail with a specific diagnostic naming the missing or unresolvable setting rather than surfacing a provider-level error or terminating without explanation.",
+      "acceptance_criteria": [
+        {"criterion": "Named diagnostic on missing configuration", "given": "A deployment with one required setting absent", "when": "The application starts", "then": "It exits with a message naming that setting and the expected form of its value, and writes a structured log entry; it does not display a provider error message"},
+        {"criterion": "Unreachable datastore is reported as such", "given": "A configured datastore that cannot be reached", "when": "The application starts", "then": "It reports that the datastore is unreachable, distinguishably from a missing configuration value, and does not crash"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "On any machine other than the author's, the application fails at startup with a raw provider 'could not find file' exception. The statistics loader has no exception handling and runs from the load handler, so a missing datastore, an uninstalled provider or a 64-bit process all crash the application on launch before any window is usable.",
+      "traces_to": {"discovery_finding": "BR-002", "source_file": "Flat Design/Module1.vb", "source_line": 7, "corroborating": ["BR-001", "BR-076", "IM-029"], "discovery_artifact": "business-rules"},
+      "proposed_anomaly": "ANOM-006",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-025",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-007",
+      "description": "Every personal-data attribute MUST carry a declared retention period, and the system MUST enforce it by making records eligible for audited purge once the period has elapsed. Retention periods MUST be configurable and MUST NOT be compiled into the application.",
+      "acceptance_criteria": [
+        {"criterion": "Retention is declared and enforced", "given": "An archived record whose configured retention period has elapsed", "when": "The retention process runs", "then": "The record is identified as eligible for purge, and purging it writes an audit entry that survives the purge"},
+        {"criterion": "Retention not yet elapsed", "given": "An archived record within its retention period", "when": "The retention process runs", "then": "The record is not purged and remains retrievable by an authorized principal"}
+      ],
+      "measurement_basis": "prescribed-target — the periods themselves are a legal determination Discovery explicitly refers elsewhere",
+      "observed_baseline": "All five traced data flows record retention as indefinite with no archival or purge logic anywhere in the application. BV-06 rates the absence high. There is no archival, no purge, no soft-delete, no tombstone and no retention logic of any kind.",
+      "traces_to": {"discovery_finding": "BV-06", "source_file": "Flat Design/ViewForm.vb", "source_line": 90, "corroborating": ["BR-057", "BR-095", "DF-SMS cross_flow_findings[4]", "data-domains.open_questions[retention and erasure obligation]"], "discovery_artifact": "data-domains + data-flow-trace"},
+      "proposed_anomaly": "ANOM-009",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The retention period cannot be derived from Discovery. The data-domain assessment raises 'Does any retention, auditability or erasure obligation apply to this student data?' as an open question owned by a data-protection reviewer, and the governing profile's compliance configuration was not readable from this workspace, so no profile-supplied period was available either. The requirement prescribes the mechanism and defers the value.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-026",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-007",
+      "description": "Audit entries MUST be append-only and tamper-evident: no application path and no principal may update or delete an entry, and the audit store MUST be able to demonstrate that no entry has been altered.",
+      "acceptance_criteria": [
+        {"criterion": "Append-only", "given": "An existing audit entry", "when": "Any application path or principal attempts to modify or delete it", "then": "The attempt fails and is itself audited"},
+        {"criterion": "Tamper evidence", "given": "The audit store", "when": "An entry is altered out of band", "then": "The alteration is detectable by the store's integrity check"},
+        {"criterion": "Survives subject purge", "given": "A purged student record", "when": "The audit store is queried for that record's identifier", "then": "Its audit history is still present and complete"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "No audit record of any kind is written anywhere, and no log file, event record or history table is produced. BR-095 states that no create, update or delete in the legacy system is attributable or reconstructible after the fact.",
+      "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["BR-057", "BR-090", "DF-SMS cross_flow_findings[3]"], "discovery_artifact": "business-rules + data-flow-trace"},
+      "proposed_anomaly": "ANOM-022",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-027",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-007",
+      "description": "The system MUST securely destroy personal data on purge such that it is not recoverable from the storage medium, and MUST securely destroy the legacy datastore file rather than merely superseding it at migration.",
+      "acceptance_criteria": [
+        {"criterion": "Purged data is unrecoverable", "given": "A purged record", "when": "The underlying storage is examined with forensic tooling", "then": "No field value of the purged record is recoverable"},
+        {"criterion": "Legacy file destroyed", "given": "A completed migration", "when": "The decommissioning record is inspected", "then": "It records the secure destruction of the legacy datastore file and of every copy, including repository history"}
+      ],
+      "measurement_basis": "derived — the remanence is a measured forensic finding",
+      "observed_baseline": "Deletion is physical but not secure. Pass-1 forensics recovered 6 previously deleted rows intact from page slack on a data page carrying 29 row slots for 2 live rows, with all 10 field values of each readable including names, two telephone numbers, gender and date of birth, and the primary-key index leaf retaining 4 entries with 2 stale pointers into slack. db-archaeology notes the recoverable rows are keyboard-mash test data, so 'there is no live personal data at risk today; the finding is the mechanism'.",
+      "traces_to": {"discovery_finding": "db-archaeology[orphan-object: deleted records recoverable from page slack]", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["BR-057", "data-domains.review_asks[deleted-student-records-remain-recoverable]", "BV-06"], "discovery_artifact": "db-archaeology + data-domains"},
+      "proposed_anomaly": "ANOM-058",
+      "anomaly_resolution": "FIX",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-030",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-009",
+      "description": "Every failure MUST be recorded in a durable, structured log carrying a correlation identifier, the operation, the authenticated principal and the failure class. The log MUST NOT contain personal data, and the correlation identifier MUST be cited in the message shown to the principal.",
+      "acceptance_criteria": [
+        {"criterion": "Failure is durably recorded", "given": "Any failed operation", "when": "The principal dismisses the error message", "then": "A structured log entry for that failure persists, retrievable by the correlation identifier shown to the principal"},
+        {"criterion": "No personal data in logs", "given": "The log output of a full operation suite exercising every field", "when": "It is scanned for personal data", "then": "No name, telephone number, date of birth or roll number value appears"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "There is no logging, no telemetry, no error code and no retry. BR-022 records that 'no record of the failure survives the dismissal of the message box'. The structured absence is total: the ux assessment records instrumentation_present = false and no telemetry source anywhere.",
+      "traces_to": {"discovery_finding": "BR-022", "source_file": "Flat Design/InsertForm.vb", "source_line": 31, "corroborating": ["IM-029", "ux-accessibility.instrumentation_present=false", "CS-09", "CS-12"], "discovery_artifact": "business-rules + ux-accessibility"},
+      "proposed_anomaly": "ANOM-023",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-031",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-009",
+      "description": "The system SHOULD emit operational telemetry sufficient to measure its own usage and performance, including operation counts, latencies, failure rates and active principal counts, so that the non-functional targets in this document can be verified rather than assumed.",
+      "acceptance_criteria": [
+        {"criterion": "Targets are measurable from telemetry", "given": "The deployed system under normal use", "when": "The latency and availability targets in NFR-010, NFR-011 and NFR-012 are evaluated", "then": "Each can be computed from emitted telemetry without additional instrumentation work"},
+        {"criterion": "Usage is measurable", "given": "A reporting period", "when": "Usage is queried", "then": "Active principal count and per-operation frequency are available, resolving the instrumentation gap recorded in the legacy baseline"}
+      ],
+      "measurement_basis": "derived from a measured absence",
+      "observed_baseline": "No telemetry source exists anywhere in the source tree, the onboarding package or a CMDB export, so no measurement window could be established. Active user count, feature usage frequency and session duration distribution are all recorded as 'unmeasured, instrumentation gap', and the assessment insists this means 'no instrumentation present', not 'no usage observed'. The persona headcount is unknown and could plausibly range from one to a small back-office team, which the assessment states is explicitly not a measurement.",
+      "traces_to": {"discovery_finding": "ux-accessibility.adoption_metrics", "source_file": "Flat Design/Form1.vb", "source_line": 1, "corroborating": ["ux-accessibility.instrumentation_present=false", "ux-accessibility.measurement_window"], "discovery_artifact": "ux-accessibility"},
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "This requirement exists because of a structural problem with this SRS's own non-functional section: several targets are prescribed rather than derived precisely because nothing was ever measured. Telemetry is the mechanism that converts them from assertions into verifiable commitments on the next cycle."
+    },
+    {
+      "id": "NFR-032",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system MUST be built with strict static type checking enabled, MUST reject implicit narrowing conversions, and MUST NOT rely on late binding for data access or reference-value handling. The build MUST fail on a type-checking diagnostic rather than deferring it to runtime.",
+      "acceptance_criteria": [
+        {"criterion": "Strict typing enforced by the build", "given": "The build configuration", "when": "It is inspected", "then": "Strict type checking is enabled for all hand-written code, not only for generated code, and diagnostics are errors rather than warnings"},
+        {"criterion": "No late-bound data access", "given": "The delivered data access and reference-value handling", "when": "They are traced", "then": "No member access is resolved at runtime by name, and every conversion between a presentation value and a stored value is explicit with declared failure behaviour"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The project compiles with Option Strict Off, Option Infer On, Option Explicit On. BR-091 records this as the enabling precondition for at least five distinct runtime-only failure modes across four modules, and notes that the Designer-generated files set Option Strict On locally so the weak setting applies only to code a human wrote. The structural assessment adds that with the setting off 'the entire column contract is resolved at runtime'.",
+      "traces_to": {"discovery_finding": "BR-091", "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj", "source_line": 51, "corroborating": ["IM-016", "coupling_indicators.optionstrict-off-late-binding", "BR-011", "BR-016", "BR-017", "BR-033", "BR-034"], "discovery_artifact": "business-rules + structural-analysis"},
+      "proposed_anomaly": "ANOM-029",
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "anomaly_details": "BR-091 states that turning strict typing on 'would surface these defects as compile errors, which is the recommended first step of any port', which is why this is prescribed as a constraint rather than a preference: it is the enforcement mechanism for ANOM-012, ANOM-013 and ANOM-028 rather than a style choice."
+    },
+    {
+      "id": "NFR-033",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-008",
+      "description": "Where a surface may display data mutated by another principal, the system SHOULD either subscribe to change notification or state an explicit maximum staleness, and SHOULD display the as-of instant of the data shown.",
+      "acceptance_criteria": [
+        {"criterion": "Staleness is bounded and visible", "given": "A surface displaying student data or statistics", "when": "Another principal commits a change", "then": "The surface either reflects the change or indicates an as-of instant from which the principal can tell the data is not current"},
+        {"criterion": "No indefinitely stale surface", "given": "A surface left open with no interaction", "when": "The configured maximum staleness elapses", "then": "The surface refreshes or marks itself stale; it does not display an unbounded-age figure as current"}
+      ],
+      "measurement_basis": "prescribed-target for the staleness bound; derived for the as-of display",
+      "observed_baseline": "There is no timer, no auto-refresh and no change notification, so an idle dashboard is indefinitely stale and, with two instances running, neither sees the other's changes until it navigates. Statistics refresh on four of five triggers, omitting delete, so the dashboard overstates the population after a deletion until the next navigation — which itself then crashes because the delete closed the shared connection.",
+      "traces_to": {"discovery_finding": "BR-077", "source_file": "Flat Design/Form1.vb", "source_line": 133, "corroborating": ["BR-058", "BR-094", "IM-020", "BR-004"], "discovery_artifact": "business-rules"},
+      "proposed_anomaly": "ANOM-032",
+      "anomaly_resolution": "CONSOLIDATE",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-034",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The mapping from each entity attribute to its stored column MUST be declared in exactly one place per entity, and an automated test MUST assert that each attribute reaches its intended column.",
+      "acceptance_criteria": [
+        {"criterion": "Single mapping declaration", "given": "The delivered codebase", "when": "Attribute-to-column mappings are located", "then": "Exactly one declaration exists per entity, against a legacy baseline in which the field-to-parameter mapping is duplicated between the create and amend paths"},
+        {"criterion": "Round-trip test per attribute", "given": "A record with a distinct recognisable value in every attribute", "when": "It is persisted and re-read", "then": "Every value returns in its own attribute, and the test fails if any two same-typed attributes are transposed"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "Parameters bind positionally because the provider treats named placeholders as anonymous; the four parameterized statements work only because their binding order happens to match their placeholder order. First and last name, and the two telephone numbers, are same-typed adjacent pairs, so a transposition between them would corrupt data with no exception at all. The mapping itself is duplicated between the create and amend paths.",
+      "traces_to": {"discovery_finding": "BR-018", "source_file": "Flat Design/InsertForm.vb", "source_line": 11, "corroborating": ["IM-015", "CS-06", "CS-11", "coupling_indicators.insert-edit-near-duplication"], "discovery_artifact": "business-rules + quality-risk"},
+      "proposed_anomaly": "ANOM-033",
+      "anomaly_resolution": "MAKE_EXPLICIT"
+    },
+    {
+      "id": "NFR-035",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "All datastore access MUST be encapsulated behind a data-access layer called through a declared interface. No presentation component may construct, parameterize or execute a datastore statement, and business rules MUST reside in a service layer callable and testable without instantiating any presentation surface.",
+      "acceptance_criteria": [
+        {"criterion": "No SQL in presentation code", "given": "The delivered codebase", "when": "Presentation components are scanned for query text or datastore API calls", "then": "None is found, against a legacy baseline of 16 inline statements across 4 of 6 modules"},
+        {"criterion": "Rules testable without UI", "given": "The service layer", "when": "Its tests are run", "then": "Every business rule is exercised without constructing a presentation surface"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "Architecture style recorded as a 'single-assembly thick-client forms-over-data monolith, with no layering inside the assembly'. 16 SQL statements live inline in UI event handlers across 4 of 6 modules with no service layer, repository, data-access layer, ORM or stored procedure anywhere; the only shared component is a 13-line module holding one public mutable connection. The dashboard's aggregation logic lives in the presentation layer.",
+      "traces_to": {"discovery_finding": "coupling_indicators.ui-owns-all-sql", "source_file": "Flat Design/Module1.vb", "source_line": 1, "corroborating": ["BR-001", "coupling_signals.no-data-access-abstraction", "coupling_signals.presentation-owns-aggregation-logic", "recommended_decomposition_boundaries.student-record-crud-service"], "discovery_artifact": "structural-analysis"},
+      "proposed_anomaly": "ANOM-041",
+      "anomaly_resolution": "CONSOLIDATE",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-036",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-005",
+      "description": "The system MUST have no circular dependency between its modules, and no module may mutate another module's internal state or control structure.",
+      "acceptance_criteria": [
+        {"criterion": "No dependency cycle", "given": "The module dependency graph of the delivered system", "when": "It is analysed", "then": "It is acyclic, against a legacy baseline of 3 cycles all rated high severity"},
+        {"criterion": "No cross-module state mutation", "given": "The delivered codebase", "when": "Cross-module interactions are traced", "then": "No module writes to another's internal state, closes a resource it did not open, or modifies another surface's control structure"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "3 circular module dependency cycles, all high severity: dashboard-to-insert, dashboard-to-view, and dashboard-to-view-to-edit, with the dashboard owning two of the three. 1 shared global mutable state object with the highest fan-in of any code node and zero SQL of its own, which the call graph describes as 'a shared mutable resource, not a service: the convergence here is state-sharing, not delegation'. One module unilaterally closes the shared connection another owns, and one module reaches into the dashboard's control tree to reparent a third.",
+      "traces_to": {"discovery_finding": "coupling_indicators.circular-form-dependencies", "source_file": "Flat Design/Form1.vb", "source_line": 104, "corroborating": ["coupling_indicators.shared-global-connection", "BR-004", "BR-063", "call-graph.cycles", "summary_metrics.circular_module_dependency_cycles=3"], "discovery_artifact": "structural-analysis + call-graph"},
+      "proposed_anomaly": "ANOM-037",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-037",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-005",
+      "description": "Naming SHOULD follow one documented convention applied consistently across the data model, the data-access layer, the service layer and the user interface, and every element identifier SHOULD denote its purpose and its actual type.",
+      "acceptance_criteria": [
+        {"criterion": "One convention, consistently applied", "given": "The delivered system", "when": "Attribute and element names are compared across layers", "then": "Each concept has one name in all layers, and the legacy-to-prescribed mapping recorded in srs-data-model.json resolves every renamed attribute"},
+        {"criterion": "Identifiers denote purpose and type", "given": "The delivered codebase", "when": "Element identifiers are inspected", "then": "None is auto-generated or sequentially numbered, and none implies a type it does not have"},
+        {"criterion": "No authorship or development residue in user-visible text", "given": "Every user-visible string", "when": "It is reviewed", "then": "It is correctly spelled and contains no author name, cohort label or placeholder comment"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The database declares PascalCase column names while every SQL statement and reader lookup uses lowercase, which breaks at runtime rather than at build time on a case-sensitive engine. Three vocabularies describe two concepts: the dashboard reads 'Degree Wise' while the column is course, and the admission-year field is labelled 'Session' while the column is yoa. Element names are overwhelmingly auto-generated with one reused across three surfaces, and the ten statistics labels carry txt prefixes implying text boxes while they are labels. The dashboard title is misspelled and a second label hardcodes the original author's name and cohort.",
+      "traces_to": {"discovery_finding": "BR-061", "source_file": "Flat Design/ViewForm.vb", "source_line": 62, "corroborating": ["IM-033", "IM-022", "IM-034", "A11Y-009", "RISK-05", "BR-081"], "discovery_artifact": "business-rules + implicit-logic + accessibility-audit"},
+      "proposed_anomaly": "ANOM-042",
+      "anomaly_resolution": "RENAME"
+    },
+    {
+      "id": "NFR-040",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-010",
+      "description": "The system MUST conform to WCAG 2.1 Level AA on every user-facing surface and MUST satisfy Section 508 as implemented by 36 CFR 1194.1. Conformance MUST be demonstrated by an automated scan appropriate to the delivered platform, a manual pass with at least two screen readers against a compiled build, and measured contrast ratios for every foreground and background pair.",
+      "acceptance_criteria": [
+        {"criterion": "No Level A or AA violation", "given": "Every delivered surface", "when": "An automated accessibility scan runs in the pipeline", "then": "No Level A or Level AA violation is reported, and the build fails if one is"},
+        {"criterion": "Assistive technology pass", "given": "A compiled build", "when": "Every operation is performed using each of at least two screen readers with no sighted assistance", "then": "Every operation completes, and every control is identified and operable"},
+        {"criterion": "Contrast is measured, not judged", "given": "Every foreground and background colour pair", "when": "Its ratio is measured with a contrast tool", "then": "Each meets or exceeds the Level AA minimum, and the measured ratio is recorded"},
+        {"criterion": "Conformance is reported as a number", "given": "The release assessment", "when": "Conformance is reported", "then": "A measured percentage is stated; a null figure is not accepted"}
+      ],
+      "measurement_basis": "derived for the standard and the baseline verdict; the conformance target is taken verbatim from the Discovery assessment",
+      "observed_baseline": "Gate decision FAIL, Section 508 compliance fail, 9 total violations: 1 critical, 2 serious, 4 moderate, 2 minor. Accessibility score and conformance percentage were both deliberately returned as null rather than estimated, because no automated or rendered measurement was possible. 137 controls across 4 surfaces carry 0 accessible-name annotations.",
+      "traces_to": {"discovery_finding": "ux-accessibility.gate_decision", "source_file": "Flat Design/Form1.Designer.vb", "source_line": 173, "corroborating": ["A11Y-001 through A11Y-009", "CS-05", "coupling_indicators.accessibility-surface-unannotated", "summary_metrics.accessible_name_annotations=0"], "discovery_artifact": "ux-accessibility + accessibility-audit"},
+      "proposed_anomaly": "ANOM-055",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "TWO LIMITS ON THIS REQUIREMENT, both carried from the source assessments rather than introduced here. First, the conformance target was resolved from the ux-accessibility artefact and NOT from the client profile's compliance configuration, which is absent from this workspace — so if the profile mandates a higher level or an agency overlay, this requirement understates it. Second, the baseline is explicitly 'a floor, not a ceiling': no automated tooling ran at all, zero per cent of findings came from tools against a normal expectation that tools catch only thirty to forty per cent of issues, and no screen reader was ever used. The modernized system must therefore be assessed against the full Level AA criterion set rather than only against the nine recorded findings. Success criterion 1.1.1 in particular was never assessed.",
+      "sme_confirmation_required": true
+    },
+    {
+      "id": "NFR-041",
+      "type": "non-functional",
+      "priority": "must",
+      "module_hint": "MOD-010",
+      "description": "Every foreground and background colour pair MUST be an explicitly chosen fixed value and MUST NOT be inherited from an operating-system theme. The system MUST additionally be verified under high-contrast mode.",
+      "acceptance_criteria": [
+        {"criterion": "No theme-dependent colour", "given": "The delivered surfaces", "when": "Their colour declarations are inspected", "then": "No foreground or background colour is drawn from a system theme colour"},
+        {"criterion": "High-contrast mode verified", "given": "The system running with high-contrast mode enabled", "when": "Every surface is reviewed", "then": "All text and controls remain legible and all contrast ratios still meet Level AA"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The Male Students tile and the record grid background use a theme-dependent system colour rather than a fixed value, so contrast against hardcoded black text is not fixed or verifiable at design time and could fail Level AA under a different theme, accent colour or high-contrast mode. No ratio was measured anywhere, including for the pastel pairs the audit judged likely to pass. High-contrast and theme interactions are named among the things the assessment method could not detect.",
+      "traces_to": {"discovery_finding": "A11Y-006", "source_file": "Flat Design/Form1.Designer.vb", "source_line": 960, "corroborating": ["Flat Design/ViewForm.Designer.vb:89", "ux-accessibility.manual_review_required[2]"], "discovery_artifact": "accessibility-audit"},
+      "proposed_anomaly": "ANOM-056",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-042",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-010",
+      "description": "The system SHOULD provide user-facing help and task guidance covering every operation it offers, and SHOULD surface field-level guidance on the entry surfaces.",
+      "acceptance_criteria": [
+        {"criterion": "Every operation is documented", "given": "The operation set in srs-requirements-functional.json", "when": "Help content is mapped against it", "then": "Each operation has guidance reachable from the surface on which it is performed"},
+        {"criterion": "Field guidance is present", "given": "Each input on the create and amend surfaces", "when": "The surface is used", "then": "Its expected format, length and mandatory status are discoverable before submission, satisfying the same need as REQ-106"}
+      ],
+      "measurement_basis": "derived from a measured absence",
+      "observed_baseline": "The ux assessment records training materials found as 'none — no help pages, in-app help/tooltip text, user guide, onboarding wizard, or LMS reference exists anywhere', and completion rate as unmeasured owing to the instrumentation gap. The one document the application does reference is the author's project report, reached by a hardcoded external URL, which implements no help function and which this SRS omits under ANOM-053.",
+      "traces_to": {"discovery_finding": "ux-accessibility.training_materials_found", "source_file": "Flat Design/Form1.vb", "source_line": 156, "corroborating": ["BR-080", "A11Y-007", "IM-034"], "discovery_artifact": "ux-accessibility"},
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Priority is should rather than must because Discovery evidences the absence of help material but no stakeholder requirement for it; the field-level clause is nonetheless must-strength by virtue of REQ-106, which derives it from accessibility finding A11Y-007."
+    },
+    {
+      "id": "NFR-050",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-008",
+      "description": "The system MUST provide a supported means of exiting that does not depend on a single control, MUST release every resource it holds on exit, and MUST warn before discarding unsaved input.",
+      "acceptance_criteria": [
+        {"criterion": "Standard close affordance present", "given": "Any surface", "when": "The principal uses the platform's standard close affordance", "then": "The application closes orderly; exit does not depend on one bespoke control"},
+        {"criterion": "Orderly resource release", "given": "A running instance holding datastore and session resources", "when": "It exits by any supported route", "then": "Every connection, lock and session is released explicitly rather than by process termination"},
+        {"criterion": "Unsaved input warned", "given": "An entry surface with unsaved input", "when": "The principal attempts to exit", "then": "They are warned and may cancel"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The dashboard sets its control box to false, removing the window's close, minimise and maximise chrome, so a single Exit button is the only supported way to terminate. Neither that path nor the alternative prompts about unsaved data in a hosted entry form, and neither closes the shared connection — the connection and the datastore lock file are released only by process termination. BR-079 notes that if the Exit handler were removed the application would have no closure affordance at all.",
+      "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96, "corroborating": ["IM-034", "BR-001", "BR-078", "CS-20"], "discovery_artifact": "business-rules"},
+      "proposed_anomaly": "ANOM-027",
+      "anomaly_resolution": "FIX"
+    },
+    {
+      "id": "NFR-051",
+      "type": "non-functional",
+      "priority": "should",
+      "module_hint": "MOD-008",
+      "description": "Surfaces SHOULD adapt to the available display area and SHOULD NOT depend on a fixed window size or absolute control positioning.",
+      "acceptance_criteria": [
+        {"criterion": "Adapts to display area", "given": "A display smaller and a display larger than the design size", "when": "Each surface is rendered", "then": "All content is reachable with no clipping and no element positioned outside its container"},
+        {"criterion": "No geometry-hidden elements", "given": "Any surface at any size", "when": "Its element tree is inspected", "then": "No element is hidden by being positioned outside its parent's bounds"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "A fixed, non-resizable 1604 by 798 client area with absolutely positioned tiles. Two duplicate statistics tiles are hidden by being pushed outside their parent's bounds at coordinates of minus 373 and plus 373 within a 343-pixel-wide parent, rather than by being hidden or deleted, so any change to the parent's size or a move to a layout container would expose two tiles structurally incapable of being correct.",
+      "traces_to": {"discovery_finding": "BR-081", "source_file": "Flat Design/Form1.Designer.vb", "source_line": 534, "corroborating": ["IM-032", "IM-034", "A11Y-005", "Flat Design/Form1.Designer.vb:1072-1078"], "discovery_artifact": "business-rules + accessibility-audit"},
+      "proposed_anomaly": "ANOM-049",
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The second criterion is what makes the ANOM-049 omission safe: those tiles must be removed rather than hidden, and this requirement forbids the geometry trick that currently conceals them."
+    },
+    {
+      "id": "NFR-052",
+      "type": "constraint",
+      "priority": "must",
+      "module_hint": "MOD-003",
+      "description": "Every reported figure MUST state the as-of instant at which it was computed and the population scope it covers, and MUST NOT present a derived temporal classification computed from any value other than an injectable time source.",
+      "acceptance_criteria": [
+        {"criterion": "As-of and scope stated", "given": "Any reported statistic", "when": "It is displayed or exported", "then": "It carries the instant it was computed and a statement of which record states are included"},
+        {"criterion": "Time source is injectable", "given": "The statistics computation", "when": "A test substitutes a fixed time source", "then": "All derived temporal classifications change accordingly, proving no compiled temporal constant remains"}
+      ],
+      "measurement_basis": "derived",
+      "observed_baseline": "The dashboard derives all five cohort buckets from a compiled constant of 2023 and never reads the system clock, so it has been wrong since 1 January 2024 and, as of the Discovery date, mislabels every cohort by three years. Changing the workstation clock has no effect. No statistic states an as-of instant, and none states its population scope, which BR-075 shows is in fact whole-table and all-time.",
+      "traces_to": {"discovery_finding": "BR-072", "source_file": "Flat Design/Form1.vb", "source_line": 59, "corroborating": ["BR-075", "IM-001", "CS-03", "coupling_signals.hardcoded-temporal-baseline"], "discovery_artifact": "business-rules + implicit-logic"},
+      "proposed_anomaly": "ANOM-019",
+      "anomaly_resolution": "FIX",
+      "sme_confirmation_required": true
+    }
+  ],
+  "totals": {
+    "total": 34,
+    "by_type": {
+      "non-functional": 25,
+      "constraint": 9,
+      "functional": 0
+    },
+    "by_priority": {
+      "must": 26,
+      "should": 8,
+      "could": 0
+    },
+    "by_module": {
+      "MOD-001": 0,
+      "MOD-002": 1,
+      "MOD-003": 2,
+      "MOD-004": 0,
+      "MOD-005": 10,
+      "MOD-006": 4,
+      "MOD-007": 3,
+      "MOD-008": 3,
+      "MOD-009": 4,
+      "MOD-010": 3,
+      "MOD-011": 4,
+      "module_note": "MOD-001 and MOD-004 carry no non-functional requirements of their own; their quality attributes are inherited from the MOD-005 persistence and MOD-006 identity requirements that govern all student-data access."
+    },
+    "by_measurement_basis": {
+      "derived": 27,
+      "prescribed-target": 4,
+      "mixed": 3,
+      "basis_note": "prescribed-target are NFR-005, NFR-010, NFR-012 and NFR-025 — the four whose central value is a new engineering or policy target with no observed baseline. mixed are NFR-011, NFR-016 and NFR-033, each of which derives part of its content from a measured fact and prescribes a threshold on top of it. The remaining 27 derive wholly from a measured Discovery finding, including the several that derive from a measured ABSENCE such as a count of zero."
+    },
+    "sme_confirmation_required_count": 15,
+    "sme_confirmation_required": ["NFR-001", "NFR-002", "NFR-004", "NFR-005", "NFR-010", "NFR-011", "NFR-012", "NFR-014", "NFR-016", "NFR-025", "NFR-027", "NFR-033", "NFR-035", "NFR-040", "NFR-052"],
+    "requirements_with_no_observed_baseline": ["NFR-005", "NFR-010", "NFR-011", "NFR-012", "NFR-025", "NFR-033"],
+    "requirements_with_no_observed_baseline_note": "These six carry a numeric or policy value that Discovery never measured and could not have measured — there is no telemetry, no recovery objective, no SLA document and no stated retention obligation anywhere in the artefact set. Each is flagged sme_confirmation_required and each appears in the srs.json open questions. They are stated rather than omitted because a modernized system needs a target to build against, but they must not be read as observed legacy behaviour."
+  }
+}

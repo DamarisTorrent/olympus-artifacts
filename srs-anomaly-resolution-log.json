@@ -1,0 +1,1121 @@
+{
+  "$schema": "olympus:artifact:srs-anomaly-resolution-log:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "Every legacy anomaly this SRS ruled on, the action taken, and whether a subject matter expert must confirm it. Sources are the Discovery business-rule catalogue (BR-NNN), the implicit-logic catalogue (IM-NNN), the quality-risk code-smell inventory (CS-NN) and escalation record (ESC-1), the accessibility audit (A11Y-NNN), the data-domain boundary violations (BV-NN), the shared-database and decomposition risk registers (RISK-NN, DS-RISK-NN), the identity assurance gaps (gap_type slugs), and the structural coupling indicators (slug keys). No anomaly is deferred: every entry carries an action.",
+  "total": 58,
+  "by_action": {
+    "FIX": 28,
+    "MAKE_EXPLICIT": 11,
+    "CONSOLIDATE": 6,
+    "OMIT": 6,
+    "RENAME": 4,
+    "OPTIMIZE": 3,
+    "DEFERRED": 0,
+    "action_note": "No anomaly is deferred. The 6 OMIT entries each carry a written justification in their justification field, as the skill requires, because stakeholders will ask why a legacy feature produced no requirement: ANOM-049 (two orphan statistic tiles), ANOM-050 (four items of dead code in application source), ANOM-051 (the unreachable amend-surface reuse branch), ANOM-052 (four superseded schema generations retained in the database file), ANOM-053 (the external Project Report link, which implements no reporting logic), and ANOM-054 (four legacy runtime defect states, also recorded in the dead_states_removed block of each affected state machine in srs.json)."
+  },
+  "by_source": {
+    "source_note": "Attributed by the FIRST-named artefact in each anomaly's discovery_source.discovery_artifact field. Most anomalies are corroborated across several artefacts — the counts below are primary attribution, not an exclusive partition, and the corroborating_findings array on each anomaly carries the full set.",
+    "business-logic.json (BR-NNN rules)": 44,
+    "structural-analysis.json (coupling indicators and signals)": 3,
+    "identity-landscape.json (assurance gaps)": 2,
+    "quality-risk.json / escalation-record.json (CS-NN, ESC-1)": 2,
+    "data-domains.json (D-N, BV-NN, BA-NN)": 2,
+    "ux-accessibility.json / accessibility-audit.json (A11Y-NNN)": 2,
+    "db-archaeology.json (category-keyed findings)": 1,
+    "state-machines.json": 1,
+    "data-flow-trace.json (DF-SMS-NNN)": 1
+  },
+  "sme_confirmation_required": [
+    "ANOM-003",
+    "ANOM-005",
+    "ANOM-007",
+    "ANOM-010",
+    "ANOM-013",
+    "ANOM-015",
+    "ANOM-019",
+    "ANOM-021",
+    "ANOM-024",
+    "ANOM-027",
+    "ANOM-031",
+    "ANOM-033",
+    "ANOM-036",
+    "ANOM-041",
+    "ANOM-049",
+    "ANOM-053",
+    "ANOM-056",
+    "ANOM-057",
+    "ANOM-058"
+  ],
+  "anomalies": [
+    {
+      "anomaly_id": "ANOM-001",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "The record search concatenates raw user keystrokes from txtSearch into both an equality clause and a LIKE clause with no parameterization and no escaping. It is the application's only unparameterized data path and the only one that interpolates user input. The grid then displays whatever the altered statement returns, giving the injection a direct output channel. ACE does not support stacked statements, which bounds but does not remove the exposure.",
+      "prescribed_behavior": "All data access MUST use parameterized statements with bound parameters. No SQL text may be assembled by concatenating or interpolating any value that originated outside the application. Search predicates MUST bind the search term as a parameter, and wildcard characters inside the term MUST be escaped so they are matched literally rather than altering match semantics.",
+      "justification": "security_violation resolves to FIX. This is the single confirmed exploitable vulnerability in the application and the mechanism named in escalation ESC-1 as the live exfiltration path for the entire student PII dataset. Carrying it forward would reproduce the exact defect the SRS exists to prevent. The fix also repairs a correctness defect: a legitimate apostrophe in a name such as O'Brien currently crashes the application with an unhandled syntax error.",
+      "affected_requirements": ["REQ-022", "REQ-021", "REQ-054", "NFR-020"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-052",
+        "corroborating_findings": ["IM-025", "CS-18", "ESC-1", "DF-SMS-002 risk_findings[critical/type-coercion]", "coupling_indicators.unsafe-sql-construction"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 50,
+        "line_range": "48-57",
+        "discovery_artifact": "business-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-002",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "The application has no login, no user identity, no roles, no permissions and no audit of actor. AuthenticationMode is set to Windows in the application framework configuration, but that only populates My.User, which no code path ever reads. Form1_Load opens the database and renders the dashboard immediately. Anyone able to launch the executable has unrestricted create, read, update and delete authority over every student record.",
+      "prescribed_behavior": "The system MUST authenticate every principal before any screen that reads or writes student data is rendered, and MUST enforce an explicit authorization decision on every create, read, update and delete operation. Authentication MUST be performed at NIST SP 800-63B AAL2 or higher through the federated identity broker. Ambient operating-system session possession MUST NOT be accepted as an authentication event.",
+      "justification": "security_violation resolves to FIX. The identity assessment records nist_aal as below-AAL1 at the application boundary and states there is 'not merely no second factor; there is no first factor at the application boundary'. A modernization target that assumes authorization exists somewhere in this code will find nothing to port, so the requirement must be written as net-new prescribed behaviour rather than as a translation.",
+      "affected_requirements": ["REQ-060", "REQ-061", "REQ-062", "REQ-063", "NFR-001", "NFR-002"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-090",
+        "corroborating_findings": ["identity-landscape.assurance_gaps[no-mfa]", "identity-landscape.assurance_gaps[below-aal2]", "structural-analysis.coupling_signals[no-authentication]", "summary_metrics.authentication_mechanisms=0", "DF-SMS cross_flow_findings[3]"],
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 26,
+        "secondary_sources": ["Flat Design/Form1.vb:15", "Flat Design/My Project/Application.myapp:8"],
+        "discovery_artifact": "business-rules + identity-landscape"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-003",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "The data tier is reached with a credential-less connection string containing no User ID, no Password and no Jet OLEDB:Database Password token. The .accdb file carries no database password, Jet workgroup security is unused, and the file is unencrypted. The identity assessment notes the decisive consequence: the same file is directly openable by any OLEDB client or by Microsoft Access itself, so any authentication added to the client alone would be a bypassable control.",
+      "prescribed_behavior": "Student data MUST be held in a server-hosted datastore that authenticates every connecting principal, and the authenticated end-user identity MUST be propagated to the data tier rather than replaced by a shared service identity. No path to student data may exist that bypasses the application's authorization layer. Data MUST be encrypted at rest and in transit. The legacy practice of distributing a readable data file alongside the application MUST NOT be carried forward.",
+      "justification": "security_violation resolves to FIX. This anomaly is why ANOM-002 alone is insufficient: the identity assessment instructs that the credential-less data-tier path be sequenced 'BEFORE or WITH the ambient-Windows retirement, never after', because otherwise the old unauthenticated path remains as a fallback. SME confirmation is required on the target datastore platform because the decomposition strategy records the application's disposition as an open question.",
+      "affected_requirements": ["REQ-064", "REQ-051", "NFR-003", "NFR-004", "NFR-021"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-090",
+        "corroborating_findings": ["identity-landscape.identity_models[Credential-less ACE OLEDB data-tier access]", "identity-landscape.assurance_gaps[shared-credentials]", "interface-inventory.interfaces[studentDB.accdb — local Access database file]", "ESC-1"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "identity-landscape + interface-inventory"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-004",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "A live dataset of named individuals' personal data — first name, last name, father's name, two mobile numbers, date of birth, gender — is committed into a public source repository as studentDB.accdb, together with a stale studentDB.laccdb lock file recording the capture machine and user. The quality-risk assessment describes the population as potentially minor students and escalated this unconditionally as ESC-1.",
+      "prescribed_behavior": "The system MUST NOT store, commit or distribute production personal data inside its source repository, build artefacts or deployment package. Environments other than production MUST be seeded with synthetic or de-identified data only. The modernized system MUST provide a documented mechanism for purging personal data from any artefact in which it has been exposed.",
+      "justification": "security_violation resolves to FIX. ESC-1 is an open, critical, stakeholder-required escalation describing 'an active, ongoing public exposure of real PII (not a latent or hypothetical risk) layered with a working injection vector and no access control of any kind'. The SRS prescribes the control; the historical exposure itself is a remediation action owned outside this document and is carried in open_questions.",
+      "affected_requirements": ["REQ-065", "NFR-003", "NFR-022"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "ESC-1",
+        "corroborating_findings": ["quality-risk.regulatory_surface_flags", "coupling_indicators.unprotected-pii-in-source-control", "ET-1"],
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 0,
+        "line_note": "Binary artefact; cited at file grain because it has no line structure.",
+        "discovery_artifact": "quality-risk + escalation-record"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-005",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "There is no application session concept at all. A single module-level OleDbConnection is opened on dashboard load and held for the lifetime of the process, so there is no idle timeout, no maximum session lifetime, no re-authentication interval and no short-lived token to expire. An unattended workstation leaves the full personal-data CRUD surface live indefinitely. Destructive operations require no elevated assurance: deletion is gated only by a Yes/No message box and editing by nothing at all.",
+      "prescribed_behavior": "The system MUST establish an explicit authenticated session distinct from any database connection, with a configurable idle timeout and a configurable absolute maximum lifetime, after either of which the principal MUST be re-authenticated before any further student-data operation. The timeout MUST be scoped to the authenticated session and MUST NOT be implemented at the connection layer. Destructive operations MUST be subject to an authorization check against the authenticated principal.",
+      "justification": "security_violation resolves to FIX. The identity assessment names both no-session-timeout and no-step-up as distinct gaps and explicitly directs that the timeout not be placed at the connection layer. SME confirmation is required on the concrete timeout values, which are a client policy decision the discovery artefacts do not supply.",
+      "affected_requirements": ["REQ-066", "REQ-067", "NFR-005"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-090",
+        "corroborating_findings": ["identity-landscape.assurance_gaps[no-session-timeout]", "identity-landscape.assurance_gaps[no-step-up]", "BR-001", "BR-056"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 4,
+        "secondary_sources": ["Flat Design/ViewForm.vb:83"],
+        "discovery_artifact": "identity-landscape"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-006",
+      "type": "security_violation",
+      "action": "FIX",
+      "legacy_behavior": "The database is located by an absolute developer workstation path embedded as a string literal in source: 'D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb'. App.config contains only a supportedRuntime element and no connectionStrings section; the generated Settings store exists and is entirely unused. The database file committed to the repository is therefore not the file the application opens, and a clean clone cannot connect to its own bundled database without a source change.",
+      "prescribed_behavior": "All environment-specific values — datastore location, credentials, endpoint addresses and external URLs — MUST be supplied by external configuration resolved at startup, with no absolute filesystem path and no secret present in source or in a compiled artefact. Startup MUST fail with a specific, actionable diagnostic naming the missing or unresolvable setting rather than raising a provider-level error.",
+      "justification": "security_violation resolves to FIX, and the same change discharges the hardcoded-configuration code smell and the orphan-datastore finding. The decomposition strategy records externalizing configuration as 'a prerequisite for every other boundary', so this is sequenced ahead of the functional work.",
+      "affected_requirements": ["REQ-051", "REQ-082", "NFR-023", "NFR-024"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-002",
+        "corroborating_findings": ["IM-034", "CS-21", "coupling_indicators.hardcoded-environment-binding", "db-archaeology[orphan-object: datastore]", "RISK-02", "DS-RISK-01"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "business-rules + db-archaeology"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-007",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Roll number is the sole record identifier for every single-row read, update and delete. It is typed freely by the user with no format mask, no length limit, no check digit and no generation scheme. Uniqueness rests solely on the Access PrimaryKey index, which the application never pre-checks, so a collision surfaces only as an untriaged provider error. The column is TEXT(255) with AllowZeroLength = True, so the empty string is a valid primary key value and the Required flag does not guarantee a meaningful identifier. Recovered values include '1', '2', '3', '34', '434'.",
+      "prescribed_behavior": "Each student record MUST carry a system-generated, immutable surrogate identifier that is never user-supplied and never reused. Roll number MUST be modelled as a separate business key that is NOT NULL, non-empty after trimming, unique under case-insensitive comparison, and validated against a documented format before persistence. The system MUST detect a roll-number collision before attempting to persist and MUST report it as a field-attributed validation error naming roll number as the conflicting field.",
+      "justification": "data_integrity_risk resolves to FIX. The two Pass-1 inputs disagreed on whether the PrimaryKey index exists at all, and the data-domain assessment records the consequence as boundary violation BV-01 at critical severity: two rows can share a roll number, the editor binds only the first match while UPDATE rewrites every match and DELETE removes every match. Prescribing a surrogate key removes the dependency on an index whose existence Discovery could not settle. SME confirmation is required on the roll-number format, which no artefact documents.",
+      "affected_requirements": ["REQ-008", "REQ-011", "REQ-016", "REQ-096"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-023",
+        "corroborating_findings": ["BR-037", "BV-01", "CS-14", "db-archaeology[missing-pk]", "RISK-03", "coupling_indicators.unenforced-identity", "DF-SMS-001 risk_findings[critical/data-loss]"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12,
+        "secondary_sources": ["Flat Design/studentDB.accdb students table definition", "Flat Design/EditForm.vb:51", "Flat Design/ViewForm.vb:90"],
+        "discovery_artifact": "business-rules + db-archaeology + data-domains"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-008",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Both the UPDATE and the DELETE are keyed on rollno with no row limit, and the row count returned by ExecuteNonQuery is discarded in both paths. An update that matches no rows still reports 'Record updated successfully'; a delete that matches nothing reports success too. If more than one row shared a roll number, a single user action would silently modify or remove every matching record while reporting success.",
+      "prescribed_behavior": "Every mutation MUST target exactly one record addressed by its surrogate identifier. The system MUST inspect the affected-row count returned by each mutation and MUST treat a count other than one as a failure: zero MUST be reported as 'record no longer exists' and more than one MUST abort the operation and raise a data-integrity alert. No mutation may report success without having confirmed that exactly one record changed.",
+      "justification": "data_integrity_risk resolves to FIX. The discarded row count is what makes the weak key dangerous rather than merely untidy, because it removes the one signal that would reveal a multi-row or zero-row effect. The legacy claim of success is a false statement to the user and must not be reproduced.",
+      "affected_requirements": ["REQ-016", "REQ-012", "REQ-027", "REQ-015"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-037",
+        "corroborating_findings": ["IM-027", "BR-036", "BV-01"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 51,
+        "secondary_sources": ["Flat Design/EditForm.vb:64", "Flat Design/ViewForm.vb:90", "Flat Design/ViewForm.vb:93"],
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-009",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Deletion issues a hard DELETE against the sole table. There is no status or is_deleted column, no archive table, no soft-delete flag, no retention period and no audit record of who deleted what or when. Once confirmed, the student record and the personal data of the student and of the named parent are irrecoverable from the application. Pass-1 forensics recovered six previously deleted rows intact from page slack, which is a data-remanence concern rather than a recovery route.",
+      "prescribed_behavior": "Deletion MUST be logical: the system MUST mark the record as archived, retain it for a configured retention period, exclude it from all default reads and statistics, and record the acting principal and timestamp. Physical destruction MUST occur only through an explicit, separately authorized purge that is itself audited, and MUST overwrite or otherwise render the data unrecoverable rather than merely unlinking it. The system MUST support fulfilment of a data-subject erasure request as a distinct, audited operation.",
+      "justification": "data_integrity_risk resolves to FIX. The data-domain assessment records this as BV-06 at high severity and notes that physical immediate deletion 'forecloses both data-subject-request handling and any reconstruction after an erroneous delete'. Prescribing soft deletion with retention is what makes the lifecycle state machine in this SRS representable at all.",
+      "affected_requirements": ["REQ-027", "REQ-091", "REQ-093", "NFR-025"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-057",
+        "corroborating_findings": ["BV-06", "BR-095", "db-archaeology[orphan-object: deleted records in page slack]", "RISK-06", "DF-SMS cross_flow_findings[4]"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 90,
+        "line_range": "90-97",
+        "discovery_artifact": "business-rules + data-domains"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-010",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Single-instance mode is explicitly disabled so any number of copies can run against the same Access file. The update writes all nine non-key columns unconditionally from current control state with no dirty-field tracking, no optimistic concurrency token, no row version and no comparison against the loaded values. The last save wins silently and the loser's edits are destroyed with no warning to either user. Refresh is navigation-driven only, so each instance may show arbitrarily stale data.",
+      "prescribed_behavior": "The system MUST implement optimistic concurrency control: every record MUST carry a version token that is read with the record and submitted with the update, and an update whose token does not match the stored value MUST be rejected with a conflict error that identifies the fields changed by the other party. The system MUST NOT silently overwrite a concurrent modification. Updates MUST persist only fields the principal actually changed.",
+      "justification": "data_integrity_risk resolves to FIX. BR-032 and BR-094 together convert merely opening and saving a record into a destructive write that defeats any external change made in between. SME confirmation is required on the conflict-resolution experience — whether the system should offer a merge, force-overwrite with authorization, or reject outright — because that is a business decision the artefacts do not settle.",
+      "affected_requirements": ["REQ-012", "REQ-058", "REQ-094"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-094",
+        "corroborating_findings": ["BR-032", "BR-003", "coupling_indicators.shared-file-database-concurrency"],
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 27,
+        "secondary_sources": ["Flat Design/EditForm.vb:51-64", "Flat Design/studentDB.laccdb"],
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-011",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "No code path begins, commits or rolls back a transaction. Every mutation is a single autocommitted statement, so there is no atomicity between a mutation and its dependent side effects. The insert path commits a row and then performs refresh work that can itself fail and report an error for an operation that actually succeeded, and a delete-and-recreate re-key loses the record irrecoverably if interrupted.",
+      "prescribed_behavior": "Every operation that performs more than one write, or a write plus a dependent state change, MUST execute inside a single transaction that commits atomically or rolls back entirely. The system MUST NOT report an operation as failed when its data change has committed, nor as succeeded when it has not. Transaction scope MUST be owned by the application service layer and MUST NOT be inferred from connection state.",
+      "justification": "data_integrity_risk resolves to FIX. BR-093 records that the absence of transactions fixes the whole system's atomicity guarantee at single-statement granularity and that 'any future multi-table operation would have no consistency mechanism to build on' — and the prescribed data model adds exactly such multi-entity writes through reference tables and audit records.",
+      "affected_requirements": ["REQ-057", "REQ-050", "REQ-080"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-093",
+        "corroborating_findings": ["BR-022", "DF-SMS cross_flow_findings[1]", "coupling_indicators.shared-file-database-concurrency"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 4,
+        "line_range": "3-12",
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-012",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "MobNo and AltMobNo are declared as 4-byte Long Integer columns with a maximum storable value of 2,147,483,647, confirmed by decoding the table-definition page directly. The entry form collects them as unconstrained free text with no MaxLength and no numeric validation. Every ten-digit Indian mobile number is therefore unstorable, and integer storage silently discards leading zeros, country prefixes, spaces and plus signs. Every value actually present in the file is nine digits, i.e. truncated or placeholder.",
+      "prescribed_behavior": "Telephone numbers MUST be stored as text of sufficient length to hold an international number including country prefix, and MUST NOT be stored in any numeric type. The system MUST preserve leading zeros and MUST validate each number against a documented format before persistence, reporting a field-attributed error naming the offending telephone field. Each telephone number MUST carry an explicit type or purpose rather than being distinguished only by position.",
+      "justification": "data_integrity_risk resolves to FIX. The db-archaeology assessment states the remediation directly: 'phone numbers are identifiers, not arithmetic quantities'. The data-domain assessment also records that the two slots are 'positionally distinguished only; there is no contact-type, no preference order and no validity window', which is why the prescription adds an explicit type rather than only widening the column.",
+      "affected_requirements": ["REQ-005", "REQ-009", "REQ-097"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-017",
+        "corroborating_findings": ["IM-006", "db-archaeology[deprecated-feature: LONG INTEGER phone columns]", "DF-SMS-003", "data-domains.D1.StudentContactPoint"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 16,
+        "line_range": "16-17",
+        "secondary_sources": ["Flat Design/studentDB.accdb students table definition", "Flat Design/EditForm.vb:57-58"],
+        "discovery_artifact": "business-rules + db-archaeology"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-013",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Date of birth is bound to the database as dtpDOB.Text — the picker's locale-formatted display string — rather than dtpDOB.Value, and is read back with a culture-free DateTime.Parse before being assigned to the picker. A date of birth therefore makes two unanchored culture round-trips per edit cycle. Day values 1 to 12 transpose silently with no error while 13 to 31 fail loudly, so the corruption is selective and hardest to detect exactly where it is most plausible. The underlying Access DATE/TIME column is a double-precision serial with a 1899-12-30 epoch, no timezone, and permits a time component on a semantically date-only field.",
+      "prescribed_behavior": "Date of birth MUST be carried end to end as a date-only typed value with no time component and no timezone, and MUST never be converted to or parsed from a culture-formatted display string for the purpose of storage or retrieval. Culture formatting MUST occur only at the presentation boundary. The system MUST reject a date of birth that is in the future or that implies an age outside a configured plausible range, and MUST report such a rejection as a field-attributed validation error.",
+      "justification": "data_integrity_risk resolves to FIX. This is a silent, locale-dependent corruption of personal data spanning the create path, the update path and the column definition. SME confirmation is required because the discovery artefacts note the stored data may already be transposed — the existing two live rows carry a 2009 date of birth against a 2019 year of admission — so a data-quality remediation decision is needed alongside the code fix, and the plausible age range is a business parameter no artefact supplies.",
+      "affected_requirements": ["REQ-004", "REQ-014", "REQ-007", "REQ-098"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-016",
+        "corroborating_findings": ["BR-034", "IM-010", "IM-011", "CS-15", "DF-SMS-004", "DS-RISK-05", "coupling_signals.culture-dependent-date-parse"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 23,
+        "secondary_sources": ["Flat Design/EditForm.vb:30", "Flat Design/EditForm.vb:62"],
+        "discovery_artifact": "business-rules + implicit-logic + data-flow-trace"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-014",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "Loading a record for editing populates the three categorical dropdowns by assigning the stored string to SelectedItem, which performs an exact case-sensitive lookup in a hardcoded Items collection. A value not found leaves the control unselected with no error, and saving then throws NullReferenceException. Any record whose gender, course or admission year lies outside the hardcoded lists — a 2024 intake, a retired programme, or a value differing only in letter case — is permanently un-editable, and if the user picks a replacement value the original datum is silently overwritten.",
+      "prescribed_behavior": "When a record holds a reference value that is not in the currently active value set, the system MUST still present the record for editing, MUST display the stored value, MUST clearly mark it as inactive or unrecognised, and MUST preserve it unchanged unless the principal explicitly chooses a replacement. The system MUST NOT silently discard a stored value, and MUST NOT make a record un-editable because of the content of a reference field. Reference-value matching MUST be case-insensitive.",
+      "justification": "data_integrity_risk resolves to FIX. BR-033 is described as 'the application's main data-destruction path short of deletion' and is reachable for every record created after the frozen admission-year list expired. The prescription also removes the legacy PartiallyLoaded state from the record lifecycle, which is recorded as a dead state in this SRS.",
+      "affected_requirements": ["REQ-013", "REQ-030", "REQ-031", "REQ-032", "REQ-056"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-033",
+        "corroborating_findings": ["IM-014", "BR-013", "BR-014", "BR-015", "BR-092", "coupling_signals.value-domain-mismatch-with-ui"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 27,
+        "line_range": "27-29",
+        "secondary_sources": ["Flat Design/EditForm.vb:59-61", "Flat Design/EditForm.Designer.vb:147-149", "Flat Design/EditForm.Designer.vb:300-314"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-015",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The permitted years of admission are the string literals 2019 through 2023, declared in four Designer locations with DropDownList enforcement. The list is static and has already expired: no student admitted after 2023 can be recorded through any application path. The dashboard independently derives five buckets by subtracting from a hardcoded 2023, so the two halves of the year logic remain superficially consistent while both are wrong.",
+      "prescribed_behavior": "Admission year MUST be stored in a numeric or date type, not as text. The set of selectable admission years MUST be derived at runtime from configuration or reference data, MUST include the current academic year without a code change, and MUST NOT be a compiled literal list. The system MUST NOT impose an upper bound on admission year that requires a rebuild to extend.",
+      "justification": "data_integrity_risk resolves to FIX. BR-015 is recorded at critical severity as 'a hard functional ceiling — the application cannot record a current intake'. SME confirmation is required on the authoritative lower bound of the admission-year range and on whether historical years outside the current window must remain selectable for back-entry, neither of which any artefact states.",
+      "affected_requirements": ["REQ-032", "REQ-042", "REQ-044", "REQ-095"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-015",
+        "corroborating_findings": ["IM-003", "IM-009", "BR-074", "BR-072", "db-archaeology[YOA TEXT rather than numeric]"],
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 91,
+        "line_range": "87-91",
+        "secondary_sources": ["Flat Design/EditForm.Designer.vb:300-303", "Flat Design/Form1.vb:59"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-016",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "No explicit validation exists anywhere on the create path. Roll number, first name, last name, father's name and both mobile numbers are passed straight from TextBox.Text into the INSERT with no trim, no emptiness check, no length check, no character-set check and no format check, and no MaxLength is set on any of the thirteen text boxes. A record consisting entirely of empty strings is a valid, persistable record provided the three dropdowns are selected. Junk was already stored: deleted rows in page slack contain Course values of '2' and '3' and YOA values of 'A' and 'B'.",
+      "prescribed_behavior": "The system MUST validate every input field at the system boundary before any persistence attempt, enforcing presence for mandatory fields, maximum length, permitted character set and documented format per field. Validation failures MUST be reported together, each attributed to its specific field, in language that names the expected form. Inner layers MUST trust boundary-validated input and MUST NOT re-validate.",
+      "justification": "data_integrity_risk resolves to FIX, with the boundary-consolidation discipline from redundant_validation applied to where validation is placed. The structural assessment is explicit that this is new work: 'Validation is a NEW requirement here, not a port: the insert path has no field validation at all.'",
+      "affected_requirements": ["REQ-003", "REQ-002", "REQ-009", "REQ-083"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-012",
+        "corroborating_findings": ["CS-07", "coupling_signals.no-input-validation", "A11Y-007", "DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "recommended_decomposition_boundaries.student-record-crud-service"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 12,
+        "line_range": "12-17",
+        "discovery_artifact": "business-rules + structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-017",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The field-reset routine clears the three dropdowns by assigning an empty string to their Text property, but a DropDownList combo accepts only values present in its Items collection, so the assignment is silently discarded and the previous selection persists. From the second insert of a session onward, every record silently inherits the previous student's gender, course and admission year unless the user notices.",
+      "prescribed_behavior": "After a successful create, the system MUST reset every input on the entry surface to its documented initial state, including reference-value selectors, which MUST return to an explicitly unselected state. The system MUST NOT carry any value from one record-entry operation into the next.",
+      "justification": "data_integrity_risk resolves to FIX. BR-020 is a real data-integrity rule, not a cosmetic defect: it silently attributes one student's course and gender to the next, and it simultaneously defeats the accidental mandatory-field guard in BR-011, converting a loud failure into silent wrong data.",
+      "affected_requirements": ["REQ-006", "REQ-002"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-020",
+        "corroborating_findings": ["IM-013", "BR-011"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 48,
+        "line_range": "41-53",
+        "secondary_sources": ["Flat Design/InsertForm.Designer.vb:88"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-018",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The date picker has no Value, Format, CustomFormat, MinDate or MaxDate set, so it initialises to the current date, and the field-reset routine explicitly re-sets it to Date.Now. A user who does not touch the control submits today as the student's date of birth — a plausible-looking value that is always wrong — and no plausibility check rejects future or eighteenth-century birth dates. Both 1753-01-01 and 9998-12-31 are selectable and storable.",
+      "prescribed_behavior": "Date of birth MUST have no pre-populated default value and MUST be presented as empty until the principal supplies one. Submission without a date of birth MUST be rejected as a missing mandatory field. The selectable and acceptable range MUST be bounded to a configured plausible range, and the system MUST NOT accept a future date of birth.",
+      "justification": "data_integrity_risk resolves to FIX. A default that is always wrong but always plausible is worse than a blank, because no downstream check can distinguish an untouched control from a deliberate entry.",
+      "affected_requirements": ["REQ-007", "REQ-004", "REQ-098"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-021",
+        "corroborating_findings": ["IM-021"],
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 286,
+        "line_range": "286-290",
+        "secondary_sources": ["Flat Design/InsertForm.vb:51", "Flat Design/EditForm.Designer.vb:258-264"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-019",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The dashboard's year-wise breakdown assigns a local variable the literal value 2023 and counts students whose admission year equals that value minus zero through four. The system clock is never read. The dashboard has therefore been frozen in the 2023-24 academic year and, as of the discovery date, mislabels every cohort by three years, reporting students admitted in 2023 as first-years when they are fourth-years. Changing the workstation clock has no effect; correcting it requires a source change and a rebuild.",
+      "prescribed_behavior": "All derived temporal values MUST be computed from an injectable time source resolved at request time, never from a compiled constant. The academic-year boundary used to derive a cohort MUST be supplied by configuration rather than assumed to be the calendar year. Every reported statistic MUST state the as-of instant and the academic year it was computed against.",
+      "justification": "data_integrity_risk resolves to FIX. BR-072 silently invalidates five of the dashboard's twelve statistics and its wrongness grows by one cohort per year with no failure signal. SME confirmation is required on the academic-year boundary date, which no artefact states and which determines cohort assignment for every record.",
+      "affected_requirements": ["REQ-042", "REQ-043", "REQ-045"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-072",
+        "corroborating_findings": ["IM-001", "CS-03", "coupling_signals.hardcoded-temporal-baseline", "BR-073", "BR-074"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 59,
+        "line_range": "58-91",
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-020",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The dashboard runs exactly two gender COUNT queries, for 'Male' and 'Female', while the entry forms permit three values including 'Other'. A student recorded as Other is storable, listable and editable but counted in no gender statistic and in no total. Similarly, three course counts and five year buckets are hardcoded, so any record carrying another course value, or an admission year more than four years before the frozen current year, is counted nowhere. No tile reports a grand total, so none of the shortfalls is detectable from the interface.",
+      "prescribed_behavior": "Every statistical breakdown MUST be derived from the data by grouping rather than from a compiled list of expected values, MUST include a bucket for values outside the active reference set, and MUST report a grand total against which the sum of the buckets can be reconciled. The system MUST surface a visible discrepancy when the buckets do not sum to the total.",
+      "justification": "data_integrity_risk resolves to FIX, and the implementation change is also an OPTIMIZE (see ANOM-046). The absence of a reconciling total is the specific defect that makes three independent undercounts invisible, so prescribing the total is as load-bearing as prescribing the grouping.",
+      "affected_requirements": ["REQ-040", "REQ-041", "REQ-043", "REQ-045"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-070",
+        "corroborating_findings": ["IM-005", "BR-071", "BR-073", "BR-075", "DF-SMS-005 risk_findings[high/data-loss]", "coupling_signals.value-domain-mismatch-with-ui"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 24,
+        "line_range": "23-35",
+        "secondary_sources": ["Flat Design/InsertForm.Designer.vb:176", "Flat Design/Form1.vb:37-55", "Flat Design/Form1.vb:61-91"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-021",
+      "type": "data_integrity_risk",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "Every dashboard count queries the entire table with no scoping predicate other than the single attribute it breaks down by. There is no academic-year scope, no active-versus-graduated status, no enrolment state and no date filter, because the schema has no status column to filter on. Because deletion is physical, a student who leaves is removed rather than marked inactive, so 'all-time' and 'currently enrolled' are the same number by construction and the dashboard cannot distinguish them.",
+      "prescribed_behavior": "Every reported statistic MUST state its population scope explicitly — which record states are included and which are excluded. Statistics over currently active students MUST exclude archived records. The system MUST be capable of reporting the active population and the all-time population as distinct figures.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-075 is not a defect in itself but an undocumented definition: the meaning of every statistic the application reports is fixed by an omission. Once ANOM-009 introduces logical deletion and ANOM-022 introduces lifecycle state, the two populations genuinely diverge and the scope must be stated rather than inherited. SME confirmation is required on which lifecycle states count as the reportable active population.",
+      "affected_requirements": ["REQ-045", "REQ-040", "REQ-041", "REQ-043"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-075",
+        "corroborating_findings": ["BR-095", "BR-057", "BV-06"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 22,
+        "line_range": "22-93",
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-022",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The students table has exactly ten business columns and no created-at, created-by, modified-at, modified-by, version or status column, and the application writes no audit record for any operation. It is impossible to establish when a record was created or last changed, who changed it, what the previous values were, or whether a student is current, graduated or withdrawn. Combined with physical deletion and the absence of any actor identity, no create, update or delete is attributable or reconstructible after the fact.",
+      "prescribed_behavior": "Every student record MUST carry created-at, created-by, modified-at, modified-by, version and lifecycle-state attributes, all maintained by the system and not editable by a principal. Every create, update, state transition, archive and purge MUST write an immutable audit entry recording the acting principal, the instant, the operation and the prior and new values of each changed attribute. Audit entries MUST be retained independently of the record they describe and MUST survive its purge.",
+      "justification": "data_integrity_risk resolves to FIX. BR-095 states the constraint this removes: the absence 'bounds what any downstream compliance or reporting requirement can possibly be satisfied from' and is 'a material constraint on any modernization that must demonstrate data lineage or support data-subject requests over this personal data'. The audit attributes are also the precondition for ANOM-010's concurrency token and ANOM-009's retention.",
+      "affected_requirements": ["REQ-090", "REQ-091", "REQ-092", "REQ-093", "REQ-094", "NFR-026"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-095",
+        "corroborating_findings": ["BV-06", "RISK-06", "DF-SMS cross_flow_findings[3]", "DF-SMS cross_flow_findings[4]", "database-schema-summary open_questions"],
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 0,
+        "line_note": "students table definition; binary artefact cited at definition grain.",
+        "secondary_sources": ["Flat Design/InsertForm.vb:9", "Flat Design/EditForm.vb:51", "Flat Design/ViewForm.vb:90"],
+        "discovery_artifact": "business-rules + data-domains"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-023",
+      "type": "error_handling_gap",
+      "action": "FIX",
+      "legacy_behavior": "The entire create path is wrapped in a single Try/Catch that catches Exception and displays 'Error: ' concatenated with the raw .NET message. There is no logging, no telemetry, no error code, no field attribution, no retry and no transaction to roll back. Duplicate-key violations, mobile-number overflows, provider failures, missing-dropdown null references and connection faults are all presented identically, so the user cannot distinguish a data-entry mistake from an infrastructure outage, and no record of the failure survives the dismissal of the message box.",
+      "prescribed_behavior": "The system MUST distinguish validation failures, business-rule violations, concurrency conflicts and infrastructure faults, and MUST present each with a distinct, actionable message that names the affected field where one applies. Raw provider or runtime exception text MUST NOT be shown to a principal. Every failure MUST be recorded in a durable, structured log with a correlation identifier that the displayed message cites, and that log MUST NOT contain personal data.",
+      "justification": "error_handling_gap resolves to FIX. The blanket catch is the sole error-handling mechanism on the create path and it erases the diagnostic distinction between every failure mode in the system. It also actively misleads: an exception raised after the row has committed reports a save failure that did not occur.",
+      "affected_requirements": ["REQ-080", "REQ-083", "REQ-084", "NFR-030", "NFR-031"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-022",
+        "corroborating_findings": ["CS-09", "CS-12", "IM-029", "A11Y-007", "BR-011", "BR-017", "BR-096"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31,
+        "line_range": "31-33",
+        "secondary_sources": ["Flat Design/EditForm.vb:70-72"],
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-024",
+      "type": "error_handling_gap",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "Exception guarding is asymmetric across paths. The insert and update handlers are wrapped in blanket Try/Catch blocks, while the record load, the grid load, the search, the delete, the edit launch and the dashboard statistics loader have no exception handling at all — so comparable failures either show a message box or terminate the process depending only on which path they occur in. The edit form performs its database read inside its constructor, invoked from a handler that also has no guard, so every load failure terminates the application. There is no Using block or Finally anywhere, so the reader close depends entirely on the happy path and a parse failure leaves an open reader on the shared connection for the life of the process.",
+      "prescribed_behavior": "The system MUST apply one uniform error-handling policy across every operation, implemented once at the application boundary rather than per handler. No unhandled fault may terminate the process. Every acquired resource MUST be released deterministically on both the success and the failure path. Data access MUST NOT be performed during object construction.",
+      "justification": "error_handling_gap with a divergent-implementation pattern resolves to CONSOLIDATE: the defect is not that handling is absent everywhere but that six paths differ, so prescribing a single boundary policy both closes the gaps and removes the inconsistency. The resource-release clause is required because IM-029 shows the missing Finally is what propagates one failure into a process-wide outage.",
+      "affected_requirements": ["REQ-081", "REQ-080", "REQ-050", "REQ-010"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-035",
+        "corroborating_findings": ["IM-029", "BR-076", "BR-034", "BR-003", "CS-20", "coupling_indicators.shared-global-connection"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 8,
+        "line_range": "7-35",
+        "secondary_sources": ["Flat Design/ViewForm.vb:60-109", "Flat Design/Form1.vb:22-93"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-025",
+      "type": "error_handling_gap",
+      "action": "FIX",
+      "legacy_behavior": "The record-load path guards its populate block with If reader.Read() and supplies no Else branch. When no row matches, the method closes the reader and returns, leaving a form that appears to be editing the selected student but holds only designer defaults — empty text boxes, unselected dropdowns and today's date. The condition surfaces later as a generic object-reference error indistinguishable from two other failure modes, and if the user fills the blank form in and saves, the update matches no rows and still reports success.",
+      "prescribed_behavior": "When a requested record does not exist, the system MUST report that explicitly, MUST NOT present an editable surface for it, and MUST NOT allow a save attempt against it. The absent-record outcome MUST be distinguishable by the principal from a validation failure and from an infrastructure fault.",
+      "justification": "error_handling_gap resolves to FIX. The missing Else branch produces a misleading interface state rather than an error, and its eventual symptom appears in a different method. The prescription also removes the legacy BlankEdit state, recorded as a dead state in this SRS.",
+      "affected_requirements": ["REQ-015", "REQ-010", "REQ-080"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-036",
+        "corroborating_findings": ["IM-028", "IM-027", "BR-060", "BR-037"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 20,
+        "line_range": "20-33",
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-026",
+      "type": "error_handling_gap",
+      "action": "FIX",
+      "legacy_behavior": "All ten dashboard count controls carry the Designer default text '0', and the statistics loader has no exception handling and runs from Form_Load. A provider failure, a missing database file or a connection closed by a prior delete produces an unhandled exception that terminates the application at startup, while any partial failure that did survive would leave tiles reading a plausible '0' rather than blank or an error. A genuinely empty table and a total failure display identically.",
+      "prescribed_behavior": "A statistic that could not be computed MUST be rendered as explicitly unavailable and MUST NOT display a numeric value. The system MUST distinguish a measured zero from an uncomputed value in both its interface and its data contract. Failure to compute one statistic MUST NOT prevent the remaining statistics from being presented, and MUST NOT terminate the application.",
+      "justification": "error_handling_gap resolves to FIX. A default that disguises failure as data is the specific mechanism by which the three undercounts in ANOM-020 remained invisible, and the unguarded startup path turns any datastore fault into a launch-time crash.",
+      "affected_requirements": ["REQ-046", "REQ-081", "REQ-080"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-076",
+        "corroborating_findings": ["IM-022", "BR-002", "BR-004", "IM-029"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 26,
+        "line_range": "15-93",
+        "secondary_sources": ["Flat Design/Form1.Designer.vb:981", "Flat Design/Form1.Designer.vb:932", "Flat Design/Form1.Designer.vb:883"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-027",
+      "type": "error_handling_gap",
+      "action": "FIX",
+      "legacy_behavior": "Deletion is the only operation guarded by a confirmation dialog, and the dialog names no student, so it cannot be used to verify that the correct record is about to be destroyed. No other destructive or semi-destructive action asks for confirmation: update rewrites all nine fields unconditionally, and application exit discards unsaved entry data with no prompt.",
+      "prescribed_behavior": "Any irreversible or destructive operation MUST require explicit confirmation, and the confirmation MUST identify the specific record by its roll number and the student's name. The system MUST warn before discarding unsaved changes on navigation away from or closure of an entry surface.",
+      "justification": "error_handling_gap resolves to FIX. The confirmation exists but cannot perform its function, which is a worse posture than no confirmation because it induces false confidence. SME confirmation is required on which operations beyond archive and purge warrant a confirmation gate, since adding gates affects operator throughput and no artefact records a usability baseline.",
+      "affected_requirements": ["REQ-026", "REQ-027", "REQ-077", "REQ-012"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-056",
+        "corroborating_findings": ["BR-057", "BR-079", "BR-032"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 88,
+        "line_range": "88-98",
+        "secondary_sources": ["Flat Design/EditForm.vb:49", "Flat Design/Form1.vb:96-99"],
+        "discovery_artifact": "business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-028",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "No explicit required-field validation exists on the create path. The three categorical dropdowns are nonetheless de-facto mandatory because none has a default SelectedIndex and all are read via SelectedItem.ToString(), which raises NullReferenceException on a Nothing reference. The blanket Catch reports 'Error: Object reference not set to an instance of an object.', naming no field. The seven text fields remain genuinely optional.",
+      "prescribed_behavior": "The mandatory or optional status of every field MUST be declared explicitly in the requirement set, enforced by an explicit validation rule, and indicated to the principal on the entry surface before submission. A missing mandatory value MUST produce an error that names the field. No field may be mandatory as a side effect of a runtime fault.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-011 is emergent from three facts none of which states a validation intent, and the legacy enforcement is an exception with an unhelpful message that is additionally defeated from the second insert onward by ANOM-017. Which fields are mandatory is settled in REQ-002 from the schema's own Required flag plus the observed de-facto set, and the residual question is carried as an open question.",
+      "affected_requirements": ["REQ-002", "REQ-003", "REQ-083"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-011",
+        "corroborating_findings": ["IM-012", "BR-091", "BR-020", "CS-08", "coupling_signals.unguarded-selecteditem-dereference"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 18,
+        "line_range": "18-33",
+        "secondary_sources": ["Flat Design/InsertForm.Designer.vb:87-103"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-029",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The project compiles with Option Strict Off, permitting late binding and implicit narrowing conversions throughout the hand-written code. This is the enabling precondition for at least five distinct runtime-only failure modes: the two SelectedItem null references, the untyped parameter coercion behind the mobile-number ceiling, and both halves of the date-of-birth string confusion. The Designer-generated files set Option Strict On locally, so the weak setting applies only to code a human wrote.",
+      "prescribed_behavior": "The modernized system MUST be built with strict static type checking enabled, MUST reject implicit narrowing conversions, and MUST NOT rely on late binding for any data access or reference-value handling. Every conversion between a presentation value and a stored value MUST be explicit and MUST declare its failure behaviour. The build MUST fail on a type-checking diagnostic rather than deferring it to runtime.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-091 records that 'several of the application's most significant data-integrity rules exist only because this switch is off' and that turning it on 'would surface these defects as compile errors, which is the recommended first step of any port'. Prescribing strict typing is therefore both an explicit requirement and the enforcement mechanism for ANOM-012, ANOM-013 and ANOM-028.",
+      "affected_requirements": ["REQ-055", "REQ-004", "REQ-005", "NFR-032"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-091",
+        "corroborating_findings": ["IM-016", "coupling_indicators.optionstrict-off-late-binding", "BR-011", "BR-016", "BR-017", "BR-033", "BR-034"],
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 51,
+        "line_range": "45-54",
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-030",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The project sets Option Compare Binary, so all string comparison in application code is case-sensitive and ordinal, while the Access engine compares text case-insensitively. The same conceptual equality has two different answers depending on which layer evaluates it: the edit form's dropdown rebinding fails on a case difference, while the dashboard counts and the search's roll-number equality ignore case. Roll numbers differing only in case are distinct to the index but equal to the WHERE clause.",
+      "prescribed_behavior": "The system MUST define, for each comparison it performs, whether that comparison is case-sensitive, and MUST apply the same semantics whether the comparison is evaluated in application code or in the datastore. Roll-number uniqueness and lookup MUST be case-insensitive. Reference-value matching MUST be case-insensitive. Any case-sensitive comparison MUST be documented as such in the requirement that depends on it.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-092 warns that 'any logic moved between the two layers during modernization changes behaviour', which is precisely what a replatform does, so leaving the semantics implicit guarantees a behavioural regression. The casing divergence is independently flagged as RISK-05 because the target may be a case-sensitive engine.",
+      "affected_requirements": ["REQ-056", "REQ-008", "REQ-013", "REQ-021"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-092",
+        "corroborating_findings": ["IM-017", "BR-033", "BR-051", "BR-070", "RISK-05", "database-schema-summary open_questions[casing]"],
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 48,
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-031",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "After a successful insert the handler calls Form1.LoadData() and ViewForm.LoadData() by type name, invoking VB's per-thread default instances. The Form1 call happens to work because Form1 is the MainForm and its default instance is the visible dashboard. The ViewForm call does not: the visible grid was constructed explicitly and reparented, so a second invisible instance is materialised, runs its Load handler, opens the connection and refreshes a grid nobody can see, leaving the real grid stale. The view navigation handler uses a guarded cast against the hosted instance instead — the contrast is the clearest evidence these calls are unintentional.",
+      "prescribed_behavior": "After any successful mutation, the system MUST refresh every presentation surface whose displayed data is affected, and MUST do so through an explicit, declared notification contract rather than by addressing a surface implicitly by type. No two mutation paths may have different refresh behaviour. The system MUST NOT maintain more than one instance of a presentation surface for the same logical view.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT, and the explicit contract simultaneously discharges the three-way refresh inconsistency in ANOM-032. The structural assessment states the porting consequence directly: 'because C# has no default-instance feature any port must consciously re-establish the intended parent-child wiring'. SME confirmation is required on the intended refresh contract, because the structural assessment records that 'the parent-child refresh contract must be re-specified rather than translated'.",
+      "affected_requirements": ["REQ-070", "REQ-071", "REQ-072", "REQ-075"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-019",
+        "corroborating_findings": ["IM-018", "CS-10", "coupling_indicators.default-instance-aliasing", "call-graph edges[insert-form→view-form, resolves_to_displayed_instance=false]", "BR-038", "BR-063"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 28,
+        "line_range": "27-28",
+        "secondary_sources": ["Flat Design/Form1.vb:139-153", "Flat Design/My Project/Application.Designer.vb:35"],
+        "discovery_artifact": "business-rules + implicit-logic + call-graph"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-032",
+      "type": "implicit_behavior",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "The three mutation paths have three mutually inconsistent refresh behaviours. Insert refreshes the dashboard but not the visible grid; delete refreshes the visible grid but not the dashboard; update refreshes both, and only because the view form attached a FormClosed handler when it launched the edit form. No two of the three agree, and nothing in any single file describes the intended contract. Statistics are recomputed on four of five triggers, omitting delete, and there is no timer or change notification, so an idle dashboard is indefinitely stale.",
+      "prescribed_behavior": "The system MUST define one refresh contract and apply it uniformly to create, update, archive and purge: every affected surface is invalidated and re-read, with no path exempt. Where a surface may display data mutated by another principal, the system MUST either subscribe to change notification or state an explicit maximum staleness and indicate the as-of instant to the principal.",
+      "justification": "duplicate_logic in the form of three divergent implementations of one concern resolves to CONSOLIDATE. BR-058 and BR-077 together show the omission is not uniform neglect but three different partial behaviours, so a single canonical contract is the resolution rather than three separate fixes.",
+      "affected_requirements": ["REQ-072", "REQ-070", "REQ-071", "REQ-075", "NFR-033"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-058",
+        "corroborating_findings": ["IM-020", "BR-077", "BR-019", "BR-038", "BR-094"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 97,
+        "line_range": "93-97",
+        "secondary_sources": ["Flat Design/InsertForm.vb:27", "Flat Design/EditForm.vb:67", "Flat Design/Form1.vb:121-137"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-033",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The OLEDB provider does not support named parameters: the '@Name' tokens in the SQL text are anonymous placeholders and parameters are bound strictly in the order they were added. The four parameterized statements work only because their AddWithValue order happens to match their placeholder order. Any future reordering shifts every value one column sideways rather than erroring, and because first/last name and the two mobile numbers are same-typed adjacent pairs, a transposition between them would corrupt data with no exception at all.",
+      "prescribed_behavior": "Parameter binding MUST be by name, verified at build time or by an automated test that asserts each parameter reaches its intended column. The system MUST NOT depend on the textual ordering of a parameter collection for correctness. Column-to-field mapping MUST be declared in exactly one place per entity.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. The source's own appearance of name-based binding contradicts the provider's actual semantics, so a developer reading the legacy code would draw the wrong conclusion about what is safe to change. SME confirmation is required because the silent same-typed transposition described in BR-018 may already have occurred in the stored data, which would be a migration-time data-quality question rather than a code question.",
+      "affected_requirements": ["REQ-054", "REQ-001", "REQ-012", "NFR-034"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-018",
+        "corroborating_findings": ["IM-015", "BR-010", "BR-032"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 11,
+        "line_range": "9-25",
+        "secondary_sources": ["Flat Design/EditForm.vb:51-64", "Flat Design/ViewForm.vb:90-92"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-034",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "Roll number, first name, last name, gender, course and admission year are TEXT columns 255 characters wide, while father's name is a MEMO column with no practical limit. No MaxLength is set on any of the thirteen text boxes and no length validation exists in code, so the only field-length rule in the system lives in the binary table definition and surfaces only as an untriaged provider error on save. The one field holding a third party's personal data is also the one field with no length ceiling, with no rationale recorded.",
+      "prescribed_behavior": "Every text attribute MUST declare an explicit maximum length in the requirement set, in the data model and at the input surface, and the three MUST agree. No attribute may be unbounded. Length violations MUST be prevented at the input surface and, if they reach the service layer, MUST be reported as a field-attributed validation error. Father's name MUST be bounded on the same basis as the other name attributes.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-096 records that this is 'the only length rule that exists and it is invisible in source'. The db-archaeology remediation is explicit that the MEMO column should become a bounded string. Stating the limits in three agreeing places is what converts an invisible provider behaviour into a testable requirement.",
+      "affected_requirements": ["REQ-009", "REQ-003", "REQ-097", "REQ-099"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-096",
+        "corroborating_findings": ["IM-007", "IM-008", "A11Y-007", "db-archaeology[FatherName MEMO]", "BR-012"],
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 0,
+        "line_note": "students table definition; TEXT width 510 bytes = 255 characters, FatherName Jet type 0x0C.",
+        "secondary_sources": ["Flat Design/InsertForm.Designer.vb:224-229", "Flat Design/InsertForm.vb:12-17"],
+        "discovery_artifact": "business-rules + implicit-logic + db-archaeology"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-035",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The grid is explicitly ReadOnly, but AllowUserToAddRows and AllowUserToDeleteRows are never set and retain their permissive True defaults, which ReadOnly does not suppress. A phantom new-row placeholder is always rendered, so an empty table never looks empty and any row count is off by one. Selecting the placeholder passes the selection guard and then yields a Nothing roll-number cell, crashing both the Update and the Delete handler, neither of which has exception handling. The Delete key can also remove rows from the bound table without touching the database, so the grid and the data silently disagree until the next reload.",
+      "prescribed_behavior": "The record list MUST present only persisted records and MUST NOT render a placeholder or any row that does not correspond to stored data. An empty result set MUST be presented as an explicit empty state. No interaction with the list may alter displayed data without a corresponding persisted change. Every selection the system accepts MUST resolve to an existing record before any operation is offered against it.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. The permissive defaults are invisible in source because they are never written, which is exactly the class of framework magic the SRS must convert into a stated requirement. The prescription also closes a reachable crash path and removes the off-by-one that makes any grid-derived count untrustworthy.",
+      "affected_requirements": ["REQ-029", "REQ-025", "REQ-020"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-060",
+        "corroborating_findings": ["IM-023", "BR-055", "BR-050", "BR-036"],
+        "source_file": "Flat Design/ViewForm.Designer.vb",
+        "source_line": 112,
+        "line_range": "110-128",
+        "secondary_sources": ["Flat Design/ViewForm.vb:62", "Flat Design/ViewForm.vb:44"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-036",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The shell has no form navigation. Each child form is instantiated once, has TopLevel set to False, and is added as a control to the dashboard's host panel. Dashboard navigation hides the children rather than removing or disposing them, so the panel permanently accumulates child form controls stacked over still-present statistics tiles. An edit form left hosted retains unsaved edits invisibly and restores them on return. Instances are reused unless disposed, which is what makes the edit-form reuse path and the default-instance confusion reachable. View and Edit are reparented from two different modules, the child reaching into the parent's control tree.",
+      "prescribed_behavior": "Navigation between surfaces MUST be an explicit, declared state transition. Exactly one primary surface MUST be presented at a time and the surfaces it replaces MUST be fully released, retaining no residual input state. A surface MUST NOT modify the control structure of another surface. Unsaved input MUST either be explicitly persisted as a draft or discarded with warning on navigation; it MUST NOT persist invisibly.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT. BR-078 is the application's single most complex behaviour at extreme complexity, spans four modules, and no single file describes it — it is the substrate on which BR-019, BR-062 and BR-063 all depend. SME confirmation is required on the intended navigation model, since the structural assessment records the shell and statistics concerns as deliberately overlapping and states 'that overlap IS the finding'.",
+      "affected_requirements": ["REQ-076", "REQ-074", "REQ-073", "REQ-070"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-078",
+        "corroborating_findings": ["IM-031", "BR-063", "BR-062", "BR-019", "coupling_signals.reaches-into-parent-control-tree", "circular-form-dependencies", "recommended_decomposition_boundaries.ui-shell-and-navigation"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 102,
+        "line_range": "102-153",
+        "secondary_sources": ["Flat Design/ViewForm.vb:70-74", "Flat Design/Form1.Designer.vb:295-312"],
+        "discovery_artifact": "business-rules + implicit-logic + structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-037",
+      "type": "implicit_behavior",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "The delete path contains the application's only dbcon.Close(), leaving the shared global connection closed with no paired reopen. The view form's own reload survives because DataAdapter.Fill opens and closes the connection implicitly, which masks the defect at the one call site that would have revealed it. The dashboard's statistics loader issues ExecuteScalar without calling connectDB first, so navigating Home after a delete raises an unhandled InvalidOperationException and terminates the application. The connection state machine also has a Broken state that the lazy-open guard tests for neither, so it is never recovered from.",
+      "prescribed_behavior": "Each unit of work MUST acquire its own datastore connection, use it within an explicit scope, and release it deterministically on completion, whether successful or not. No connection may be shared across operations or surfaces, and no component may close a connection it did not open. Connection lifecycle MUST NOT depend on implicit framework behaviour, and a connection in an unusable state MUST be discarded and replaced rather than reused.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT, and the explicit scope simultaneously removes the shared-mutable-state coupling rated critical by the structural assessment, which states 'every decomposition boundary must cut this edge'. The implicit auto-open behaviour that masks the defect is itself a magic behaviour the SRS must displace.",
+      "affected_requirements": ["REQ-053", "REQ-050", "REQ-052", "REQ-057"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-004",
+        "corroborating_findings": ["IM-019", "BR-001", "BR-003", "CS-20", "coupling_indicators.shared-global-connection", "coupling_signals.silent-state-check-swallows-broken-states", "call-graph edges[view-form→module1-db-connection, mutates_shared_state=true]"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 94,
+        "line_range": "83-102",
+        "secondary_sources": ["Flat Design/Form1.vb:25-26", "Flat Design/Module1.vb:6"],
+        "discovery_artifact": "business-rules + implicit-logic + call-graph"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-038",
+      "type": "duplicate_logic",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "The insert and edit surfaces are near-duplicates: 373 against 371 Designer lines with byte-for-byte identical control sets covering the same ten fields, and their hand-written halves duplicate the same field-to-parameter mapping. The structural assessment states the consequence as 'one record-editor component is doing the work of two'.",
+      "prescribed_behavior": "The field set, its validation rules and its mapping to stored attributes MUST be declared exactly once and reused by every surface that creates or amends a student record. A change to a field's validation MUST take effect on every such surface without a second edit.",
+      "justification": "duplicate_logic resolves to CONSOLIDATE. The canonical definition is the entity and its validation rules, declared once in the prescribed data model; the create and amend surfaces become two projections of it rather than two implementations. This also removes the divergence risk that currently lets roll number be freely editable on one surface and read-only on the other by virtue of two separate Designer files.",
+      "affected_requirements": ["REQ-001", "REQ-012", "REQ-003", "REQ-011"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-032",
+        "corroborating_findings": ["CS-06", "CS-11", "coupling_indicators.insert-edit-near-duplication", "duplication_map.near_duplicate_application_modules", "BR-031"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 54,
+        "line_range": "54-63",
+        "secondary_sources": ["Flat Design/InsertForm.vb:12-23", "Flat Design/InsertForm.Designer.vb", "Flat Design/EditForm.Designer.vb"],
+        "discovery_artifact": "quality-risk + structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-039",
+      "type": "duplicate_logic",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "The view surface triplicates its data-loading logic across three methods: LoadData binds the whole table, LoadSData binds a filtered result, and RefreshData is a one-line passthrough to LoadData existing only to give the shell a public name to call. Filtering calls one loader while every refresh path calls another, so an active search filter is discarded silently whenever anything else happens, and there is no reset control.",
+      "prescribed_behavior": "Record retrieval MUST be implemented once, parameterized by its filter, sort and page, and every caller MUST use that single path. An active filter MUST survive a refresh triggered by an unrelated operation, and the system MUST provide an explicit control to clear the filter.",
+      "justification": "duplicate_logic resolves to CONSOLIDATE. The canonical version is a single parameterized query path; the three legacy methods collapse into it. The silent filter loss described in IM-026 is a direct consequence of the duplication rather than an independent defect, so consolidating is also the fix for it.",
+      "affected_requirements": ["REQ-020", "REQ-021", "REQ-023", "REQ-072"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-050",
+        "corroborating_findings": ["IM-026", "CS-17", "coupling_signals.duplicate-load-paths", "BR-053", "duplication_map.dead_code_in_application_source[2]"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 34,
+        "line_range": "34-58",
+        "secondary_sources": ["Flat Design/ViewForm.vb:97", "Flat Design/ViewForm.vb:112"],
+        "discovery_artifact": "business-rules + implicit-logic + quality-risk"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-040",
+      "type": "duplicate_logic",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "The course taxonomy BCA/MCA/IIMCA is restated in at least eight places: two Designer Items collections, two dead AutoCompleteCustomSource collections, three dashboard COUNT queries and three tile captions, plus two further orphaned captions. Gender is duplicated across two Designer files and contradicted by the single place that aggregates it. Admission year is declared in four Designer locations and independently re-derived by dashboard arithmetic. There is no database constraint, no lookup table and no grouping anywhere.",
+      "prescribed_behavior": "Each controlled vocabulary MUST have exactly one authoritative definition held as reference data in the datastore, with a code, a display label, an active flag and an effective date range. Every surface, validation rule and statistic MUST read the vocabulary from that single definition. Adding or retiring a value MUST require no code change and no rebuild.",
+      "justification": "duplicate_logic resolves to CONSOLIDATE. The eight-way duplication is recorded as the maintenance risk rather than any branching complexity, and the decomposition strategy independently prescribes the same resolution: normalizing gender, course and admission year into reference tables with real constraints is 'the one place the target schema legitimately gains relations the legacy single-table shape has none of'. Consolidation here is also the precondition for ANOM-014 and ANOM-015.",
+      "affected_requirements": ["REQ-030", "REQ-031", "REQ-032", "REQ-033", "REQ-095"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-014",
+        "corroborating_findings": ["IM-004", "IM-003", "IM-005", "BR-013", "BR-015", "BR-070", "BR-071", "data-domains.D3[CodeList]", "decomposition-strategy.target_data_model_prescriptions"],
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 103,
+        "line_range": "99-103",
+        "secondary_sources": ["Flat Design/EditForm.Designer.vb:311-314", "Flat Design/Form1.vb:38", "Flat Design/Form1.vb:43", "Flat Design/Form1.vb:48", "Flat Design/Form1.Designer.vb:897"],
+        "discovery_artifact": "business-rules + implicit-logic + decomposition-strategy"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-041",
+      "type": "duplicate_logic",
+      "action": "CONSOLIDATE",
+      "legacy_behavior": "All data access is inline in user-interface event handlers: sixteen SQL statements across four of six modules, with no service layer, repository, data-access layer, ORM or stored procedure anywhere. The only shared component is a thirteen-line module holding one public mutable connection. The structural assessment rates this ui-owns-all-sql at high severity.",
+      "prescribed_behavior": "All datastore access MUST be encapsulated behind an explicit data-access layer that presentation code calls through a declared interface. No presentation component may construct, parameterize or execute a datastore statement. Business rules and validation MUST reside in a service layer that is callable and testable without instantiating any presentation surface.",
+      "justification": "duplicate_logic resolves to CONSOLIDATE: the same concern is implemented sixteen times in four places. The decomposition strategy's student-record-crud-service boundary names this directly — 'the SQL to build it already exists but must be LIFTED OUT of the four form event handlers'. SME confirmation is required because the layering choice is bound to the target-platform decision, which the decomposition strategy records as an open disposition question.",
+      "affected_requirements": ["REQ-050", "REQ-057", "NFR-035", "NFR-036"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-001",
+        "corroborating_findings": ["coupling_indicators.ui-owns-all-sql", "coupling_signals.no-data-access-abstraction", "coupling_signals.presentation-owns-aggregation-logic", "summary_metrics.inline_sql_statements=16", "recommended_decomposition_boundaries.student-record-crud-service"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 1,
+        "line_range": "3-12",
+        "secondary_sources": ["Flat Design/Form1.vb:24", "Flat Design/InsertForm.vb:9", "Flat Design/EditForm.vb:14", "Flat Design/ViewForm.vb:39"],
+        "discovery_artifact": "structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-042",
+      "type": "naming_inconsistency",
+      "action": "RENAME",
+      "legacy_behavior": "The database declares PascalCase column names — RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB — while every SQL statement and every reader lookup in the application uses lowercase. Access is case-insensitive so this is harmless today, but it breaks at runtime rather than at build time on a case-sensitive target.",
+      "prescribed_behavior": "Attribute naming MUST follow one documented convention applied consistently across the data model, the data-access layer and the service layer, and the mapping from each prescribed attribute name to its legacy column name MUST be recorded in the data model so migration is mechanical. The system MUST NOT depend on the datastore's case-insensitivity for name resolution.",
+      "justification": "naming_inconsistency resolves to RENAME. The decomposition strategy directs settling the casing deliberately, and RISK-05 flags the divergence as breaking on PostgreSQL. The old-to-new mapping is carried in srs-data-model.json so the rename does not lose the ability to trace a prescribed attribute back to its legacy column.",
+      "affected_requirements": ["REQ-096", "REQ-099", "NFR-037"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-061",
+        "corroborating_findings": ["RISK-05", "database-schema-summary open_questions[casing]", "db-schema.json:76"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 62,
+        "secondary_sources": ["Flat Design/studentDB.accdb students table definition", "Flat Design/EditForm.vb:21-30"],
+        "discovery_artifact": "structural-analysis + db-archaeology"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-043",
+      "type": "naming_inconsistency",
+      "action": "RENAME",
+      "legacy_behavior": "Three vocabularies describe two concepts. The dashboard axis heading reads 'Degree Wise' while the column and the selector are named course. The admission-year field is labelled 'Session' on both entry forms while the column is named yoa and holds a single year rather than a session range — and 'Session' is a retired column name from a superseded schema generation still present in the database file. The abbreviations YOA, FName and LName are never expanded anywhere.",
+      "prescribed_behavior": "Each concept MUST have one name used consistently in the data model, the service layer, the user interface and all reported statistics. Every user-visible label MUST be a complete, unabbreviated term. Admission year MUST be named consistently and MUST NOT be labelled with a term denoting a different concept.",
+      "justification": "naming_inconsistency resolves to RENAME. This is also an accessibility defect: A11Y-002 records that a screen reader announces the raw database token and that abbreviations are never expanded, so the rename discharges part of a WCAG 1.3.1 failure as well as a maintainability concern.",
+      "affected_requirements": ["REQ-033", "REQ-032", "REQ-103", "NFR-037"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-015",
+        "corroborating_findings": ["IM-033", "BR-014", "BR-071", "A11Y-002", "db-archaeology[superseded generation C with Session column]"],
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 118,
+        "secondary_sources": ["Flat Design/Form1.Designer.vb:337", "Flat Design/Form1.Designer.vb:371", "Flat Design/studentDB.accdb"],
+        "discovery_artifact": "business-rules + implicit-logic + accessibility-audit"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-044",
+      "type": "naming_inconsistency",
+      "action": "RENAME",
+      "legacy_behavior": "Internal control names are overwhelmingly auto-generated — Label1 through Label27, Button8, Panel1 through Panel20, PictureBox1 through PictureBox17 — with Label8 reused in three different forms. The ten statistics count controls carry txt-prefixed names implying TextBoxes while they are in fact Labels, so any future code that casts them or sets ReadOnly on them will fail. The dashboard title is misspelled 'Sudent Management System' and a second label hardcodes the original author's name and cohort, both user-visible.",
+      "prescribed_behavior": "Every named element MUST have an identifier that denotes its purpose and its actual type, unique within its surface. User-visible text MUST be correctly spelled and MUST NOT contain development-time or authorship residue. Element naming MUST follow the target platform's documented convention.",
+      "justification": "naming_inconsistency resolves to RENAME. A11Y-009 records the accessibility consequence: in combination with the missing accessible names, assistive technology may expose the literal internal name such as 'PictureBox14' or 'cmbyoa' to a screen reader. The misspelling and author residue are user-visible defects that no modernized system should reproduce.",
+      "affected_requirements": ["REQ-108", "REQ-048", "NFR-037"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-076",
+        "corroborating_findings": ["A11Y-009", "IM-022", "BR-081", "IM-034"],
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 1066,
+        "secondary_sources": ["Flat Design/Form1.Designer.vb:97", "Flat Design/Form1.Designer.vb:981", "Flat Design/InsertForm.Designer.vb:49"],
+        "discovery_artifact": "business-rules + accessibility-audit"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-045",
+      "type": "naming_inconsistency",
+      "action": "RENAME",
+      "legacy_behavior": "The two telephone attributes are named MobNo and AltMobNo and are distinguished only by position, with no contact type, no preference order and no validity window. The data-domain assessment describes them as 'two unlabelled telephone slots denormalised into the student row'.",
+      "prescribed_behavior": "Each contact point MUST carry an explicit, named type and purpose rather than being identified by a positional 'alternate' qualifier. Contact points MUST be modelled so that their number is not fixed by the schema at two.",
+      "justification": "naming_inconsistency resolves to RENAME, and the rename is what makes the modelling change in ANOM-012 meaningful: widening the column without naming what each slot means would preserve the ambiguity. The data-domain assessment identifies StudentContactPoint as a distinct logical entity on exactly this basis.",
+      "affected_requirements": ["REQ-097", "REQ-005"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-017",
+        "corroborating_findings": ["data-domains.D1.StudentContactPoint", "DF-SMS-003", "IM-006"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 16,
+        "line_range": "16-17",
+        "secondary_sources": ["Flat Design/studentDB.accdb students table definition"],
+        "discovery_artifact": "data-domains + business-rules"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-046",
+      "type": "performance_antipattern",
+      "action": "OPTIMIZE",
+      "legacy_behavior": "The dashboard computes its twelve statistics as twelve independent COUNT queries with no GROUP BY — two for gender, three for course, five for year buckets — each a separate round trip, executed sequentially from the startup path. The year predicates are built by converting an integer to a string and concatenating it into a quoted literal to match a TEXT column, so comparison is lexical rather than arithmetic and no range predicate would behave numerically, which is the likely reason five equality queries were written instead of one grouped query.",
+      "prescribed_behavior": "Statistical breakdowns MUST be computed by grouped aggregation returning all buckets for one axis in a single datastore round trip. Admission year MUST be stored numerically so that range and grouping predicates evaluate arithmetically. The dashboard MUST render within the latency budget stated in NFR-010 measured at the stated data volume.",
+      "justification": "performance_antipattern resolves to OPTIMIZE. The grouped form is also the correctness fix for ANOM-020, because grouping over the data rather than over a compiled list of expected values is what makes an out-of-set value countable. The expected characteristic is stated in NFR-010 rather than invented here.",
+      "affected_requirements": ["REQ-040", "REQ-041", "REQ-043", "REQ-044", "NFR-010"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-071",
+        "corroborating_findings": ["BR-072", "BR-073", "BR-074", "IM-009", "CS-02", "db-archaeology[logic-in-proc]", "coupling_signals.presentation-owns-aggregation-logic"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 62,
+        "line_range": "22-93",
+        "discovery_artifact": "business-rules + db-archaeology"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-047",
+      "type": "performance_antipattern",
+      "action": "OPTIMIZE",
+      "legacy_behavior": "The record list binds the entire table via SELECT * with no WHERE, no ORDER BY, no TOP and no paging, and the grid grows without bound as the table grows. Display order is whatever physical order the engine returns, which is not guaranteed stable across inserts and deletes, so a user's visual position is not stable between refreshes. Every refresh creates a new result set and discards the previous one without disposing it.",
+      "prescribed_behavior": "Record retrieval MUST be paged with a bounded maximum page size and MUST apply a deterministic, stable sort that the principal can change. No operation may read the full table into memory. Every retrieved resource MUST be released deterministically. Retrieval MUST meet the latency budget in NFR-011 at the stated data volume.",
+      "justification": "performance_antipattern resolves to OPTIMIZE. The unbounded read is flagged independently by the structural assessment as the unbounded-full-table-read coupling signal. The stable-sort clause is required because BR-050 records that order instability makes the list unusable for sequential review, which is a correctness consequence of the same omission.",
+      "affected_requirements": ["REQ-020", "REQ-023", "NFR-011"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-050",
+        "corroborating_findings": ["coupling_signals.unbounded-full-table-read", "BR-061", "BR-019"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 39,
+        "line_range": "37-45",
+        "discovery_artifact": "business-rules + structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-048",
+      "type": "performance_antipattern",
+      "action": "OPTIMIZE",
+      "legacy_behavior": "The edit-launch path attaches a FormClosed handler on every click but constructs a new form only when none exists or the previous was disposed, so each reuse adds another subscription to the same event on the same instance and the grid reload runs once per accumulated subscription, producing N redundant full-table queries per close. Separately, the hidden default view-form instance materialised after every insert runs its Load handler, opens the connection and binds a result set that is never disposed, accumulating redundant query work across the session.",
+      "prescribed_behavior": "Event subscriptions MUST be symmetric: every subscription MUST have exactly one corresponding removal, and no component may accumulate duplicate subscriptions across a session. A single logical refresh MUST result in exactly one datastore read. The system MUST NOT hold presentation or data resources that are not reachable from the current surface.",
+      "justification": "performance_antipattern resolves to OPTIMIZE. BR-062 notes the accumulation is latent today only because both exit paths dispose the instance, which makes the dead reuse branch 'itself the more durable hazard' — so the prescription addresses the asymmetry rather than only its current symptom.",
+      "affected_requirements": ["REQ-073", "REQ-070", "REQ-076"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-062",
+        "corroborating_findings": ["IM-030", "CS-19", "coupling_signals.handler-leak-on-repeat-edit", "BR-019", "BR-050"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 75,
+        "line_range": "60-81",
+        "secondary_sources": ["Flat Design/ViewForm.vb:111-113", "Flat Design/EditForm.vb:37-40"],
+        "discovery_artifact": "business-rules + implicit-logic"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-049",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "The dashboard contains two duplicate statistic tiles — a second 'BCA Students' and a second 'IIMCA Students', each with its own count label — that the statistics loader never writes to, so they display their Designer default of '0' forever. They are nested in the wrong parent panel and pushed outside its bounds by coordinates of -373 and +373 within a 343-pixel-wide parent rather than being hidden or deleted, so any change to the parent's size or a move to a layout container would expose two tiles structurally incapable of being correct. The accessibility audit records that they nonetheless remain in the control collection and tab order, so a keyboard or screen-reader user can land on them out of sequence.",
+      "prescribed_behavior": "No requirement is generated for these tiles. The modernized dashboard MUST present exactly one tile per statistic it reports, and MUST NOT contain any presentation element that no computation writes to. Elements MUST be removed rather than hidden by geometry.",
+      "justification": "dead_code resolves to OMIT. These tiles produce no behaviour a stakeholder could depend on: they are structurally incapable of showing a correct value. They are not merely unused but actively harmful, because A11Y-005 shows they are reachable by assistive technology and one of them overlaps a real tile. SME confirmation is required only to record that no stakeholder expected a second BCA or IIMCA figure, since the duplication is unexplained.",
+      "affected_requirements": ["REQ-048", "REQ-104"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-081",
+        "corroborating_findings": ["IM-032", "A11Y-005", "BR-071"],
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 534,
+        "line_range": "518-614",
+        "secondary_sources": ["Flat Design/Form1.Designer.vb:551", "Flat Design/Form1.Designer.vb:583", "Flat Design/Form1.Designer.vb:600"],
+        "discovery_artifact": "business-rules + implicit-logic + accessibility-audit"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-050",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "Four items of dead code exist in application source. Both the edit and view forms carry an identical accidental Imports of a VisualStyleElement.Status namespace, an IDE-completion artifact unused in both. The view form holds a commented-out loader call immediately superseded by a one-line passthrough that exists only to give the shell a public name to call. The generated Settings accessor is a 73-line shell over an empty settings store — the configuration mechanism exists and is entirely unused, which is why the connection string is hardcoded. The two AutoCompleteCustomSource collections carrying the course and year literals are dead configuration because the combos are DropDownList style.",
+      "prescribed_behavior": "No requirement is generated for any of these elements. The modernized system MUST NOT contain unreferenced imports, commented-out code paths, passthrough members that exist only to satisfy an external caller's naming, or configuration scaffolding that nothing reads.",
+      "justification": "dead_code resolves to OMIT. None of these elements is reachable or observable, so generating requirements for them would specify behaviour the legacy system does not have. The empty Settings store is recorded rather than silently dropped because its existence explains why ANOM-006's hardcoded path was possible, and the passthrough member disappears when ANOM-031 replaces implicit type-name addressing with an explicit notification contract.",
+      "affected_requirements": ["REQ-051", "REQ-070"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-050",
+        "corroborating_findings": ["CS-13", "CS-16", "IM-003", "duplication_map.dead_code_in_application_source", "coupling_signals.unused-import", "coupling_signals.empty-settings-store"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 12,
+        "secondary_sources": ["Flat Design/EditForm.vb:2", "Flat Design/ViewForm.vb:34-36", "Flat Design/My Project/Settings.Designer.vb:1", "Flat Design/InsertForm.Designer.vb:118"],
+        "discovery_artifact": "structural-analysis + quality-risk"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-051",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "The edit form's UpdateRollNo reuse branch is effectively unreachable, because both exit paths of the edit form call Close and dispose the instance, so the shell's IsDisposed guard always reconstructs rather than reusing. BR-062 records that this makes the duplicate-handler accumulation latent and that 'the dead reuse branch is itself a maintenance hazard'.",
+      "prescribed_behavior": "No requirement is generated for instance reuse of an amend surface. The modernized system MUST construct an amend surface per operation and MUST NOT retain or reuse a previous instance.",
+      "justification": "dead_code resolves to OMIT. Generating a requirement for a reuse path no execution reaches would specify behaviour that has never run, and the explicit navigation model prescribed in ANOM-036 removes the construct-or-reuse decision entirely.",
+      "affected_requirements": ["REQ-076", "REQ-073"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-062",
+        "corroborating_findings": ["IM-030", "CS-13", "state-machines.child-form-instance-lifecycle", "BR-078"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 37,
+        "line_range": "37-40",
+        "secondary_sources": ["Flat Design/ViewForm.vb:64-68", "Flat Design/InsertForm.vb:57"],
+        "discovery_artifact": "business-rules + state-machines"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-052",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "The database file retains four superseded table-definition generations for the same table: an early three-column shape, one carrying ClassN and Sec where the live definition has Course and YOA, one carrying Session in place of YOA, and the live definition. Roughly 37 orphaned long-value property pages persist, maxcols reads 19 against a live ncols of 10, and a stray four-byte fixed-data slot at row offset zero belongs to no live column. Retired column names SName, Class, ClassN, Sec, Session and Field1 remain readable in the file.",
+      "prescribed_behavior": "No requirement is generated for any superseded column. The prescribed data model MUST be pinned to the ten live attributes, and data migration MUST read only those, explicitly ignoring the retired shapes. The migration MUST assert that no source row carries data in a retired column before the legacy file is retired.",
+      "justification": "dead_code resolves to OMIT. The decomposition strategy directs exactly this: 'pin migration to the ten live columns'. The omission is documented rather than silent because the retired name Session still drives a user-visible label on the control that writes YOA, which is why ANOM-043 renames it — an omission with no note would leave that coincidence unexplained.",
+      "affected_requirements": ["REQ-099", "REQ-032"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-096",
+        "corroborating_findings": ["db-archaeology[orphan-object: four superseded design generations]", "RISK-04", "duplication_map.superseded_schema_retained_in_database_file", "db-schema.json:75", "IM-033"],
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 0,
+        "line_note": "Superseded students table-definition records on pages 135, 142, 144, 146-150 and 166-193.",
+        "discovery_artifact": "db-archaeology + structural-analysis"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-053",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "The dashboard's Project Report button does not open the project report committed in the repository. It launches the default browser against a hardcoded absolute GitHub URL pointing at that same file in the author's public repository, with a source comment still reading 'Replace with your desired web link'. The feature requires internet access, depends on a third-party repository remaining public at a fixed path, and leaks the fact of use to an external host. Process.Start is unguarded, so a machine with no registered URL handler crashes the application. The capability catalogue records that 'the dashboard's Report button is a dead link to an external PDF and implements no actual reporting'.",
+      "prescribed_behavior": "No reporting requirement is generated from this control. The modernized system MUST NOT embed an external repository URL, MUST NOT depend on a third-party host for a document it can serve itself, and MUST NOT launch an external process without handling its failure. If a reporting capability is required it MUST be specified from stakeholder requirements, not derived from this control.",
+      "justification": "dead_code resolves to OMIT, because the control implements no application behaviour: the interface inventory classifies it as kind 'unknown' on the explicit grounds that 'it is neither a report the application produces nor an api/file-exchange integration' and that 'any real reporting capability is unimplemented'. SME confirmation is required precisely because stakeholders may expect a reporting feature that has never existed, and this omission must not be mistaken for a decision that reporting is unnecessary.",
+      "affected_requirements": ["REQ-047"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-080",
+        "corroborating_findings": ["IM-034", "coupling_indicators.hardcoded-external-url-as-reporting", "interface-inventory.interfaces[Project report link (outbound browser launch)]", "capability-catalog.capabilities[reporting-and-analytics]"],
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 156,
+        "line_range": "155-158",
+        "secondary_sources": ["Siddharth Jain Project Report.pdf", "Flat Design/Form1.Designer.vb:168"],
+        "discovery_artifact": "business-rules + interface-inventory"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-054",
+      "type": "dead_code",
+      "action": "OMIT",
+      "legacy_behavior": "Four legacy runtime states are reachable but represent defect conditions rather than intended behaviour: PartiallyLoaded, in which a categorical selector failed to bind and saving destroys the stored value; BlankEdit, in which no row matched and the surface shows designer defaults while appearing to edit the selected record; DefaultInstance, a parallel invisible surface materialised by addressing a type by name; and Broken, a connection state the lazy-open guard never tests for and never recovers from. A fifth, Busy, is an implicit state created by an unclosed reader that blocks every other operation on the shared connection.",
+      "prescribed_behavior": "None of these states is prescribed. The modernized state machines in srs.json MUST NOT contain them, and the conditions that produce them MUST be impossible by construction under REQ-013, REQ-015, REQ-070 and REQ-050 respectively.",
+      "justification": "dead_code resolves to OMIT, applied to states rather than to statements. Each is recorded in this log with its reason because the skill's own guidance is that a state removed with no note is indistinguishable from an oversight; they are also listed in the dead_states_removed block of each affected state machine in srs.json.",
+      "affected_requirements": ["REQ-013", "REQ-015", "REQ-070", "REQ-050", "REQ-053"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "BR-033",
+        "corroborating_findings": ["BR-036", "BR-019", "BR-004", "BR-003", "state-machines.student-record-lifecycle", "state-machines.shared-database-connection", "state-machines.child-form-instance-lifecycle"],
+        "source_file": "Flat Design/EditForm.vb",
+        "source_line": 27,
+        "secondary_sources": ["Flat Design/EditForm.vb:20", "Flat Design/InsertForm.vb:28", "Flat Design/Module1.vb:6"],
+        "discovery_artifact": "state-machines"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-055",
+      "type": "accessibility_violation",
+      "action": "FIX",
+      "legacy_behavior": "Zero AccessibleName and zero AccessibleDescription assignments exist across all 137 controls in all four surfaces; the audit verified that neither string occurs anywhere in any Designer file. Non-text controls — the three selectors, the date picker, the grid, every image and every text box — therefore have no reliable programmatic name, and the platform has no label-association equivalent to fall back on. The audit rates this critical and states it is 'the only mechanism (keyboard + screen reader) a non-visual user has to operate the application at all'. The accessibility gate decision is FAIL, driven by this finding.",
+      "prescribed_behavior": "Every interactive and informational element MUST expose a programmatic name, and a programmatic description where the name alone is ambiguous, sufficient for assistive technology to identify and operate it without reference to visual layout. Purely decorative elements MUST be marked so assistive technology skips them. The system MUST satisfy WCAG 2.1 success criterion 4.1.2 at Level A.",
+      "justification": "accessibility_violation resolves to FIX against the conformance target in srs-accessibility-compliance.json. This is the single highest-impact remediation because it is a measured zero, and the audit's own recommendation lists it first. It is the only critical accessibility finding and is what forces the FAIL verdict.",
+      "affected_requirements": ["REQ-100", "REQ-108", "NFR-040"],
+      "sme_confirmation_required": false,
+      "discovery_source": {
+        "rule_id": "A11Y-001",
+        "corroborating_findings": ["CS-05", "coupling_indicators.accessibility-surface-unannotated", "summary_metrics.accessible_name_annotations=0", "A11Y-009"],
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 173,
+        "line_range": "173-215",
+        "secondary_sources": ["Flat Design/InsertForm.Designer.vb:85-331", "Flat Design/EditForm.Designer.vb:53-330", "Flat Design/ViewForm.Designer.vb:42-171"],
+        "discovery_artifact": "ux-accessibility + accessibility-audit"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-056",
+      "type": "accessibility_violation",
+      "action": "FIX",
+      "legacy_behavior": "Eight further accessibility findings were recorded: raw database field names as grid column headers with abbreviations never expanded (A11Y-002, serious, WCAG 1.3.1 and 3.3.2); five year tiles carrying the identical caption 'Year Students' differentiated only by a decorative coloured numeral image (A11Y-003, serious, 1.4.1); duplicate TabIndex values making focus order implementation-defined (A11Y-004, 2.4.3); two overlapping duplicate panels remaining in the tab order (A11Y-005, 1.3.2); theme-dependent SystemColors.ActiveCaption on a tile and the grid background making contrast unverifiable at design time (A11Y-006, 1.4.3 Level AA); no MaxLength and no field-attributed validation message anywhere (A11Y-007, 3.3.2); no access-key mnemonics on any button (A11Y-008, 2.1.1); and generic auto-generated internal element names (A11Y-009, 2.4.6 Level AA).",
+      "prescribed_behavior": "The system MUST resolve every finding recorded in srs-accessibility-compliance.json and MUST conform to WCAG 2.1 Level AA across every surface. Column headers MUST carry human-readable labels with abbreviations expanded; elements conveying distinct information MUST be distinguishable without reliance on colour or image; focus order MUST be unique and deterministic; colour pairs MUST be fixed and validated against the Level AA contrast ratio rather than inherited from a theme; input constraints MUST be declared at the surface and errors attributed to their field; and keyboard mnemonics MUST be provided.",
+      "justification": "accessibility_violation resolves to FIX. SME confirmation is required because the audit states its findings are 'a floor, not a ceiling': axe-core could not run at all against a desktop application, zero per cent of findings came from automated tooling, both the accessibility score and the conformance percentage were deliberately returned as null rather than estimated, and live NVDA/JAWS/Narrator testing plus pixel-level contrast measurement against a compiled build are named as required before the findings can be considered conclusive.",
+      "affected_requirements": ["REQ-101", "REQ-102", "REQ-103", "REQ-104", "REQ-105", "REQ-106", "REQ-107", "REQ-108", "NFR-040", "NFR-041"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "A11Y-002",
+        "corroborating_findings": ["A11Y-003", "A11Y-004", "A11Y-005", "A11Y-006", "A11Y-007", "A11Y-008", "A11Y-009", "ux-accessibility.gate_decision=FAIL", "accessibility-audit.508_compliance=fail"],
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "secondary_sources": ["Flat Design/Form1.Designer.vb:442-454", "Flat Design/Form1.Designer.vb:167", "Flat Design/Form1.Designer.vb:528-537", "Flat Design/Form1.Designer.vb:960", "Flat Design/InsertForm.Designer.vb:131-158"],
+        "discovery_artifact": "ux-accessibility + accessibility-audit"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-057",
+      "type": "data_integrity_risk",
+      "action": "FIX",
+      "legacy_behavior": "The complete personal-data corpus for every student is one unversioned file on one workstation, reached by a hardcoded path, with no backup, no replication, no transaction log and no retention policy. The data-flow assessment rates this critical and states that 'loss or corruption of that file is unrecoverable total data loss'. The underlying engine reached end of life on 2017-10-10, is 32-bit only and out-of-process, and is not supported by modern runtimes. There is no automated test, no continuous-integration pipeline and no build script anywhere, and the git history contains exactly one commit, so no behavioural baseline and no regression safety net exists.",
+      "prescribed_behavior": "Student data MUST be held in a supported, currently maintained datastore with point-in-time recovery, a documented backup schedule and a tested restore procedure meeting the objectives in NFR-012 and NFR-013. The modernized system MUST be covered by automated tests exercising every requirement's acceptance criteria and MUST be built and verified by an automated pipeline before release.",
+      "justification": "data_integrity_risk resolves to FIX. The absence of any behavioural baseline is why the acceptance criteria in this SRS are load-bearing: the structural assessment records that no executable specification of current behaviour exists to migrate against, so the criteria in srs-requirements-functional.json become the specification rather than a restatement of one. SME confirmation is required on the recovery objectives in NFR-012 and NFR-013, which are prescribed targets and not observed measurements.",
+      "affected_requirements": ["NFR-012", "NFR-013", "NFR-014", "NFR-015", "NFR-016"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-002",
+        "corroborating_findings": ["DF-SMS cross_flow_findings[2]", "db-archaeology[eol-engine]", "coupling_indicators.no-automated-verification", "coupling_indicators.broken-clean-clone-build", "quality-risk.test_coverage[method=unavailable]", "structural-analysis.open_questions[NO BEHAVIOURAL BASELINE EXISTS]"],
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "secondary_sources": ["Flat Design/studentDB.accdb", "Flat Design/Student Management System Siddharth Jain.vbproj:35"],
+        "discovery_artifact": "data-flow-trace + db-archaeology + quality-risk"
+      }
+    },
+    {
+      "anomaly_id": "ANOM-058",
+      "type": "data_integrity_risk",
+      "action": "MAKE_EXPLICIT",
+      "legacy_behavior": "Father's name holds personal data about a second, unconsented data subject inside the student's row, with no separate identity, no consent basis and no independent erasure path. The data-domain assessment models it as a distinct logical entity GuardianReference with distinct_data_subject set true. All five traced data flows record retention as indefinite with no archival or purge logic anywhere, and the assessment's open question asks whether any retention, auditability or erasure obligation applies, naming a data-protection reviewer as its owner.",
+      "prescribed_behavior": "The system MUST model a guardian or parent as an identifiable party distinct from the student, MUST record the lawful basis on which that party's data is held, and MUST support erasure of that party's data independently of the student record. Every personal-data attribute MUST carry a declared retention period, and the system MUST enforce it.",
+      "justification": "implicit_behavior resolves to MAKE_EXPLICIT: the legacy system holds a second data subject's personal data without ever acknowledging that it does so, and the prescribed model must state it rather than inherit it. SME confirmation is required and is unavoidable — the applicable retention and erasure obligations are a legal determination the discovery artefacts explicitly refer to a data-protection reviewer, and the governing profile's compliance configuration was not readable from this workspace (see srs.json open_questions).",
+      "affected_requirements": ["REQ-093", "REQ-098", "NFR-025", "NFR-027"],
+      "sme_confirmation_required": true,
+      "discovery_source": {
+        "rule_id": "BR-095",
+        "corroborating_findings": ["data-domains.D1.GuardianReference", "BA-02", "BV-06", "data-domains.review_asks[deleted-student-records-remain-recoverable]", "DF-SMS-002", "DF-SMS cross_flow_findings[4]", "IM-008"],
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 15,
+        "secondary_sources": ["Flat Design/studentDB.accdb students table definition (FatherName)", "Flat Design/EditForm.vb:56"],
+        "discovery_artifact": "data-domains + business-rules"
+      }
+    }
+  ]
+}

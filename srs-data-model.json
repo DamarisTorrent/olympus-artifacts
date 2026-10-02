@@ -1,0 +1,592 @@
+{
+  "$schema": "olympus:artifact:srs-data-model:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "The entity model the SRS prescribes, derived from the Discovery data artefacts with anomaly resolutions applied. The legacy system is a single denormalized table of ten columns with exactly one index and no other constraint of any kind. This model normalizes it into eight entities: the student aggregate, its contact points, the guardian as a distinct data subject, the enrolment, three reference vocabularies consolidated from eight scattered literal declarations, and an audit entry. Every attribute traces to a legacy column or to a named Discovery finding that requires it; nothing is invented. Attribute names follow one convention and each carries its legacy column name so migration is mechanical.",
+  "schema_limitation": "THE LEGACY COLUMN TYPES ARE DECLARED, NOT CONFIRMED, AND THIS BOUNDS EVERY TYPE STATEMENT BELOW. No live database engine was available at any point in Discovery: every statement about the .accdb internals comes from reading the file as bytes. Two Pass-1 passes disagreed. The structural pass reported that column data types, nullability, primary key and indexes were UNKNOWN and explicitly declined to guess. The db-archaeology pass reported concrete declared types from a parsed table definition. The data-domain pass arbitrated and RESOLVED IN FAVOUR OF db-archaeology for declared types and for primary-key existence, and that resolution is what this model carries. A third conflict is unresolved and is recorded as a defect rather than a tie: the data-flow trace describes mobno and altmobno as short text bound as String while db-archaeology reports them as 4-byte LONG INTEGER — the data-domain pass states 'Both are correct about different things, and the mismatch between them IS the defect'. Consequently: (a) every legacy_type below is 'declared per db-archaeology, unconfirmed against a live engine'; (b) RISK-03 and DS-RISK-02 remain open and DS-RISK-02 is recorded as blocking target-schema generation; (c) the decomposition strategy's first prescription — read real types from a live ACE engine before writing any DDL — is a hard prerequisite on this model, carried as REQ-099 and as an open question in srs.json. No column default is asserted anywhere in this model: the parsed property blob recorded the absence of ValidationRule, ValidationText, Format, InputMask and lookup properties on all ten columns but did not report DefaultValue either way, so defaults are 'not established' rather than absent.",
+  "naming_convention": "Prescribed attribute names are lowercase snake_case. The legacy database declares PascalCase column names while every legacy SQL statement and reader lookup uses lowercase, a divergence that is harmless on the case-insensitive Access engine but breaks at runtime rather than at build time on a case-sensitive target (RISK-05). ANOM-042 resolves this to RENAME under one documented convention; every attribute below records legacy_column as the PascalCase name actually declared in the table definition, so the rename is traceable and the migration mapping is complete.",
+  "legacy_source_summary": {
+    "table": "students",
+    "logical_schema": "studentDB",
+    "owner": "Admin",
+    "engine": "Microsoft Access ACE (Jet), provider Microsoft.ACE.OLEDB.12.0, end of life 2017-10-10, 32-bit only, out-of-process, not supported by modern .NET runtimes",
+    "column_count": 10,
+    "row_count_estimate": 2,
+    "deleted_rows_recoverable_from_page_slack": 6,
+    "indexes": 1,
+    "owning_module": "module1-db-connection",
+    "measured_absences": "Zero foreign keys, zero relationships, zero check constraints, zero validation rules, zero triggers or data macros, zero stored procedures or saved queries, zero views, zero VBA modules, zero database links or synonyms, zero audit or provenance columns, zero soft-delete columns, no database password, no encryption. The Discovery artefacts are explicit that these are measured findings rather than unfilled fields, and that foreign-key absence in particular must not be read as undiscovered coupling.",
+    "sharing_verdict": "none-detected. One cluster, CLU-STUDENTDB-ACCDB-01, with exactly one participating application and one write owner. The cluster is degenerate, not entangled: cross-application write contention points, read joins, boundary-crossing foreign keys and integration channels all measured zero. Any consumer that reads a non-empty cluster array as evidence of cross-application coupling will produce a false positive."
+  },
+  "entities": [
+    {
+      "entity": "Student",
+      "module": "MOD-001",
+      "description": "The aggregate root for a student's identity. Prescribed from the data-domain assessment's Student entity within domain D1 (Student Identity and Contact), which the assessment classifies as the highest-sensitivity data in the application: directly identifying personal data plus contact numbers plus personal data about a named third party, potentially concerning minors. The legacy table conflated this with contact points, guardian data and enrolment into one row; this model separates them so that contact cardinality, guardian erasure and enrolment history are each representable.",
+      "data_domain": "D1",
+      "security_classification": "PII — highest in the application. Access control, encryption at rest and in transit, and audit of every read and write are mandatory per REQ-061, REQ-064 and REQ-092.",
+      "legacy_access_control": "none — filesystem permissions on the .accdb file were the only control, and the file is openable by any OLEDB client or by Microsoft Access itself, bypassing the application entirely",
+      "attributes": [
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "identity": "surrogate primary key",
+          "constraints": ["system-generated", "immutable", "never reused", "never user-supplied", "never displayed as the business identifier"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-007. The legacy key is a user-typed TEXT(255) column whose uniqueness rests on a single index that two Discovery passes disagreed about the existence of, and which permits the empty string because AllowZeroLength is True. BV-01 rates the consequence critical: two rows can share a roll number, the editor binds only the first match while UPDATE rewrites every match and DELETE removes every match. A surrogate key removes the dependency on that index entirely.",
+          "traces_to": {"discovery_finding": "BR-023", "source_file": "Flat Design/InsertForm.vb", "source_line": 12}
+        },
+        {
+          "name": "roll_number",
+          "type": "string",
+          "max_length": 32,
+          "nullable": false,
+          "legacy_column": "RollNo",
+          "legacy_type": "TEXT(255), Required = True, AllowZeroLength = True — declared per db-archaeology, unconfirmed against a live engine",
+          "legacy_index": "PrimaryKey, index type byte 1, single column ascending, at studentDB.accdb:0x8321d with the column definition at 0x83147",
+          "constraints": [
+            "NOT NULL",
+            "non-empty after trimming — the legacy empty string must not remain a valid key",
+            "unique under case-insensitive comparison",
+            "validated against a documented format before persistence",
+            "immutable after creation",
+            "max_length reduced from 255 to 32 pending format confirmation"
+          ],
+          "traces_to_column": "studentDB.students.RollNo",
+          "rationale": "ANOM-007 and ANOM-030. Retained as the business key because every legacy single-row read, update and delete matches on it and operators know students by it, but demoted from primary key and constrained. Case-insensitive uniqueness is prescribed because BR-092 shows the legacy case-sensitive index and case-insensitive WHERE clause disagree, which is the one configuration in which BR-037's multi-row update becomes reachable. The 32-character ceiling is a prescribed reduction, not an observed value, and is flagged for SME confirmation along with the format.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-023", "source_file": "Flat Design/InsertForm.vb", "source_line": 12, "corroborating": ["BR-031", "BR-037", "BV-01", "CS-14", "db-archaeology[missing-pk]"]}
+        },
+        {
+          "name": "first_name",
+          "type": "string",
+          "max_length": 100,
+          "nullable": false,
+          "legacy_column": "FName",
+          "legacy_type": "TEXT(255), nullable, AllowZeroLength = True — declared, unconfirmed",
+          "constraints": ["NOT NULL", "non-empty after trimming", "declared permitted character set", "no leading or trailing whitespace persisted"],
+          "traces_to_column": "studentDB.students.FName",
+          "rationale": "ANOM-016 and ANOM-034. Legacy accepted any content including the empty string with no trim, no length check and no character-set check; the only length rule lived in the binary table definition and surfaced as an untriaged provider error. Made mandatory because it is one of two attributes the legacy search can match on and a record with no name is unidentifiable in the list view. The 100-character ceiling is a prescribed reduction from 255 and is flagged for confirmation.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-012", "source_file": "Flat Design/InsertForm.vb", "source_line": 13, "corroborating": ["BR-096", "IM-007", "A11Y-007", "DF-SMS-002"]}
+        },
+        {
+          "name": "last_name",
+          "type": "string",
+          "max_length": 100,
+          "nullable": false,
+          "legacy_column": "LName",
+          "legacy_type": "TEXT(255), nullable, AllowZeroLength = True — declared, unconfirmed",
+          "constraints": ["NOT NULL", "non-empty after trimming", "declared permitted character set", "no leading or trailing whitespace persisted"],
+          "traces_to_column": "studentDB.students.LName",
+          "rationale": "ANOM-016 and ANOM-034. Same basis as first_name. Note the adjacency hazard in ANOM-033: first_name and last_name are a same-typed adjacent pair, so a positional parameter transposition between them would corrupt data with no exception at all, which is why REQ-054 prescribes name-based binding verified by test.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-012", "source_file": "Flat Design/InsertForm.vb", "source_line": 14, "corroborating": ["BR-018", "BR-096", "DF-SMS-002"]}
+        },
+        {
+          "name": "date_of_birth",
+          "type": "date",
+          "nullable": false,
+          "legacy_column": "DOB",
+          "legacy_type": "DATETIME — declared, unconfirmed. Access DATE/TIME is a double-precision serial with a 1899-12-30 epoch and no timezone, and permits a time component on a semantically date-only field.",
+          "constraints": [
+            "NOT NULL",
+            "date-only — no time component, no timezone",
+            "not in the future",
+            "within a configured plausible age range",
+            "no default value; presented empty until supplied",
+            "never converted to or parsed from a culture-formatted display string for storage or retrieval"
+          ],
+          "traces_to_column": "studentDB.students.DOB",
+          "rationale": "ANOM-013 and ANOM-018. The legacy write binds the date picker's locale-formatted display string rather than its typed value, and the read parses it back with a culture-free parse, so a date of birth makes two unanchored culture round-trips per edit cycle. Day values 1 to 12 transpose silently while 13 to 31 fail loudly, making the corruption selective and hardest to detect where it is most plausible. The legacy default is today's date — a value that is always wrong but always plausible — and neither a future nor an eighteenth-century date is rejected. DS-RISK-05 adds that transposition may already be present in the stored data.",
+          "sme_confirmation_required": true,
+          "data_quality_warning": "The two live legacy rows carry a 2009 date of birth against a 2019 year of admission, implying a nine-year-old admitted student. db-archaeology describes both rows as implausible test data. Migration must not assume stored dates are correct.",
+          "traces_to": {"discovery_finding": "BR-016", "source_file": "Flat Design/InsertForm.vb", "source_line": 23, "corroborating": ["BR-034", "BR-021", "IM-010", "IM-011", "IM-021", "CS-15", "DF-SMS-004", "DS-RISK-05"]}
+        },
+        {
+          "name": "gender_code",
+          "type": "string",
+          "max_length": 16,
+          "nullable": false,
+          "legacy_column": "Gender",
+          "legacy_type": "TEXT(255), nullable, AllowZeroLength = True — declared, unconfirmed",
+          "constraints": [
+            "NOT NULL",
+            "foreign key to GenderCode.code",
+            "matched case-insensitively",
+            "a stored value absent from the active set is preserved and displayed as inactive, never silently discarded"
+          ],
+          "traces_to_column": "studentDB.students.Gender",
+          "rationale": "ANOM-040 and ANOM-014. The legacy value set is declared as literals in two Designer files with no database constraint of any kind, and is contradicted by the single place that aggregates it: the dashboard counts only two of the three permitted values, so a student recorded as the third is storable, listable and editable yet counted in no statistic and in no total. Normalizing to a reference entity with a real foreign key is prescribed directly by the decomposition strategy, which identifies this as the one place the target schema legitimately gains relations the legacy single-table shape has none of. The data-domain assessment notes that gender describes a protected characteristic, so its value set is a policy artefact even though individual code values are not personal data.",
+          "traces_to": {"discovery_finding": "BR-013", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 176, "corroborating": ["BR-070", "BR-033", "IM-005", "BA-01", "data-domains.D3.GenderCode"]}
+        },
+        {
+          "name": "lifecycle_state",
+          "type": "enum",
+          "nullable": false,
+          "permitted_values": ["Active", "Archived", "Purged"],
+          "constraints": ["NOT NULL", "system-maintained", "never directly editable by a principal", "transitions only as prescribed by the StudentRecord state machine in srs.json"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-009, ANOM-021 and ANOM-022. The legacy schema has no status column at all, which is why the recovered record lifecycle has no persisted state: a record's state is its existence, so enrolled, graduated and withdrawn are indistinguishable and the only terminal transition is physical destruction. BR-075 records the consequence for reporting — all-time and currently-enrolled are the same number by construction. This attribute makes logical deletion, retention and population scoping representable. NOTE the deliberate restraint: Graduated and Withdrawn are NOT prescribed here, because Discovery evidences only that they cannot be distinguished, not that the business requires them; that question is carried as an open question and an SME item rather than resolved by invention.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["BR-057", "BR-075", "BV-06", "state-machines.student-record-lifecycle"]}
+        },
+        {
+          "name": "row_version",
+          "type": "integer",
+          "nullable": false,
+          "constraints": ["NOT NULL", "system-incremented on every persisted change", "submitted with every update and compared before writing"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-010. The legacy update writes all nine non-key columns unconditionally from current control state with no dirty-field tracking, no concurrency token and no comparison against loaded values, and single-instance mode is explicitly disabled so any number of copies can run against one file. The last save wins silently and the loser's edits are destroyed with no warning to either user. Merely opening and saving a record rewrites every field and defeats any external change made in between.",
+          "traces_to": {"discovery_finding": "BR-094", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 27, "corroborating": ["BR-032", "BR-003"]}
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp",
+          "nullable": false,
+          "constraints": ["NOT NULL", "system-set on creation", "immutable", "stored with timezone"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-022. BR-095 records that the table has exactly ten business columns and no created, modified or deleted timestamp of any kind, so it is impossible to establish when a record was created or last changed. db-archaeology adds that the Access object-level design dates record when the table definition changed, not when any row changed, so they cannot substitute for row provenance.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["RISK-06", "db-schema.json:77"]}
+        },
+        {
+          "name": "created_by",
+          "type": "string",
+          "max_length": 128,
+          "nullable": false,
+          "constraints": ["NOT NULL", "set from the authenticated principal", "immutable", "never supplied by client input"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-002 and ANOM-022. BR-090 records no user concept and no audit of actor, and BR-095 notes that record-level ownership and data-subject access rights cannot be implemented on a schema with no actor columns. This attribute has no meaning until REQ-060 establishes authentication, which is why the two are prescribed together.",
+          "traces_to": {"discovery_finding": "BR-090", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 26, "corroborating": ["BR-095", "identity-landscape.assurance_gaps[shared-credentials]"]}
+        },
+        {
+          "name": "modified_at",
+          "type": "timestamp",
+          "nullable": false,
+          "constraints": ["NOT NULL", "system-set on every persisted change", "stored with timezone"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-022.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}
+        },
+        {
+          "name": "modified_by",
+          "type": "string",
+          "max_length": 128,
+          "nullable": false,
+          "constraints": ["NOT NULL", "set from the authenticated principal", "never supplied by client input"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-002 and ANOM-022.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}
+        },
+        {
+          "name": "archived_at",
+          "type": "timestamp",
+          "nullable": true,
+          "constraints": ["set when lifecycle_state becomes Archived", "null only while lifecycle_state is Active", "drives retention expiry"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-009. Legacy deletion is physical with no archive, no soft-delete flag, no retention period and no audit of who deleted what or when; BV-06 rates the absence high and records that it forecloses both data-subject-request handling and any reconstruction after an erroneous delete. This attribute is one of the two optional attributes in this model, and the schema's nullability here is semantic rather than permissive.",
+          "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90, "corroborating": ["BV-06", "BR-095"]}
+        },
+        {
+          "name": "retention_expires_at",
+          "type": "timestamp",
+          "nullable": true,
+          "constraints": ["derived from archived_at plus the configured retention period", "null only while lifecycle_state is Active", "a record past this instant is eligible for audited purge"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-009 and ANOM-058. All five traced data flows record retention as indefinite with no archival or purge logic anywhere in the application. The retention period itself is a configured value, not a constant, because the applicable obligation is an open legal question the data-domain assessment refers to a data-protection reviewer.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["BV-06", "data-domains.lifecycle_note", "DF-SMS cross_flow_findings[4]"]}
+        }
+      ],
+      "relationships": [
+        {"type": "one-to-many", "target_entity": "StudentContactPoint", "foreign_key": "StudentContactPoint.student_id", "cascade_behavior": "archive and purge cascade with the parent student; a contact point has no independent lifecycle"},
+        {"type": "one-to-many", "target_entity": "GuardianReference", "foreign_key": "GuardianReference.student_id", "cascade_behavior": "NO CASCADE ON ERASURE — a guardian is a distinct data subject whose data must be erasable independently of the student record per ANOM-058 and REQ-093. Archive cascades; erasure does not."},
+        {"type": "one-to-many", "target_entity": "Enrolment", "foreign_key": "Enrolment.student_id", "cascade_behavior": "archive and purge cascade with the parent student"},
+        {"type": "many-to-one", "target_entity": "GenderCode", "foreign_key": "Student.gender_code", "cascade_behavior": "restrict — a reference value in use may not be deleted; it may only be deactivated"},
+        {"type": "one-to-many", "target_entity": "AuditEntry", "foreign_key": "AuditEntry.subject_id", "cascade_behavior": "NO CASCADE — audit entries are retained independently and survive the purge of the record they describe, per REQ-092"}
+      ],
+      "constraints": [
+        {
+          "description": "roll_number is unique across all non-purged records under case-insensitive comparison, and the system detects a collision before attempting to persist rather than surfacing a provider error",
+          "type": "unique",
+          "enforcement": "both",
+          "traces_to": {"discovery_finding": "BR-023", "source_file": "Flat Design/InsertForm.vb", "source_line": 12}
+        },
+        {
+          "description": "Every mutation affects exactly one record addressed by student_id; an affected-row count of zero is reported as 'record no longer exists' and a count above one aborts the operation and raises a data-integrity alert",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {"discovery_finding": "BR-037", "source_file": "Flat Design/EditForm.vb", "source_line": 51}
+        },
+        {
+          "description": "A record whose lifecycle_state is Archived or Purged is excluded from all default reads and from all statistics computed over the active population",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {"discovery_finding": "BR-075", "source_file": "Flat Design/Form1.vb", "source_line": 22}
+        },
+        {
+          "description": "archived_at and retention_expires_at are non-null if and only if lifecycle_state is not Active",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}
+        },
+        {
+          "description": "An update whose submitted row_version does not match the stored value is rejected with a conflict error identifying the fields changed by the other party; the system never silently overwrites a concurrent modification",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {"discovery_finding": "BR-094", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 27}
+        }
+      ]
+    },
+    {
+      "entity": "StudentContactPoint",
+      "module": "MOD-001",
+      "description": "A telephone contact point for a student. Prescribed from the data-domain assessment's StudentContactPoint entity in domain D1, which describes the legacy shape as 'two unlabelled telephone slots denormalised into the student row' with cardinality 'exactly two, positionally distinguished only; there is no contact-type, no preference order and no validity window'. Extracted into its own entity so that the number of contact points is not fixed at two by the schema and so each carries an explicit purpose.",
+      "data_domain": "D1",
+      "security_classification": "PII",
+      "attributes": [
+        {
+          "name": "contact_point_id",
+          "type": "uuid",
+          "nullable": false,
+          "identity": "surrogate primary key",
+          "constraints": ["system-generated", "immutable"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-045. Required because the legacy positional slots have no identity of their own.",
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/InsertForm.vb", "source_line": 16}
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["NOT NULL", "foreign key to Student.student_id"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-045. The legacy model has zero foreign keys; db-archaeology records this as assessed correct by construction for a single-table design and deliberately rates it informational 'so that rationalization does not read the absence of foreign keys as undiscovered coupling'. The relations prescribed here are new structure, not recovered structure.",
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}
+        },
+        {
+          "name": "contact_type",
+          "type": "enum",
+          "nullable": false,
+          "permitted_values": ["Primary", "Alternate"],
+          "constraints": ["NOT NULL", "at most one Primary per student"],
+          "traces_to_column": "derived from the positional distinction between MobNo and AltMobNo",
+          "rationale": "ANOM-045. Replaces positional meaning with declared meaning. The two permitted values are exactly the distinction the legacy column names imply and nothing more — the value set is deliberately not extended to Mobile, Home, Work and so on, because Discovery evidences only the primary/alternate split.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/InsertForm.vb", "source_line": 16, "corroborating": ["data-domains.D1.StudentContactPoint"]}
+        },
+        {
+          "name": "telephone_number",
+          "type": "string",
+          "max_length": 20,
+          "nullable": false,
+          "legacy_column": "MobNo, AltMobNo",
+          "legacy_type": "LONG INTEGER — Jet type 0x04, 4-byte signed, maximum 2,147,483,647. Declared per db-archaeology and CONTRADICTED by the data-flow trace, which describes the same columns as short text bound as String. The data-domain assessment resolves this as 'not a tie — both are correct about different things, and the mismatch between them IS the defect'.",
+          "constraints": [
+            "NOT NULL",
+            "stored as text, never in any numeric type",
+            "leading zeros preserved",
+            "validated against a documented telephone format including optional country prefix",
+            "length sufficient for a full international number"
+          ],
+          "traces_to_column": "studentDB.students.MobNo and studentDB.students.AltMobNo",
+          "rationale": "ANOM-012. The 32-bit ceiling excludes every ten-digit Indian mobile number, all of which begin with 6, 7, 8 or 9 — and every value actually present in the file is nine digits, i.e. truncated or placeholder, which db-archaeology cites in judging the project report's claim that a ten-digit number passed testing 'not credible'. Integer storage also silently discards leading zeros, country prefixes, spaces and plus signs. The legacy entry form collects the value as unconstrained free text with no maximum length and no numeric validation, so the only enforcement is a raw provider error. db-archaeology's remediation is quoted directly: 'phone numbers are identifiers, not arithmetic quantities'.",
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/InsertForm.vb", "source_line": 16, "corroborating": ["IM-006", "DF-SMS-003", "db-archaeology[deprecated-feature]"]}
+        }
+      ],
+      "relationships": [
+        {"type": "many-to-one", "target_entity": "Student", "foreign_key": "StudentContactPoint.student_id", "cascade_behavior": "archive and purge cascade from the parent student"}
+      ],
+      "constraints": [
+        {
+          "description": "At most one contact point per student carries contact_type Primary",
+          "type": "unique",
+          "enforcement": "both",
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/InsertForm.vb", "source_line": 16}
+        },
+        {
+          "description": "telephone_number is never stored in a numeric type and never has leading zeros stripped",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {"discovery_finding": "BR-017", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}
+        }
+      ]
+    },
+    {
+      "entity": "GuardianReference",
+      "module": "MOD-001",
+      "description": "A parent or guardian recorded against a student. Prescribed from the data-domain assessment's GuardianReference entity in domain D1, which flags it distinct_data_subject = true and describes it as 'personal data about a second, unconsented data subject held inside the student's row, with no separate identity, no consent basis and no independent erasure path'. Modelled as its own entity precisely so that an independent erasure path exists.",
+      "data_domain": "D1",
+      "security_classification": "PII concerning a data subject other than the student. Subject to the same access control, encryption and audit requirements, and additionally to an independent erasure path per REQ-093.",
+      "attributes": [
+        {
+          "name": "guardian_reference_id",
+          "type": "uuid",
+          "nullable": false,
+          "identity": "surrogate primary key",
+          "constraints": ["system-generated", "immutable"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-058. The legacy guardian has no identity of its own; it is a single text column inside the student's row.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/InsertForm.vb", "source_line": 15}
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["NOT NULL", "foreign key to Student.student_id"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-058.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}
+        },
+        {
+          "name": "relationship_type",
+          "type": "enum",
+          "nullable": false,
+          "permitted_values": ["Father", "Guardian"],
+          "constraints": ["NOT NULL"],
+          "traces_to_column": "implied by the legacy column name FatherName",
+          "rationale": "ANOM-058. The legacy column captures one relationship only, Father, as an unstated assumption baked into the column name. Guardian is added because the entity must be able to represent a student whose recorded party is not a father; the value set is deliberately minimal and is flagged for SME confirmation rather than expanded to a full family taxonomy, which Discovery does not evidence.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/InsertForm.vb", "source_line": 15, "corroborating": ["data-domains.D1.GuardianReference", "BA-02"]}
+        },
+        {
+          "name": "full_name",
+          "type": "string",
+          "max_length": 200,
+          "nullable": false,
+          "legacy_column": "FatherName",
+          "legacy_type": "MEMO — Jet type 0x0C, an unbounded long-value type that cannot be indexed. Declared, unconfirmed.",
+          "constraints": ["NOT NULL", "non-empty after trimming", "bounded length", "declared permitted character set"],
+          "traces_to_column": "studentDB.students.FatherName",
+          "rationale": "ANOM-034 and ANOM-058. IM-008 records the inconsistency and its consequence: father's name is MEMO and so accepts effectively unbounded input while the student's own names are capped at 255, with no rationale recorded — so 'the one field holding a third party's personal data is also the one field with no length ceiling'. db-archaeology's remediation prescribes a bounded string instead of MEMO.",
+          "traces_to": {"discovery_finding": "BR-096", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["IM-008", "BR-012", "DF-SMS-002"]}
+        },
+        {
+          "name": "lawful_basis",
+          "type": "string",
+          "max_length": 64,
+          "nullable": false,
+          "constraints": ["NOT NULL", "drawn from a configured set of permitted bases"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-058. The data-domain assessment records that this party's data is held with 'no consent basis and no independent erasure path'. The permitted set is configuration rather than a literal here because the applicable bases are a legal determination the assessment refers to a data-protection reviewer and because the governing profile's compliance configuration was not readable from this workspace.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/InsertForm.vb", "source_line": 15, "corroborating": ["data-domains.D1.GuardianReference", "BV-06", "data-domains.open_questions[retention and erasure obligation]"]}
+        },
+        {
+          "name": "erased_at",
+          "type": "timestamp",
+          "nullable": true,
+          "constraints": ["set when this party's data is erased independently of the student record", "once set, full_name is irrecoverably removed while the entry and its audit trail persist"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-058 and ANOM-009. This is the independent erasure path the data-domain assessment records as absent. It is distinct from the student's own archive and purge because a guardian erasure request must be satisfiable without destroying the student record.",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["BV-06", "DF-SMS cross_flow_findings[4]"]}
+        }
+      ],
+      "relationships": [
+        {"type": "many-to-one", "target_entity": "Student", "foreign_key": "GuardianReference.student_id", "cascade_behavior": "archive cascades from the parent student; ERASURE DOES NOT CASCADE IN EITHER DIRECTION — erasing a guardian leaves the student intact, and purging a student does not by itself discharge a guardian erasure request"}
+      ],
+      "constraints": [
+        {
+          "description": "This party's personal data is erasable independently of the student record, and the erasure is itself audited",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/InsertForm.vb", "source_line": 15}
+        }
+      ]
+    },
+    {
+      "entity": "Enrolment",
+      "module": "MOD-002",
+      "description": "A student's enrolment on a programme for an admission year. Prescribed from the data-domain assessment's Enrolment aggregate in domain D2 (Student Enrolment), which owns the legacy Course and YOA columns. Separated from Student so that the two attributes that are not personal data are not held under the same classification as those that are, and so that admission year becomes a typed value rather than free text.",
+      "data_domain": "D2",
+      "security_classification": "Internal / business-sensitive. The data-flow trace classifies this cluster as sensitive rather than PII (DF-SMS-005), which the data-domain assessment notes is 'the one place an inherited artifact drew a classification line between columns of the same row'.",
+      "attributes": [
+        {
+          "name": "enrolment_id",
+          "type": "uuid",
+          "nullable": false,
+          "identity": "surrogate primary key",
+          "constraints": ["system-generated", "immutable"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-040. The legacy enrolment has no identity; it is two columns in the student row, which is why a student cannot have an enrolment history.",
+          "traces_to": {"discovery_finding": "BR-014", "source_file": "Flat Design/InsertForm.vb", "source_line": 19}
+        },
+        {
+          "name": "student_id",
+          "type": "uuid",
+          "nullable": false,
+          "constraints": ["NOT NULL", "foreign key to Student.student_id"],
+          "traces_to_column": "NONE — prescribed new",
+          "rationale": "ANOM-040. Corresponds to the data-domain cross-domain reference XD-01, which records D2 referencing D1 by roll number.",
+          "traces_to": {"discovery_finding": "BR-014", "source_file": "Flat Design/studentDB.accdb", "source_line": 0, "corroborating": ["XD-01"]}
+        },
+        {
+          "name": "course_code",
+          "type": "string",
+          "max_length": 16,
+          "nullable": false,
+          "legacy_column": "Course",
+          "legacy_type": "TEXT(255), nullable, AllowZeroLength = True — declared, unconfirmed",
+          "constraints": [
+            "NOT NULL",
+            "foreign key to CourseCode.code",
+            "matched case-insensitively",
+            "a stored value absent from the active set is preserved and displayed as inactive, never silently discarded"
+          ],
+          "traces_to_column": "studentDB.students.Course",
+          "rationale": "ANOM-040 and ANOM-014. The legacy taxonomy is restated in at least eight places — two Designer item collections, two dead autocomplete collections, three dashboard count queries and three tile captions — with no database constraint, no lookup table and no grouping, so adding a programme requires coordinated edits across all eight and a record carrying any other value is counted nowhere. Junk values are already present: deleted rows in page slack contain Course values of '2' and '3'.",
+          "traces_to": {"discovery_finding": "BR-014", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 103, "corroborating": ["IM-004", "BR-071", "BR-033", "data-domains.D3.CourseCode"]}
+        },
+        {
+          "name": "admission_year",
+          "type": "integer",
+          "nullable": false,
+          "legacy_column": "YOA",
+          "legacy_type": "TEXT(255), nullable, AllowZeroLength = True — declared, unconfirmed. db-archaeology notes it is text 'rather than a numeric or date type, so year values are free text'.",
+          "constraints": [
+            "NOT NULL",
+            "numeric type, never text",
+            "within a configured range whose upper bound always includes the current academic year",
+            "no compiled upper bound requiring a rebuild to extend"
+          ],
+          "traces_to_column": "studentDB.students.YOA",
+          "rationale": "ANOM-015 and ANOM-046. The legacy value set is five string literals, 2019 to 2023, declared in four Designer locations and already expired — no student admitted after 2023 can be recorded through any application path. Because the column is text, cohort matching is lexical rather than arithmetic: a whitespace-padded or non-canonical stored year is counted nowhere while being indistinguishable in the grid, and no range predicate would behave numerically, which IM-009 identifies as the likely reason five equality queries were written instead of one grouped query. Junk is already present: deleted rows in page slack contain YOA values of 'A' and 'B'. Typing this numerically is the precondition for the grouped aggregation prescribed in REQ-044.",
+          "sme_confirmation_required": true,
+          "traces_to": {"discovery_finding": "BR-015", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 91, "corroborating": ["IM-003", "IM-009", "BR-074", "BR-072", "data-domains.D3.IntakeYear"]}
+        }
+      ],
+      "relationships": [
+        {"type": "many-to-one", "target_entity": "Student", "foreign_key": "Enrolment.student_id", "cascade_behavior": "archive and purge cascade from the parent student"},
+        {"type": "many-to-one", "target_entity": "CourseCode", "foreign_key": "Enrolment.course_code", "cascade_behavior": "restrict — a reference value in use may not be deleted, only deactivated"}
+      ],
+      "constraints": [
+        {
+          "description": "Cohort position is derived at read time from admission_year and an injectable current-date source against a configured academic-year boundary; it is never stored and never computed from a compiled constant",
+          "type": "business-rule",
+          "enforcement": "application",
+          "traces_to": {"discovery_finding": "BR-072", "source_file": "Flat Design/Form1.vb", "source_line": 59}
+        },
+        {
+          "description": "admission_year is compared and grouped arithmetically, never as a string literal concatenated into a query",
+          "type": "check",
+          "enforcement": "both",
+          "traces_to": {"discovery_finding": "BR-074", "source_file": "Flat Design/Form1.vb", "source_line": 62}
+        }
+      ]
+    },
+    {
+      "entity": "GenderCode",
+      "module": "MOD-004",
+      "description": "The authoritative gender vocabulary. Prescribed from the data-domain assessment's D3 code list GenderCode, whose legacy value set is Male, Female, Other. The assessment records that D3 owns no physical columns and that its physical system of record is 'none' — the vocabulary exists only as Designer literals — which is exactly why this entity is prescribed.",
+      "data_domain": "D3",
+      "security_classification": "Non-sensitive reference data. The data-domain assessment notes that gender describes a protected characteristic, so the value set itself is a policy artefact even though individual code values are not personal data.",
+      "attributes": [
+        {"name": "code", "type": "string", "max_length": 16, "nullable": false, "identity": "primary key", "constraints": ["NOT NULL", "unique", "immutable"], "traces_to_column": "NONE — prescribed new; legacy values are Designer literals only", "rationale": "ANOM-040.", "traces_to": {"discovery_finding": "BR-013", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 176}},
+        {"name": "display_label", "type": "string", "max_length": 64, "nullable": false, "constraints": ["NOT NULL", "fully spelled, no abbreviation"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-043 and A11Y-002. Labels must be readable by assistive technology rather than raw tokens.", "traces_to": {"discovery_finding": "A11Y-002", "source_file": "Flat Design/ViewForm.vb", "source_line": 14}},
+        {"name": "is_active", "type": "boolean", "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-014. Deactivation rather than deletion is what allows a record holding a retired value to remain editable instead of becoming permanently locked.", "traces_to": {"discovery_finding": "BR-033", "source_file": "Flat Design/EditForm.vb", "source_line": 27}},
+        {"name": "sort_order", "type": "integer", "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-040. Required because presentation order must not depend on physical row order, which BR-050 shows is not stable in the legacy engine.", "traces_to": {"discovery_finding": "BR-050", "source_file": "Flat Design/ViewForm.vb", "source_line": 39}}
+      ],
+      "seed_values": ["Male", "Female", "Other"],
+      "seed_values_note": "Exactly the three legacy values, taken verbatim from the Designer item collections on both data-entry surfaces. No value is added or removed. Note that the legacy dashboard counted only Male and Female, so Other was storable, listable and editable yet counted in no statistic and in no total — REQ-040 fixes the aggregation rather than the vocabulary.",
+      "relationships": [
+        {"type": "one-to-many", "target_entity": "Student", "foreign_key": "Student.gender_code", "cascade_behavior": "restrict"}
+      ],
+      "constraints": [
+        {"description": "The vocabulary has exactly one authoritative definition; every surface, validation rule and statistic reads it from here, and adding or retiring a value requires no code change and no rebuild", "type": "business-rule", "enforcement": "application", "traces_to": {"discovery_finding": "BR-013", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 176}}
+      ]
+    },
+    {
+      "entity": "CourseCode",
+      "module": "MOD-004",
+      "description": "The authoritative programme vocabulary. Prescribed from the data-domain assessment's D3 code list CourseCode, whose legacy value set is BCA, MCA, IIMCA.",
+      "data_domain": "D3",
+      "security_classification": "Non-sensitive reference data",
+      "attributes": [
+        {"name": "code", "type": "string", "max_length": 16, "nullable": false, "identity": "primary key", "constraints": ["NOT NULL", "unique", "immutable"], "traces_to_column": "NONE — prescribed new; legacy values are Designer and SQL literals only", "rationale": "ANOM-040.", "traces_to": {"discovery_finding": "BR-014", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 103}},
+        {"name": "display_label", "type": "string", "max_length": 128, "nullable": false, "constraints": ["NOT NULL", "fully spelled, no abbreviation"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-043. The legacy interface calls this concept 'Degree Wise' on the dashboard and 'course' in the column and selector — the same concept under two names.", "traces_to": {"discovery_finding": "BR-071", "source_file": "Flat Design/Form1.Designer.vb", "source_line": 337}},
+        {"name": "nominal_duration_years", "type": "integer", "nullable": false, "constraints": ["NOT NULL", "greater than zero"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-019 and IM-002. The legacy dashboard hardcodes five cohort buckets while IM-002 and BR-073 record that the three recognised programmes are two-year and three-year degrees, so a fifth-year bucket 'has no clear referent'. Holding the duration as data is what allows cohort count to be derived rather than asserted.", "sme_confirmation_required": true, "traces_to": {"discovery_finding": "BR-073", "source_file": "Flat Design/Form1.vb", "source_line": 61, "corroborating": ["IM-002"]}},
+        {"name": "is_active", "type": "boolean", "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-014. BR-033 records that a record carrying a decommissioned programme code is currently locked out of all editing.", "traces_to": {"discovery_finding": "BR-033", "source_file": "Flat Design/EditForm.vb", "source_line": 27}},
+        {"name": "sort_order", "type": "integer", "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-040.", "traces_to": {"discovery_finding": "BR-050", "source_file": "Flat Design/ViewForm.vb", "source_line": 39}}
+      ],
+      "seed_values": ["BCA", "MCA", "IIMCA"],
+      "seed_values_note": "Exactly the three legacy values. nominal_duration_years cannot be seeded from Discovery — no artefact states the duration of any programme — so it is an SME input and is the reason REQ-043 derives cohort count rather than asserting five.",
+      "relationships": [
+        {"type": "one-to-many", "target_entity": "Enrolment", "foreign_key": "Enrolment.course_code", "cascade_behavior": "restrict"}
+      ],
+      "constraints": [
+        {"description": "The vocabulary has exactly one authoritative definition, replacing the eight scattered legacy declarations; adding a programme requires no code change, no new query, no new tile and no rebuild", "type": "business-rule", "enforcement": "application", "traces_to": {"discovery_finding": "BR-014", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 103}}
+      ]
+    },
+    {
+      "entity": "AdmissionYear",
+      "module": "MOD-004",
+      "description": "The authoritative set of selectable admission years. Prescribed from the data-domain assessment's D3 code list IntakeYear, whose legacy value set is the five string literals 2019 to 2023. Held as reference data rather than as a literal list so that the current academic year is always selectable without a rebuild.",
+      "data_domain": "D3",
+      "security_classification": "Non-sensitive reference data",
+      "attributes": [
+        {"name": "year", "type": "integer", "nullable": false, "identity": "primary key", "constraints": ["NOT NULL", "unique", "four-digit calendar year"], "traces_to_column": "NONE — prescribed new; legacy values are Designer literals in four locations", "rationale": "ANOM-015. Typed numerically because the legacy column is text, making cohort matching lexical rather than arithmetic.", "traces_to": {"discovery_finding": "BR-015", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 91}},
+        {"name": "is_open_for_admission", "type": "boolean", "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-015. Distinguishes a year that may be selected for a new enrolment from one that remains valid on existing records — the distinction the legacy frozen list cannot express, which is why it became 'a hard functional ceiling'.", "traces_to": {"discovery_finding": "BR-015", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 91}}
+      ],
+      "seed_values": [2019, 2020, 2021, 2022, 2023],
+      "seed_values_note": "Exactly the five legacy values as the initial historical set. The set MUST be extended to include every year through the current academic year on migration — the legacy list expired after 2023 and, as of the Discovery date, no current intake could be recorded at all. The authoritative lower bound and whether historical years remain selectable for back-entry are SME inputs.",
+      "relationships": [
+        {"type": "one-to-many", "target_entity": "Enrolment", "foreign_key": "Enrolment.admission_year", "cascade_behavior": "restrict"}
+      ],
+      "constraints": [
+        {"description": "The set always includes the current academic year without a code change, and imposes no upper bound requiring a rebuild to extend", "type": "business-rule", "enforcement": "application", "traces_to": {"discovery_finding": "BR-015", "source_file": "Flat Design/InsertForm.Designer.vb", "source_line": 91}}
+      ]
+    },
+    {
+      "entity": "AuditEntry",
+      "module": "MOD-007",
+      "description": "An immutable record of one operation performed against student data. Prescribed entirely new: the legacy system writes no audit record of any kind, has no actor identity to attribute one to, and has no log file, event record or history table anywhere. BR-095 states the consequence — no create, update or delete in the legacy system is attributable or reconstructible after the fact.",
+      "module_note": "This entity is the reason MOD-007 exists as a module. It has no legacy counterpart and is traced to a named absence rather than to an observed behaviour.",
+      "security_classification": "Contains prior and new values of PII attributes, so it inherits the PII classification and access controls of the data it describes, with read access restricted more tightly than the records themselves.",
+      "attributes": [
+        {"name": "audit_entry_id", "type": "uuid", "nullable": false, "identity": "primary key", "constraints": ["NOT NULL", "system-generated", "immutable"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-022.", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"name": "occurred_at", "type": "timestamp", "nullable": false, "constraints": ["NOT NULL", "stored with timezone", "set from the server time source, never from client input"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-019 and ANOM-022. The server time source clause is prescribed because BR-072 shows the legacy system never consulted a clock at all for a derived temporal value.", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"name": "actor_principal", "type": "string", "max_length": 128, "nullable": false, "constraints": ["NOT NULL", "set from the authenticated principal", "never supplied by client input"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-002 and ANOM-022. Unsatisfiable until REQ-060 establishes authentication: the identity assessment records that 'every operator of the host shares one identical, credential-less, undifferentiated path to the student PII, and no per-user attribution of reads or writes is possible'.", "traces_to": {"discovery_finding": "BR-090", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 26, "corroborating": ["identity-landscape.assurance_gaps[shared-credentials]"]}},
+        {"name": "operation", "type": "enum", "nullable": false, "permitted_values": ["Create", "Update", "Archive", "Purge", "Erase", "Read", "StateTransition", "AuthenticationFailure", "AuthorizationDenial"], "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-022. Read is included because the data is PII and REQ-092 requires read access to be attributable; Erase is distinct from Purge because ANOM-058 requires guardian erasure to be independent of student purge.", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"name": "subject_entity", "type": "string", "max_length": 64, "nullable": false, "constraints": ["NOT NULL"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-022.", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"name": "subject_id", "type": "uuid", "nullable": false, "constraints": ["NOT NULL", "not enforced as a foreign key, because the entry must survive the purge of the record it describes"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-009 and ANOM-022. The deliberate absence of a foreign key here is the mechanism by which REQ-092's survival requirement is met.", "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}},
+        {"name": "changed_attributes", "type": "json", "nullable": true, "constraints": ["holds the prior and new value of each changed attribute", "null only for operations that change no attribute, such as Read and AuthorizationDenial"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-022. BR-095 records that it is impossible to establish 'what the previous values were'. Alongside archived_at this is the second of the two optional attributes in this model, and its nullability is semantic.", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"name": "correlation_id", "type": "string", "max_length": 64, "nullable": false, "constraints": ["NOT NULL", "shared with the structured application log entry for the same operation", "cited in any error message shown to a principal"], "traces_to_column": "NONE — prescribed new", "rationale": "ANOM-023. BR-022 records that under the legacy blanket catch 'no record of the failure survives the dismissal of the message box'; the correlation identifier is what links a user-visible failure to a durable record of it.", "traces_to": {"discovery_finding": "BR-022", "source_file": "Flat Design/InsertForm.vb", "source_line": 31}}
+      ],
+      "relationships": [
+        {"type": "many-to-one", "target_entity": "Student", "foreign_key": "AuditEntry.subject_id", "cascade_behavior": "NO CASCADE AND NO ENFORCED REFERENCE — entries are retained independently and survive the purge of the record they describe"}
+      ],
+      "constraints": [
+        {"description": "Entries are append-only: no entry may be updated or deleted by any application path or any principal", "type": "business-rule", "enforcement": "both", "traces_to": {"discovery_finding": "BR-095", "source_file": "Flat Design/studentDB.accdb", "source_line": 0}},
+        {"description": "Every create, update, state transition, archive, purge and erasure writes exactly one entry, within the same transaction as the change it describes", "type": "business-rule", "enforcement": "application", "traces_to": {"discovery_finding": "BR-093", "source_file": "Flat Design/Module1.vb", "source_line": 4}},
+        {"description": "Entries are retained for at least the retention period applying to the data they describe, and survive the purge of that data", "type": "business-rule", "enforcement": "application", "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}}
+      ]
+    }
+  ],
+  "excluded_from_model": [
+    {
+      "name": "StudentPopulationStatistics",
+      "reason": "Not an entity. The data-domain assessment excludes it from ownership under decision BA-05 as a derived read model: it is 'fully derived at read time by ten COUNT(*) statements and persists nothing'. The SRS specifies it as behaviour in MOD-003 (REQ-040 through REQ-046), not as stored data. Prescribing it as an entity would invent persistence the legacy system does not have and the requirements do not need.",
+      "traces_to": {"discovery_finding": "BA-05", "discovery_artifact": "data-domains"}
+    },
+    {
+      "name": "Superseded legacy columns ClassN, Sec, Session, SName, Class, Field1",
+      "reason": "Omitted under ANOM-052. The database file retains four superseded table-definition generations whose column shapes differ from the live definition; maxcols reads 19 against a live ncols of 10, and a stray four-byte fixed-data slot belongs to no live column. The decomposition strategy directs pinning migration to the ten live columns. The omission is recorded rather than silent because the retired name Session still drives the user-visible label on the control that writes YOA, which ANOM-043 renames.",
+      "traces_to": {"discovery_finding": "RISK-04", "discovery_artifact": "db-archaeology + shared-db-analysis"}
+    },
+    {
+      "name": "Any entity derived from fixtures/shared-db-analysis.json or fixtures/default.json",
+      "reason": "Deliberately excluded as source-tree contamination. Those files are QA fixtures for the Discovery skills themselves, found inside the application's own source tree. One describes a fictitious CORE_ODS cluster with CUSTOMER, ADDRESS and BILLING_ACCOUNT tables shared across a billing portal and a CRM; the other describes a fictitious 12,500-user portfolio with PIV and AAL3 authenticators. Three separate Discovery passes independently flagged them, one at high severity as an active contamination hazard, warning that this is 'exactly how a later pass could detect a SQL Server shared-DB cluster in a VB.NET/Access desktop application'. No value from either file appears anywhere in this SRS.",
+      "traces_to": {"discovery_finding": "shared-db-analysis.open_questions + identity-landscape.discrepancies_and_findings[4]", "discovery_artifact": "shared-db-analysis + identity-landscape"}
+    }
+  ],
+  "migration_prerequisites": [
+    "Read the real column types, nullability, defaults, collation and index definitions from a live database engine before any target schema is generated. No Discovery pass had a live engine; DS-RISK-02 is recorded as blocking target-schema generation and RISK-03 as blocking decisive cutover.",
+    "Confirm roll-number uniqueness across the live data and de-duplicate before applying the unique constraint. The legacy index permits the empty string and two Discovery passes disagreed about whether the index exists at all.",
+    "Resolve the LONG INTEGER versus short-text contradiction on the two telephone columns against live data, and expect every stored value to be nine digits or fewer, i.e. truncated or placeholder.",
+    "Audit every stored date of birth for day/month transposition before migration. The corruption is silent for day values 1 to 12, and the two live rows are already implausible.",
+    "Reject or quarantine rows carrying out-of-vocabulary values rather than silently mapping them. Deleted rows in page slack prove the gap was exercised, carrying Course values of '2' and '3' and YOA values of 'A' and 'B'.",
+    "Extend AdmissionYear to cover every year from the historical lower bound through the current academic year; the legacy list stops at 2023.",
+    "Settle attribute casing deliberately rather than inheriting the legacy PascalCase-versus-lowercase divergence, which breaks at runtime rather than at build time on a case-sensitive engine.",
+    "Treat the six rows recoverable from page slack as a disposal obligation, not a data source. All ten field values of each are readable including names, telephone numbers, gender and date of birth; db-archaeology notes the recoverable rows are keyboard-mash test data so 'there is no live personal data at risk today; the finding is the mechanism'. The legacy file must be securely destroyed, not merely superseded."
+  ]
+}

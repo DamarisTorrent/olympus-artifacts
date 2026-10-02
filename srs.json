@@ -1,0 +1,533 @@
+{
+  "$schema": "olympus:artifact:srs:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "srs": {
+    "version": "1.0.0",
+    "application": "Student Management System (VB.NET)",
+    "generation_date": "2026-10-02",
+    "discovery_gate_date": "2026-10-02",
+    "discovery_gate_note": "NO EXPLICIT GATE-APPROVAL STAMP EXISTS ON ANY INPUT ARTEFACT, AND THIS IS RECORDED RATHER THAN GLOSSED. The skill directs that generation STOP if any discovery artefact lacks a gate-approved stamp. No input artefact carries such a stamp, a readiness-check record, or any approval field: searching the whole staged input set for gate, readiness or approval language returns only an accessibility gate decision of FAIL, the quality-risk escalation triggers, and the open stakeholder escalation ESC-1. The date above is therefore the assessment and extraction date common to every input artefact (business-logic extraction_date 2026-10-02T18:05:00Z; quality-risk, ux-accessibility, compliance-citations and capability-catalog assessed_date 2026-10-02), NOT the date a readiness check passed. This SRS was generated because the inputs are complete, internally cross-validated and individually schema-conformant, and because every finding it rests on is cited to a file and line a reviewer can check. The absence of a formal gate record is carried as an open question for the engagement owner, together with the two gate-relevant facts that ARE recorded: the accessibility gate verdict is FAIL, and escalation ESC-1 is open with status open and no owner assigned.",
+    "accessibility_standard": "WCAG 2.1 Level AA, with Section 508 as implemented by the ICT Final Rule, 36 CFR 1194.1, which incorporates WCAG 2.0/2.1 Level AA by reference",
+    "accessibility_standard_source": "Resolved from ux-accessibility.json applicable_standards and accessibility-audit.json standard, NOT from the client profile's compliance configuration. See srs-accessibility-compliance.json source_note and open_questions[1] below: profiles/faa/ is not present in or readable from this execution workspace, so the profile-supplied conformance level could not be read and may be higher than the level recorded here.",
+    "governing_client_profile": "faa",
+    "derived_from_discovery_passes": [
+      "Pass 0 — catalog (catalog.json)",
+      "Pass 1 — structural analysis, including the embedded interface-inventory and database-schema-summary sections (structural-analysis.json), plus call-graph.json, data-flow-trace.json, db-archaeology.json, identity-landscape.json, language-detection.json",
+      "Pass 2 — business logic extraction (business-logic.json, implicit-logic.json, state-machines.json)",
+      "Pass 3 — quality and risk assessment (quality-risk.json, escalation-record.json)",
+      "Pass 3 — UX and accessibility assessment (ux-accessibility.json, accessibility-audit.json)",
+      "Data domain discovery (data-domains.json), shared-database analysis (shared-db-analysis.json, decomposition-strategy.json), capability extraction (capability-catalog.json), compliance citation mapping (compliance-citations.json)"
+    ]
+  },
+  "detail_files": {
+    "functional_requirements": "srs-requirements-functional.json",
+    "non_functional_requirements": "srs-requirements-nonfunctional.json",
+    "data_model": "srs-data-model.json",
+    "accessibility_compliance": "srs-accessibility-compliance.json",
+    "anomaly_resolution_log": "srs-anomaly-resolution-log.json"
+  },
+  "detail_files_note": "Five detail files, all written, all named here. This document is the INDEX: it carries the modules, the actor model, the state machines, the traceability matrix, the anomaly summary and the open questions. The requirements themselves, the prescribed entity model, the accessibility findings and the full anomaly log live in the files above. A consumer that reads only this index has the structure but not the prescription, and must follow the map.",
+  "id_scheme": {
+    "modules": "MOD-NNN, assigned by this document. Eleven modules, MOD-001 through MOD-011. Prescriptive functional areas, NOT the six legacy code modules — the legacy module identifiers (form1-dashboard, insert-form, edit-form, view-form, module1-db-connection, my-project-infrastructure) are used verbatim where this document cites legacy evidence, and each module below records which of them it derives from.",
+    "functional_requirements": "REQ-NNN, globally unique, in srs-requirements-functional.json. Numbering is grouped by module rather than contiguous — MOD-001 holds REQ-001 to REQ-016 plus REQ-026 and REQ-027, MOD-002 holds REQ-020 to REQ-033, MOD-003 holds REQ-040 to REQ-048, MOD-004 holds REQ-030 to REQ-032 and REQ-095, MOD-005 holds REQ-050 to REQ-058 and REQ-096 to REQ-099, MOD-006 holds REQ-060 to REQ-067, MOD-007 holds REQ-090 to REQ-094, MOD-008 holds REQ-070 to REQ-077, MOD-009 holds REQ-080 to REQ-084, MOD-010 holds REQ-100 to REQ-108. Gaps in the sequence are deliberate grouping space, not missing requirements; the authoritative count is 88.",
+    "non_functional_requirements": "NFR-NNN, globally unique, in srs-requirements-nonfunctional.json. 34 requirements. Numbered in bands by concern: 001-005 identity, 010-016 performance and platform, 020-027 security and data protection, 030-037 maintainability and observability, 040-042 accessibility and usability, 050-052 presentation and reporting constraints.",
+    "anomalies": "ANOM-NNN, in srs-anomaly-resolution-log.json. 58 anomalies, ANOM-001 through ANOM-058, contiguous.",
+    "requirement_priority_vocabulary": "must | should | could — one vocabulary used throughout both requirement files, matching the template. The modal verb in each description text is MUST, SHOULD or MAY correspondingly.",
+    "requirement_type_vocabulary": "functional | non-functional | constraint — one vocabulary used throughout both requirement files.",
+    "legacy_finding_identifiers_cited": "These are COPIED VERBATIM from the Discovery artefacts and are never renumbered: BR-NNN business rules (60, in business-logic.json), IM-NNN implicit-logic findings (34), CS-NN code smells (21), ET-N escalation triggers, ESC-N escalation records, A11Y-NNN accessibility findings (9), DF-SMS-NNN data flows (5), D-N data domains, XD-NN cross-domain references, BA-NN boundary arbitrations, BV-NN boundary violations, RISK-NN shared-database risks, DS-RISK-NN decomposition risks, CLU-… cluster identifiers. Several Discovery artefacts carry NO identifier scheme at all — structural-analysis coupling indicators are keyed by their object name, identity-landscape findings by gap_type or by a prose title, db-archaeology findings by category plus severity, and capability-catalog capabilities by name slug only. Where this document cites those it uses the artefact's own key form, e.g. coupling_indicators.shared-global-connection or identity-landscape.assurance_gaps[no-mfa].",
+    "capability_identifiers": "NO CAPABILITY IDS EXIST TO COPY. capability-catalog.json carries no id and no external_id on either capability — the artefact states that no client-profile reference catalogue was reachable and that 'all such fields are left unset (equivalent to NULL) rather than guessed'. The stable identity, and the artefact's own idempotency key, is the name slug. This document therefore cites the two capabilities as personnel-records-management and reporting-and-analytics verbatim and invents no identifier for either. The only real database identifier in the input set is the application_id, copied verbatim at the top of every file in this output."
+  },
+  "modules": [
+    {
+      "id": "MOD-001",
+      "name": "Student Record Lifecycle Management",
+      "description": "Creation, retrieval, amendment, archiving and purging of an individual student record, including its contact points, guardian reference and enrolment. This is the application's one genuine business capability and the module every other one exists to serve.",
+      "derives_from_legacy_modules": ["insert-form", "edit-form", "view-form"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["Student", "StudentContactPoint", "GuardianReference"],
+      "state_machines": ["StudentRecord"],
+      "requirement_count": 18,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-001' — REQ-001 through REQ-016, REQ-026, REQ-027",
+      "nonfunctional_requirement_count": 0,
+      "notable_findings": "The three most consequential findings in the whole Discovery record land here. BR-033 is the data-destruction path: a record holding a reference value outside the hardcoded list was silently blanked on load and then overwritten on save, and because the admission-year list expired after 2023 this captures every record created thereafter. BR-032 combined with BR-094 means merely opening and saving a record rewrote all nine attributes, defeating any concurrent change with no warning to either party. BR-012 records that no validation existed anywhere on the create path, so a record of entirely empty strings was persistable — and the structural assessment is explicit that validation is therefore new work, not a port."
+    },
+    {
+      "id": "MOD-002",
+      "name": "Record Search, Listing and Retrieval",
+      "description": "Presentation of the student record set to an operator: paged and sorted listing, parameterized multi-attribute search, filtering, selection and the explicit column contract of the list.",
+      "derives_from_legacy_modules": ["view-form"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["Student", "Enrolment"],
+      "state_machines": [],
+      "requirement_count": 9,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-002' — REQ-020 through REQ-025, REQ-028, REQ-029, REQ-033",
+      "nonfunctional_requirement_count": 1,
+      "notable_findings": "BR-052 is the application's single confirmed exploitable vulnerability and the mechanism named in escalation ESC-1 as the live exfiltration path for the entire personal-data set: the search concatenated raw keystrokes into both an equality and a pattern clause, with the grid as a direct output channel. The same defect crashed the application on a legitimate apostrophe, so a name such as O'Brien was indistinguishable from an attack. BR-054 records that seven of ten attributes were unsearchable and that no filter by programme or admission year existed anywhere, despite those being the dashboard's primary reporting axes."
+    },
+    {
+      "id": "MOD-003",
+      "name": "Enrolment Statistics and Reporting",
+      "description": "Computation and presentation of population statistics by gender, programme and cohort, with declared population scope, a reconciling grand total, and derived rather than asserted bucket counts.",
+      "derives_from_legacy_modules": ["form1-dashboard"],
+      "capability": "reporting-and-analytics",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["Student", "Enrolment", "GenderCode", "CourseCode", "AdmissionYear"],
+      "state_machines": [],
+      "requirement_count": 9,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-003' — REQ-040 through REQ-048",
+      "nonfunctional_requirement_count": 2,
+      "notable_findings": "Five of the twelve legacy statistics were silently invalid and three undercounted, with no mechanism to detect either. BR-072 hardcoded the current year as 2023 and never read the clock, so every cohort has been mislabelled since 1 January 2024 and the error grows by one cohort per year with no failure signal. BR-070 counted two of three gender values, BR-071 three hardcoded programmes, BR-073 five cohorts justified nowhere — and BR-075 records that no statistic reported a grand total, which is precisely why none of the three undercounts was visible. The structural assessment's warning governs this module: 'the current SQL is evidence of intent, not a specification'."
+    },
+    {
+      "id": "MOD-004",
+      "name": "Reference Data and Controlled Vocabulary Management",
+      "description": "Single authoritative definition of the gender, programme and admission-year vocabularies as reference data with codes, labels, active flags and effective ordering, and their administration without a code change.",
+      "derives_from_legacy_modules": ["insert-form", "edit-form", "form1-dashboard"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["GenderCode", "CourseCode", "AdmissionYear"],
+      "state_machines": [],
+      "requirement_count": 4,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-004' — REQ-030, REQ-031, REQ-032, REQ-095",
+      "nonfunctional_requirement_count": 0,
+      "notable_findings": "This module exists because the legacy vocabularies had no home at all. The data-domain assessment records that domain D3 owns no physical columns and that its physical system of record is 'none' — the value sets existed only as compiled literals, the programme taxonomy restated across at least eight locations. There was no database constraint, no lookup table and no grouping. BR-015 is the sharpest consequence: the admission-year list expired after 2023, so the application could not record a current intake at all, and BR-033 then made every such record permanently un-amendable. The decomposition strategy independently prescribes this same normalization as 'the one place the target schema legitimately gains relations the legacy single-table shape has none of'."
+    },
+    {
+      "id": "MOD-005",
+      "name": "Persistence, Transactions and Data Access",
+      "description": "The data-access layer: scoped connection and unit-of-work lifecycle, transactional atomicity, optimistic concurrency, named parameter binding, explicit typing and comparison semantics, the surrogate identity scheme and the live-schema migration prerequisite.",
+      "derives_from_legacy_modules": ["module1-db-connection", "insert-form", "edit-form", "view-form"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator", "Direct Datastore Accessor"],
+      "data_entities": ["Student", "StudentContactPoint", "GuardianReference", "Enrolment", "GenderCode", "CourseCode", "AdmissionYear"],
+      "state_machines": ["PersistenceUnitOfWork"],
+      "requirement_count": 13,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-005' — REQ-050 through REQ-058, REQ-096 through REQ-099",
+      "nonfunctional_requirement_count": 10,
+      "notable_findings": "The legacy data-access layer was thirteen lines holding one public mutable connection, and the structural assessment rates its coupling critical with the instruction that 'every decomposition boundary must cut this edge'. It has the highest fan-in of any code node while holding zero SQL — the call graph calls it 'a shared mutable resource, not a service'. All sixteen SQL statements lived inline in UI event handlers across four of six modules. No transaction existed anywhere. One module unilaterally closed the connection another owned, which is the BR-004 defect that crashed the application after any deletion. REQ-099 carries the hard prerequisite that governs this whole module: no Discovery pass ever had a live database engine, so every column type in the data model is declared rather than confirmed, and DS-RISK-02 is recorded as blocking target-schema generation."
+    },
+    {
+      "id": "MOD-006",
+      "name": "Identity, Authentication and Authorization",
+      "description": "Authentication of every principal at the prescribed assurance level through a federated broker, an explicit authorization decision on every operation, deny-by-default, session lifetime, elevation for destructive operations, and datastore-level authentication that closes the bypass path.",
+      "derives_from_legacy_modules": ["my-project-infrastructure"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator", "Identity Broker", "Ambient Windows Principal", "Direct Datastore Accessor"],
+      "data_entities": ["AuditEntry"],
+      "state_machines": ["AuthenticatedSession"],
+      "requirement_count": 8,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-006' — REQ-060 through REQ-067",
+      "nonfunctional_requirement_count": 4,
+      "notable_findings": "THIS MODULE IS PRESCRIBED ENTIRELY FROM A NAMED ABSENCE, which is its evidence. BR-090 records no login, no user identity, no roles, no permissions and no audit of actor; summary_metrics records authentication_mechanisms = 0. The identity assessment states it most precisely: 'There is not merely no second factor; there is no first factor at the application boundary', and rates the application boundary below-AAL1 on both identity models. BR-090 is explicit about why the absence must become a requirement rather than be skipped: 'a modernization target that assumes authorization exists somewhere in this code will find nothing to port'. The decisive constraint is that client-side authentication alone would be bypassable — the datastore file is openable by any database client or by Microsoft Access itself, which is why REQ-064 is sequenced with rather than after the rest."
+    },
+    {
+      "id": "MOD-007",
+      "name": "Audit, Provenance and Record Lifecycle State",
+      "description": "Record provenance attributes, an immutable append-only audit entry per operation, audit retention independent of the records described, the version token underpinning concurrency, and fulfilment of data-subject access and erasure requests including independent guardian erasure.",
+      "derives_from_legacy_modules": ["module1-db-connection"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["AuditEntry", "Student", "GuardianReference"],
+      "state_machines": ["StudentRecord"],
+      "requirement_count": 5,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-007' — REQ-090 through REQ-094",
+      "nonfunctional_requirement_count": 3,
+      "notable_findings": "ALSO PRESCRIBED FROM A NAMED ABSENCE. BR-095 records that the table had exactly ten business columns and no created, modified, version or status attribute, and that the application wrote no audit record for any operation — so 'no create, update or delete in this system is attributable or reconstructible after the fact'. The data-flow assessment states it at critical severity: 'Insert, update and delete leave no trace beyond the mutated row.' BV-06 adds that physical immediate deletion 'forecloses both data-subject-request handling and any reconstruction after an erroneous delete'. The data-domain assessment identifies the guardian as a distinct, unconsented data subject held inside the student's row with no independent erasure path, which is why REQ-093 separates the two erasure lifecycles."
+    },
+    {
+      "id": "MOD-008",
+      "name": "Application Shell, Navigation and Refresh Contract",
+      "description": "Explicit navigation state transitions, the single declared refresh and change-notification contract applied uniformly to every mutation, symmetric event subscription, surface isolation, and orderly exit.",
+      "derives_from_legacy_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": [],
+      "state_machines": ["NavigationContext"],
+      "requirement_count": 8,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-008' — REQ-070 through REQ-077",
+      "nonfunctional_requirement_count": 3,
+      "notable_findings": "BR-078 is the most complex single behaviour in the application, the only rule rated EXTREME complexity, and the substrate on which BR-019, BR-062 and BR-063 all depend — yet 'no single file describes it'. The shell had no navigation: child surfaces were reparented into one host panel and merely hidden, accumulating across the session over still-visible statistics tiles, with an amendment surface retaining unsaved edits invisibly. IM-020 records the refresh consequence in one sentence: insert refreshed the dashboard but not the visible list, delete refreshed the list but not the dashboard, update refreshed both and only by accident of a subscription made in another module — 'no two of the three agree'. The structural assessment notes the shell and statistics concerns deliberately overlap on one legacy module and that 'that overlap IS the finding', directing that the contract be re-specified rather than translated."
+    },
+    {
+      "id": "MOD-009",
+      "name": "Error Handling, Diagnostics and Observability",
+      "description": "One uniform boundary error-handling policy, distinguishable failure classes, field-attributed validation reporting, structured durable logging with correlation identifiers, startup configuration diagnostics, and the automated verification that gates release.",
+      "derives_from_legacy_modules": ["insert-form", "edit-form", "view-form", "form1-dashboard"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": ["AuditEntry"],
+      "state_machines": [],
+      "requirement_count": 5,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-009' — REQ-080 through REQ-084",
+      "nonfunctional_requirement_count": 4,
+      "notable_findings": "IM-029 records the asymmetry that defines this module: two handlers were wrapped in catch-alls while six paths had no exception handling at all, 'so comparable failures either show a message box or terminate the process depending only on which path they occur in'. BR-022's catch-all 'erases the diagnostic distinction between every failure mode in the system' and 'no record of the failure survives the dismissal of the message box'. There was no logging, no telemetry and no error code anywhere, and the ux assessment records instrumentation_present = false with no telemetry source in existence. NFR-014 carries unusual weight here: because no behavioural baseline and no executable specification of current behaviour exists, the acceptance criteria in this SRS ARE the specification, so the test suite derived from them is the only thing the modernized system can be judged against."
+    },
+    {
+      "id": "MOD-010",
+      "name": "Accessibility and User Interface Conformance",
+      "description": "WCAG 2.1 Level AA and Section 508 conformance across every surface: programmatic naming, readable column labels, non-colour-dependent distinction, deterministic focus order, measured contrast, declared input constraints with field-attributed errors, keyboard accelerators and purposeful element naming.",
+      "derives_from_legacy_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": [],
+      "state_machines": [],
+      "requirement_count": 9,
+      "requirement_ids_selector": "srs-requirements-functional.json :: requirements[] where module_hint == 'MOD-010' — REQ-100 through REQ-108, one per accessibility finding A11Y-001 through A11Y-009",
+      "nonfunctional_requirement_count": 3,
+      "notable_findings": "The accessibility gate verdict is FAIL with Section 508 compliance assessed as fail and nine violations: one critical, two serious, four moderate, two minor. A11Y-001 is the critical one and is a measured zero — no accessible name or description exists on any of the 137 controls across all four surfaces, and the audit calls this 'the only mechanism a non-visual user has to operate the application at all'. Two limits must travel with this module: the conformance target was resolved from the Discovery artefact and not from the client profile, which is absent from this workspace; and the baseline is explicitly 'a floor, not a ceiling' because no automated tool could run against a desktop application and no screen reader was ever used, so zero per cent of findings came from tooling and both the score and the conformance percentage were returned as null rather than estimated."
+    },
+    {
+      "id": "MOD-011",
+      "name": "Configuration, Deployment and Environment Binding",
+      "description": "Externalized configuration with no hardcoded path or secret, clean-clone build and run, a supported runtime and datastore platform, backup and recovery, and the prohibition on production personal data in any artefact.",
+      "derives_from_legacy_modules": ["module1-db-connection", "my-project-infrastructure"],
+      "capability": "personnel-records-management",
+      "actor_names": ["Student Records Operator"],
+      "data_entities": [],
+      "state_machines": [],
+      "requirement_count": 0,
+      "requirement_ids_selector": "NO functional requirement carries module_hint == 'MOD-011'. Its behaviour is prescribed by REQ-051 (externalized datastore configuration, assigned to MOD-005 as a persistence binding) and REQ-082 (startup configuration diagnostic, assigned to MOD-009 as an error-handling concern), and by NFR-015, NFR-022, NFR-023 and NFR-024 in srs-requirements-nonfunctional.json. The module is retained because the anomalies it owns need a home — see notable_findings. This zero is stated rather than hidden: a module claiming requirements it does not have is the drift the requirement_count key exists to expose.",
+      "nonfunctional_requirement_count": 4,
+      "notable_findings": "The legacy configuration posture is the reason the committed database is not the database the application opens. BR-002 records an absolute developer path on a D: drive embedded as a string literal, with no configuration entry, no relative path and no environment override, so 'on any machine other than the author's, the application fails at startup' and the repository-committed datastore is 'an orphan datastore'. A configuration mechanism existed — a generated accessor over an empty settings store — and was entirely unused, which ANOM-050 omits as dead code and which explains how the hardcoding was possible. The clean-clone build is separately broken by a missing signing certificate and a Debug-to-Release mapping. Most seriously, ESC-1 remains open: live personal data is committed to a public repository alongside the injection path capable of exfiltrating it."
+    }
+  ],
+  "actors": [
+    {
+      "name": "Student Records Operator",
+      "type": "human",
+      "description": "The one user class the Discovery record evidences. Creates, retrieves, searches, amends and archives student records, and reads population statistics.",
+      "authentication": "PRESCRIBED: per-user authentication through the federated identity broker using an authorization-code flow with proof key for code exchange, enforced before any surface displaying or accepting student data is rendered. OBSERVED: none — the legacy application performed no authentication of any kind and accepted possession of an interactive desktop session as the whole of the access decision.",
+      "target_assurance": "NIST SP 800-63B AAL2 minimum, with a second factor that is not an emailed code. SUBJECT TO UPWARD REVISION: the identity assessment states that a Tier 1 safety classification would instead demand a phishing-resistant AAL3 authenticator such as FIDO2 or PIN-unlocked PIV. The catalogue records safety_tier as null and states tier must come from stakeholder or Safety Board input, so AAL2 is a floor pinned to an explicitly non-authoritative Tier 3 lean.",
+      "observed_assurance": "below-AAL1 at the application boundary; IAL unknown; FAL not-applicable; phishing_resistant false; mfa_type none",
+      "permissions": "PRESCRIBED: create, retrieve, search, amend and archive student records; read statistics; read reference data. Purge, guardian erasure and reference-data administration require separate grants and are NOT included in this actor's baseline. OBSERVED: unrestricted create, read, update and delete over every student record, including the personal data of students and of named guardians, with no privilege test on any path.",
+      "modules": ["MOD-001", "MOD-002", "MOD-003", "MOD-004", "MOD-005", "MOD-006", "MOD-007", "MOD-008", "MOD-009", "MOD-010", "MOD-011"],
+      "endpoints_accessed": "All four human-facing surfaces recorded in the Pass 1 interface inventory: Form1 — dashboard, navigation shell and statistics view; InsertForm — new student record entry; EditForm — existing student record editor; ViewForm — student record grid, search and delete. There are no HTTP endpoints: summary_metrics records http_endpoints 0, scheduled_jobs 0 and message_queues 0, and the interface inventory states that this is 'confirmed as a genuine zero rather than an unmeasured value'.",
+      "evidence": {
+        "derived_from": "identity-landscape.json identity_models[].user_classes == ['local-workstation-operator'], present identically on both identity models",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 15,
+        "authorization_check": "NONE EXISTS. The citation is to the absence: Form1_Load calls the connection helper and then the statistics loader 'with no authentication or authorization gate preceding it; My.User is never read anywhere in the tree'.",
+        "corroborating": ["BR-090", "structural-analysis.coupling_signals[no-authentication] at Flat Design/My Project/Application.myapp:8", "interface-inventory.interfaces[0].authentication == 'none — no login form, no user concept, no roles anywhere in the application'", "ux-accessibility.personas[local-workstation-operator]"],
+        "label_provenance": "The identity assessment states that 'user_classes uses the observed local-workstation-operator rather than a profile taxonomy label'. The name used here is this SRS's business-facing rendering of that one observed class; it is not a second actor."
+      }
+    },
+    {
+      "name": "Identity Broker",
+      "type": "system",
+      "description": "The federation broker that authenticates the operator on the application's behalf and issues the short-lived tokens that scope data access. PRESCRIBED, not observed — it has no legacy counterpart.",
+      "authentication": "Mutual authentication with the application using the registered client credentials of the deployment; fronts the organisation's staff directory as the upstream identity provider.",
+      "target_assurance": "Must be capable of asserting AAL2 or higher, and of asserting a phishing-resistant AAL3 authenticator should a Tier 1 safety classification be returned.",
+      "permissions": "Asserts identity and authentication context. Holds NO authority over student data and MUST NOT be able to read, amend or archive any record.",
+      "modules": ["MOD-006"],
+      "endpoints_accessed": "The authentication and token endpoints of the broker protocol. No student-data interface.",
+      "evidence": {
+        "derived_from": "identity-landscape.json broker_recommendation, recommended_pattern 'broker-staff-only', and retire_recommendations[0].replacement_model 'Broker-fronted federated staff IDP (OIDC authorization-code flow with PKCE for the desktop client) at AAL2 minimum, with per-user authentication enforced before any form loads'",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 26,
+        "authorization_check": "NONE EXISTS in the legacy system. This actor is prescribed to create the authorization boundary that BR-090 records as entirely absent.",
+        "corroborating": ["identity-landscape.proliferation_findings[legacy-directory-without-sso] with consolidation_candidate true", "identity-landscape.assurance_gaps[below-aal2]", "BR-090"],
+        "scope_limit": "DELIBERATELY UNNAMED PRODUCT AND UPSTREAM PROVIDERS. The identity assessment recommends a concrete broker technology only 'SUBJECT TO PROFILE CONFIRMATION' and refuses to name upstream identity providers at all, stating that the faa profile's technology and analyzer configuration were unreadable from its sandbox and that 'naming concrete FAA IDPs would be fabrication'. This SRS inherits that refusal: it prescribes the pattern and the assurance level, never the product. The provider inventory must be completed from the profile before the broker design is acted on. It also records that the concrete Windows binding — local account store or domain directory — 'is NOT determinable from source' and must be confirmed."
+      }
+    },
+    {
+      "name": "Ambient Windows Principal",
+      "type": "system",
+      "description": "The operating-system interactive-logon identity that the legacy application bound to implicitly and never read. Recorded as an actor because it is what currently governs access, and prescribed to be RETIRED rather than hardened.",
+      "authentication": "OBSERVED: Windows interactive logon on the host workstation, bound by the application framework's authentication mode. The framework populated a user object from it, but no code path ever read that object, so the binding conferred nothing and verified nothing. PRESCRIBED: the binding MUST be removed in the same change that introduces the authentication gate, not afterwards.",
+      "target_assurance": "Not applicable — this identity model is prescribed for retirement, not for an assurance target.",
+      "observed_assurance": "below-AAL1; IAL unknown because 'proofing strength is wholly inherited from the issuance policy of the Windows account, which is a host/domain administration artifact and is not observable in this application's source'; FAL not-applicable.",
+      "permissions": "OBSERVED: effectively full authority, since possession of an interactive desktop session on the host was the whole of the access decision. PRESCRIBED: none.",
+      "modules": ["MOD-006"],
+      "endpoints_accessed": "Every surface, by virtue of launching the executable.",
+      "evidence": {
+        "derived_from": "identity-landscape.json identity_models[0] 'Ambient Windows interactive-logon identity (VB.NET Application Framework AuthenticationMode.Windows)', model_type on-prem-directory",
+        "source_file": "Flat Design/My Project/Application.Designer.vb",
+        "source_line": 26,
+        "authorization_check": "NONE. The assessment's retire reason is categorical: 'CRITERION 2 — Blocks zero-trust… possession of an interactive desktop session on the host is the whole of the access decision… A retire recommendation here is mandatory, not optional, under the skill's IWA/zero-trust rule.'",
+        "corroborating": ["Flat Design/My Project/Application.myapp:8 — AuthenticationMode 0 confirms the setting is designer-persisted intent, not a code-generation accident", "Flat Design/Student Management System Siddharth Jain.vbproj:76 — no directory, security or identity assembly is referenced anywhere in the project", "BR-090"],
+        "retirement_sequencing": "The assessment directs that 'the ambient binding must be removed in the same change that introduces the authentication gate, otherwise the old path remains as an unauthenticated fallback.'"
+      }
+    },
+    {
+      "name": "Direct Datastore Accessor",
+      "type": "system",
+      "description": "Any process or person reaching the student data directly through a general-purpose database client rather than through the application. Recorded because it is a REAL, currently reachable access path with full authority, and prescribed to be ELIMINATED — not merely restricted.",
+      "authentication": "OBSERVED: none whatsoever. The connection string carries no user, no password and no database-password token, and the absence of that token is itself the evidence that the datastore file has no password. PRESCRIBED: this path MUST NOT exist; the datastore MUST authenticate every connecting principal.",
+      "target_assurance": "Not applicable — prescribed for elimination.",
+      "observed_assurance": "below-AAL1 for authentication, with IAL recorded as the enum floor IAL1 under protest: 'no subject identity is asserted to the data tier at all, which is weaker than self-asserted. The IAL enum has no below-IAL1 member.'",
+      "permissions": "OBSERVED: full read and write over the entire personal-data set, outside the application entirely. PRESCRIBED: none.",
+      "modules": ["MOD-005", "MOD-006"],
+      "endpoints_accessed": "The datastore file itself, recorded in the Pass 1 interface inventory as the machine-facing interface 'studentDB.accdb — local Access database file', whose authentication is 'none — no database password; filesystem permissions are the only access control over the full PII dataset'.",
+      "evidence": {
+        "derived_from": "identity-landscape.json identity_models[1] 'Credential-less ACE OLEDB data-tier access to bundled studentDB.accdb', and assurance_gaps[shared-credentials]",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "authorization_check": "NONE. This actor is the reason REQ-064 exists, and the assessment states why in terms that settle the sequencing: 'this path is reachable WITHOUT the application: any OLEDB client, or Microsoft Access itself, pointed at the same .accdb obtains the same full read/write access, so any authentication added to the WinForms client alone would be a bypassable control.'",
+        "corroborating": ["interface-inventory.interfaces[studentDB.accdb — local Access database file].capability_hint — 'an uncontrolled second access path to the data that bypasses the application entirely'", "ESC-1", "BR-090 boundary condition — 'Any user with file-system read/write access to the .accdb has equivalent authority outside the application entirely, since the file is unencrypted and unprotected'"],
+        "retirement_sequencing": "The assessment directs that this be addressed 'BEFORE or WITH the ambient-Windows retirement, never after.'"
+      }
+    }
+  ],
+  "actor_model_note": "FOUR ACTORS, AND THE RESTRAINT IS DELIBERATE. The skill forbids invented actors: every actor must trace to a concrete authorization check in the Discovery record. This application has NO authorization checks and NO roles — three independent artefacts record that there is 'no user concept, no roles anywhere in the application', and the only user class modelled anywhere in Discovery is the single observed local-workstation-operator, present identically on both identity models. This SRS therefore prescribes ONE human actor, not a plausible-looking set of administrator, reviewer and analyst roles that no evidence supports. The three system actors are each traced to a named identity model or interface in the Discovery record: the broker is the prescribed replacement the identity assessment itself recommends, and the other two are real observed access paths prescribed for retirement and elimination respectively. Note that the ambient principal and the direct datastore accessor are kept SEPARATE despite overlapping permissions, because they authenticate by entirely different paths and must be retired in a specific order — merging them is the actor-confusion failure mode the skill warns about. The absence of role differentiation among human operators is carried as open question 5 and is the most consequential actor-model gap in this document: REQ-062's deny-by-default exists precisely so that this gap cannot silently become a grant of full authority to every future principal.",
+  "state_machines": [
+    {
+      "entity": "StudentRecord",
+      "module": "MOD-001",
+      "description": "The prescribed lifecycle of a student record. The legacy record had NO PERSISTED STATE AT ALL: the recovered state machine records that 'a record's state is its existence', so enrolled, graduated and withdrawn were indistinguishable and the only terminal transition was physical destruction. Every state below other than Active had no durable representation in the legacy system. This machine prescribes the ONLY valid transitions the modernized system may allow.",
+      "initial_state": "Draft",
+      "terminal_states": ["Discarded", "Purged"],
+      "states": [
+        {"name": "Draft", "description": "Attribute values held on the entry surface only, not persisted. Prescribed to be explicit: the legacy equivalent was lost on cancel or exit with no prompt.", "entry_action": "Present an entry surface with every input at its documented initial state and no pre-populated value", "exit_action": "none"},
+        {"name": "Active", "description": "A persisted, current student record. The only state the legacy system could represent.", "entry_action": "Set created or modified provenance from the server clock and authenticated principal; write the audit entry in the same transaction", "exit_action": "none"},
+        {"name": "Archived", "description": "Logically deleted: retained, excluded from default reads and from active-population statistics, still retrievable by an authorized principal. Prescribed new — the legacy system deleted physically.", "entry_action": "Set archived_at and derive retention_expires_at; write an Archive audit entry", "exit_action": "Clear archived_at and retention_expires_at on restore"},
+        {"name": "Purged", "description": "Physically destroyed after retention expiry, by a separately authorized and audited operation, such that the data is unrecoverable from the storage medium.", "entry_action": "Render every attribute value unrecoverable; write a Purge audit entry that survives the record", "exit_action": "none — terminal"},
+        {"name": "Discarded", "description": "An unpersisted draft abandoned by the principal. Terminal and leaves no record.", "entry_action": "Discard all input after an explicit warning", "exit_action": "none — terminal"}
+      ],
+      "transitions": [
+        {"from": "Draft", "to": "Active", "trigger": "Principal submits the create form", "guard": "Every validation rule in REQ-002 through REQ-009 passes AND roll number does not collide case-insensitively with a non-purged record AND the principal is authorized to create", "action": "Persist the student with its contact points, guardian reference and enrolment, plus the Create audit entry, in one transaction", "traces_to": {"discovery_finding": "BR-010", "source_file": "Flat Design/InsertForm.vb", "source_line": 9}, "prescribed_requirement": "REQ-001"},
+        {"from": "Draft", "to": "Discarded", "trigger": "Principal cancels, navigates away, or exits", "guard": "The principal has been warned that unsaved input will be lost and has confirmed", "action": "Discard input; write no record", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/InsertForm.vb", "source_line": 57}, "prescribed_requirement": "REQ-026", "corrects": "The legacy transition had guard 'none — no confirmation is requested and the draft is discarded silently'."},
+        {"from": "Active", "to": "Active", "trigger": "Principal submits an amendment", "guard": "The submitted row_version matches the stored value AND every validation rule passes AND exactly one record is affected AND the principal is authorized to amend", "action": "Persist only changed attributes; advance row_version; update modified provenance; write an Update audit entry recording prior and new values — all in one transaction", "traces_to": {"discovery_finding": "BR-032", "source_file": "Flat Design/EditForm.vb", "source_line": 51}, "prescribed_requirement": "REQ-012", "corrects": "The legacy transition rewrote all nine attributes unconditionally with 'no dirty-field tracking and no concurrency check'."},
+        {"from": "Active", "to": "Archived", "trigger": "Principal confirms an archive", "guard": "The principal is authorized to archive AND has confirmed against a prompt naming the roll number and student name AND exactly one record is affected", "action": "Set lifecycle_state Archived, archived_at and retention_expires_at; write an Archive audit entry; refresh every affected surface per REQ-072", "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}, "prescribed_requirement": "REQ-027", "corrects": "The legacy transition was a physical unrecoverable delete with no audit, and it closed the shared connection, so the next dashboard navigation terminated the application."},
+        {"from": "Active", "to": "Active", "trigger": "Principal declines the archive confirmation", "guard": "none", "action": "Abandon with the record unchanged and no shared state altered", "traces_to": {"discovery_finding": "BR-056", "source_file": "Flat Design/ViewForm.vb", "source_line": 88}, "prescribed_requirement": "REQ-026"},
+        {"from": "Archived", "to": "Active", "trigger": "Principal restores an archived record", "guard": "The principal is authorized to restore AND retention has not expired AND roll number does not now collide with an Active record", "action": "Clear archived_at and retention_expires_at; set lifecycle_state Active; write a StateTransition audit entry", "traces_to": {"discovery_finding": "BV-06", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}, "prescribed_requirement": "REQ-027", "prescribed_new": true, "rationale": "Prescribed because BV-06 records that the legacy physical delete 'forecloses… any reconstruction after an erroneous delete'. This transition is the recovery path that absence created."},
+        {"from": "Archived", "to": "Purged", "trigger": "Authorized principal purges, or the retention process purges an eligible record", "guard": "retention_expires_at has elapsed AND the principal holds a purge grant distinct from the archive grant AND has re-authenticated per REQ-067", "action": "Render every attribute value unrecoverable; write a Purge audit entry that survives the record", "traces_to": {"discovery_finding": "BR-057", "source_file": "Flat Design/ViewForm.vb", "source_line": 90}, "prescribed_requirement": "REQ-027"}
+      ],
+      "reachability_verified": "Every state is reachable from Draft: Draft is initial; Active via create; Archived via archive; Purged via purge; Discarded via cancel. Every non-terminal state has at least one exit transition — Draft has two, Active has three, Archived has two. Both terminal states are intentional: Purged is the prescribed end of the retention lifecycle, and Discarded is the end of an abandoned draft.",
+      "dead_states_removed": [
+        {"state": "PartiallyLoaded", "reason": "A legacy defect state, not a lifecycle state. It arose when a categorical selector failed to bind because the stored value was outside the hardcoded list, leaving the surface visually indistinguishable from a correctly loaded one while saving from it destroyed the stored value. The recovered state machine calls the transition out of it 'the application's main data-destruction path short of deletion'. REQ-013 makes the condition impossible by preserving and marking out-of-set values instead.", "evidence": "Flat Design/EditForm.vb:27-29 (BR-033, IM-014)", "resolved_by": "ANOM-014, ANOM-054"},
+        {"state": "BlankEdit", "reason": "A legacy defect state. It arose when no record matched the requested key: the populate block was guarded with no alternative branch, so the surface appeared to be amending the selected student while holding only designer defaults, and saving from it reported success while affecting zero rows. REQ-015 makes the condition impossible by reporting the absent record and presenting no editable surface.", "evidence": "Flat Design/EditForm.vb:20-33 (BR-036, IM-028)", "resolved_by": "ANOM-025, ANOM-054"},
+        {"state": "LoadedForEdit", "reason": "Not removed as dead but FOLDED into Active. It was a presentation state rather than a record state: the record remained persisted and unchanged throughout. The prescribed machine models record lifecycle only, and the corresponding presentation state is AmendSurface in the NavigationContext machine.", "evidence": "Flat Design/ViewForm.vb:60-81 (BR-030, BR-063)", "resolved_by": "folded into Active; presentation aspect modelled in NavigationContext"},
+        {"state": "NonExistent", "reason": "Folded. The legacy machine needed this state because deletion was physical and unaudited, so a deleted record was 'indistinguishable from never-created, graduated, withdrawn or deleted'. Once REQ-027 makes deletion logical and REQ-091 makes it audited, a record that has existed is always representable, and absence before creation needs no state.", "evidence": "state-machines.json student-record-lifecycle states[0] (BR-057, BR-095)", "resolved_by": "ANOM-009, ANOM-022"}
+      ],
+      "states_not_prescribed_pending_confirmation": [
+        {"state": "Graduated", "reason": "NOT PRESCRIBED, and the restraint is deliberate. Discovery evidences only that the legacy system CANNOT distinguish a graduated student — BR-075 records that 'graduated and withdrawn students are indistinguishable from current students unless they were deleted, which destroys the record' — not that the business requires the distinction. Prescribing an enrolment-status enum on that basis would be inventing a requirement. Carried as open question 6.", "evidence": "BR-075, BR-095"},
+        {"state": "Withdrawn", "reason": "NOT PRESCRIBED, same basis as Graduated.", "evidence": "BR-075, BR-095"}
+      ]
+    },
+    {
+      "entity": "PersistenceUnitOfWork",
+      "module": "MOD-005",
+      "description": "The prescribed lifecycle of a datastore interaction. Replaces the legacy shared-global-connection machine, which the structural assessment rates critical with the instruction that 'every decomposition boundary must cut this edge'. The legacy machine had one state the code never tested for and one state created implicitly by an unclosed reader that blocked every other operation on the shared object.",
+      "initial_state": "Idle",
+      "terminal_states": ["Committed", "RolledBack"],
+      "states": [
+        {"name": "Idle", "description": "No connection held. The resting state between units of work.", "entry_action": "Release any connection held", "exit_action": "none"},
+        {"name": "Open", "description": "A connection acquired for this unit of work alone, with an explicit transaction scope open. Not shared with any other operation or surface.", "entry_action": "Acquire a connection from the pool and begin the transaction", "exit_action": "none"},
+        {"name": "Committed", "description": "The transaction committed atomically and the connection was released.", "entry_action": "Commit, release the connection deterministically, emit the change notification per REQ-070", "exit_action": "none — terminal"},
+        {"name": "RolledBack", "description": "The transaction rolled back entirely and the connection was released. No partial effect persists.", "entry_action": "Roll back, release the connection deterministically, log with a correlation identifier per REQ-084", "exit_action": "none — terminal"}
+      ],
+      "transitions": [
+        {"from": "Idle", "to": "Open", "trigger": "A service operation requires datastore access", "guard": "Configuration resolved at startup AND the datastore reachable AND the principal authorized for the operation", "action": "Acquire a dedicated connection and begin a transaction", "traces_to": {"discovery_finding": "BR-001", "source_file": "Flat Design/Module1.vb", "source_line": 5}, "prescribed_requirement": "REQ-050"},
+        {"from": "Open", "to": "Committed", "trigger": "Every write in the unit of work succeeded", "guard": "Each mutation affected exactly one record per REQ-016 AND every concurrency token matched", "action": "Commit; release the connection; notify affected surfaces", "traces_to": {"discovery_finding": "BR-093", "source_file": "Flat Design/InsertForm.vb", "source_line": 25}, "prescribed_requirement": "REQ-057"},
+        {"from": "Open", "to": "RolledBack", "trigger": "Any write failed, any guard failed, or any fault occurred", "guard": "none — any failure takes this transition", "action": "Roll back entirely; release the connection; report the failure class per REQ-080", "traces_to": {"discovery_finding": "BR-022", "source_file": "Flat Design/InsertForm.vb", "source_line": 31}, "prescribed_requirement": "REQ-057"},
+        {"from": "Committed", "to": "Idle", "trigger": "The unit of work returns to its caller", "guard": "none", "action": "none — the connection is already released", "traces_to": {"discovery_finding": "BR-001", "source_file": "Flat Design/Module1.vb", "source_line": 6}, "prescribed_requirement": "REQ-050"},
+        {"from": "RolledBack", "to": "Idle", "trigger": "The unit of work returns to its caller", "guard": "none", "action": "none — the connection is already released, so no later operation is affected", "traces_to": {"discovery_finding": "BR-003", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-050"}
+      ],
+      "reachability_verified": "All four states are reachable from Idle. Both terminal states return to Idle, so the machine is cyclic by design and neither Committed nor RolledBack is a trap. Open has exactly two exits covering success and every failure.",
+      "dead_states_removed": [
+        {"state": "Busy", "reason": "A legacy implicit state with no code representation: the shared connection with an unclosed reader attached, in which 'any further command on the shared connection fails because OleDb permits only one open reader per connection'. It was reachable because a parse failure occurred between opening the reader and closing it, with no deterministic-release construct anywhere in the file, leaving the connection poisoned 'for the remaining life of the process'. REQ-050's per-operation scoping and deterministic release make the state unreachable.", "evidence": "Flat Design/EditForm.vb:18 and :33 (BR-003, BR-034, BR-035, IM-029)", "resolved_by": "ANOM-024, ANOM-037, ANOM-054"},
+        {"state": "Broken", "reason": "A legacy state the recovered machine describes as one 'that connectDB tests for neither, so it is never recovered from' — the lazy-open guard tested only for Closed, so a connection in a broken or connecting state was left unusable with no recovery path. REQ-050 requires an unusable connection to be discarded and replaced rather than reused.", "evidence": "Flat Design/Module1.vb:6 (BR-001 boundary condition, coupling_signals.silent-state-check-swallows-broken-states)", "resolved_by": "ANOM-037, ANOM-054"},
+        {"state": "Open (shared, process-lifetime)", "reason": "The legacy Open state was a process-lifetime shared singleton reached from four surfaces, reopened by nobody and closed by exactly one — the delete path — leaving it closed for everyone else. That is not the same state as the prescribed per-unit-of-work Open and is recorded here so the rename is not mistaken for a carry-forward.", "evidence": "Flat Design/Module1.vb:4 and Flat Design/ViewForm.vb:94 (BR-001, BR-004, coupling_indicators.shared-global-connection)", "resolved_by": "ANOM-037"}
+      ]
+    },
+    {
+      "entity": "AuthenticatedSession",
+      "module": "MOD-006",
+      "description": "The prescribed session lifecycle. ENTIRELY NEW — the identity assessment records that the legacy application had 'no application session concept at all, therefore no idle timeout, no maximum session lifetime, no re-authentication interval, and no short-lived token to expire', because the only session-like object was a datastore connection held for the lifetime of the process. Its consequence is stated plainly: 'An unattended workstation leaves the full PII CRUD surface live indefinitely.'",
+      "initial_state": "Unauthenticated",
+      "terminal_states": ["Terminated"],
+      "states": [
+        {"name": "Unauthenticated", "description": "No principal established. No surface displaying or accepting student data may be rendered.", "entry_action": "Clear all personal data from every surface", "exit_action": "none"},
+        {"name": "Authenticating", "description": "An authentication exchange with the broker is in progress.", "entry_action": "Initiate the broker flow", "exit_action": "none"},
+        {"name": "Authenticated", "description": "A principal is established with a known assurance level and permission set. Student-data operations are permitted subject to authorization.", "entry_action": "Record the principal, assurance level and permissions; write an authentication-success audit entry; start the idle and absolute timers", "exit_action": "none"},
+        {"name": "Expired", "description": "The idle period or absolute lifetime elapsed. Personal data has been cleared and re-authentication is required.", "entry_action": "Clear all personal data from every surface; write a session-expiry audit entry", "exit_action": "none"},
+        {"name": "Terminated", "description": "The principal signed out or the application exited. Every resource released.", "entry_action": "Release the session and every held resource; write a session-end audit entry", "exit_action": "none — terminal"}
+      ],
+      "transitions": [
+        {"from": "Unauthenticated", "to": "Authenticating", "trigger": "Application start, or a student-data operation attempted with no session", "guard": "Broker configuration resolved", "action": "Initiate the authorization-code flow", "traces_to": {"discovery_finding": "BR-090", "source_file": "Flat Design/Form1.vb", "source_line": 15}, "prescribed_requirement": "REQ-060"},
+        {"from": "Authenticating", "to": "Authenticated", "trigger": "The broker returns a valid assertion", "guard": "The asserted assurance level is AAL2 or higher AND the principal has at least one permission grant", "action": "Establish the session; write the audit entry; start both timers", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[below-aal2]", "source_file": "Flat Design/My Project/Application.Designer.vb", "source_line": 26}, "prescribed_requirement": "REQ-060"},
+        {"from": "Authenticating", "to": "Unauthenticated", "trigger": "Authentication fails, is declined, or the asserted assurance level is below the floor", "guard": "none", "action": "Write an AuthenticationFailure audit entry recording the attempted identity but no credential material", "traces_to": {"discovery_finding": "BR-090", "source_file": "Flat Design/My Project/Application.myapp", "source_line": 8}, "prescribed_requirement": "REQ-063"},
+        {"from": "Authenticated", "to": "Expired", "trigger": "The idle period elapses, or the absolute lifetime elapses", "guard": "none — either elapsing is sufficient", "action": "Clear personal data from every surface; write the expiry audit entry", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"},
+        {"from": "Expired", "to": "Authenticating", "trigger": "The principal attempts any operation after expiry", "guard": "none", "action": "Initiate re-authentication", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"},
+        {"from": "Authenticated", "to": "Authenticated", "trigger": "The principal elevates for a purge or an erasure", "guard": "Re-authentication succeeds at the elevated assurance level", "action": "Record the elevation and its outcome in the audit; permit the destructive operation once", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-step-up]", "source_file": "Flat Design/ViewForm.vb", "source_line": 83}, "prescribed_requirement": "REQ-067"},
+        {"from": "Authenticated", "to": "Terminated", "trigger": "The principal signs out or exits", "guard": "Any unsaved input has been warned about per REQ-077", "action": "Release the session and every held resource; write the session-end audit entry", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077"},
+        {"from": "Expired", "to": "Terminated", "trigger": "The principal exits from an expired session", "guard": "none", "action": "Release every held resource", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077"}
+      ],
+      "reachability_verified": "All five states are reachable from Unauthenticated. Every non-terminal state has at least one exit: Unauthenticated one, Authenticating two, Authenticated three, Expired two. Terminated is the single intentional terminal state. There is no state in which student data is reachable without an established session.",
+      "dead_states_removed": [],
+      "dead_states_note": "No legacy states were removed because there was no legacy session machine to remove them from. This machine is prescribed from the named absence recorded in identity-landscape.assurance_gaps[no-session-timeout] and BR-090."
+    },
+    {
+      "entity": "NavigationContext",
+      "module": "MOD-008",
+      "description": "The prescribed navigation state machine. Replaces the legacy navigation-shell and child-form-instance-lifecycle machines, which together produced the application's three most subtle defects — the default-instance refresh confusion, the duplicate close-handler accumulation, and the cross-module reparenting of the amendment surface. BR-078, the legacy behaviour, is the only rule in the catalogue rated EXTREME complexity and the only one of which Discovery says 'no single file describes it'.",
+      "initial_state": "AuthenticationSurface",
+      "terminal_states": ["Exiting"],
+      "states": [
+        {"name": "AuthenticationSurface", "description": "The only surface presentable while the session is Unauthenticated or Expired. Prescribed new.", "entry_action": "Clear all personal data from every surface", "exit_action": "none"},
+        {"name": "Dashboard", "description": "Population statistics. The first surface after authentication.", "entry_action": "Compute every statistic with a declared population scope and as-of instant; render an unavailable statistic as explicitly unavailable", "exit_action": "Release the statistics surface"},
+        {"name": "RecordList", "description": "The paged, sorted, filterable record list.", "entry_action": "Retrieve one page with the active filter and sort preserved", "exit_action": "Release the list surface"},
+        {"name": "CreateSurface", "description": "The record-entry surface.", "entry_action": "Present every input at its documented initial state with no pre-populated value", "exit_action": "Warn about unsaved input, then release the surface and all its input state"},
+        {"name": "AmendSurface", "description": "The record-amendment surface for exactly one retrieved record.", "entry_action": "Retrieve the record by surrogate identifier; report an absent record rather than presenting a blank surface", "exit_action": "Warn about unsaved changes, then release the surface and all its input state"},
+        {"name": "Exiting", "description": "Orderly shutdown.", "entry_action": "Warn about unsaved input; release the session, every connection and every lock explicitly", "exit_action": "none — terminal"}
+      ],
+      "transitions": [
+        {"from": "AuthenticationSurface", "to": "Dashboard", "trigger": "The session becomes Authenticated", "guard": "The principal holds at least a statistics-read grant", "action": "Present the dashboard as the sole primary surface", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 15}, "prescribed_requirement": "REQ-076"},
+        {"from": "Dashboard", "to": "RecordList", "trigger": "Principal navigates to the record list", "guard": "Authorized to read records", "action": "Release the dashboard surface; present the list as the sole primary surface", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 141}, "prescribed_requirement": "REQ-076", "corrects": "The legacy transition hid the dashboard's content without removing it, so child surfaces accumulated layered over still-present statistics tiles."},
+        {"from": "Dashboard", "to": "CreateSurface", "trigger": "Principal navigates to create a record", "guard": "Authorized to create", "action": "Release the dashboard; present a fresh create surface", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 104}, "prescribed_requirement": "REQ-076", "corrects": "The legacy transition reused a previous instance unless disposed, so 'prior control state including unsaved entry data is restored silently'."},
+        {"from": "RecordList", "to": "CreateSurface", "trigger": "Principal navigates to create a record", "guard": "Authorized to create", "action": "Release the list; present a fresh create surface", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 104}, "prescribed_requirement": "REQ-076"},
+        {"from": "RecordList", "to": "AmendSurface", "trigger": "Principal selects a record and requests amendment", "guard": "Exactly one record is selected AND it resolves to an existing record AND the principal is authorized to amend", "action": "Retrieve the record; release the list; present the amendment surface as the sole primary surface", "traces_to": {"discovery_finding": "BR-063", "source_file": "Flat Design/ViewForm.vb", "source_line": 65}, "prescribed_requirement": "REQ-074", "corrects": "The legacy transition had the LIST surface reach into the SHELL's control tree to reparent the amendment surface, inverting ownership, and left the list 'live and interactable beneath it' with stale data."},
+        {"from": "CreateSurface", "to": "RecordList", "trigger": "A create succeeds, or the principal cancels", "guard": "On cancel, unsaved input has been warned about", "action": "Release the create surface and all its input state; on success emit the change notification so the list and statistics both refresh", "traces_to": {"discovery_finding": "BR-019", "source_file": "Flat Design/InsertForm.vb", "source_line": 28}, "prescribed_requirement": "REQ-070", "corrects": "The legacy transition did not actually occur: the refresh call resolved to a second invisible instance, so 'the visible grid is left stale and the user remains in InsertHosted with no indication'."},
+        {"from": "AmendSurface", "to": "RecordList", "trigger": "An amendment succeeds, or the principal cancels", "guard": "On cancel, unsaved changes have been warned about", "action": "Release the amendment surface and all its input state; on success emit the change notification once, through the declared contract rather than a close-event subscription", "traces_to": {"discovery_finding": "BR-038", "source_file": "Flat Design/EditForm.vb", "source_line": 69}, "prescribed_requirement": "REQ-071", "corrects": "The legacy refresh ran once per accumulated event subscription, and depended on a subscription registered in a different module."},
+        {"from": "RecordList", "to": "Dashboard", "trigger": "Principal navigates to the dashboard", "guard": "Authorized to read statistics", "action": "Release the list; recompute every statistic", "traces_to": {"discovery_finding": "BR-077", "source_file": "Flat Design/Form1.vb", "source_line": 133}, "prescribed_requirement": "REQ-075", "corrects": "In the legacy system this transition TERMINATED THE APPLICATION if a deletion had occurred earlier in the session, because the delete path had closed the shared connection and the statistics loader had no exception handling."},
+        {"from": "CreateSurface", "to": "Dashboard", "trigger": "Principal navigates to the dashboard", "guard": "Unsaved input has been warned about", "action": "Release the create surface and all its input state; recompute every statistic", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 121}, "prescribed_requirement": "REQ-076"},
+        {"from": "AmendSurface", "to": "Dashboard", "trigger": "Principal navigates to the dashboard", "guard": "Unsaved changes have been warned about", "action": "Release the amendment surface and all its input state; recompute every statistic", "traces_to": {"discovery_finding": "BR-078", "source_file": "Flat Design/Form1.vb", "source_line": 126}, "prescribed_requirement": "REQ-076", "corrects": "The legacy transition hid the amendment surface rather than closing it, 'so unsaved edits persist invisibly and reappear on return to the view'."},
+        {"from": "Dashboard", "to": "Exiting", "trigger": "Principal exits by any supported route", "guard": "Unsaved input has been warned about", "action": "Release the session, every connection and every lock explicitly", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077", "corrects": "The legacy exit had guard 'none — no confirmation, no check for unsaved entry data, no orderly close of the shared connection; the window has no close chrome so this button is the only supported exit'."},
+        {"from": "RecordList", "to": "Exiting", "trigger": "Principal exits by any supported route", "guard": "none", "action": "Release every held resource", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077"},
+        {"from": "CreateSurface", "to": "Exiting", "trigger": "Principal exits by any supported route", "guard": "Unsaved input has been warned about and discard confirmed", "action": "Release every held resource", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077"},
+        {"from": "AmendSurface", "to": "Exiting", "trigger": "Principal exits by any supported route", "guard": "Unsaved changes have been warned about and discard confirmed", "action": "Release every held resource", "traces_to": {"discovery_finding": "BR-079", "source_file": "Flat Design/Form1.vb", "source_line": 96}, "prescribed_requirement": "REQ-077"},
+        {"from": "Dashboard", "to": "AuthenticationSurface", "trigger": "The session becomes Expired", "guard": "none", "action": "Clear all personal data from the surface", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"},
+        {"from": "RecordList", "to": "AuthenticationSurface", "trigger": "The session becomes Expired", "guard": "none", "action": "Clear all personal data from the surface", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"},
+        {"from": "AmendSurface", "to": "AuthenticationSurface", "trigger": "The session becomes Expired", "guard": "none", "action": "Clear all personal data from the surface; unsaved changes are discarded after warning", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"},
+        {"from": "CreateSurface", "to": "AuthenticationSurface", "trigger": "The session becomes Expired", "guard": "none", "action": "Clear all personal data from the surface; unsaved input is discarded after warning", "traces_to": {"discovery_finding": "identity-landscape.assurance_gaps[no-session-timeout]", "source_file": "Flat Design/Module1.vb", "source_line": 4}, "prescribed_requirement": "REQ-066"}
+      ],
+      "reachability_verified": "All six states are reachable from AuthenticationSurface. Every non-terminal state has at least one exit: AuthenticationSurface one, Dashboard four, RecordList four, CreateSurface four, AmendSurface four. Exiting is the single intentional terminal state. Exactly one primary surface is presented in every state, which is the invariant the legacy machine lacked.",
+      "dead_states_removed": [
+        {"state": "DefaultInstance", "reason": "A legacy defect state, not a navigation state: 'a parallel, invisible instance materialised by VB's My.Forms feature when a form is addressed by type name rather than through a stored reference'. After every create, the refresh call constructed or reused this invisible instance, ran its load handler, opened a connection and bound a result set that was never disposed — refreshing a list nobody could see while the real list stayed stale. The structural assessment rates this coupling critical and notes that 'because C# has no default-instance feature any port must consciously re-establish the intended parent-child wiring'. REQ-070's explicit notification contract and one-instance-per-view rule make the state unreachable.", "evidence": "Flat Design/InsertForm.vb:27-28 and Flat Design/Form1.vb:149-151 (BR-019, IM-018, CS-10, coupling_indicators.default-instance-aliasing)", "resolved_by": "ANOM-031, ANOM-054"},
+        {"state": "Hidden", "reason": "A legacy state in which a surface was 'instantiated and still a child of Panel5 but not visible; retains all control state including unsaved edits'. It is the mechanism by which an abandoned amendment's unsaved edits persisted invisibly and reappeared on return, and by which the host panel accumulated surfaces across a session. REQ-076 requires replaced surfaces to be fully released with no residual input state.", "evidence": "Flat Design/Form1.vb:122-132 (BR-078, IM-031)", "resolved_by": "ANOM-036"},
+        {"state": "Disposed", "reason": "A legacy state existing only to support the construct-or-reuse decision: 'the reference is non-Nothing but IsDisposed is true, which is the condition the shell tests to decide whether to reconstruct'. REQ-076 forbids navigation transitions from depending on whether an object was previously disposed, so the state has no purpose. Its removal also eliminates the dead reuse branch that ANOM-051 omits and the duplicate-subscription accumulation that REQ-073 fixes.", "evidence": "Flat Design/Form1.vb:103-105 and Flat Design/ViewForm.vb:64-68 (BR-078, BR-062, IM-030)", "resolved_by": "ANOM-036, ANOM-048, ANOM-051"},
+        {"state": "EditHosted (layered over ViewHosted)", "reason": "A legacy state in which the amendment surface sat as a SIBLING of the list surface inside the same host panel rather than replacing it, 'added there by the view form reaching through the Form1 default instance', with the list remaining live and interactable beneath it showing stale data. REQ-074 forbids a surface from modifying another's control structure and REQ-076 permits exactly one primary surface at a time.", "evidence": "Flat Design/ViewForm.vb:70-74 (BR-063, BR-078)", "resolved_by": "ANOM-036"},
+        {"state": "Terminated (by unhandled exception)", "reason": "The legacy machine contained an explicit transition to a Terminated state triggered by 'any unhandled exception in the view, search, delete or edit-launch path', because 'none of those four handlers has a Try/Catch, unlike the insert and update paths'. This is not a prescribed state: REQ-081 requires that no unhandled fault terminate the process, so the only route to Exiting is a deliberate exit.", "evidence": "Flat Design/ViewForm.vb:60-109 (BR-035, BR-052, BR-060, IM-029)", "resolved_by": "ANOM-024, ANOM-054"}
+      ]
+    }
+  ],
+  "anomaly_resolution_log_summary": {
+    "total": 58,
+    "by_action": {
+      "FIX": 28,
+      "MAKE_EXPLICIT": 11,
+      "CONSOLIDATE": 6,
+      "OMIT": 6,
+      "RENAME": 4,
+      "OPTIMIZE": 3,
+      "DEFERRED": 0
+    },
+    "by_type": {
+      "security_violation": 6,
+      "data_integrity_risk": 18,
+      "implicit_behavior": 10,
+      "error_handling_gap": 5,
+      "duplicate_logic": 4,
+      "naming_inconsistency": 4,
+      "performance_antipattern": 3,
+      "dead_code": 6,
+      "accessibility_violation": 2,
+      "by_type_note": "The two accessibility entries carry nine findings between them: ANOM-055 is the single critical finding A11Y-001, and ANOM-056 consolidates the remaining eight, each of which is nonetheless given its own requirement REQ-101 through REQ-108 and its own entry in srs-accessibility-compliance.json. No accessibility finding is dropped by that grouping."
+    },
+    "by_source": {
+      "source_note": "By primary attribution — the first-named artefact in each anomaly's discovery_artifact field. Most anomalies are corroborated across several artefacts; the full set is in each anomaly's corroborating_findings array.",
+      "business-logic.json": 44,
+      "structural-analysis.json": 3,
+      "identity-landscape.json": 2,
+      "quality-risk.json / escalation-record.json": 2,
+      "data-domains.json": 2,
+      "ux-accessibility.json / accessibility-audit.json": 2,
+      "db-archaeology.json": 1,
+      "state-machines.json": 1,
+      "data-flow-trace.json": 1
+    },
+    "deferred": 0,
+    "deferred_note": "NO ANOMALY IS DEFERRED. The skill requires that none be deferred without written justification approved by a human reviewer, and none is. The 6 OMIT entries are resolutions, not deferrals, and each carries a written justification because stakeholders will ask why a legacy feature produced no requirement.",
+    "sme_confirmation_required": [
+      "ANOM-003", "ANOM-005", "ANOM-007", "ANOM-010", "ANOM-013", "ANOM-015", "ANOM-019", "ANOM-021", "ANOM-024", "ANOM-027", "ANOM-031", "ANOM-033", "ANOM-036", "ANOM-041", "ANOM-049", "ANOM-053", "ANOM-056", "ANOM-057", "ANOM-058"
+    ],
+    "sme_confirmation_required_count": 19,
+    "sme_confirmation_note": "Nineteen of fifty-eight resolutions need a human decision, and naming them is how this SRS stays honest about what it decided alone. They fall into four groups. BUSINESS PARAMETERS no artefact supplies: the roll-number format, the plausible age range, the academic-year boundary, the admission-year bounds, retention periods and session timeouts. TARGET-PLATFORM DECISIONS bound to an open disposition question: the datastore platform, the layering approach, and the recovery objectives. CONTRACTS Discovery says must be re-specified rather than translated: the refresh contract, the navigation model, the conflict-resolution experience and the error-handling policy. OMISSIONS that must not be mistaken for decisions: the Project Report control, where stakeholders may expect a reporting feature that has never existed, and the two orphan dashboard tiles, whose duplication is unexplained.",
+    "detail": "srs-anomaly-resolution-log.json"
+  },
+  "traceability_matrix": {
+    "discovery_to_srs": {
+      "business_rules": {"total": 60, "with_requirements": 57, "omitted_with_justification": 3, "unresolved": 0, "note": "Every one of the 60 rules in business-logic.json is accounted for. 57 produced at least one prescriptive requirement. 3 resolve to OMIT and are cited by a requirement that records the omission and its justification rather than prescribing behaviour: BR-080 by REQ-047 (the Project Report control implements no reporting logic), BR-081 by REQ-048 (two orphan tiles structurally incapable of being correct), and the dead reuse branch within BR-062 by ANOM-051 while BR-062's substantive defect is fixed by REQ-073. Nothing is unresolved."},
+      "implicit_logic_findings": {"total": 34, "with_requirements": 31, "omitted_with_justification": 3, "unresolved": 0, "note": "IM-032 (two orphan tiles hidden by geometry), IM-003's two dead autocomplete collections and IM-034's unused report link resolve to OMIT. The remaining 31 are each cited by at least one requirement, most as MAKE_EXPLICIT resolutions, which is the expected shape: a catalogue of 34 implicit behaviours against 461 hand-written lines is precisely the magic this SRS exists to convert into stated requirements."},
+      "accessibility_findings": {"total": 9, "with_requirements": 9, "unresolved": 0, "note": "One requirement per finding, REQ-100 through REQ-108, each also recorded in srs-accessibility-compliance.json with its success criterion, level, severity and legacy evidence."},
+      "code_smells": {"total": 21, "with_requirements": 21, "unresolved": 0, "note": "All 21 CS-NN findings are cited as corroborating evidence on at least one requirement. They are corroborating rather than primary because each restates, from the quality-risk assessment's angle, a defect the business-rule or implicit-logic catalogue records with finer file-and-line evidence."},
+      "identity_assurance_gaps": {"total": 6, "with_requirements": 6, "unresolved": 0, "note": "no-mfa and below-aal2 to NFR-001 and REQ-060; shared-credentials to REQ-064 and NFR-004; no-identity-proofing to NFR-001's assurance clause and open question 5; no-session-timeout to REQ-066 and NFR-005; no-step-up to REQ-067."},
+      "data_flows": {"total": 5, "with_requirements": 5, "unresolved": 0, "note": "DF-SMS-001 to REQ-008 and REQ-096; DF-SMS-002 to REQ-003 and REQ-021; DF-SMS-003 to REQ-005 and REQ-097; DF-SMS-004 to REQ-004 and REQ-014; DF-SMS-005 to REQ-030 through REQ-032 and REQ-040 through REQ-044. All five cross-flow findings are cited."},
+      "boundary_violations": {"total": 7, "with_requirements": 7, "unresolved": 0, "note": "BV-01 to REQ-008, REQ-016 and REQ-096; BV-04 and BV-05 to REQ-042 and REQ-046; BV-06 to REQ-027, REQ-093 and NFR-025; BV-07 to REQ-050 and REQ-057. BV-02 and BV-03 are cited within the reference-data and enrolment requirements."},
+      "decomposition_risks": {"total": 14, "with_requirements": 13, "unresolved": 1, "note": "RISK-01 through RISK-07 and DS-RISK-01 through DS-RISK-07. THE ONE UNRESOLVED ITEM IS DELIBERATE AND IS CARRIED AS OPEN QUESTION 1: the decomposition strategy's own target_binding_not_supplied ask records that whether this application should be modernized at all is an open disposition question with options rearchitect, replace, or retain-or-retire. This SRS cannot resolve it and does not pretend to; it specifies what the modernized system must do IF the decision is to modernize. RISK-03 and DS-RISK-02, the unconfirmed schema types, ARE resolved — by REQ-099, which makes a live-engine schema read a blocking prerequisite rather than leaving the gap implicit."},
+      "interfaces": {"total": 6, "covered": 5, "omitted_with_justification": 1, "unresolved": 0, "note": "The 4 human-facing surfaces map to MOD-001, MOD-002, MOD-003 and MOD-008 and are each covered by requirements and by an accessibility requirement. The machine-facing datastore interface maps to MOD-005 and is prescribed to be eliminated as an access path by REQ-064. The outbound Project Report link is OMITTED under ANOM-053 and REQ-047. Note the internal inconsistency in the source artefact, recorded rather than silently picked over: summary_metrics states human_facing_interfaces 4 while the interface inventory's own counts block states total 6, human_facing 5 and machine_facing 1 — the fifth human-facing item being the outbound link, whose audience is recorded as public."},
+      "capabilities": {"total": 2, "covered": 2, "unresolved": 0, "note": "personnel-records-management maps to MOD-001, MOD-002, MOD-004, MOD-005, MOD-006, MOD-007, MOD-008, MOD-009, MOD-010 and MOD-011; reporting-and-analytics maps to MOD-003. Cited by name slug because the artefact carries no id — see id_scheme.capability_identifiers."},
+      "data_entities": {"total_physical_columns": 10, "columns_modelled": 10, "columns_dropped": 0, "unresolved": 0, "note": "All ten live columns appear in srs-data-model.json, normalized across Student, StudentContactPoint, GuardianReference and Enrolment, each recording its legacy column name so the rename is traceable. The three data domains D1, D2 and D3 and all eight logical entities the data-domain assessment identified are modelled or explicitly excluded with a reason."},
+      "escalations": {"total": 1, "covered": 1, "closed": 0, "note": "ESC-1 is covered by REQ-065, NFR-022 and ANOM-004 as a forward control, but REMAINS OPEN as a remediation action with status open and no owner assigned. This SRS prescribes the control; it cannot close the escalation. Carried as open question 2."}
+    },
+    "srs_to_discovery": {
+      "total_requirements": 122,
+      "requirements_with_evidence": 122,
+      "requirements_without_evidence": 0,
+      "note": "Every requirement in both detail files carries a traces_to object naming a discovery finding, a source file and a line or line range. There are no invented requirements. The one class that warrants scrutiny is the identity, audit and retention set in MOD-006 and MOD-007, which has no legacy behaviour to trace to — each of those requirements traces instead to a NAMED ABSENCE in the Discovery record (BR-090 for authentication and authorization, BR-095 for provenance and audit, BV-06 for retention, and the six identity assurance gaps), and each anomaly_details field states explicitly that it is prescribed from an absence. That is evidence, not invention: BR-090 itself warns that 'a modernization target that assumes authorization exists somewhere in this code will find nothing to port'.",
+      "bidirectional_verified": true,
+      "bidirectional_method": "Forward: every requirement's traces_to was written from a specific finding in a specific artefact. Backward: each finding class was enumerated from its source artefact and checked for at least one citing requirement, with the per-class results recorded in discovery_to_srs above. The business-rule check is the strictest, because the 60 rules are the richest input: all 60 are cited, and the mapping is recorded per rule in the functional requirements file's business_rule_coverage block."
+    },
+    "coverage": {
+      "interface_endpoints_covered": 5,
+      "interface_endpoints_total": 6,
+      "interface_endpoints_note": "The sixth is the outbound Project Report link, omitted with justification under ANOM-053. Also note that http_endpoints is a measured 0: this application has no HTTP, RPC or messaging surface at all, which the interface inventory confirms as 'a genuine zero rather than an unmeasured value'.",
+      "business_rules_covered": 60,
+      "business_rules_total": 60,
+      "implicit_logic_findings_covered": 34,
+      "implicit_logic_findings_total": 34,
+      "accessibility_findings_covered": 9,
+      "accessibility_findings_total": 9,
+      "persistence_entities_covered": 1,
+      "persistence_entities_total": 1,
+      "persistence_entities_note": "One physical table, students, with ten columns — all ten modelled. The denominator is 1 because that is the entire legacy schema: zero views, zero stored procedures, zero triggers, zero foreign keys, zero database links, all measured rather than unexamined. The prescribed model expands that one table into 8 entities.",
+      "state_machines_prescribed": 4,
+      "state_machines_recovered_from_discovery": 4,
+      "state_machines_note": "Four recovered, four prescribed, but NOT one-to-one. The recovered student-record-lifecycle becomes StudentRecord with persisted state added; the recovered shared-database-connection becomes PersistenceUnitOfWork; the recovered navigation-shell and child-form-instance-lifecycle machines COLLAPSE into the single NavigationContext machine, because the second existed only to support the construct-or-reuse decision that REQ-076 removes; and AuthenticatedSession is entirely new, prescribed from the named absence in identity-landscape.assurance_gaps[no-session-timeout].",
+      "data_domains_covered": 3,
+      "data_domains_total": 3,
+      "identity_models_covered": 2,
+      "identity_models_total": 2,
+      "identity_models_note": "Both observed models appear in the actor model and both are prescribed for retirement — the ambient principal and the direct datastore accessor. The prescribed replacement, the identity broker, is the third system actor."
+    }
+  },
+  "summary": {
+    "total_modules": 11,
+    "total_requirements": 122,
+    "total_functional": 79,
+    "total_non_functional": 25,
+    "total_constraints": 18,
+    "total_must": 109,
+    "total_should": 12,
+    "total_could": 1,
+    "total_state_machines": 4,
+    "total_states": 20,
+    "total_transitions": 37,
+    "total_dead_states_removed": 12,
+    "total_actors": 4,
+    "total_human_actors": 1,
+    "total_system_actors": 3,
+    "total_anomalies_resolved": 58,
+    "total_anomalies_deferred": 0,
+    "total_data_entities": 8,
+    "total_accessibility_findings": 9,
+    "total_requirements_needing_sme_confirmation": 35,
+    "reconciliation_note": "These totals agree with the detail files and can be checked against them. 122 requirements = 88 functional-file entries + 34 non-functional-file entries. By type, 79 functional + 25 non-functional + 18 constraint = 122, where the 18 constraints are 9 in each file. By priority, 109 must + 12 should + 1 could = 122; the single could is REQ-047, which records an omission rather than prescribing behaviour. 20 states = 5 StudentRecord + 4 PersistenceUnitOfWork + 5 AuthenticatedSession + 6 NavigationContext. 37 transitions = 7 + 5 + 8 + 17. 12 dead states removed = 4 + 3 + 0 + 5. 35 requirements need SME confirmation = 20 functional + 15 non-functional; separately, 19 of the 58 anomaly resolutions do."
+  },
+  "open_questions": [
+    "1. WHETHER THIS APPLICATION SHOULD BE MODERNIZED AT ALL IS UNRESOLVED, AND THIS SRS DOES NOT RESOLVE IT. The decomposition strategy records target_binding as not supplied, with the disposition options rearchitect, replace, or retain-or-retire, and the structural assessment observes that 461 hand-written lines means 'retire/replace deserves explicit consideration by the disposition owner'. The relationship 'rearchitect' and the target name in the decomposition strategy are both marked PROVISIONAL, and wave_id is the explicit sentinel 'unassigned'. This document specifies what the modernized system MUST do IF the decision is to modernize. It should not be read as a recommendation to build.",
+    "2. THE GOVERNING CLIENT PROFILE IS DECLARED AS 'faa' AND IS AUTHORITATIVE FOR THIS TASK, BUT ITS DIRECTORY IS NOT PRESENT IN OR READABLE FROM THIS WORKSPACE, AND THE PROFILE'S APPLICABILITY TO THIS APPLICATION IS DISPUTED BY EVERY PRIOR PASS. Two distinct problems, recorded together because they compound. First, profiles/faa/ could not be read: the only directories available to this execution are the staged input artefacts and the application source tree. Four values this SRS would normally resolve from the profile were therefore resolved from the Discovery artefacts instead, each flagged at its point of use — the accessibility conformance target (from ux-accessibility.json applicable_standards, see srs-accessibility-compliance.json source_note), the retention and erasure obligations (unresolved, see REQ-093 and NFR-025), the identity provider inventory (deliberately unnamed, see the Identity Broker actor's scope_limit), and the authenticator assurance floor (taken from the identity assessment's own reference material, which states that 'the AAL floors cited come from the skill's own references/retire-recommendations.md rather than from the profile'). If the profile mandates a higher accessibility level, a specific retention period, or a phishing-resistant authenticator, this SRS understates those requirements and must be regenerated once the profile is mounted. Second, the profile's applicability is independently disputed by at least five prior passes: the catalogue, the structural analysis, the business-logic extraction, the capability extraction, the data-domain discovery and the ux assessment each record that this application — a single-developer VB.NET WinForms student-records desktop tool with a one-table Access database — has no aviation, NAS, air-traffic, certification or other FAA-adjacent content of any kind. The business-logic extraction checked the profile's regulatory sources directly and found no match on any entry, concluding that 'every rule in this catalog is a business convention, a defect or an implementation artifact, not a regulatory requirement' and that consequently no regulatory traceability was populated for any rule. Per the dispatch rules this SRS does not adopt an alternative profile and does not restate one as fact; the discrepancy is recorded for the profile owner, who must resolve it before any FAA-specific gating consumes this document. Note also that compliance-citations.json is empty — zero citations, zero unique citations — which is consistent with the mismatch rather than with an incomplete pass.",
+    "3. NO DISCOVERY READINESS GATE RECORD EXISTS. The skill directs that generation STOP if any artefact lacks a gate-approved stamp. No input artefact carries one. See srs.discovery_gate_note for the full statement of what was relied on instead. Two gate-relevant facts that DO exist both point the wrong way and should be weighed by the engagement owner before this SRS is accepted: the accessibility gate verdict is FAIL, and escalation ESC-1 is open.",
+    "4. ESC-1 REMAINS AN OPEN, CRITICAL, STAKEHOLDER-REQUIRED ESCALATION AND THIS SRS CANNOT CLOSE IT. Live personal data for named individuals — names, guardian name, two telephone numbers, dates of birth — is committed to a public repository alongside a confirmed SQL-injection path capable of exfiltrating it, behind an application with no authentication, authorization or encryption. The escalation's own words: 'an active, ongoing public exposure of real PII (not a latent or hypothetical risk)'. Its review ask requires a decision on who owns remediation, with options to purge the file from git history, restrict repository visibility, or confirm an accepted-risk disposition. Status is open with no owner assigned. REQ-065 and NFR-022 prescribe the forward control; the historical exposure is an action item outside this document and is time-sensitive in a way the rest of this SRS is not.",
+    "5. NO ROLE DIFFERENTIATION IS EVIDENCED, SO THE ACTOR MODEL PRESCRIBES ONE HUMAN ACTOR. Discovery records exactly one observed user class and states three times over that there is 'no user concept, no roles anywhere in the application'. This SRS therefore declines to invent an administrator, reviewer or analyst role, because the skill forbids actors with no evidence. But several requirements presuppose a privilege boundary that one undifferentiated actor cannot express: REQ-027 separates archive authority from purge authority, REQ-067 requires elevation for destructive operations, REQ-092 restricts audit read more tightly than record read, REQ-093 governs guardian erasure, and REQ-095 governs reference-data administration. A stakeholder must confirm the role set and the permission grants. Until then REQ-062's deny-by-default is what prevents the gap from silently becoming a grant of full authority to every principal — which would be the legacy posture under a new name. Related: the identity assessment records no-identity-proofing as a gap and notes that the concrete Windows binding, local account store or domain directory, 'is NOT determinable from source'.",
+    "6. WHETHER THE BUSINESS REQUIRES AN ENROLMENT LIFECYCLE IS UNCONFIRMED, AND THE STATE MACHINE DELIBERATELY STOPS SHORT. BR-075 and BR-095 record that the legacy system CANNOT distinguish a current student from a graduated or withdrawn one, because there is no status column and deletion is physical — so 'all-time and currently enrolled are the same number by construction'. That is evidence of an incapacity, not of a requirement. The prescribed StudentRecord machine therefore adds only Draft, Active, Archived and Purged, which are what logical deletion and retention need, and explicitly does NOT add Graduated or Withdrawn. If the business does track enrolment status, this is a material gap in the data model and the statistics requirements, and REQ-045's definition of the reportable active population depends on the answer.",
+    "7. SEVERAL NUMERIC TARGETS ARE PRESCRIBED RATHER THAN DERIVED, BECAUSE NOTHING WAS EVER MEASURED. There is no telemetry anywhere in the source tree, the onboarding package or a CMDB export, so no performance, availability, usage or recovery baseline exists — the ux assessment records active user count, feature usage frequency and session duration as 'unmeasured, instrumentation gap' and insists this means 'no instrumentation present', not 'no usage observed'. Test coverage is recorded as method=unavailable with high confidence and the artefact explicitly forbids reading it as nought per cent. Six requirements therefore carry a value Discovery could not have supplied and each is flagged: NFR-005 session timeouts, NFR-010 dashboard latency, NFR-011 list latency, NFR-012 recovery objectives, NFR-025 retention periods, NFR-033 maximum staleness. Each is stated rather than omitted because the modernized system needs a target to build against, but none may be read as observed legacy behaviour. NFR-031 prescribes the telemetry that would convert them into verifiable commitments on the next cycle.",
+    "8. THE LEGACY COLUMN TYPES ARE DECLARED, NOT CONFIRMED, AND THIS BOUNDS THE WHOLE DATA MODEL. No Discovery pass ever had a live database engine: every statement about the datastore's internals comes from reading the file as bytes. Two passes disagreed — one declared types, nullability, primary key and indexes UNKNOWN and declined to guess, the other reported concrete declared types — and the data-domain pass arbitrated in favour of the latter, which is what srs-data-model.json carries. One conflict remains unresolved by design: the two telephone columns are reported as 4-byte integers by one pass and as short text by another, which the data-domain pass rules is itself the defect rather than a tie. DS-RISK-02 is recorded as blocking target-schema generation and RISK-03 as blocking decisive cutover. REQ-099 makes a live-engine schema read a hard, blocking prerequisite, and srs-data-model.json carries eight further migration prerequisites including auditing every stored date of birth for day-month transposition, which may already be present in the data.",
+    "9. SIX DELETED RECORDS ARE FORENSICALLY RECOVERABLE FROM THE LEGACY FILE, WHICH IS A DISPOSAL OBLIGATION RATHER THAN A RECOVERY ROUTE. Pass-1 forensics recovered six deleted rows intact from page slack with all ten field values readable, including names, telephone numbers, gender and date of birth, on a page carrying 29 row slots for 2 live rows, with the primary-key index leaf retaining stale pointers into slack. db-archaeology notes the recoverable rows are keyboard-mash test data, so 'there is no live personal data at risk today; the finding is the mechanism'. NFR-027 prescribes secure destruction of the legacy file and of every copy including repository history; a data-protection reviewer should confirm whether the historical remanence requires notification.",
+    "10. SOURCE-TREE CONTAMINATION WAS FOUND AND EXCLUDED, AND DOWNSTREAM CONSUMERS SHOULD KNOW IT EXISTS. The application's own source tree contains QA fixtures for the Discovery skills themselves, plus 26 untracked scaffolding files across four directories. One fixture describes a fictitious shared-database cluster with customer, address and billing tables spanning two unrelated applications; another describes a fictitious 12,500-user identity portfolio with PIV and AAL3 authenticators. Three passes independently flagged them, one at high severity as an active contamination hazard, with the shared-database pass warning that this is 'exactly how a later pass could detect a SQL Server shared-DB cluster in a VB.NET/Access desktop application'. No value from any of them appears anywhere in this SRS: srs-data-model.json records the exclusion explicitly. Relatedly, capability-catalog.json is STALE against the current artefact set — it records that its required input data-domains.json 'WAS NOT AVAILABLE' and that the sibling task's output directory was empty at its execution time, yet data-domains.json now exists and is substantial. This SRS used data-domains.json directly for the entity model rather than relying on the capability catalogue's two-capability summary, but the capability catalogue should be re-run and reconciled before anything else anchors on it.",
+    "11. THE ACCESSIBILITY BASELINE IS A FLOOR, NOT A CEILING, AND NINE FINDINGS SHOULD NOT BE READ AS NINE DEFECTS. No automated tool could run at all — the standard scanner is browser-and-DOM based and this is a desktop executable with no DOM, no URL and no running build — so zero per cent of findings came from tooling, against a normal expectation that tools catch only thirty to forty per cent of issues even when they do run. No screen reader was ever used, no contrast ratio was ever measured, and both the accessibility score and the conformance percentage were deliberately returned as null rather than estimated. Success criterion 1.1.1 was never assessed at all. The modernized system must be assessed against the full WCAG 2.1 Level AA criterion set, not only against the nine recorded findings; srs-accessibility-compliance.json lists ten specific unassessed gaps and six verification requirements.",
+    "12. NO SAFETY TIER, BUSINESS OWNER OR OPERATIONAL CRITICALITY WAS EVER ESTABLISHED, AND TWO REQUIREMENTS DEPEND ON THE ANSWER. The catalogue records safety_tier as null and states tier must come from stakeholder or Safety Board input, not be inferred from code. No CMDB export, org chart or user-count figure was provided at onboarding. Three consequences are live: NFR-001's AAL2 floor is pinned to an explicitly non-authoritative Tier 3 lean and the identity assessment states that a Tier 1 return would instead demand a phishing-resistant AAL3 authenticator; the identity assessment's three high-severity gaps carry explicit instructions to re-rate to critical if Tier 1 or Tier 2 is returned; and the audience of every surface is recorded as internal 'on the inference that administrative student-record screens are staff-facing', with the warning that 'if any of these screens is in fact public-facing, the complete absence of authentication becomes a critical finding rather than a structural observation'. The accessibility verdict is the one conclusion safely independent of tier, which this SRS adopts: a critical WCAG violation fails at any tier."
+  ]
+}
