@@ -1,0 +1,143 @@
+{
+  "$schema": "https://olympus.framework/schemas/rationalization/integration-graph.schema.json",
+  "review_asks": [
+    {
+      "ask_slug": "external-dependency-unowned",
+      "action": "context",
+      "title": "No internal owner is recorded for either external dependency (GitHub report link, ACE OLEDB redistributable) — who should be asked whether they survive modernization?",
+      "why": "Without a named internal owner, nobody can be asked whether these two external touchpoints should be carried into any target state or retired.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Portfolio Integration Mapping"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "Both dependencies are directly evidenced in source (a hardcoded GitHub URL launched via Process.Start, and the ACE OLEDB 12.0 provider reference), and neither the catalog nor the structural-analysis pass records an internal owner for either."
+      },
+      "assessment": "Two external dependencies were found: a hardcoded public GitHub link (the dashboard's 'Report' button shells out to a PDF via Process.Start) and the Microsoft ACE OLEDB 12.0 runtime redistributable required on every workstation to reach the Access database. Neither has a recorded internal owner.",
+      "reasoning": "A scan of catalog.json, structural-analysis.json's integration_points/interface-inventory sections, and call-graph.json surfaced exactly these two outbound touchpoints — there are zero HTTP endpoints, zero message queues, and zero scheduled jobs otherwise. Discovery recorded both with technical detail but no owner field.",
+      "evidence_refs": [
+        {
+          "name": "GitHub report link",
+          "detail": "Process.Start against a hardcoded public github.com URL; the application's only outbound network call",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "ACE OLEDB redistributable",
+          "detail": "Out-of-process COM provider installed per workstation; 32-bit build required (Release pins PlatformTarget x86)",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/call-graph.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "integration-inventory-complete",
+      "action": "verify",
+      "title": "Confirm the integration graph is complete for this single-application wave",
+      "why": "Downstream Rationalization and sequencing steps will treat this graph as the whole integration picture for the wave; an undiscovered integration would surface later as a failed cutover rather than a flagged risk.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Portfolio Integration Mapping"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "Discovery's structural-analysis pass read every one of the 13 .vb files, the .vbproj, the .sln and all config/manifest files in full (an explicit do-not-fan-out case: 1 build module, 2,787 LOC, 1 table) and found zero HTTP endpoints, zero scheduled jobs, zero message queues, zero stored procedures/views/triggers/links, and exactly one local file-based database. The only outbound call is a hardcoded browser launch."
+      },
+      "assessment": "This wave contains exactly one application: a standalone VB.NET WinForms desktop app with no network, web, batch, or API surface, persisting to a local Microsoft Access file. There are no cross-app integrations to record because there is no peer application in this wave.",
+      "reasoning": "systems[] holds the one in-scope application; data_flows[], shared_identifiers[], and cross_system_capabilities[] are empty by construction (a cross-app artifact needs ≥2 systems to populate them), and both discovered external touchpoints are captured in external_deps[]. Nothing in the Discovery evidence (catalog, structural-analysis, call-graph) suggests an undiscovered integration.",
+      "evidence_refs": [
+        {
+          "name": "Structural-analysis completeness note",
+          "detail": "\"Full-tree walk ... no fan-out ... every one of the 13 .vb files, the .vbproj, the .sln, and all four config/manifest files was read in full rather than sampled\"",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Zero-integration-surface counts",
+          "detail": "http_endpoints: 0, scheduled_jobs: 0, message_queues: 0, outbound_integrations: 1, authentication_mechanisms: 0",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "integration-graph-recorded",
+      "action": "aware",
+      "title": "Integration graph recorded for this wave, for the record.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Portfolio Integration Mapping"
+      },
+      "assessment": "The wave's one system (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)') is recorded in systems[], with its two external touchpoints (a GitHub report link and the ACE OLEDB runtime) in external_deps[]. No cross-app data_flows[], shared_identifiers[], or cross_system_capabilities[] exist because the wave contains a single application with no peer to integrate with. The governing-profile mismatch Discovery flagged (this application has no detectable FAA/NAS relevance under the 'faa' governing profile) is carried forward in metadata.unresolved_references rather than silently adopted or restated as fact."
+    }
+  ],
+  "metadata": {
+    "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+    "generated_date": "2026-10-02",
+    "applications_analyzed": 1,
+    "analyst": "portfolio-integration-mapper",
+    "source_artifacts": [
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/call-graph.json"
+    ],
+    "isolated_systems": [
+      "c70846ac-0948-4953-990c-c68a2be292d9"
+    ],
+    "unresolved_references": [
+      {
+        "finding": "Governing-profile mismatch: the governing client profile for this task is declared as 'faa' (FAA/NAS legacy-modernization scope), but the sole application in this wave (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)') is a public, single-developer academic student-records desktop tool (GPL licence, public GitHub origin, one-commit history, author-credited project report) with no aviation, NAS, air-traffic, certification, or FAA-adjacent content of any kind. Both the Discovery catalog and structural-analysis passes independently raised this same discrepancy. This mapper does not adopt an alternative governing profile and does not restate one as fact here; it maps the application as found and flags the mismatch for the engagement owner to resolve before any FAA-specific gating (safety tiering, NAS impact assessment, compliance mapping) consumes this graph.",
+        "severity": "high"
+      },
+      {
+        "finding": "Single-application wave: the integration graph is cross-app by construction, so with only one application in scope there is no peer system to form a data_flows[] edge, a shared_identifiers[] entry, or a cross_system_capabilities[] cluster with. systems[] is populated for the one application present; data_flows[], shared_identifiers[], and cross_system_capabilities[] are left empty by design — a reflection of a genuine absence of integration partners, not an incomplete analysis.",
+        "severity": "info"
+      },
+      {
+        "finding": "No profiles/faa/risk-classification.yaml or profiles/faa/scoring.yaml was staged among this task's input artifacts, so no profile-driven tier/volume banding could be looked up for the system node. tier is intentionally left unset on the systems[] entry rather than guessed; the Discovery catalog's own safety_tier field is likewise null pending authoritative Safety Board input (it notes only a non-authoritative 'T3' lean from the FAA profile README's qualitative signal table).",
+        "severity": "medium"
+      },
+      {
+        "finding": "Discovery's structural-analysis pass could not resolve Access column data types, nullability, primary-key/index definitions, or row counts for the application's sole table ('students') because the .accdb was decoded as a binary file and never opened through a live database engine; these remain open in discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json's database-schema-summary.open_questions. Carried forward here as context for Rationalization; not independently re-verified by this mapper.",
+        "severity": "low"
+      }
+    ]
+  },
+  "systems": [
+    {
+      "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "name": "Student Management System (VB.NET)",
+      "archetype": "desktop",
+      "primary_language": "Visual Basic .NET",
+      "description": "Standalone Windows desktop (WinForms) application for managing student academic records (CRUD over a single 'students' table) with a statistics dashboard, persisted to a local Microsoft Access (.accdb) file. No HTTP, batch, or messaging surface. Single build project, single deployment surface — multi-subsystem decomposition thresholds (≥2 tech-stack families, ≥3 top-level subsystem directories, or a README naming ≥2 subsystems) are not met, so this is modeled as one system node rather than decomposed.",
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)"
+    }
+  ],
+  "data_flows": [],
+  "shared_identifiers": [],
+  "external_deps": [
+    {
+      "id": "ext-github-project-report",
+      "name": "GitHub-hosted project report (public PDF)",
+      "kind": "public-internet-link",
+      "owner": "Unassigned — public GitHub repository under the original author's account; no internal/organizational owner recorded",
+      "description": "The dashboard's 'Report' button does not generate a report; it shells out via Process.Start to a hardcoded public github.com URL for the author's project-report PDF. The application's only outbound network call.",
+      "systems_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    },
+    {
+      "id": "ext-ace-oledb-runtime",
+      "name": "Microsoft Access Database Engine (ACE OLEDB 12.0) redistributable",
+      "kind": "runtime-prerequisite",
+      "owner": "Microsoft (COTS runtime component); no internal owner recorded",
+      "description": "Out-of-process COM provider required on every workstation to open the bundled studentDB.accdb file; not a NuGet/assembly reference. Release build pins PlatformTarget x86, so the 32-bit redistributable specifically is required.",
+      "systems_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    }
+  ],
+  "cross_system_capabilities": []
+}
