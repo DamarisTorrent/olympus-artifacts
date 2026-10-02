@@ -1,0 +1,81 @@
+{
+  "$schema": "olympus:artifact:tiff-corpus-assessment:v1",
+  "corpus_id": "NOT-APPLICABLE-no-image-corpus-c70846ac-0948-4953-990c-c68a2be292d9",
+  "source_system": {
+    "system_name": "Student Management System (VB.NET) — NO IMAGE CORPUS EXISTS",
+    "store_type": "other",
+    "wrapper_format": "NOT APPLICABLE. There is no document-imaging corpus in this application. A full-tree search found ZERO TIFF or TIF files, zero scanned-document files, and no image-handling, scanning or OCR code of any kind. The application is a WinForms student-record CRUD tool whose only persistence is ten scalar text/date columns in one Microsoft Access table; it stores no documents, no attachments and no images. The four raster files that do exist in the repository are user-interface artefacts, not content: three PNG screenshots used in the README and one .ico application icon. This assessment is emitted ONLY because the Discovery line declared the tiff-corpus-assessor artifact unconditionally for every application. See the risk_findings block for the specific fields whose schema minimums forced placeholder values.",
+    "access_method": "unknown"
+  },
+  "scale_estimate": {
+    "image_count_estimate": 4,
+    "estimate_confidence": "exact",
+    "total_size_gb": 0.000174,
+    "avg_image_size_kb": 45.66,
+    "growth_rate_per_year": 0
+  },
+  "sampling_strategy": {
+    "method": "pure-random",
+    "sample_size": 100,
+    "strata_definition": "NOT APPLICABLE — no strata, because there is no corpus to stratify.",
+    "confidence_level": 0.8,
+    "rationale": "NO SAMPLING WAS PERFORMED OR IS POSSIBLE. All four raster files in the repository were examined directly — a census, not a sample — and none is a scanned document: 'Student Management(1).png' (103,870 bytes), 'Student Management(2).png' (43,627 bytes) and 'Student Management(3).png' (35,262 bytes) are application screenshots, and 'Flat Design/graduates.ico' (4,286 bytes) is the window/application icon. The values in this object are SCHEMA-FORCED PLACEHOLDERS, not findings: sample_size carries a minimum of 100 and confidence_level a minimum of 0.8, so neither can express 'no sampling applicable'. The method 'pure-random' is likewise the least-assuming member of a closed enum with no not-applicable option. Do not read any number in this object as a measurement."
+  },
+  "ocr_readiness": {
+    "overall_score": 1,
+    "factors": [
+      {
+        "factor": "text-density",
+        "score": 1,
+        "weight": 1,
+        "notes": "SCHEMA-FORCED PLACEHOLDER, NOT AN ASSESSMENT. No OCR readiness was or could be evaluated: there are no scanned documents to evaluate. The factors array requires at least one member and every score has a minimum of 1, so a single minimum-valued factor is used to satisfy the shape. The score 1 means 'no corpus assessed', NOT 'a corpus was assessed and found unreadable' — these are opposite findings and must not be conflated by a downstream consumer or scored as migration risk."
+      }
+    ],
+    "recommended_engine": "tesseract",
+    "estimated_accuracy": {
+      "character_level": 0,
+      "field_level": 0
+    }
+  },
+  "metadata_inference_plan": {
+    "available_structured_metadata": [],
+    "inferable_from_content": [],
+    "inference_strategy": "rule-based"
+  },
+  "migration_sequencing": {
+    "waves": [
+      {
+        "wave": 1,
+        "image_count_estimate": 0,
+        "selection_criteria": "NOT APPLICABLE — no images to migrate. This single zero-count wave exists only because the waves array requires at least one member. No image-migration work is in scope for this application, and no capacity, duration or dependency should be planned against it.",
+        "estimated_duration_weeks": 0,
+        "dependencies": []
+      }
+    ],
+    "prioritization_basis": "recency",
+    "parallel_capacity_per_wave": 0
+  },
+  "cost_projection": {
+    "ocr_cost_usd": 0,
+    "storage_cost_monthly_usd": 0,
+    "total_migration_cost_usd": 0,
+    "basis": "Zero cost on a measured zero-page corpus: no $/page OCR rate, no $/GB-month storage rate and no sample size were applied, because there are no pages to process. The four raster files in the repository (187,045 bytes total) are README screenshots and an application icon that migrate as ordinary source assets at no incremental imaging cost. These zeros are a genuine finding — there is no image-migration cost — and not an unestimated placeholder."
+  },
+  "risk_findings": [
+    {
+      "finding": "THIS ARTIFACT IS NOT APPLICABLE TO THIS APPLICATION AND SHOULD NOT BE SCORED. The Discovery line declared the tiff-corpus-assessor output unconditionally, so the file is emitted to satisfy the contract, but the application has no document-imaging corpus: zero TIFF/TIF files anywhere in the tree, zero image-handling, scanning or OCR code, and no attachment or document column in the single-table schema. A reviewer or downstream consumer that treats the placeholder values above as measurements will conclude this application has a small, unreadable, maximally risky image corpus — the precise opposite of the finding, which is that it has none.",
+      "severity": "high",
+      "mitigation": "Treat this artifact as a documented not-applicable result. Three objects contain SCHEMA-FORCED PLACEHOLDERS whose minimums make 'not applicable' inexpressible, and each is labelled as such in its own prose field: sampling_strategy.sample_size (minimum 100, no sampling occurred), sampling_strategy.confidence_level (minimum 0.8), ocr_readiness.overall_score and its single factor score (minimum 1), ocr_readiness.recommended_engine (closed enum with no not-applicable member, 'tesseract' chosen arbitrarily), metadata_inference_plan.inference_strategy and migration_sequencing.prioritization_basis (closed enums, least-assuming member chosen). Recommend the line make this artifact conditional on detection of an actual image corpus, and recommend the schema owner permit a zero image_count_estimate or an explicit not-applicable discriminator so a true negative can be stated rather than simulated."
+    },
+    {
+      "finding": "The scale_estimate object reports the only honest count available — 4 raster files, counted exactly — but those files are NOT corpus content. image_count_estimate carries a minimum of 1, so zero cannot be stated; the real census of scanned documents is zero. The 4 counted files are three README screenshots in the repository root and one application icon under Flat Design/.",
+      "severity": "medium",
+      "mitigation": "Read scale_estimate together with source_system.wrapper_format, which itemises exactly what the four files are. If a consumer needs a scanned-document count, the correct value is 0. Every number reported in scale_estimate is literally true of the files counted and verifiable by listing them; none describes a document corpus."
+    },
+    {
+      "finding": "Separately from the corpus question, the repository contains skill scaffolding that does not belong to the application and could be mistaken for application content by a less careful walk — including assets/corpus-assessment-template.yaml, references/ocr-readiness-rubric.md, references/engine-selection-matrix.md, references/migration-sequencing-strategy.md and scripts/classify_procs_template.sql. These are templates and reference documents for the Discovery skills themselves, present inside the application source tree. Their presence is the likely reason an image-corpus assessment was expected here, and a walk that treated references/ocr-readiness-rubric.md as evidence of an imaging workload would fabricate a corpus that does not exist.",
+      "severity": "medium",
+      "mitigation": "Excluded from this analysis as non-application content, consistent with the catalog entry's existing open question about fixtures/default.json. Recommend the upstream repository-preparation step stop staging skill assets, references, scripts and fixtures inside the application source tree, since every Discovery pass must now independently recognise and discount them."
+    }
+  ]
+}

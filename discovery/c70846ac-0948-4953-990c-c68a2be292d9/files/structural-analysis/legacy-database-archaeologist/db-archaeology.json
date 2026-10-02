@@ -1,0 +1,198 @@
+{
+  "$schema": "olympus:artifact:db-archaeology:v1",
+  "application": {
+    "name": "Student Management System (VB.NET)",
+    "id": "c70846ac-0948-4953-990c-c68a2be292d9"
+  },
+  "database_engine": {
+    "type": "other",
+    "version": "Microsoft Access ACE 12 (accdb format v2) — connection string pins provider Microsoft.ACE.OLEDB.12.0 (Access 2007 engine family); file header signature 'Standard ACE DB' with version byte 0x02 at offset 0x14; file last written by Access 2013 / Office 15 (AccessVersion property 09.50). Engine type recorded as 'other' because the schema enum has no 'access'/'jet'/'ace' member.",
+    "edition": "Access Connectivity Engine (ACE) — file-based, single-file embedded database; 32-bit OLEDB provider; no server edition, no service, no network listener. Database is unencrypted and has no database password; Jet workgroup security is unused (default 'Admin' user).",
+    "end_of_life": "2017-10-10"
+  },
+  "schemas": [
+    {
+      "name": "studentDB",
+      "owner": "Admin",
+      "table_count": 1,
+      "view_count": 0,
+      "proc_count": 0,
+      "trigger_count": 0,
+      "size_gb": 0.000748,
+      "row_count_estimate": 2,
+      "purpose": "The entire database is one Microsoft Access file, 'Flat Design/studentDB.accdb'. Access has no SQL schema/namespace concept, so this single entry represents the whole file as the application's one logical schema; there is no second schema and therefore no canonical/shadow pairing. Holds exactly 1 user table ('students') plus 25 Access-generated MSys* system catalog tables (MSysObjects, MSysQueries, MSysRelationships, MSysACEs, MSysAccessStorage, MSysResources, MSysComplexColumns, the MSysComplexType_* family, the MSysNavPane* family, MSysWSDP*, MSysNameMap) which are engine infrastructure rather than application schema and are not inventoried individually in tables[]. Zero views, zero saved queries (QueryDefs), zero data macros, zero VBA modules. is_shadow is false: there is no duplicate or archive copy of this schema anywhere in the repository.",
+      "is_shadow": false
+    }
+  ],
+  "tables": [
+    {
+      "schema": "studentDB",
+      "name": "students",
+      "row_count_estimate": 2,
+      "has_primary_key": true,
+      "has_foreign_keys": false,
+      "indexes": 1,
+      "usage_status": "active",
+      "business_purpose": "Sole system of record for student academic records. 10 columns, confirmed from the parsed table definition: RollNo TEXT(255) (PK, Required), FName TEXT(255), LName TEXT(255), FatherName MEMO, MobNo LONG INTEGER, AltMobNo LONG INTEGER, Gender TEXT(255), Course TEXT(255), YOA TEXT(255), DOB DATETIME. Every SQL statement in the application targets this table and only this table: 10 dashboard COUNT(*) aggregates (Form1.vb:24-84), full-table SELECT for the grid (ViewForm.vb:39), search SELECT (ViewForm.vb:48-51), single-row SELECT for edit (EditForm.vb:14), INSERT (InsertForm.vb:9), UPDATE (EditForm.vb:51) and DELETE (ViewForm.vb:90). Only 2 live rows are present and both are implausible test data (a 2009 date of birth against a 2019 year of admission); 6 further rows are deleted but still recoverable from page slack.",
+      "shared_with_other_apps": [],
+      "citation": "MSysObjects:students (ObjectId 131, Type 1, table definition page 131 at Flat Design/studentDB.accdb:0x83000; column names at 0x83147-0x831c5; sole data page 71 at 0x47000 with num_rows=2). DateCreate 2023-06-02 20:47:57 and DateUpdate 2023-06-04 23:22:41 are object-level design dates only — ACE records no row-level DML timestamp, so last_modified is deliberately omitted rather than populated with a design/stats date. usage_status 'active' is established by signals 2 and 3 of references/unused-table-detection.md both failing: 15 distinct app-code references across Form1.vb, InsertForm.vb, EditForm.vb and ViewForm.vb, confirmed by `grep -rin 'students' 'Flat Design'/*.vb`."
+    }
+  ],
+  "stored_procedures": [],
+  "triggers": [],
+  "findings": [
+    {
+      "category": "eol-engine",
+      "severity": "high",
+      "description": "The database engine is past vendor de-support with no patch path. The connection string hard-pins 'Provider=Microsoft.ACE.OLEDB.12.0', the Access 2007 engine family, whose vendor extended support ended 2017-10-10 (Office 2007 end of extended support). The file itself was last written by Access 2013 / Office 15, which reached end of extended support 2023-04-11, so both the declared provider and the writing engine are unsupported as of this assessment. Per the skill gotcha, the version was NOT taken from a banner string: it is confirmed from the raw file header ('Standard ACE DB' at byte 0x04, format version byte 0x02 at byte 0x14 = ACE 12 / accdb-2007) and corroborated by the ACEDAO.DLL and MSACC.OLB Office 15 type-library references embedded at 0x3396b and 0x33799. Compounding the support gap, ACE.OLEDB.12.0 is a 32-bit-only out-of-process OLEDB provider that must be separately installed on every host and is not supported by modern .NET (OleDb on .NET 5+ is Windows-only and the app targets .NET Framework 4.8), so the engine is simultaneously a support, deployment and runtime-modernization blocker.",
+      "affected_objects": [
+        "Microsoft.ACE.OLEDB.12.0 provider",
+        "Flat Design/studentDB.accdb",
+        "Flat Design/Module1.vb"
+      ],
+      "remediation_hint": "Do not attempt to keep the engine. The entire payload is 1 table, 10 columns and 2 rows of test data, so migration cost is dominated by rewriting the data-access code, not by moving data. Replace with a supported engine during modernization (PostgreSQL or SQL Server per the target blueprint) and replace the inline OleDb calls with a parameterized data-access layer. If any interim running instance exists, treat the unsupported, unencrypted, unpatched engine as a compliance exception requiring sign-off.",
+      "citation": "Flat Design/Module1.vb:7"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "high",
+      "description": "The committed database file is unreachable by the application as configured, making the repository's only datastore an orphan. The sole connection string hardcodes the absolute developer-machine path 'D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb' (note the triply-nested directory), but the database actually committed to the repository sits at 'Flat Design/studentDB.accdb'. That D: path exists on no other machine and does not correspond to the repository layout, so on any host other than the author's the application cannot open any database at all; conversely the committed .accdb has no code path that opens it. There is no configuration escape: App.config contains only a supportedRuntime element and no connectionStrings section, and the path is not read from any setting, environment variable or relative path. A stale 64-byte lock file 'Flat Design/studentDB.laccdb' is also committed alongside the database; Access deletes this file on clean close of the last connection, so its presence proves the database was captured while still open or not cleanly closed. It records machine name 'SIDDHARTH-WINDO' (NetBIOS 15-char truncation) and Access user 'Admin'.",
+      "affected_objects": [
+        "Flat Design/studentDB.accdb",
+        "Flat Design/studentDB.laccdb",
+        "Flat Design/Module1.vb",
+        "Flat Design/App.config"
+      ],
+      "remediation_hint": "Externalize the datastore location into configuration (App.config connectionStrings, or a relative path resolved from the application directory) so the committed database is the one actually opened. Delete the committed .laccdb lock file and add '*.laccdb' to .gitignore. Decide explicitly whether a binary database belongs in source control at all; if it is fixture data, move it to a test-fixtures path and document it as such.",
+      "citation": "Flat Design/Module1.vb:7"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "high",
+      "description": "Two columns are typed too narrowly to hold the data they are named for, causing guaranteed overflow on valid input. MobNo and AltMobNo are both LONG INTEGER (Jet type 0x04, 4-byte signed, maximum 2,147,483,647), but a 10-digit mobile number is at least 7,000,000,000 and cannot be represented. Every value actually stored in the file is 9 digits (978546138, 978564328, 874567887, 788456887), i.e. truncated or placeholder, and no stored value is a valid 10-digit number. The defect is reachable from the UI: InsertForm passes the raw textbox string straight into the Long column via AddWithValue with no validation (InsertForm.vb:16-17), so a user entering a real 10-digit number triggers an overflow surfaced only as a raw exception message in a message box. The project report's own test case 2 claims a 'Passed' result for AltMobNo 9876543210 (p.10), a value that provably cannot be stored in a Long Integer column, so that test result is not credible. Also in this class: DOB is DATETIME but is written from the date picker's .Text string rather than its .Value (InsertForm.vb:23, EditForm.vb:62), making the write dependent on the host machine's locale date format.",
+      "affected_objects": [
+        "studentDB.students.MobNo",
+        "studentDB.students.AltMobNo",
+        "studentDB.students.DOB",
+        "Flat Design/InsertForm.vb",
+        "Flat Design/EditForm.vb"
+      ],
+      "remediation_hint": "Retype phone-number columns as fixed-length text (VARCHAR/TEXT) in the target schema — phone numbers are identifiers, not arithmetic quantities, and need to preserve leading zeros and country prefixes. Bind DOB as a typed date parameter from the picker's .Value, not its .Text. Add explicit input validation before the write rather than relying on the engine to raise.",
+      "citation": "Flat Design/studentDB.accdb:0x83183"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "medium",
+      "description": "The search path builds SQL by string concatenation of unvalidated user input, the one place in the application where parameter binding was abandoned. ViewForm.LoadSData concatenates the raw search textbox value into both an equality predicate and a LIKE predicate: query += \" WHERE rollno = '\" + searchQuery + \"' OR fname LIKE '%\" + searchQuery + \"%'\". Every other statement in the codebase correctly uses OleDbCommand parameters, so this is an isolated regression rather than a systemic style. A quote character in the search box breaks the query, and a crafted value can alter the predicate to disclose the full table or union in other data. Jet/ACE does not support statement batching over OLEDB, so stacked DDL/DML injection is not reachable, which bounds the severity to unauthorized read rather than write or schema change. Recorded here as a database-access anti-pattern because it is also the dynamic-SQL vector that the unused-table methodology requires auditing: it is the only non-literal SQL in the application, it was checked, and it resolves to the same 'students' table, so no table is hidden from the grep-based usage cross-reference by dynamic construction.",
+      "affected_objects": [
+        "Flat Design/ViewForm.vb",
+        "studentDB.students"
+      ],
+      "remediation_hint": "Replace the concatenation with OleDbCommand parameters for both predicates, matching the pattern already used in InsertForm.vb, EditForm.vb and the delete path in ViewForm.vb:90-92. Escape or parameterize the LIKE wildcards separately so user-supplied % and _ are treated as literals.",
+      "citation": "Flat Design/ViewForm.vb:50"
+    },
+    {
+      "category": "missing-pk",
+      "severity": "medium",
+      "description": "A primary key exists but is too weak to function as a reliable identifier, so this is a key-quality defect rather than a missing key. The 'students' table has exactly one index, named 'PrimaryKey', index type byte 1 (PRIMARY KEY), single column RollNo ascending. However RollNo is typed TEXT(255) with AllowZeroLength = True, so the empty string is a valid primary key value and the Required = True flag does not actually guarantee a meaningful identifier. Because the key is text rather than numeric it also orders lexically, meaning roll number '10' sorts before '2'; the values recovered from the file ('1', '2', and '3', '34', '434' in the deleted rows) confirm unpadded numeric-looking strings are being used, so any ordered listing or range query over RollNo is wrong. There is no autonumber surrogate key and no uniqueness constraint on any other column.",
+      "affected_objects": [
+        "studentDB.students.RollNo",
+        "studentDB.students.PrimaryKey"
+      ],
+      "remediation_hint": "In the target schema give the table an integer surrogate primary key and keep the business roll number as a separate NOT NULL UNIQUE column with a CHECK constraint on format and a disallowed empty string. If roll numbers must stay textual, zero-pad to fixed width so lexical and numeric ordering agree.",
+      "citation": "MSysObjects:students (PrimaryKey index entry at Flat Design/studentDB.accdb:0x8321d, index leaf page 126 at 0x7e000; RollNo column definition at 0x83147)"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "medium",
+      "description": "The database declares essentially no integrity constraints, and the validation the documentation claims exists is implemented nowhere. Parsed from the live property blob: there is no ValidationRule, ValidationText, Format, InputMask or lookup/row-source property on any of the 10 columns; AllowZeroLength = True on every text column; and only RollNo carries Required = True, leaving the other 9 columns nullable. Gender and Course are written by the application from fixed dropdown lists ('Male'/'Female' and 'BCA'/'MCA'/'IIMCA') but the database holds no value list, lookup or CHECK equivalent to enforce that domain — and the deleted rows in slack prove the gap was exercised, containing Course = '2'/'3' and YOA = 'A'/'B'. YOA is TEXT(255) rather than a numeric or date type, so year values are free text. FatherName is MEMO (Jet type 0x0C), an unbounded long-value type that cannot be indexed and is unnecessary for a person's name. Correspondingly, no validation exists on the application side either: both save paths read textboxes and call ExecuteNonQuery directly inside a bare Try/Catch that surfaces ex.Message to the user, with no required-field, format or range check. The project report nonetheless asserts 'data validation and integrity checks' (p.6) and records test case 5, 'Validation of Mandatory Fields', as Passed (p.10); neither claim is supported by the schema or the code.",
+      "affected_objects": [
+        "studentDB.students.Gender",
+        "studentDB.students.Course",
+        "studentDB.students.YOA",
+        "studentDB.students.FatherName",
+        "Flat Design/InsertForm.vb",
+        "Flat Design/EditForm.vb"
+      ],
+      "remediation_hint": "Define the domain in the target schema: NOT NULL on business-required columns, CHECK or enum/reference tables for Gender and Course, a numeric or date type for year of admission, and a bounded VARCHAR for FatherName instead of MEMO. Add server-side validation in the new data-access layer and do not carry forward the documentation's unverified validation claims into target-state requirements.",
+      "citation": "MSysObjects:students (LvProp property blob, 3920 bytes, long-value page 142 at Flat Design/studentDB.accdb:0x8e000, MR2 header)"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "medium",
+      "description": "The data-access design is the Jet/ACE file-share model with no concurrency control, which does not survive any multi-user deployment. Module1 exposes a single process-wide Public OleDbConnection ('dbcon') that every form shares; connectDB() opens it only if State = Closed and nothing ever disposes it, so the connection is held for the life of the process with no Using block, no connection pooling and no transaction scope anywhere in the codebase. ViewForm's delete path calls dbcon.Close() on this shared global connection mid-session (ViewForm.vb:94), leaving other forms holding a closed connection object until some later caller happens to reopen it. More fundamentally, a .accdb is a file-share database: concurrency is mediated only by the .laccdb lock file, there is no server process, and corruption risk under concurrent writes over a network share is a well-known property of the engine rather than a bug to fix. No INSERT/UPDATE/DELETE in the application is wrapped in a transaction, so a failed multi-step operation cannot be rolled back. The project report documents no deployment, multi-user or concurrency guidance at all, and the README's only instruction is the generic 'update the connection string'.",
+      "affected_objects": [
+        "Flat Design/Module1.vb",
+        "Flat Design/ViewForm.vb",
+        "Flat Design/studentDB.accdb",
+        "Flat Design/studentDB.laccdb"
+      ],
+      "remediation_hint": "Move to a client/server engine and a short-lived, pooled, per-operation connection acquired inside a Using block, with explicit transactions around any multi-statement write. Remove the shared global connection and the mid-session Close() entirely. Do not deploy the .accdb to a network share as an interim measure.",
+      "citation": "Flat Design/Module1.vb:4"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "medium",
+      "description": "Four superseded generations of the table design persist as orphaned metadata inside the file, never reclaimed. The table definition reports maxcols = 19 against ncols = 10, proving 9 column slots were retired without a compact, and the file retains roughly 37 orphaned long-value property-blob pages holding the column lists of earlier designs. Recovered generations, ordered by increasing column count: generation A (RollNo, SName, Class, DOB/Field1) on pages 166-193; generation B (10 columns with ClassN and Sec where Course and YOA now sit) on pages 146-150; generation C (10 columns with Session in place of YOA) on pages 135 and 144; and the live generation D with Course and YOA on page 142. Retired column names SName, Class, ClassN, Sec, Session and Field1 are all still readable in the file even though none is a live column. A stray 4-byte fixed-data slot at row offset +0 belongs to no live column yet holds non-zero bytes in the live row at slot 24, further residue of the retired design. Chronological ordering of the generations is inferred from column-count progression only: Access reuses freed pages, so page number is not a timestamp and the orphaned blobs carry no date. This matters beyond tidiness because 'Session' survives in the user interface — the Insert and Edit forms label the year-of-admission dropdown 'Session' while the column is YOA, so the retired design still drives what users see.",
+      "affected_objects": [
+        "studentDB.students",
+        "retired column SName",
+        "retired column Class",
+        "retired column ClassN",
+        "retired column Sec",
+        "retired column Session",
+        "retired column Field1"
+      ],
+      "remediation_hint": "Run Compact and Repair to reclaim the retired column slots and orphaned property pages before any migration reads the file, so a schema extraction tool cannot pick up a superseded generation. Treat the live 10-column definition on page 142 as the single authoritative source of schema truth, and reconcile the 'Session' UI label against the YOA column during modernization.",
+      "citation": "Flat Design/studentDB.accdb:0x8e000"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "medium",
+      "description": "Deleted student records remain fully recoverable from page slack, a data-remanence exposure in a table that holds personal data. The single data page for 'students' (page 71) has 29 row slots for 2 live rows: 6 slots hold deleted-but-intact rows that parse cleanly under the current column layout, and 21 slots were reclaimed to zero length. All 10 field values of each deleted row are readable, including names, two phone numbers, gender and date of birth — exactly the personal-data columns a deletion is meant to remove. The DELETE path in the application issues a plain SQL DELETE (ViewForm.vb:90) with no compact afterwards, so every record a user deletes through the UI stays readable in the file indefinitely. The primary-key index compounds this: its leaf page retains 4 entries ('1', '2', '3', '4') of which only 2 are inside the used area, leaving 2 stale index pointers into the slack rows. In this specific file the recoverable rows are keyboard-mash test data (values 'asd', 'sda', 'ads', 'asdaasdasd'), so there is no live personal data at risk today; the finding is the mechanism, which would apply unchanged to real records.",
+      "affected_objects": [
+        "studentDB.students",
+        "Flat Design/studentDB.accdb",
+        "Flat Design/ViewForm.vb"
+      ],
+      "remediation_hint": "Do not treat a SQL DELETE against a .accdb as erasure. Compact and Repair before the file is shared, migrated or archived, and confirm slack is purged. In the target architecture, define an explicit deletion/retention policy and verify that deletes are unrecoverable where regulation requires it. Migrate only the 2 live rows and confirm no slack rows are carried into the target.",
+      "citation": "Flat Design/studentDB.accdb:0x47000"
+    },
+    {
+      "category": "size-outlier",
+      "severity": "medium",
+      "description": "The file is roughly three orders of magnitude larger than the data it holds. studentDB.accdb occupies 802,816 bytes across 196 pages of 4,096 bytes, while the entire user payload is 2 rows totalling about 211 bytes on a single data page — a ratio of about 3,800 to 1, with 1 page in 196 (0.5 percent) holding any user data. The page census accounts for the waste: 60 pages are marked free in the allocation bitmap (29 of them written as all-zero), 38 are long-value pages of which only 1 holds the live property blob and the rest are superseded design snapshots, and 26 are table definitions for the 25 unused system catalog tables. A further contributor is an embedded Office Theme attachment: MSysResources holds 1 row (Name 'Office Theme', Extension 'thmx') stored through the complex-type backing table f_9E8203D96A754B0890DAF9414007C362_Data, which is Access template furniture and carries no application meaning. The file also derives from the stock Microsoft blank-database template rather than a purpose-built design, evidenced by the document property Author = 'SGARDNER6' and an MSysAccessStorage DateCreate of 2009-07-31.",
+      "affected_objects": [
+        "Flat Design/studentDB.accdb",
+        "MSysResources",
+        "f_9E8203D96A754B0890DAF9414007C362_Data"
+      ],
+      "remediation_hint": "Compact and Repair reclaims roughly 400 KB (the 60 free pages plus the orphaned long-value pages) and is a prerequisite to any byte-level schema extraction. Do not size the migration target from the current file size: the real payload is 1 table, 10 columns and 2 rows. Treat the 800 KB as an artifact of the template and the uncompacted design churn, not as data volume.",
+      "citation": "Flat Design/studentDB.accdb:0x1000"
+    },
+    {
+      "category": "logic-in-proc",
+      "severity": "medium",
+      "description": "There is no database-resident business logic to extract — the database is a passive store and all logic is client-side — but the aggregation logic that was pushed into the client is defective. Confirmed zero on the database side, by two independent methods each: MSysQueries has num_rows = 0 with an empty owned-pages map and MSysObjects contains no Type 5 rows, so there are no saved queries or QueryDefs; no DataMacro, AfterInsert, AfterUpdate, AfterDelete or BeforeChange string occurs anywhere in the 802,816 bytes in either ASCII or UTF-16LE, so there are no data macros or trigger equivalents; and the VBA project is an empty default shell (PROJECTwm long-value is 0x0000, MSysObjects.LvModule is NULL on every row, no Type -32761 module rows), so there is no VBA code. Extraction scope arising from this database is therefore zero. The logic that exists instead sits in the presentation layer: Form1.LoadData issues 10 separate COUNT(*) round-trips to derive the dashboard, and the year-wise buckets are computed from a literal 'Dim currentYear As Integer = 2023' rather than the system clock, so every year-wise figure on the dashboard has been wrong since 2024-01-01 and silently drifts further each year. Because YOA is a TEXT column, those buckets are also string-equality comparisons against stringified arithmetic, not date logic. The report further documents a 'Total Students Card' (p.11) that no code computes and no screenshot renders.",
+      "affected_objects": [
+        "Flat Design/Form1.vb",
+        "studentDB.students.YOA",
+        "MSysQueries",
+        "MSysAccessStorage"
+      ],
+      "remediation_hint": "Report zero stored procedures, zero triggers and zero extractable database-resident rules to the extraction stage — this database needs no logic archaeology, only a schema and 2 rows of data. Separately, when rebuilding the dashboard, derive the current year at runtime, replace the 10 COUNT(*) round-trips with a single grouped aggregate, and store year of admission in a numeric or date type so the bucketing is arithmetic rather than string matching.",
+      "citation": "Flat Design/Form1.vb:59"
+    },
+    {
+      "category": "missing-fk",
+      "severity": "info",
+      "description": "The database declares no foreign keys and no relationships at all, which is recorded for completeness rather than as a defect. MSysRelationships contains exactly 1 row and it is an Access system relationship between MSysNavPaneGroups and MSysNavPaneGroupCategories, not a user relationship; no relationship-name string of the form expected for a user table exists anywhere in the file in either encoding; and the 'students' table definition carries relidx = -1, i.e. no foreign-key index slot. Per the skill gotcha that missing constraints are not automatically a bug, this is assessed as correct by construction: the schema contains exactly one user table, so there is no second entity for a foreign key to reference. This also means the single-table design is confirmed on three independent sources — the parsed catalog, the project report's single-table 'List of tables' (p.9), and the SELECT * data grid with AutoGenerateColumns in Student Management(2).png, which renders exactly the 10 known columns and no join output. Recorded as info so that rationalization does not read the absence of foreign keys as undiscovered coupling. Note that the catalog entry's table_count of 1 was inferred from embedded SQL text and is hereby confirmed against the actual binary.",
+      "affected_objects": [
+        "studentDB.students",
+        "MSysRelationships"
+      ],
+      "remediation_hint": "No action. If the target design normalizes Course, Gender or year of admission into reference tables, introduce foreign keys at that point; do not retrofit constraints onto the single-table legacy shape.",
+      "citation": "MSysRelationships:MSysNavPaneGroupCategoriesMSysNavPaneGroups"
+    }
+  ]
+}

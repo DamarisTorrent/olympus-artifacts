@@ -1,0 +1,92 @@
+{
+  "$schema": "olympus:artifact:language-detection:v1",
+  "primary_language": "Visual Basic .NET",
+  "primary_framework": "Windows Forms (WinForms)",
+  "secondary_languages": [],
+  "frameworks": [
+    "Windows Forms (WinForms)"
+  ],
+  "build_tools": [
+    "MSBuild",
+    "Visual Studio Solution (.sln)"
+  ],
+  "databases": [
+    "Microsoft Access (Jet/ACE OLEDB, .accdb file)"
+  ],
+  "confidence": "weak",
+  "evidence": [
+    {
+      "language": "Visual Basic .NET",
+      "signals": [
+        {
+          "type": "config",
+          "match": ".vbproj: MyType=WindowsForms, OutputType=WinExe, TargetFrameworkVersion=v4.8",
+          "count": 1,
+          "path_sample": "Flat Design/Student Management System Siddharth Jain.vbproj"
+        },
+        {
+          "type": "extension",
+          "match": ".vb",
+          "count": 13,
+          "path_sample": "Flat Design/Form1.vb"
+        },
+        {
+          "type": "content_marker",
+          "match": "Inherits System.Windows.Forms.Form",
+          "count": 4,
+          "path_sample": "Flat Design/Form1.Designer.vb"
+        },
+        {
+          "type": "directory",
+          "match": "Visual Studio VB.NET project scaffold directory ('My Project/': Application.myapp, Settings.settings, AssemblyInfo.vb)",
+          "count": 1,
+          "path_sample": "Flat Design/My Project/Application.myapp"
+        },
+        {
+          "type": "content_marker",
+          "match": "Imports System.Data.OleDb + ConnectionString \"Provider=Microsoft.ACE.OLEDB.12.0\" (MS Access data access, no DAL/ORM)",
+          "count": 5,
+          "path_sample": "Flat Design/Module1.vb"
+        },
+        {
+          "type": "absence_check",
+          "match": "No Web.config or .aspx/.ascx/.ashx files anywhere in the tree — rules out ASP.NET WebForms despite shared .NET lineage",
+          "count": 0
+        },
+        {
+          "type": "absence_check",
+          "match": "No VB_Name attribute or .vbp/.vbg project file in application source — rules out VB6; the only VB_Name hits in the repo are inside bundled skill-reference docs (references/vb6-patterns.md, references/detection-heuristics.md), which are non-application contamination and were excluded",
+          "count": 0
+        }
+      ],
+      "signal_count": 7,
+      "confidence": "weak"
+    }
+  ],
+  "dispatch": [
+    {
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms (WinForms)",
+      "scope": "frontend",
+      "primary_reference": "cross-cutting/skills/discovery-patterns/SKILL.md",
+      "resolved_on_disk": true
+    }
+  ],
+  "excluded_directories": [
+    "node_modules",
+    "vendor",
+    "packages",
+    ".git",
+    "bin",
+    "obj",
+    "target",
+    "dist",
+    "build",
+    "assets",
+    "references",
+    "scripts",
+    "fixtures"
+  ],
+  "generated_by": "legacy-language-reader",
+  "generated_at": "2026-10-02T00:00:00Z"
+}

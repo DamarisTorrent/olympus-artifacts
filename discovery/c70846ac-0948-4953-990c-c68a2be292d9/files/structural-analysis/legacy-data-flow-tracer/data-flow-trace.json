@@ -1,0 +1,1075 @@
+{
+  "$schema": "olympus:artifact:data-flow-trace:v1",
+  "generated": "2026-10-02",
+  "application": {
+    "name": "Student Management System (VB.NET)",
+    "id": "c70846ac-0948-4953-990c-c68a2be292d9"
+  },
+  "methodology_notes": "Scope and evidence base. Only two inputs were staged for this run: the application catalog entry (discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json) and a tech-fingerprint marker that addresses no file. No architecture map, no db-archaeology artifact, and no integration graph were available, so every flow below was derived first-hand from the source tree at /source. All citations are repository-relative {file}:{line} against the working tree as of this run.\n\nTracing approach. The application is a single-project WinForms thick client (24 files, 2787 LOC, ~83% of it Designer-generated). All data access is inline OleDb SQL in four forms against one table, 'students', in one local Microsoft Access file. There is no HTTP surface, no scheduler, no queue, no SFTP route, and no file-drop pipeline, so the usual invisible-ingress hunt (cron, Autosys, landing zones) found nothing to cross-reference; the full ingress surface is keyboard entry on InsertForm and EditForm. Two non-obvious ingress/egress paths that application-code-only tracing would have missed ARE present and are traced: the ACE OLEDB provider's own sidecar lock file (DF-SMS-008) and the egress of the whole database file into a public Git repository (every flow).\n\nUnresolved: Access column types. studentDB.accdb is an 802,816-byte 'Standard ACE DB' binary. Column names are stored UTF-16LE and the available tooling in this sandbox (no strings(1), no Python execution, ripgrep treats the file as binary) could not recover the table DDL or any row data. The catalog entry reports the same limitation. Consequence: every target column type below is UNDECLARED in source, and every write is an untyped OleDbParameter bind. The type-coercion findings are therefore unresolved rather than ruled out, and they cannot be closed until the real DDL is dumped. Pass 1 / legacy-database-archaeologist must open the .accdb with ACE or mdbtools and publish students' DDL; several findings here resolve in opposite directions depending on whether rollno, yoa, mobno, altmobno, and dob are Text or Number/Date-Time columns. For the same reason no claim is made about what rows the committed database actually contains - at 802 KB it is larger than an empty ACE database, so it is treated as potentially holding live student PII until a row inspection proves otherwise.\n\nPII classification basis. The governing client profile for this task is declared as 'faa', but profiles/faa/ is not reachable from this sandbox, so profiles/faa/compliance.yaml could not be consulted and no agency-specific identifier rules were applied. Classifications were assigned from the generic enum definitions in references/pii-phi-tracking.md: student roll number as an institutional ID number, names, parent name, mobile numbers, DOB and gender as 'pii'; course and year-of-admission as 'sensitive' (an education record is controlled but the values are not themselves personal identifiers); no 'phi' or 'fti' content exists in this application. Separately, and per the governing-profile rule: the application's source, README, and project report describe a generic student-records desktop tool with no aviation, NAS, or FAA content. The 'faa' declaration governs this task, but the mismatch is a real discrepancy, is recorded as cross_flow_findings CFF-008, and is not restated here as fact about the application.\n\nDeliberate omission. The skill's output list includes a populated copy of assets/data-flow-trace-template.yaml. It is not emitted. A second, unvalidated copy of exactly these facts alongside the schema-bound JSON is the redundant-store / unreconciled-copy antipattern this skill exists to flag; data-flow-trace.json is the single authoritative artifact, and data-flow-trace-summary.md is a reviewer-facing digest that derives from it rather than restating it.\n\nOne further observation that belongs to no single element flow: the dashboard's 'Report' button (Flat Design/Form1.vb:155-158) does not generate a report. It calls Process.Start on a hard-coded github.com URL pointing at the author's PDF project report. There is consequently NO reporting, print, export, or email egress for student data anywhere in the application - the only data exits are the on-screen grid, the on-screen dashboard counters, and the committed database file. Downstream module-design work should not assume a reporting capability exists to be migrated.",
+  "flows": [
+    {
+      "flow_id": "DF-SMS-001",
+      "data_element": {
+        "name": "student_roll_number",
+        "type": "Access column type undeclared in source; bound from a .NET String, which OleDbParameter.AddWithValue infers as OleDbType.VarWChar (Flat Design/InsertForm.vb:12)",
+        "description": "Institutional roll number keyed into txtRollNo on InsertForm. Serves as the de facto primary key: it is the only column in the DELETE and UPDATE predicates and the only value passed to the EditForm constructor.",
+        "business_meaning": "Unique student identifier within the institution. Every record-level operation in the application is addressed by this value.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (keyboard entry on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:12"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "translate",
+          "description": "OLE DB does not support named parameters. The '@RollNo' token in the INSERT text is treated by the ACE provider as a positional '?' marker, and parameters bind strictly in the order they were added to the collection - the names are decorative. The order happens to match the column list here, so the write is currently correct, but any future reordering of the AddWithValue calls would silently write each value into a different column with no compiler or runtime error.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:9"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "encode",
+          "description": "AddWithValue infers the OleDbType from the .NET runtime type, so txtRollNo.Text binds as VarWChar. The target column type is never declared anywhere in the source, so Jet performs an implicit cast at write time. If rollno is a Number column, a non-numeric entry fails inside ExecuteNonQuery rather than at the input field; txtRollNo also carries no MaxLength (Flat Design/InsertForm.Designer.vb:222-229), so an over-length value is likewise rejected by the engine rather than by the form.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:12"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "route",
+          "description": "ViewForm.btnUpdate_Click reads rollno back out of the selected DataGridView row and passes it to the EditForm constructor as the sole record key. This makes rollno the addressing key for edit and delete, yet no uniqueness constraint is asserted anywhere in code and the insert path performs no duplicate check - if the Access table lacks a primary key on rollno, a duplicate value makes both records un-addressable and the UPDATE and DELETE statements affect all matching rows.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "ViewForm.btnUpdate_Click",
+            "citation": "Flat Design/ViewForm.vb:62"
+          },
+          "implicit": false
+        },
+        {
+          "step": 4,
+          "operation": "encode",
+          "description": "The search path is the one query in the application that is not parameterized: LoadSData interpolates the raw search term directly into \"WHERE rollno = '<term>'\". rollno is therefore compared as a quoted character literal, forcing an implicit cast if the column is numeric, and a term containing an apostrophe produces a malformed statement that throws outside any Try/Catch (neither btnSearch_Click nor LoadSData has one).",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "ViewForm.LoadSData",
+            "citation": "Flat Design/ViewForm.vb:50"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.rollno",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "The Access database file is committed to a public Git repository, so the roll number leaves the trust boundary entirely. Flat Design/Form1.vb:156 hard-codes this repository's own public github.com URL, confirming the repository is public, and neither .gitignore nor .gitattributes excludes *.accdb. The file is 802,816 bytes - larger than an empty ACE database - and its rows could not be read with available tooling, so it must be treated as holding live student records until a row inspection proves otherwise.",
+          "severity": "critical",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The data element exists in three stores with no reconciliation of any kind: the runtime Access file at the hard-coded path in Module1.vb:7, the repo-committed copy at Flat Design/studentDB.accdb, and the in-memory DataSet in ViewForm. The runtime path (D:\\PROGRAMING\\...) does not resolve to the repo copy, so the file the application actually reads and the file under version control are different artifacts that diverge on first use. No reconciliation job exists anywhere in the source.",
+          "severity": "high",
+          "category": "unreconciled-copy"
+        },
+        {
+          "finding": "The in-memory grid copy goes stale on insert. InsertForm.btnSave_Click refreshes the grid via an unqualified ViewForm.LoadData() call, which VB resolves to the My.Forms DEFAULT instance of ViewForm - not the New ViewForm() instance that Form1.btnView_Click created and parented into Panel5 (Flat Design/Form1.vb:141). The new row is loaded into an off-screen DataSet while the visible grid keeps its stale copy. The bug is non-obvious because the adjacent Form1.LoadData() call on line 27 DOES hit the visible dashboard - Form1 is the startup form, so its default instance is the real one.",
+          "severity": "medium",
+          "category": "unreconciled-copy"
+        },
+        {
+          "finding": "The search predicate is built by string concatenation over unsanitized operator input against a table holding ten PII columns, and the surrounding query is SELECT *. Besides the type-coercion exposure, this is an injection path that can widen disclosure past the intended record, and the enclosing methods have no exception handling, so a stray apostrophe crashes the form.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "No retention, archival, or purge rule exists for any of the three stores. The repo-committed copy is the worst case - it is retained in Git history permanently and is not reachable by any application-level deletion, so ViewForm's DELETE statement cannot remove a student's record from it.",
+          "severity": "medium",
+          "category": "orphaned-data"
+        },
+        {
+          "finding": "A single process-wide OleDbConnection (Flat Design/Module1.vb:4) is shared by all four forms. ViewForm.btnDelete_Click closes it at Flat Design/ViewForm.vb:94 while the other forms still hold references, and connectDB() re-opens lazily only when State is exactly Closed - a connection left in the Broken state is therefore never re-established, and the next operation fails.",
+          "severity": "medium",
+          "category": "data-loss"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-002",
+      "data_element": {
+        "name": "student_name",
+        "type": "Access column types undeclared in source (students.fname, students.lname); both bound from .NET Strings inferred as OleDbType.VarWChar",
+        "description": "Student first and last name, keyed into txtFirstName and txtLastName on InsertForm and editable on EditForm. fname is also a search target.",
+        "business_meaning": "Primary human identifier for the student record; the value an operator searches on.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (keyboard entry on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:13"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "Bound via AddWithValue as VarWChar with no declared target type and no MaxLength on either textbox (Flat Design/InsertForm.Designer.vb:275-282). Access Text columns default to 255 characters; an over-length name is rejected by the engine inside ExecuteNonQuery and surfaces to the user as a generic 'Error:' message box, not as field-level validation. No trimming, case normalization, or non-empty check is applied on the insert path - an entirely blank name is persisted without complaint.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:13"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "Positional parameter binding: the ACE provider ignores the '@FName' / '@LName' names and binds by collection order against the '?' markers it sees in the statement text. fname and lname are adjacent same-typed string columns, so a reordering would swap first and last name silently, with no error at any layer.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:9"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "normalize",
+          "description": "The only explicit normalization anywhere in the application: the search term is trimmed with txtSearch.Text.Trim() before being handed to LoadSData. Note the asymmetry - the search term is trimmed but the stored name never was, so a name saved with leading or trailing whitespace can never be found by the trimmed search term.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "ViewForm.btnSearch_Click",
+            "citation": "Flat Design/ViewForm.vb:105"
+          },
+          "implicit": false
+        },
+        {
+          "step": 4,
+          "operation": "encode",
+          "description": "The search term is interpolated into \"fname LIKE '%<term>%'\" by concatenation. Two implicit behaviours apply: any '%' or '_' the operator types is consumed as a wildcard rather than matched literally, and the wildcard dialect itself is ambiguous - the ACE engine exposes ANSI-92 wildcards ('%', '_') over OLE DB but '*' and '?' in the Access UI, so the same stored pattern behaves differently depending on which engine mode reads it.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "ViewForm.LoadSData",
+            "citation": "Flat Design/ViewForm.vb:50"
+          },
+          "implicit": true
+        },
+        {
+          "step": 5,
+          "operation": "normalize",
+          "description": "Read-back on the edit path uses stReader(\"fname\").ToString(), which converts DBNull to String.Empty. NULL and empty string become indistinguishable in the UI, and because EditForm.btnSave_Click writes every field back unconditionally, simply opening and saving a record rewrites a genuine NULL as an empty string. The distinction is permanently lost on the first edit - Access, unlike Oracle, does treat '' and NULL as distinct values.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:22"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.fname, students.lname",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (EditForm fields, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:22",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Student names leave the trust boundary inside the committed studentDB.accdb. Combined with DOB (DF-SMS-005) and gender (DF-SMS-006) in the same published file, the name forms a direct re-identification set rather than an isolated attribute.",
+          "severity": "critical",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The name search is the application's only unparameterized query and reads the full PII table with SELECT *. Operator input is concatenated into both an equality predicate and a LIKE pattern with no escaping, so a crafted term can widen disclosure beyond the intended record; an apostrophe alone crashes the form, since neither btnSearch_Click nor LoadSData has exception handling.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "NULL names silently become empty strings. EditForm.LoadData converts DBNull to String.Empty on read and btnSave_Click writes every field back unconditionally, so opening and saving any record destroys the NULL-versus-empty distinction that Access actually preserves. Migration to a target that enforces NOT NULL or distinguishes the two will see a different row population than the legacy table reports today.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "No validation exists on either name field: no non-empty check, no MaxLength, no trim on write. A blank name is persisted and then cannot be matched by the trimmed search term, producing records that are reachable only by roll number or by scrolling the grid.",
+          "severity": "medium",
+          "category": "data-loss"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-003",
+      "data_element": {
+        "name": "father_name",
+        "type": "Access column type undeclared in source (students.fathername); bound from a .NET String inferred as OleDbType.VarWChar",
+        "description": "Name of the student's father, keyed into txtFatherName on InsertForm and editable on EditForm.",
+        "business_meaning": "Parent or guardian identification attached to the student record. The named individual is a third party who does not interact with the system.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (keyboard entry on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:15"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "Bound via AddWithValue as VarWChar against an undeclared column type, with no MaxLength on the input and no validation. Identical handling to the student's own name, with no marker anywhere in schema or code that this value identifies a different natural person.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:15"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "Positional parameter binding: '@FatherName' is a decorative name and the provider binds by collection order. fathername sits between lname and mobno in the column list, all string-typed, so a reordering corrupts across person boundaries without error.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:9"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "normalize",
+          "description": "Read-back via stReader(\"fathername\").ToString() collapses DBNull to String.Empty, and the unconditional rewrite in EditForm.btnSave_Click then persists the empty string over the original NULL. For a third-party attribute this matters more than for the student's own name: 'not supplied' and 'supplied as blank' are legally different states for data collected about someone who is not the data subject.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:24"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.fathername",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (EditForm fields, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:24",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Third-party PII leaves the trust boundary in the committed studentDB.accdb. This is the worst-positioned element in the trace from a privacy standpoint: the named individual is not the data subject, has no relationship with the system, and cannot discover, correct, or request deletion of the record, yet the file is published in a public repository and retained in Git history.",
+          "severity": "critical",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The parent's name is collected and stored with no notice, consent, lawful-basis, or purpose record of any kind. No consent text, privacy notice, or purpose-of-collection string appears anywhere in the source tree, the form labels, or the README, and the field carries no separate retention rule distinguishing it from the student's own record.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The schema and code carry no indication that fathername identifies a different natural person from fname/lname. Any downstream consumer that classifies columns rather than flows - a migration mapper, a masking tool, a DSAR responder - will treat it as another attribute of the student and will not subject it to third-party handling. This is precisely the case where classification must travel with the data element, not the column.",
+          "severity": "medium",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "NULL collapses to empty string on the first edit round-trip (EditForm.LoadData reads DBNull as String.Empty; btnSave_Click rewrites every field unconditionally), erasing the distinction between 'parent name not supplied' and 'parent name supplied as blank'.",
+          "severity": "medium",
+          "category": "data-loss"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-004",
+      "data_element": {
+        "name": "student_mobile_numbers",
+        "type": "Access column types undeclared in source (students.mobno, students.altmobno); both bound from .NET Strings inferred as OleDbType.VarWChar",
+        "description": "Primary and alternate mobile telephone numbers, keyed into txtMobNo and txtAltMobNo on InsertForm and editable on EditForm.",
+        "business_meaning": "Contact channel for the student. Whose number altmobno holds - the student's second line or a parent's - is nowhere stated in code, schema, or form labels.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (keyboard entry on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:16"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "Both numbers bind as VarWChar against undeclared column types, with no MaxLength on either textbox (Flat Design/InsertForm.Designer.vb:131-138, 151-158) and no format, length, or digits-only validation. The type coercion is directional and destructive in one direction: if the Access columns are Number, Jet coerces the string and silently discards the leading zero of a national-format number and rejects a leading '+' or any spacing or hyphenation outright. If they are Text, those characters survive but no two operators will enter the same number the same way. The project also compiles with OptionStrict Off (Flat Design/Student Management System Siddharth Jain.vbproj:51), so the compiler performs no narrowing-conversion check on this or any other bind in the application - every type mismatch is deferred to the engine at execute time.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:16"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "Positional parameter binding: '@MobNo' and '@AltMobNo' are decorative and bind by collection order. The two columns are adjacent and identically typed, so a reordering swaps primary and alternate contact numbers with no error anywhere - and because neither number is labelled as to whose it is, the swap is undetectable after the fact.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:9"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "normalize",
+          "description": "Read-back via stReader(\"mobno\").ToString() / stReader(\"altmobno\").ToString() converts DBNull to String.Empty; the unconditional rewrite on save then persists the empty string. If the columns are Number rather than Text, the round-trip is worse than lossy: the value is re-rendered through the reading host's number formatting before being written back as a string.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:25"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.mobno, students.altmobno",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (EditForm fields, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:25",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Directly contactable PII - two mobile numbers per student - leaves the trust boundary in the committed studentDB.accdb, alongside the matching names. A published contact list is immediately actionable for phishing or harassment in a way that most other columns are not.",
+          "severity": "critical",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "Both numbers bind as untyped strings against undeclared Access column types. If the columns are Number, every national-format number loses its leading zero and every number entered with a '+' country prefix, a space, or a hyphen is rejected inside ExecuteNonQuery. The direction of the loss cannot be determined without the real DDL, so this finding is unresolved rather than ruled out - legacy-database-archaeologist must dump the students DDL to close it.",
+          "severity": "high",
+          "category": "type-coercion"
+        },
+        {
+          "finding": "No format validation exists on either field: no digits-only check, no length bound, no MaxLength on the controls, and no required-field check. Nothing prevents a letter, an empty string, or a 400-character paste from being submitted, so the contact data cannot be assumed dialable by any downstream consumer.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "The semantics of altmobno are undocumented anywhere - code, schema, or form label. If it holds a parent's number it is third-party PII that inherits none of the handling flagged for DF-SMS-003, and the positional-binding exposure above means primary and alternate can be transposed undetectably.",
+          "severity": "medium",
+          "category": "pii-leak"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-005",
+      "data_element": {
+        "name": "date_of_birth",
+        "type": "Access column type undeclared in source (students.dob); bound from dtpDOB.Text - a locale-rendered STRING, not a Date - inferred as OleDbType.VarWChar",
+        "description": "Student date of birth, selected in the dtpDOB DateTimePicker on InsertForm and EditForm.",
+        "business_meaning": "Identity and age attribute of the student; combined with name and gender it is a re-identification key.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (DateTimePicker selection on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:23"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "The single most consequential implicit transformation in the application: the code binds dtpDOB.Text, not dtpDOB.Value, so what is persisted is the DateTimePicker's RENDERED STRING rather than a DateTime. No Format or CustomFormat is set on the control on either form (Flat Design/InsertForm.Designer.vb:284-289 and Flat Design/EditForm.Designer.vb:258-264 configure only font, location, name, size and tab index), so the control falls back to the WinForms default DateTimePickerFormat.Long - the LONG date pattern of the operating system locale. On an en-US host the bound value is a string of the form 'Monday, October 2, 2023'; on another locale it is that locale's long pattern, in that locale's language.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:23"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "Jet coerces that bound string to a value for the dob column using the provider's own locale. If dob is a Date/Time column, the long-date string must be parsed back into a date - which generally succeeds for the locale that wrote it and fails or misreads for any other - and Access Date/Time carries no time zone at all, so the zone of entry is dropped unrecorded. If dob is a Text column, the locale-specific long-date string is stored verbatim and the table ends up holding dates in as many formats and languages as there were hosts that wrote to it. Either way the day/month ambiguity of numeric fallback formats applies to the first twelve days of every month.",
+          "location": {
+            "system": "Microsoft Access (ACE OLEDB 12.0 provider)",
+            "component": "Jet/ACE implicit string-to-date coercion",
+            "citation": "Flat Design/InsertForm.vb:23"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "decode",
+          "description": "Read-back is DateTime.Parse(stReader(\"dob\").ToString()) with NO IFormatProvider, so the value is re-parsed under the READING machine's current culture, which need not be the culture that wrote it. A record written on an en-US host and opened on an en-GB host silently exchanges day and month wherever both are 12 or below. The call is also completely unguarded: EditForm.LoadData has no Try/Catch and is invoked from the EditForm constructor (Flat Design/EditForm.vb:10), so a NULL or unparseable dob throws a FormatException before the form can be shown - the record becomes permanently un-editable through the UI.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:30"
+          },
+          "implicit": true
+        },
+        {
+          "step": 4,
+          "operation": "encode",
+          "description": "The update path repeats the defect: EditForm.btnSave_Click binds dtpDOB.Text again, so every edit re-renders the date through the EDITING host's locale and long-date pattern and writes that string back. Drift therefore compounds across edits rather than stabilising - each save re-encodes whatever the previous host's parse produced.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.btnSave_Click",
+            "citation": "Flat Design/EditForm.vb:62"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.dob",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (EditForm DateTimePicker, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:30",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Date of birth leaves the trust boundary in the committed studentDB.accdb. DOB is the highest-value single column in the table for identity fraud, and it is published alongside full name (DF-SMS-002) and gender (DF-SMS-006) in the same file, which together constitute a standard re-identification triple.",
+          "severity": "critical",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "Date of birth is persisted as a locale-rendered long-date STRING, not a date. dtpDOB.Text is bound on both the insert (InsertForm.vb:23) and update (EditForm.vb:62) paths, with no Format or CustomFormat set on the control, so the stored representation depends on the operating-system locale of whichever host performed the write. Read-back uses DateTime.Parse with no IFormatProvider (EditForm.vb:30), re-parsing under the reading host's culture. A record written on one locale and edited on another silently exchanges day and month, and each edit re-encodes rather than corrects. Migration cannot assume the dob column holds a single parseable format: the real distribution of stored values must be profiled before any conversion is written.",
+          "severity": "high",
+          "category": "type-coercion"
+        },
+        {
+          "finding": "A NULL or unparseable dob makes the record permanently un-editable. DateTime.Parse at EditForm.vb:30 is unguarded and sits inside EditForm.LoadData, which is called from the constructor at EditForm.vb:10 - outside the Try/Catch that protects btnSave_Click. The FormatException therefore escapes before the form is shown, so an operator cannot open the record to correct the bad value, and cannot correct it through any other path either.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "The default submitted date of birth is today. ClearFields sets dtpDOB.Value = Date.Now (Flat Design/InsertForm.vb:51) and the control has no MinDate, MaxDate, ShowCheckBox, or plausibility validation, so an operator who simply does not touch the DOB field silently stores the current date as the student's date of birth. There is no way afterwards to distinguish 'born today' from 'never entered'.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Access Date/Time values carry no time zone and none is recorded anywhere in the flow, so the zone of entry is dropped at the persistence boundary. For a date-only attribute this is low-impact today, but any target platform that stores DOB as a timestamp will apply a default zone and can shift the date by one day.",
+          "severity": "low",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-006",
+      "data_element": {
+        "name": "gender",
+        "type": "Access column type undeclared in source (students.gender); bound from cmbGender.SelectedItem.ToString() inferred as OleDbType.VarWChar",
+        "description": "Student gender, selected from a hard-coded three-value drop-down {Male, Female, Other} on InsertForm and EditForm, and aggregated into two dashboard counters on Form1.",
+        "business_meaning": "Demographic attribute of the student and one of the three dimensions the dashboard reports on.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Administrative user (ComboBox selection on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:18"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "cmbGender.SelectedItem.ToString() is evaluated with no selection guard. The ComboBox is DropDownList style with no default selection set (Flat Design/InsertForm.Designer.vb:171-180), so SelectedItem is Nothing until the operator picks a value, and the call raises a NullReferenceException. The enclosing Try/Catch converts that into a generic 'Error: Object reference not set...' message box (Flat Design/InsertForm.vb:32) - the entire insert is abandoned with no indication to the operator of which field was missing. The same pattern applies to course and yoa in DF-SMS-007, so whichever of the three is unset fails identically and indistinguishably.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:18"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "On the edit path, cmbGender.SelectedItem = stReader(\"gender\").ToString() performs a value-equality lookup against the hard-coded Items collection {Male, Female, Other} (Flat Design/EditForm.Designer.vb:149). A stored value outside that exact set - different case, a trailing space, a legacy code, or NULL read back as String.Empty - matches no item, so WinForms leaves SelectedItem as Nothing SILENTLY, with no exception and no visual cue beyond an empty box. The operator then sees a blank gender field, and pressing Save throws on SelectedItem.ToString(), making such records un-editable.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:27"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "aggregate",
+          "description": "The dashboard derives two counters with SELECT COUNT(*) FROM students WHERE gender = 'Male' and the same for 'Female'. The comparison is against hard-coded string literals and is whitespace-sensitive, and the third value the entry form offers - 'Other' - is never counted by any query. The two displayed totals therefore do not sum to the table's row count, and nothing on the dashboard reveals the shortfall.",
+          "location": {
+            "system": "Student Management System (Form1 dashboard)",
+            "component": "Form1.LoadData",
+            "citation": "Flat Design/Form1.vb:24"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.gender",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (Form1 dashboard counters, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/Form1.vb:34",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Gender leaves the trust boundary in the committed studentDB.accdb. Alone it is a low-sensitivity demographic attribute, but published in the same rows as full name (DF-SMS-002) and date of birth (DF-SMS-005) it completes a standard re-identification triple, which is why the classification is carried at pii rather than none.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The dashboard silently undercounts. Only 'Male' and 'Female' are counted (Form1.vb:24, 29) while the entry form offers a third value, 'Other' (InsertForm.Designer.vb:176), and the comparisons are case- and whitespace-sensitive string literals. Any student recorded as 'Other' - or with a case or spacing variant - appears in no gender counter, so the two numbers on the dashboard do not reconcile to the row count and no total is displayed that would expose the gap.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "A stored gender value outside the hard-coded three-item list makes the record un-editable, and does so silently. EditForm.LoadData's SelectedItem assignment (EditForm.vb:27) leaves the control at Nothing when no item matches, giving no error; the subsequent save then throws on SelectedItem.ToString(). Because the Items list is compiled into the Designer file, any pre-existing or externally written value - including NULL - is unreachable through the UI without a code change.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Insert fails with an unattributable error when gender is left unselected: the DropDownList has no default selection, SelectedItem.ToString() throws NullReferenceException, and the handler's catch-all reports only the raw exception message (InsertForm.vb:32). The operator is given no indication which of gender, course, or yoa was missing - all three fail identically.",
+          "severity": "medium",
+          "category": "data-loss"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-007",
+      "data_element": {
+        "name": "enrollment_course_and_admission_year",
+        "type": "Access column types undeclared in source (students.course, students.yoa); yoa bound from cmbyoa.SelectedItem.ToString() - a STRING even though the value is a year - inferred as OleDbType.VarWChar",
+        "description": "Course code selected from a hard-coded drop-down {BCA, MCA, IIMCA} and year of admission selected from a hard-coded drop-down {2019, 2020, 2021, 2022, 2023}. Both feed the dashboard's course and academic-year counters.",
+        "business_meaning": "The student's enrollment: which programme and which admission cohort. Year of admission is the basis for the academic-year-of-study calculation on the dashboard.",
+        "pii_classification": "sensitive"
+      },
+      "entry_point": {
+        "system": "Administrative user (ComboBox selections on InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:19"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "cmbyoa.SelectedItem.ToString() writes the admission year as TEXT. The target column type is undeclared, so if yoa is a Number column Jet implicitly casts on every write and on every one of the five dashboard comparisons; if it is Text the comparisons work but no ordering, range query, or arithmetic on the cohort year is possible without a cast. Both combo boxes are also unguarded against no selection, so an unset course or year throws NullReferenceException into the handler's generic catch exactly as gender does in DF-SMS-006.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:20"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "calculate",
+          "description": "The academic-year-of-study buckets are derived from a hard-coded Dim currentYear As Integer = 2023 rather than from Date.Now.Year. The five bucket queries compare yoa against 2023, 2022, 2021, 2020 and 2019 and label the results '1st year' through '5th year'. The baseline is frozen in source: as of the trace date (2026) the dashboard still reports the 2023 cohort as first-year students, and every cohort admitted after 2023 falls into no bucket at all.",
+          "location": {
+            "system": "Student Management System (Form1 dashboard)",
+            "component": "Form1.LoadData",
+            "citation": "Flat Design/Form1.vb:59"
+          },
+          "implicit": false
+        },
+        {
+          "step": 3,
+          "operation": "translate",
+          "description": "Each bucket query concatenates an Integer-derived string into a quoted literal - \"WHERE yoa = '\" & currentYear.ToString() & \"'\" - so an Integer is rendered to text and then compared against a column of unknown type. If yoa is numeric, Jet applies an implicit cast on every one of the five comparisons on every dashboard load; if it is text, the comparison is exact and case-sensitive. This is also the only place in the application where a value derived from code rather than operator input is concatenated into SQL.",
+          "location": {
+            "system": "Student Management System (Form1 dashboard)",
+            "component": "Form1.LoadData",
+            "citation": "Flat Design/Form1.vb:62"
+          },
+          "implicit": true
+        },
+        {
+          "step": 4,
+          "operation": "translate",
+          "description": "On the edit path, course and yoa are restored by SelectedItem value-equality lookup against their hard-coded Items collections (Flat Design/EditForm.Designer.vb:303, 314). Any stored value outside those compiled lists - a discontinued course code, a cohort year after 2023, a case variant, or NULL - matches nothing and leaves SelectedItem at Nothing silently, after which the save throws. Records from cohorts the drop-down no longer lists are therefore un-editable.",
+          "location": {
+            "system": "Student Management System (WinForms client)",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:29"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Microsoft Access (ACE OLEDB 12.0) local file database",
+          "store_type": "relational-table",
+          "location": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb :: students.course, students.yoa",
+          "source_of_truth": true,
+          "retention": "None defined - no archival, purge, or retention rule exists anywhere in the source tree. Education records of this kind normally carry a statutory retention period; none is expressed or enforced here.",
+          "citation": "Flat Design/Module1.vb:7"
+        },
+        {
+          "system": "Student Management System (WinForms client process)",
+          "store_type": "cache",
+          "location": "ViewForm in-memory DataSet, table \"students\", bound to DataGridView1.DataSource",
+          "source_of_truth": false,
+          "retention": "Process lifetime; refreshed only by an explicit LoadData call",
+          "citation": "Flat Design/ViewForm.vb:42"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.accdb - an 802,816-byte ACE database committed to the repository working tree",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/studentDB.accdb:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (Form1 dashboard course counters, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/Form1.vb:53",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (Form1 dashboard academic-year counters, operator screen)",
+          "interface": "screen",
+          "citation": "Flat Design/Form1.vb:87",
+          "external_consumer": false
+        },
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "No cohort admitted after 2023 can be recorded at all. The admission-year drop-down is a compiled, hard-coded list ending at 2023 (Flat Design/InsertForm.Designer.vb:91 and EditForm.Designer.vb:303) with no 'other' option and no free-text fallback, so from the 2024 intake onward the application cannot capture a correct year of admission without a source change and redeployment. Any records entered since then necessarily carry a wrong year.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "The academic-year dimension of the dashboard is frozen at a hard-coded baseline. Form1.vb:59 sets currentYear = 2023 literally instead of reading the system clock, so the five year-of-study buckets have not advanced since the code was written and students admitted after 2023 are counted in none of them. The dashboard reports confidently wrong figures with no staleness indicator.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Course counters enumerate only the three hard-coded values BCA, MCA and IIMCA (Flat Design/Form1.vb:38-50). Any other course value in the table - a programme added later, a case variant, or NULL - is invisible on the dashboard, and as with the gender counters no total is shown that would expose the discrepancy.",
+          "severity": "medium",
+          "category": "data-loss"
+        },
+        {
+          "finding": "Education-record attributes leave the trust boundary in the committed studentDB.accdb, joined in the same rows to name, DOB, gender and contact numbers. The combination - who the student is plus what they are enrolled in and when they were admitted - is a materially greater exposure than the identifiers alone, and no retention rule limits how long the published copy persists.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "yoa is written and compared as a character literal against a column of undeclared type (InsertForm.vb:20, Form1.vb:62), so every dashboard load may be performing five implicit casts. Resolve by dumping the real students DDL before any migration maps this column.",
+          "severity": "low",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-008",
+      "data_element": {
+        "name": "host_and_database_user_identity",
+        "type": "Fixed-width 32-byte slot pair inside the ACE lock file: NetBIOS computer name and Jet workgroup user name, written by the provider",
+        "description": "The computer name of the host that opened the database and the Jet account name under which it was opened. Written by the ACE OLEDB provider into the sidecar lock file studentDB.laccdb as a side effect of opening the connection. No application code reads, writes, or references this file.",
+        "business_meaning": "The only record anywhere in the system of who or what touched the student database. There is no application-level audit trail, so this provider artifact is the de facto - and only - access record.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Windows host / ACE OLEDB 12.0 provider",
+        "interface": "direct-db",
+        "citation": "Flat Design/Module1.vb:8"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "enrich",
+          "description": "A textbook invisible ingress: dbcon.Open() causes the ACE provider to create or update studentDB.laccdb and stamp the opening machine's NetBIOS computer name and the Jet workgroup user name into its slot table. This is pure provider side effect - the data element is introduced by the runtime, not by any application statement, and grepping the application source for it finds nothing. The host identity is read from the operating system and the Jet user defaults to 'Admin' because the connection string supplies no User ID.",
+          "location": {
+            "system": "Microsoft Access (ACE OLEDB 12.0 provider)",
+            "component": "Lock-file slot allocation on connection open",
+            "citation": "Flat Design/Module1.vb:8"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "The authenticated Windows identity of the operator is discarded at the database boundary and re-derived as the single shared Jet account 'Admin'. The connection string (Flat Design/Module1.vb:7) carries no User ID, no Password and Persist Security Info=False, and the application has no login form, user table, or role concept of any kind, so every read, insert, update and delete by every operator is attributed to the same account. The committed lock file confirms the collapse: its user slot reads 'Admin'. No re-derivation of authorization context is cited anywhere, because none happens.",
+          "location": {
+            "system": "Microsoft Access (ACE OLEDB 12.0 provider)",
+            "component": "Default Jet workgroup identity",
+            "citation": "Flat Design/studentDB.laccdb:1"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Windows file system (application directory, alongside the database)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.laccdb - 64 bytes, holding computer name 'SIDDHARTH-WIND' and Jet user 'Admin'",
+          "source_of_truth": true,
+          "retention": "Indefinite. The provider deletes the lock file when the last connection closes, but InsertForm never closes the shared connection, so the lock routinely outlives the session - and this stale lock was committed to the repository rather than cleaned up, making it permanent.",
+          "citation": "Flat Design/studentDB.laccdb:1"
+        },
+        {
+          "system": "Git repository / GitHub (public)",
+          "store_type": "file-system",
+          "location": "Flat Design/studentDB.laccdb committed to the repository working tree; neither .gitignore nor .gitattributes excludes *.laccdb",
+          "source_of_truth": false,
+          "retention": "Indefinite - retained in Git history even if deleted from HEAD",
+          "citation": "Flat Design/.gitignore:1"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "GitHub (public repository siddharth9300/Student-Management-System-VB.Net)",
+          "interface": "file-export",
+          "citation": "Flat Design/Form1.vb:156",
+          "external_consumer": true
+        }
+      ],
+      "crosses_system_boundary": true,
+      "crosses_identity_boundary": true,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Host and account identity are published. The committed studentDB.laccdb discloses the developer workstation's NetBIOS name 'SIDDHARTH-WIND' and the database account 'Admin' to anyone who clones the public repository. The leak is small in volume but it is reconnaissance-grade: it names a specific machine and confirms the database is opened under the default unauthenticated Jet account, directly alongside the database file itself.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "The operator's authenticated identity is destroyed at the database boundary and never re-derived. The connection string supplies no credentials and the application has no login, user table, or role model, so every mutation of every student record by every operator is performed as the shared Jet 'Admin' account. There is no mechanism - and no cited re-derivation - by which authorization context could be reconstructed, and the data-flow trace therefore cannot attribute any write to a person.",
+          "severity": "high",
+          "category": "pii-leak"
+        },
+        {
+          "finding": "Stale lock files accumulate and are never cleaned. InsertForm.btnSave_Click and EditForm.btnSave_Click open the shared connection via Module1.connectDB() and never close it, and connectDB() reopens only when the state is exactly Closed, so the lock file persists past the operation that created it. The copy in this repository is exactly such an orphan - a lock recording a session that ended years ago, now permanent in Git history.",
+          "severity": "medium",
+          "category": "orphaned-data"
+        },
+        {
+          "finding": "The existence of a lock file proves the Access database is a multi-opener shared file store. Access control for the entire student dataset is delegated wholly to file-system permissions on the .accdb: any process or user that can read the path can read every PII column, and any that can write it can modify or destroy the table, with no server, no connection credential, and no audit record to mediate or detect it.",
+          "severity": "high",
+          "category": "pii-leak"
+        }
+      ]
+    }
+  ],
+  "cross_flow_findings": [
+    {
+      "finding": "CFF-001. Every traced element has an uncontrolled external copy. All ten student columns share the single persistence location studentDB.accdb :: students, and a copy of that entire 802,816-byte database file is committed to a public Git repository - Flat Design/Form1.vb:156 hard-codes this repository's own public github.com URL, and neither .gitignore nor .gitattributes excludes *.accdb or *.laccdb. Every flow in this trace therefore terminates in an egress that leaves the trust boundary, is retained permanently in Git history, and is unreachable by the application's own DELETE statement. The file's rows could not be read with the tooling available in this sandbox, so it must be treated as holding live student records - including names, dates of birth, mobile numbers and parent names - until a row inspection proves otherwise. This is the single highest-priority item in the trace and it should be remediated (history rewrite plus credential and data review) independently of any modernization work.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007", "DF-SMS-008"],
+      "severity": "critical"
+    },
+    {
+      "finding": "CFF-002. Three unreconciled stores per element, two of which are provably different files. Each student element lands in (a) the Access table at the runtime path hard-coded in Flat Design/Module1.vb:7, (b) the repo-committed Flat Design/studentDB.accdb, and (c) the in-memory DataSet behind ViewForm's grid (Flat Design/ViewForm.vb:42). The runtime path - D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb - does not resolve to the repository copy, and the .accdb is not even referenced as Content or None in the .vbproj, so the file the application reads at runtime and the file under version control are distinct artifacts that diverge from first use. No reconciliation job, sync step, or deployment copy exists anywhere in the source. Migration must decide explicitly which copy is authoritative before extracting any data; this trace marks the runtime path as source_of_truth because that is what the code opens, but the only copy actually available for inspection is the repository one.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007"],
+      "severity": "high"
+    },
+    {
+      "finding": "CFF-003. No authentication, authorization, or audit exists anywhere in the application, so no write in any flow can be attributed to a person. A grep across all hand-written .vb for login, password, auth, user, audit and logging constructs returns nothing. There is no login form, no user or role table, no per-record owner column, no owner filter in any WHERE clause, and no insert/update/delete log. Every one of the ten PII columns is fully readable and mutable by anyone who can launch the executable or reach the .accdb on the file system, and all activity is attributed to the shared Jet 'Admin' account (Flat Design/studentDB.laccdb:1). The practical consequence for this trace is that the actor dimension of every flow is empty: there is no evidence from which to reconstruct who changed what.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007", "DF-SMS-008"],
+      "severity": "high"
+    },
+    {
+      "finding": "CFF-004. One unparameterized query reads the whole PII table. ViewForm.LoadSData (Flat Design/ViewForm.vb:48-51) is the only SQL in the application built by string concatenation over operator input, and it wraps a SELECT * over a table of ten PII columns, interpolating the raw term into both an equality predicate on rollno and a LIKE pattern on fname with no escaping or type check. A crafted term can widen disclosure past the intended record; an apostrophe alone throws, and neither btnSearch_Click nor LoadSData has exception handling, so the form crashes. Every other statement in the application is parameterized, which makes this a single-site fix rather than a systemic rewrite.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002"],
+      "severity": "high"
+    },
+    {
+      "finding": "CFF-005. All ten writes are untyped binds against undeclared column types, and the DDL could not be recovered. Every value reaches Access through OleDbParameter.AddWithValue, which infers the OleDbType from the .NET runtime type - so every field, including the admission year and both mobile numbers, binds as VarWChar. No column type is declared anywhere in the source, the project compiles with OptionStrict Off (Flat Design/Student Management System Siddharth Jain.vbproj:51) so the compiler performs no narrowing check, and studentDB.accdb could not be parsed with the tooling available here. Compounding this, OLE DB does not support named parameters at all: the '@Name' tokens in every statement are positional '?' markers bound strictly by the order the parameters were added, so the names are decorative and a reordering would silently write values into the wrong columns. The type-coercion findings in DF-SMS-001, DF-SMS-004, DF-SMS-005 and DF-SMS-007 are consequently unresolved rather than ruled out - several resolve in opposite directions depending on whether the real columns are Text, Number or Date/Time. legacy-database-archaeologist must dump the students DDL before any of them can be closed or any migration mapping written.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007"],
+      "severity": "medium"
+    },
+    {
+      "finding": "CFF-006. No retention, archival, or purge rule exists for any store in any flow. Nothing in the source tree expresses how long a student record is kept, when it is archived, or when it is destroyed; the only deletion mechanism is an operator pressing Delete on a selected grid row (Flat Design/ViewForm.vb:90). The repo-committed copy and the committed lock file are formally orphaned data: no application code path can reach them, so no retention rule could be enforced against them even if one existed.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007", "DF-SMS-008"],
+      "severity": "medium"
+    },
+    {
+      "finding": "CFF-007. The dashboard is the only aggregate consumer and it reconciles with nothing. Gender counters omit the 'Other' value the entry form offers (Flat Design/Form1.vb:24,29 vs InsertForm.Designer.vb:176); course counters enumerate only three hard-coded codes (Form1.vb:38-50); and the five academic-year buckets are anchored to a hard-coded currentYear = 2023 (Form1.vb:59) rather than the system clock, so they have not advanced since the code was written and no post-2023 cohort appears in any bucket. No query displays a total row count, so none of the three dimensions can be checked against the table and the shortfalls are invisible to the operator. Treat every number on this dashboard as unverified until re-derived from the real data.",
+      "flows_involved": ["DF-SMS-006", "DF-SMS-007"],
+      "severity": "medium"
+    },
+    {
+      "finding": "CFF-008. Governing-profile discrepancy, and PII classification was assigned without the profile's rules. This task declares the governing client profile as 'faa', which is authoritative for the run; the application's source, README and project report describe a generic student-records desktop tool with no aviation, NAS, or FAA content, and the staged catalog entry records the same mismatch in its open_questions. Separately, profiles/faa/ is not reachable from this sandbox, so profiles/faa/compliance.yaml could not be consulted and no agency-specific identifier rules were applied: all pii_classification values in this trace were assigned from the generic enum definitions in references/pii-phi-tracking.md. Two consequences for downstream consumers. First, the classifications must be re-validated against the real profile compliance rules before any compliance gate relies on them - in particular, whether a student roll number and an education record attract an agency-specific class. Second, the engagement owner should confirm the application-to-profile assignment before FAA-specific gating (safety tiering, NAS impact) is applied to this application at all.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007", "DF-SMS-008"],
+      "severity": "medium"
+    },
+    {
+      "finding": "CFF-009. Edit round-trips silently rewrite data in three distinct ways, and every flow that passes through EditForm is affected. EditForm.btnSave_Click writes all nine mutable columns back unconditionally whenever the operator presses Save, so the read-back defects become write defects: (a) stReader(col).ToString() converts DBNull to String.Empty, so a genuine NULL is persisted as an empty string - a distinction Access does preserve (DF-SMS-002, DF-SMS-003, DF-SMS-004); (b) SelectedItem value-equality lookups against hard-coded Items lists leave the control blank when no item matches, after which the save throws, making records with out-of-vocabulary gender, course, or yoa values permanently un-editable (DF-SMS-006, DF-SMS-007); and (c) dtpDOB.Text is re-rendered through the editing host's locale on every save, so date drift compounds rather than stabilises (DF-SMS-005). An operator who opens a record to correct one field can therefore silently damage three others. This makes the edit path the highest-value target for business-rule extraction in Pass 2.",
+      "flows_involved": ["DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007"],
+      "severity": "high"
+    },
+    {
+      "finding": "CFF-010. The in-memory grid copy is refreshed on the wrong object instance after insert. InsertForm.btnSave_Click calls the unqualified ViewForm.LoadData() (Flat Design/InsertForm.vb:28), which VB resolves to the My.Forms default instance of ViewForm rather than the New ViewForm() instance that Form1.btnView_Click created and parented into Panel5 (Flat Design/Form1.vb:141,145). The newly inserted row is loaded into an off-screen DataSet while the visible grid keeps its stale copy until the operator navigates away and back. The defect is easy to miss on review because the adjacent Form1.LoadData() call on the previous line DOES reach the visible dashboard - Form1 is the startup form, so its default instance is the real one. Any reimplementation must not preserve this asymmetry as though it were intended behaviour.",
+      "flows_involved": ["DF-SMS-001", "DF-SMS-002", "DF-SMS-003", "DF-SMS-004", "DF-SMS-005", "DF-SMS-006", "DF-SMS-007"],
+      "severity": "medium"
+    }
+  ]
+}

@@ -1,0 +1,242 @@
+{
+  "$schema": "olympus:artifact:call-graph:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "GRAIN: logical module (class / VB module), plus the data store, the Access file and the one external target as terminal nodes. Node ids for the six code modules match structural-analysis.json `modules[].id` exactly, so the two documents compose. This grain was chosen because the application has only one build module and one deployment surface — a project-reference graph would be a single node and say nothing, while a method-level graph over 461 hand-written lines would be noise. Edge count is small by nature: 9 code-to-code edges, 7 code-to-data edges, 1 outbound. What matters in this graph is not its size but that 3 of the 9 code-to-code edges are cycle members, and that 4 independent modules converge on one shared mutable connection object.",
+  "nodes": [
+    {
+      "id": "form1-dashboard",
+      "type": "winforms-form (startup form, navigation shell, statistics dashboard)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/Form1.vb",
+      "loc": 1371,
+      "fan_out": 5,
+      "fan_in": 3
+    },
+    {
+      "id": "insert-form",
+      "type": "winforms-form (create path)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/InsertForm.vb",
+      "loc": 434,
+      "fan_out": 4,
+      "fan_in": 1
+    },
+    {
+      "id": "edit-form",
+      "type": "winforms-form (update path)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/EditForm.vb",
+      "loc": 447,
+      "fan_out": 3,
+      "fan_in": 1
+    },
+    {
+      "id": "view-form",
+      "type": "winforms-form (read / search / delete path)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/ViewForm.vb",
+      "loc": 313,
+      "fan_out": 5,
+      "fan_in": 2
+    },
+    {
+      "id": "module1-db-connection",
+      "type": "vb-module (shared global connection holder; the entire data-access layer, 13 lines)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/Module1.vb",
+      "loc": 13,
+      "fan_out": 1,
+      "fan_in": 4,
+      "note": "Highest fan-in of any code node and holds zero SQL. It is a shared mutable resource, not a service: the convergence here is state-sharing, not delegation."
+    },
+    {
+      "id": "my-project-infrastructure",
+      "type": "generated application infrastructure (My namespace: startup wiring, default-instance provider, resources, settings)",
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "path": "Flat Design/My Project/",
+      "loc": 209,
+      "fan_out": 1,
+      "fan_in": 0,
+      "note": "Entry point of the whole graph, and the mechanism that makes the default-instance edges below resolvable at all."
+    },
+    {
+      "id": "db.students",
+      "type": "database-table (the application's only user table, 10 columns)",
+      "surface": "studentDB.accdb (Microsoft Access file)",
+      "fan_in": 4,
+      "note": "Every one of the four form modules reaches this table directly. It is the true integration point of the application."
+    },
+    {
+      "id": "store.studentDB.accdb",
+      "type": "file-based database (Microsoft ACE / Access)",
+      "surface": "local filesystem / workstation",
+      "note": "Reached via the Microsoft.ACE.OLEDB.12.0 out-of-process provider against a hardcoded absolute path."
+    },
+    {
+      "id": "external.github-project-report",
+      "type": "external-http-target (public internet)",
+      "surface": "external",
+      "note": "The application's only outbound network call."
+    }
+  ],
+  "edges": [
+    {
+      "from": "my-project-infrastructure",
+      "to": "form1-dashboard",
+      "kind": "application-startup (MySubMain designates MainForm)",
+      "evidence": "Flat Design/My Project/Application.myapp:4"
+    },
+    {
+      "from": "form1-dashboard",
+      "to": "module1-db-connection",
+      "kind": "direct call — Module1.connectDB(), then uses the global dbcon",
+      "evidence": "Flat Design/Form1.vb:16"
+    },
+    {
+      "from": "form1-dashboard",
+      "to": "insert-form",
+      "kind": "instantiation + control reparenting — New InsertForm(), added to Panel5 with TopLevel=False",
+      "evidence": "Flat Design/Form1.vb:104",
+      "cycle_member": true
+    },
+    {
+      "from": "form1-dashboard",
+      "to": "view-form",
+      "kind": "instantiation + control reparenting + DirectCast call to RefreshData()",
+      "evidence": "Flat Design/Form1.vb:141",
+      "cycle_member": true
+    },
+    {
+      "from": "insert-form",
+      "to": "module1-db-connection",
+      "kind": "direct call — Module1.connectDB()",
+      "evidence": "Flat Design/InsertForm.vb:7"
+    },
+    {
+      "from": "insert-form",
+      "to": "form1-dashboard",
+      "kind": "VB DEFAULT-INSTANCE call — Form1.LoadData() resolves through My.Forms, NOT through the hosting instance that created this form",
+      "evidence": "Flat Design/InsertForm.vb:27",
+      "cycle_member": true,
+      "resolves_to_displayed_instance": false,
+      "note": "The post-insert dashboard refresh lands on an off-screen Form1, so the visible dashboard keeps stale counts. The edge is real; its target is not the object the user sees."
+    },
+    {
+      "from": "insert-form",
+      "to": "view-form",
+      "kind": "VB DEFAULT-INSTANCE call — ViewForm.LoadData() resolves through My.Forms, not the hosted instance",
+      "evidence": "Flat Design/InsertForm.vb:28",
+      "resolves_to_displayed_instance": false,
+      "note": "Same aliasing defect: the grid the user is looking at is not the one refreshed."
+    },
+    {
+      "from": "edit-form",
+      "to": "module1-db-connection",
+      "kind": "direct call — Module1.connectDB(), in both LoadData and btnSave_Click",
+      "evidence": "Flat Design/EditForm.vb:15"
+    },
+    {
+      "from": "edit-form",
+      "to": "form1-dashboard",
+      "kind": "VB DEFAULT-INSTANCE call — Form1.LoadData() after a successful UPDATE",
+      "evidence": "Flat Design/EditForm.vb:67",
+      "cycle_member": true,
+      "resolves_to_displayed_instance": false
+    },
+    {
+      "from": "view-form",
+      "to": "module1-db-connection",
+      "kind": "direct call — connectDB(), uses the global dbcon, and calls dbcon.Close() on it",
+      "evidence": "Flat Design/ViewForm.vb:11",
+      "mutates_shared_state": true,
+      "note": "The only edge in the graph that tears down shared global state another module owns (ViewForm.vb:94)."
+    },
+    {
+      "from": "view-form",
+      "to": "edit-form",
+      "kind": "instantiation with constructor argument — New EditForm(rollNo), or UpdateRollNo() on a reused instance",
+      "evidence": "Flat Design/ViewForm.vb:65",
+      "cycle_member": true
+    },
+    {
+      "from": "view-form",
+      "to": "form1-dashboard",
+      "kind": "VB DEFAULT-INSTANCE control-tree mutation — adds EditForm to Form1.Panel5.Controls, a child form reaching into its grandparent's layout",
+      "evidence": "Flat Design/ViewForm.vb:72",
+      "cycle_member": true,
+      "resolves_to_displayed_instance": false
+    },
+    {
+      "from": "form1-dashboard",
+      "to": "db.students",
+      "kind": "shared table — 10 inline SELECT COUNT(*) aggregates, year buckets built by string concatenation",
+      "evidence": "Flat Design/Form1.vb:24",
+      "operations": ["SELECT COUNT(*) x10"],
+      "parameterized": false
+    },
+    {
+      "from": "insert-form",
+      "to": "db.students",
+      "kind": "shared table — inline parameterized INSERT of all 10 columns",
+      "evidence": "Flat Design/InsertForm.vb:9",
+      "operations": ["INSERT"],
+      "parameterized": true
+    },
+    {
+      "from": "edit-form",
+      "to": "db.students",
+      "kind": "shared table — inline parameterized SELECT one and UPDATE, both keyed on rollno",
+      "evidence": "Flat Design/EditForm.vb:14",
+      "operations": ["SELECT", "UPDATE"],
+      "parameterized": true
+    },
+    {
+      "from": "view-form",
+      "to": "db.students",
+      "kind": "shared table — SELECT * bound to the grid, a string-concatenated search SELECT, and a parameterized DELETE",
+      "evidence": "Flat Design/ViewForm.vb:39",
+      "operations": ["SELECT *", "SELECT * WHERE (concatenated)", "DELETE"],
+      "parameterized": "mixed",
+      "note": "ViewForm.vb:50 concatenates raw txtSearch keystrokes into both an equality and a LIKE clause — the application's one live SQL-injection edge."
+    },
+    {
+      "from": "db.students",
+      "to": "store.studentDB.accdb",
+      "kind": "containment — the table lives in this file",
+      "evidence": "Flat Design/studentDB.accdb"
+    },
+    {
+      "from": "module1-db-connection",
+      "to": "store.studentDB.accdb",
+      "kind": "OLE DB connection — Microsoft.ACE.OLEDB.12.0 against a hardcoded absolute path that does not exist in the repository layout",
+      "evidence": "Flat Design/Module1.vb:7"
+    },
+    {
+      "from": "form1-dashboard",
+      "to": "external.github-project-report",
+      "kind": "outbound HTTPS — Process.Start against a hardcoded public github.com URL (the dashboard's 'Report' button)",
+      "evidence": "Flat Design/Form1.vb:157"
+    }
+  ],
+  "cycles": [
+    {
+      "members": ["form1-dashboard", "insert-form"],
+      "kind": "mutual UI dependency — the shell constructs the child, the child calls back into the shell by default instance",
+      "severity": "high",
+      "evidence": ["Flat Design/Form1.vb:104", "Flat Design/InsertForm.vb:27"]
+    },
+    {
+      "members": ["form1-dashboard", "view-form"],
+      "kind": "mutual UI dependency — the shell constructs and drives the child, the child mutates the shell's control tree",
+      "severity": "high",
+      "evidence": ["Flat Design/Form1.vb:141", "Flat Design/Form1.vb:150", "Flat Design/ViewForm.vb:72"]
+    },
+    {
+      "members": ["form1-dashboard", "view-form", "edit-form"],
+      "kind": "three-module cycle — Form1 constructs ViewForm, ViewForm constructs EditForm and hosts it in Form1.Panel5, EditForm refreshes Form1",
+      "severity": "high",
+      "evidence": ["Flat Design/Form1.vb:141", "Flat Design/ViewForm.vb:65", "Flat Design/ViewForm.vb:72", "Flat Design/EditForm.vb:67"]
+    }
+  ],
+  "notes": "WHAT THIS TRAVERSAL COULD NOT RESOLVE, stated so the graph is not read as complete:\n\n1. DEFAULT-INSTANCE TARGETS ARE AMBIGUOUS BY CONSTRUCTION. Five edges are VB default-instance calls (`Form1.LoadData()`, `ViewForm.LoadData()`, `Form1.Panel5`). Statically these resolve to the generated My.Forms singletons; at runtime the forms the user actually sees are separate objects created with `New` in Form1 and ViewForm. Both readings are defensible and they disagree, so each such edge is marked `resolves_to_displayed_instance: false` rather than silently picked. This is the application's most consequential structural defect and it is invisible to any tool that resolves these names statically and stops there.\n\n2. EVENT-HANDLER EDGES ARE NOT MODELLED INDIVIDUALLY. WinForms `Handles` clauses and the one dynamic `AddHandler editForm.FormClosed` (ViewForm.vb:75) are UI-framework dispatch, folded into the module-grain edges above. The AddHandler is never removed, so a reused EditForm accumulates subscriptions — a multiplicity the graph cannot express at this grain.\n\n3. 2,326 OF 2,787 LINES ARE DESIGNER-GENERATED LAYOUT and contribute no call edges, only control construction. They are counted in each node's `loc` because they are real maintenance surface — Form1.Designer.vb alone is 1,211 lines and 77 controls — but they are deliberately not traversed for edges.\n\n4. THE DATABASE CONTRIBUTES NO EDGES OF ITS OWN. Confirmed by decoding the .accdb catalog directly: zero stored procedures, zero views, zero triggers, zero relationships, zero database links. Every edge touching `db.students` therefore originates in application code — unusually for a legacy application, there is no logic hiding in the database. That is a measured finding, not an unexamined assumption.\n\n5. NO REFLECTION, NO LATE-BOUND DISPATCH AND NO GENERATED CODE PATHS were found, so there are no hidden call edges of that kind. But OptionStrict is Off project-wide (vbproj:51) and column access is by string name (`stReader(\"fname\")`, `Cells(\"rollno\")`), so the application's data contract — as opposed to its call graph — is resolved at runtime and is not verifiable from source.\n\n6. NO BUILD WAS PERFORMED. A clean clone does not build (manifest signing against a gitignored, absent .pfx) and could not connect if it did (the hardcoded D:\\PROGRAMING path does not exist in the repository layout), so no edge here is confirmed by execution or by a compiler. Every edge is cited to a file and line a reader can check instead."
+}

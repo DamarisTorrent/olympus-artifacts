@@ -1,0 +1,167 @@
+{
+  "$schema": "olympus:artifact:language-detection:v1",
+  "primary_language": "Visual Basic .NET",
+  "primary_framework": "Windows Forms (WinForms)",
+  "secondary_languages": [],
+  "frameworks": [
+    "Windows Forms (WinForms)",
+    "ADO.NET (System.Data.OleDb)"
+  ],
+  "build_tools": [
+    "MSBuild",
+    "Visual Studio Solution (.sln)"
+  ],
+  "databases": [
+    "Microsoft Access (ACE OLEDB, .accdb file)"
+  ],
+  "confidence": "strong",
+  "evidence": [
+    {
+      "language": "Visual Basic .NET",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.vb",
+          "count": 13,
+          "path_sample": "Flat Design/Form1.vb"
+        },
+        {
+          "type": "build-file",
+          "match": "*.vbproj (VB.NET project file)",
+          "count": 1,
+          "path_sample": "Flat Design/Student Management System Siddharth Jain.vbproj"
+        },
+        {
+          "type": "build-file",
+          "match": "*.sln (Visual Studio solution)",
+          "count": 1,
+          "path_sample": "Student Management System Siddharth Jain.sln"
+        },
+        {
+          "type": "code-marker",
+          "match": "Module ... End Module (VB.NET module declaration)",
+          "count": 1,
+          "path_sample": "Flat Design/Module1.vb:3"
+        },
+        {
+          "type": "code-marker",
+          "match": "Imports System.Data.OleDb (VB.NET import syntax)",
+          "count": 1,
+          "path_sample": "Flat Design/Module1.vb:1"
+        },
+        {
+          "type": "project-property",
+          "match": "<MyType>WindowsForms</MyType>",
+          "count": 1,
+          "path_sample": "Flat Design/Student Management System Siddharth Jain.vbproj:13"
+        },
+        {
+          "type": "project-property",
+          "match": "<OutputType>WinExe</OutputType>",
+          "count": 1,
+          "path_sample": "Flat Design/Student Management System Siddharth Jain.vbproj:8"
+        },
+        {
+          "type": "code-marker",
+          "match": "VB.NET designer partial classes (*.Designer.vb)",
+          "count": 7,
+          "path_sample": "Flat Design/Form1.Designer.vb"
+        }
+      ],
+      "signal_count": 8,
+      "confidence": "strong"
+    },
+    {
+      "language": "Windows Forms resource XML (.resx)",
+      "signals": [
+        {
+          "type": "file-extension",
+          "match": "*.resx",
+          "count": 6,
+          "path_sample": "Flat Design/Form1.resx"
+        },
+        {
+          "type": "code-marker",
+          "match": "System.Drawing.Bitmap / imgdata embedded resource entries",
+          "count": 4,
+          "path_sample": "Flat Design/Form1.resx"
+        }
+      ],
+      "signal_count": 2,
+      "confidence": "strong"
+    },
+    {
+      "language": "SQL (Access/Jet dialect, embedded in VB.NET string literals)",
+      "signals": [
+        {
+          "type": "code-marker",
+          "match": "SELECT/INSERT/UPDATE/DELETE literals passed to OleDbCommand or OleDbDataAdapter",
+          "count": 16,
+          "path_sample": "Flat Design/InsertForm.vb:9"
+        },
+        {
+          "type": "absent-signal",
+          "match": "*.sql DDL files in the source tree",
+          "count": 0
+        },
+        {
+          "type": "absent-signal",
+          "match": "stored procedure / view / trigger definitions",
+          "count": 0
+        }
+      ],
+      "signal_count": 3,
+      "confidence": "strong"
+    },
+    {
+      "language": "XML configuration",
+      "signals": [
+        {
+          "type": "file-name",
+          "match": "App.config",
+          "count": 1,
+          "path_sample": "Flat Design/App.config"
+        },
+        {
+          "type": "code-marker",
+          "match": "<supportedRuntime version=\"v4.0\" sku=\".NETFramework,Version=v4.8\"/>",
+          "count": 1,
+          "path_sample": "Flat Design/App.config:4"
+        },
+        {
+          "type": "absent-signal",
+          "match": "connectionStrings element binding the database in config",
+          "count": 0
+        }
+      ],
+      "signal_count": 3,
+      "confidence": "strong"
+    }
+  ],
+  "dispatch": [
+    {
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms (WinForms)",
+      "scope": "Flat Design/ — all 13 *.vb files, the .vbproj and the .sln. NOTE: no VB.NET/WinForms pattern reference exists in this tree. references/vb6-patterns.md is the nearest available document and is listed as the secondary reference, but it targets classic VB6 (COM, Form1.frm, ADO), NOT VB.NET on .NET Framework 4.8; its guidance transfers only partially and must not be applied verbatim.",
+      "primary_reference": "discovery-patterns-dotnet",
+      "secondary_reference": "references/vb6-patterns.md",
+      "resolved_on_disk": false
+    },
+    {
+      "language": "SQL (Access/Jet dialect, embedded)",
+      "framework": "ADO.NET System.Data.OleDb against Microsoft Access ACE",
+      "scope": "Inline SQL string literals in Flat Design/Form1.vb, InsertForm.vb, EditForm.vb, ViewForm.vb, plus the binary Flat Design/studentDB.accdb catalog. NOTE: the declared Pass 1 variant for this step is discovery-patterns-sqlserver, which does NOT match this engine — the application uses Microsoft Access (ACE OLEDB), not SQL Server. No Access/Jet pattern reference is present on disk.",
+      "primary_reference": "discovery-patterns-access",
+      "resolved_on_disk": false
+    }
+  ],
+  "excluded_directories": [
+    ".git",
+    "assets",
+    "references",
+    "scripts",
+    "fixtures"
+  ],
+  "generated_by": "legacy-language-reader (invoked by legacy-architecture-mapper, Discovery Pass 1)",
+  "generated_at": "2026-10-02"
+}
