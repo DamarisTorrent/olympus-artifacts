@@ -1,0 +1,358 @@
+{
+  "$schema": "olympus:artifact:shared-db-analysis:v1",
+  "skill_id": "decomposition-patterns",
+  "step": "shared-db-analysis",
+  "task_type": "discovery-shared-database-analysis",
+  "source_app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "wave_id": "unassigned",
+  "generated_at": "2026-10-02T00:00:00Z",
+  "meta": {
+    "governing_client_profile": "faa",
+    "wave_id_basis": "No wave id exists for this dispatch. This is a Discovery-line pass, which runs BEFORE Rationalization assigns waves; no wave-scoped context key, no rationalization/wave-{wave_id}/ staged artifact, and no shared-db-cluster-map were supplied. The literal 'unassigned' is an explicit sentinel satisfying the schema's minLength:1 requirement, NOT a wave number. It must not be read as wave 1.",
+    "shared_db_cluster_map_consulted": "none — context.shared_db_cluster_map was not supplied at this dispatch, and no portfolio-grain cluster map exists before Rationalization. The global view was therefore NOT re-derived here, per the skill's prohibition on per-target synthesis of a portfolio view.",
+    "declared_inputs_resolution": "The dispatch declared structural-analysis.json and database-schema-summary as REQUIRED inputs, but neither was staged into this dispatch's input-artifacts directory (it contained only the dispatch-context file). Both were instead read from the prior passes' outputs under artifacts/discovery-structural-analysis/. Recorded so the gap in input staging is visible rather than silently worked around.",
+    "engine_taxonomy_note": "The store engine is Microsoft Access ACE 12, which several Discovery artifact enums have no member for; upstream passes recorded 'other'. No SQL Server, Oracle or RAC cluster exists, so the skill's 'Oracle RAC cluster is the unit of analysis' heuristic does not apply.",
+    "evidence_basis": "First-hand source analysis (Flat Design/Module1.vb, Form1.vb, InsertForm.vb, EditForm.vb, ViewForm.vb, the .sln, .vbproj, App.config, README.md, and a byte-level read of studentDB.accdb / studentDB.laccdb), cross-checked against the Discovery structural-analysis, db-archaeology and data-flow-trace artifacts. Inherited inputs were NOT thin for this pass; they were corroborated, not mirrored."
+  },
+  "shared_database_clusters": [
+    {
+      "cluster_id": "CLU-STUDENTDB-ACCDB-01",
+      "database": "studentDB.accdb (Microsoft Access ACE 12 single-file embedded database, 802,816 bytes, header 'Standard ACE DB', reached through Provider=Microsoft.ACE.OLEDB.12.0; no server instance, no network listener, no logical catalog name)",
+      "shared_tables": [
+        "students"
+      ],
+      "participating_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "write_owners": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "read_only_consumers": [],
+      "sharing_pattern": "single-application-embedded-file — NOT shared. This is a degenerate cluster of exactly one participating application, recorded so that the absence of cross-application sharing reads as a measured result rather than an unexamined dimension. The store is a file bundled inside the application's own repository, opened through one hardcoded absolute path in Flat Design/Module1.vb:7 by one process-wide OleDbConnection that all four forms share.",
+      "coupling_severity": "none",
+      "notes": "DO NOT read this entry as shared-DB entanglement. participating_apps has exactly one member and write_owners has exactly one member, so the cluster is not contended and imposes no co-wave constraint on any other application. Evidence for the single-app finding is convergent across four independent checks: (1) the solution file declares exactly one project (Student Management System Siddharth Jain.vbproj) with no ProjectReference and one WinExe output, so there is no second executable; (2) all 15 inline SQL statements across the four forms resolve to the bare one-part name 'students' — 12 SELECT (10 dashboard COUNT(*) aggregates at Form1.vb:24-82, full-grid SELECT at ViewForm.vb:39, search SELECT at ViewForm.vb:48-50, single-row SELECT at EditForm.vb:14), 1 INSERT (InsertForm.vb:9), 1 UPDATE (EditForm.vb:51), 1 DELETE (ViewForm.vb:90) — with no 3-part or 4-part name, no OPENQUERY/OPENROWSET, no linked server, no synonym and no Access cross-file IN 'other.accdb' clause anywhere; (3) the .accdb catalog holds exactly one user table and zero stored procedures, zero views, zero saved queries, zero data macros/triggers, zero VBA modules and zero user relationships (MSysRelationships carries only the engine-internal MSysNavPaneGroups row), so no database-resident logic couples a second consumer; (4) there is no HTTP endpoint, no API, no message queue, no scheduled job, no batch entry point, no file import/export, no SMTP and no UNC path in the tree, so no integration channel exists through which another application could reach the data. Write ownership is therefore already singular and requires no resolution. The two paths by which an undetected consumer COULD exist are both outside code and are carried as risks RISK-01 and RISK-02 below rather than asserted away."
+    }
+  ],
+  "cross_application_sharing_summary": {
+    "sharing_verdict": "none-detected",
+    "applications_participating_in_any_cluster": 1,
+    "clusters_with_more_than_one_participating_app": 0,
+    "contended_clusters_more_than_one_write_owner": 0,
+    "shared_mutable_tables": 0,
+    "cross_application_write_contention_points": 0,
+    "cross_application_read_joins": 0,
+    "foreign_keys_crossing_an_application_boundary": 0,
+    "stored_procedures": 0,
+    "triggers_or_data_macros": 0,
+    "views_or_saved_queries": 0,
+    "database_links_linked_servers_or_synonyms": 0,
+    "three_or_four_part_sql_names_in_code": 0,
+    "integration_channels_reaching_the_store": 0,
+    "config_files_binding_the_database": 0,
+    "connection_strings_in_the_whole_repository": 1,
+    "store_topology": "One embedded single-file Microsoft Access database holding one user table ('students', 10 columns: RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB). The engine runs in-process via the 32-bit ACE OLEDB redistributable; there is no server process, no credential and no engine-side audit trail. Access control over the entire dataset is filesystem permissions alone — the file carries no database password and Jet workgroup security is unused (default 'Admin' account).",
+    "write_ownership_status": "already-singular — the one application is the sole writer of the one table; no dual-write, no facade and no ownership negotiation is required.",
+    "co_wave_implication": "none — this application's data layer constrains no other application's wave placement, and no other application constrains its.",
+    "undetectable_sharing_paths": [
+      "A file-share .accdb has no engine-side audit trail, so a human or tool opening studentDB.accdb directly in Microsoft Access — bypassing the application entirely — would leave no trace any code-based or file-based walk could find. This is the single material residual uncertainty behind the 'no sharing' verdict and is closeable only by asking the business owner.",
+      "The database file, and its stale lock file, are committed to a public Git repository (origin github.com/siddharth9300/Student-Management-System-VB.Net, single commit, branch master). Every clone is an uncontrolled copy of the store outside any access control, and Git history retains it even if deleted from HEAD.",
+      "The application sets SingleInstance=false, so multiple instances — and multiple workstations, if the .accdb were ever placed on a network share — could contend for the one file under Jet/ACE page locking with no transaction use anywhere in the code. Whether the deployed copy was ever placed on a share is unverified."
+    ],
+    "detection_basis": "Code, configuration, solution/project manifests, and a byte-level read of the .accdb catalog. No live database engine was available, so write ownership is established from the complete set of SQL call sites rather than from engine-side permissions or an audit log (consistent with the data-line constraint that Discovery has no live DB access)."
+  },
+  "top_risks_for_decomposition": [
+    {
+      "risk_id": "RISK-01",
+      "severity": "medium",
+      "summary": "The 'no cross-application sharing' verdict cannot be fully closed from code. Because the store is a file-share Access database with no engine-side audit trail, any out-of-band consumer opening studentDB.accdb directly in Microsoft Access is undetectable by any walk of the source tree. If such a consumer exists, a decisive cutover would silently break it — the only reader of the legacy file after cutover would be a path nobody inventoried.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Confirm with the business owner / file custodian that no person or tool opens the .accdb directly outside the application. This is a one-question check and is the only way to close the dimension; it is carried as review ask 'out-of-band-database-consumers-unverifiable'.",
+      "blocks_decisive_cutover": false
+    },
+    {
+      "risk_id": "RISK-02",
+      "severity": "high",
+      "summary": "The migration source of record is ambiguous and may be a torn copy. The sole connection string hardcodes D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb — a triply-nested path that exists on no machine and does not match the repository layout (which has one 'Flat Design' level). So the committed .accdb has no code path that opens it, and the file the application actually reads at runtime is a different artifact that diverges from first use, with no reconciliation or deployment-copy step anywhere in the source. The committed copy is additionally suspect: its Access lock file (studentDB.laccdb, payload 'SIDDHARTH-WINDO' + 'Admin') is committed alongside it, which Access only leaves behind when the database was captured while still open or not cleanly closed.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Before any data migration or replay, establish WHICH .accdb is the authoritative dataset, then compact-and-repair it and take a row count to confirm it is not a torn copy. Do not treat the repository copy as the source of record by default.",
+      "blocks_decisive_cutover": true
+    },
+    {
+      "risk_id": "RISK-03",
+      "severity": "high",
+      "summary": "No target DDL can be generated yet, because the legacy schema's types, nullability and key constraints are unresolved. Column names and on-disk order were recovered from the ACE catalog, but the type bytes, lengths, NULL-ability and Required/AllowZeroLength/ValidationRule settings were not resolved by text-oriented tooling, and the two upstream passes disagree: one reports a single-column PrimaryKey index on RollNo with MobNo/AltMobNo as LONG INTEGER and FatherName as MEMO, while the structural pass reports no primary key or index established at all and all types unknown. The application is no guide — OptionStrict is Off and every value is bound via AddWithValue from a string control, so even DOB and YOA may be stored as text.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Open the .accdb through an Access/ACE engine or ODBC and query the catalog for declared types, lengths, nullability and indexes before generating any target schema. Settle RollNo uniqueness specifically: it is the de-facto key used by every single-row SELECT, UPDATE and DELETE with no duplicate check anywhere in the insert path, so if duplicates exist, de-duplication must precede migration.",
+      "blocks_decisive_cutover": true
+    },
+    {
+      "risk_id": "RISK-04",
+      "severity": "medium",
+      "summary": "The database file retains a superseded column layout. A second 'students' table-definition record carries ClassN and Sec in the positions where the live definition carries Course and YOA, and retired column name tokens (SName, Class, ClassN, Sec, Session, Field1) remain readable in the file. The application references only Course and YOA, so these are dead residue from an earlier schema revision — but a migration that reads the file's catalog generically rather than the live definition could pick up the wrong shape, and it is unconfirmed whether any data rows still carry the old layout.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Pin the migration to the ten live columns inventoried in the database-schema-summary, and confirm no rows carry the ClassN/Sec shape before replay. One upstream pass explicitly hedged this finding as inferred from binary name-map tokens rather than readable DDL, so a reviewer with Access tooling can settle it cheaply.",
+      "blocks_decisive_cutover": false
+    },
+    {
+      "risk_id": "RISK-05",
+      "severity": "medium",
+      "summary": "Column name casing differs between the schema and every call site: the database declares PascalCase (RollNo, FName, FatherName, AltMobNo) while all SQL and all reader lookups use lowercase (rollno, fname, fathername, altmobno). Access/Jet is case-insensitive so this is harmless today, but it breaks on a case-sensitive target such as PostgreSQL, and it breaks specifically in the places resolved at runtime rather than compile time — stReader(\"fname\") and DataGridView Cells(\"rollno\") — which will fail at runtime, not at build.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Decide the target casing convention once, deliberately, and apply it to both the generated schema and the regenerated access code.",
+      "blocks_decisive_cutover": false
+    },
+    {
+      "risk_id": "RISK-06",
+      "severity": "high",
+      "summary": "There is no behavioural or data baseline to verify a cutover against, and no history to reconstruct one from. The students table carries no audit, soft-delete or provenance column — no created/modified timestamp, no user stamp, no row version — and the application has no authentication or user concept, so no change to any student record can be attributed or replayed. DELETE is physical and immediate. Row count was never measured and ACE records no row-level DML timestamp.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Establish a data baseline (row count plus a full extract) from the confirmed source of record before cutover, and verify the regenerated target by replaying the recorded CRUD behaviour against that extract. Do not expect the legacy store to supply any change history.",
+      "blocks_decisive_cutover": false
+    },
+    {
+      "risk_id": "RISK-07",
+      "severity": "high",
+      "summary": "The store holds unprotected personal data in public source control, which is a data-exposure finding rather than a decomposition blocker but bears directly on how the legacy file is handled during migration. The students table carries FName, LName, FatherName, MobNo, AltMobNo, DOB and Gender; the .accdb has no database password and is unencrypted; the application has no authentication, so every operator has unrestricted CRUD over all records; and the file is committed to a public GitHub repository where Git history retains it even if deleted from HEAD.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "mitigation": "Treat every copy of the .accdb as exposed. Handle the migration extract as personal data, and escalate the public-repository exposure through the engagement's data-protection route — it is already independently recorded by upstream Discovery passes and is not resolvable by any decomposition choice.",
+      "blocks_decisive_cutover": false
+    }
+  ],
+  "open_questions": [
+    "DEGENERATE CLUSTER, NOT ENTANGLEMENT — read this before consuming shared_database_clusters. The array has one entry because the application does have a persistent store, not because that store is shared. participating_apps and write_owners each have exactly one member. Any downstream consumer that treats a non-empty shared_database_clusters array as evidence of cross-application coupling, or that derives a co-wave constraint from it, will produce a false positive. The correct reading is: one application, one store, sole writer already established, zero co-wave constraints imposed or received.",
+    "WAVE ID IS A SENTINEL, NOT A WAVE. wave_id is 'unassigned' because this is a Discovery-line pass that runs before Rationalization assigns waves; no wave-scoped context, no staged rationalization/wave-{wave_id}/ artifact and no portfolio shared-db-cluster-map were supplied. The schema requires a non-empty wave_id, so an explicit sentinel was used rather than a fabricated wave number. Re-anchor this artifact to a real wave id when the application is waved.",
+    "GOVERNING-PROFILE DISCREPANCY (recorded as a finding, per the governing-profile declaration; this pass does NOT adopt an alternative profile and does not restate one as fact). The authoritative governing client profile for this task is 'faa'. Nothing in this application's source supports that scope: it is a single-developer VB.NET WinForms student-records tool under a GPL licence with a public GitHub origin, a one-commit history and an author-credited project report, containing no aviation, NAS, air-traffic, certification or FAA-adjacent artifact. Three prior Discovery passes (Pass 0 catalog, structural analysis, data-flow trace) raised the same mismatch independently. No FAA-profile shared-database or decomposition policy was applied here, and upstream analysis records that the profile's own legacy-technology mapping defines no modernization target for a VB.NET WinForms + MS Access desktop stack. The engagement owner should settle the application-to-profile assignment before any FAA-specific gating consumes this artifact.",
+    "NO LIVE ENGINE WAS AVAILABLE. Every statement about the .accdb's internals comes from reading the file as bytes, never from opening it through a database engine, so no runtime catalog query corroborates the decode. This is the root cause of RISK-03 and RISK-04 and is the single highest-value gap to close before target DDL is generated.",
+    "UPSTREAM ARTIFACTS CONFLICT ON DETAILS, AND THE CONFLICTS ARE NOT SILENTLY RESOLVED HERE. The two db-archaeology artifacts disagree on the logical schema name ('studentDB' vs '(default)'), file size (0.000748 vs 0.000803 GB), whether a PrimaryKey index on RollNo is established, SQL-injection severity (medium vs critical) and how many statements are unparameterized (one isolated regression vs six of sixteen). The two data-flow traces disagree on whether Access column types are known (one asserts concrete types, the other states they are unknown and must not be guessed) and on the dashboard aggregate count (ten vs nine). None of these conflicts changes the sharing verdict — all of them are internal to a single-app, single-table store — but a reviewer should not treat any one of them as settled.",
+    "NO CO-WAVE-CONSTRAINTS ARTIFACT WAS EMITTED. The skill's step-3 contract names co-wave-constraints.json, but this dispatch declared only shared-db-analysis.json and decomposition-strategy.json as output schemas and supplied no schema for the co-wave artifact. Emitting a file against an unseen schema would risk a validation failure, so it was deliberately omitted. Note that the substantive result would be the meaningful empty one: this target has no shared-DB entanglement and therefore constrains nobody.",
+    "SOURCE-TREE CONTAMINATION. The repository working tree contains Discovery-harness scaffolding that is not part of the application: references/, assets/, scripts/, fixtures/ and schemas/. Two items are actively misleading for this pass specifically and were disregarded as evidence — scripts/classify_procs_template.sql is a generic Oracle/SQL Server/DB2 stored-procedure inventory template, and fixtures/shared-db-analysis.json is this skill's own QA fixture describing a fictitious CORE_ODS cluster with CUSTOMER/ADDRESS/BILLING_ACCOUNT tables shared across 'billing-portal' and 'crm-lite'. Neither describes this application. Their presence inside a customer source tree is exactly how a later pass could 'detect' a SQL Server shared-DB cluster in a VB.NET/Access desktop application; upstream passes flagged the same contamination and it is worth fixing at the staging layer."
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "out-of-band-database-consumers-unverifiable",
+      "action": "context",
+      "title": "Does anyone open the student database file directly, outside the application?",
+      "why": "It is the only way another system could be using this data without us knowing, and if one exists, replacing the application would silently break it.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "No other application shares this database. The application owns one Microsoft Access file containing a single table of student records, and it is the only writer. However, because the data lives in a plain file rather than on a database server, the file keeps no record of who opens it — so a person or tool opening it directly in Microsoft Access would leave no trace we could find by examining the software. We need the business owner to confirm no such use exists.",
+      "reasoning": "Four independent checks converge on a single-application store: the solution builds exactly one executable with no project references; all fifteen database statements in the code address one unqualified table name, with no cross-database or linked-server reference of any kind; the database file itself contains one user table and no procedures, views, saved queries, triggers or relationships through which another consumer could be coupled; and the application has no network, API, queue, scheduled-job or file-exchange surface at all. The one signal that pulls the other way is not evidence of a consumer but the absence of a means to detect one: a file-based database has no server-side audit trail. A committed lock file naming a single workstation confirms only that the developer's own Access session once had the file open.",
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "The code-side and file-side evidence for a single-application store is complete and mutually corroborating, and three upstream Discovery passes reached the same conclusion independently. Confidence is held below 0.95 only because the file-based design makes a direct-access consumer undetectable in principle, which no amount of code analysis can close."
+      },
+      "evidence_refs": [
+        {
+          "name": "Sole connection string, hardcoded in source",
+          "detail": "One connection string exists in the entire repository: Provider=Microsoft.ACE.OLEDB.12.0 against a single .accdb file path. App.config declares no connectionStrings section and Settings.settings is empty, so zero configuration files bind the database.",
+          "artifact_path": "Flat Design/Module1.vb"
+        },
+        {
+          "name": "Complete SQL call-site inventory",
+          "detail": "All 15 inline statements across four forms address the bare table name 'students' — 12 SELECT, 1 INSERT, 1 UPDATE, 1 DELETE. No 3-part or 4-part name, no OPENQUERY/OPENROWSET, no linked server, no synonym, no Access cross-file IN clause.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Database catalog read from the file itself",
+          "detail": "One user table; zero stored procedures, views, saved queries, data macros, VBA modules and user relationships. Both db-archaeology passes record shared_with_other_apps as empty.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/db-archaeology.json"
+        },
+        {
+          "name": "No integration surface",
+          "detail": "Zero HTTP endpoints, APIs, message queues, scheduled jobs, batch entry points, file import/export paths, SMTP routes or UNC paths. The only outbound network call opens a GitHub PDF URL in a browser.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Audit-trail blind spot, recorded upstream",
+          "detail": "The db-archaeology cross-app-sharing finding states explicitly that a file-share database has no engine-side audit trail, so an out-of-band consumer opening the file directly would leave no trace the walk could find.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/db-archaeology.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "governing-profile-scope-mismatch",
+      "action": "context",
+      "title": "Confirm this student-records application really belongs in the FAA programme scope.",
+      "why": "If the application was assigned to this programme in error, every FAA-specific gate applied to it — safety tiering, airspace impact, compliance mapping — is being spent on the wrong system.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The governing profile for this analysis is the FAA programme, and that declaration is authoritative for how this pass was run. But nothing in the application supports it: it is a small single-developer Windows desktop tool for managing college student records — names, parent name, contact numbers, course, year of admission, date of birth — published under an open-source licence on a public code-sharing site. There is no aviation, air-traffic, certification or safety content of any kind. This looks like a scope or assignment error and should be settled by the engagement owner.",
+      "reasoning": "The mismatch was reached by comparing the declared profile against the application's own README, project report, source tree and database contents, all of which describe student-record administration for BCA/MCA/IIMCA course programmes. Three prior Discovery passes raised the same discrepancy independently, and upstream analysis also records that the FAA profile's legacy-technology mapping covers only ASP.NET/C#/WCF and defines no modernization target for this application's VB.NET WinForms plus Microsoft Access stack — so even if the application were in scope, no profile-driven decomposition policy currently applies to it. This pass did not adopt any alternative profile and applied no FAA-specific shared-database policy.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The domain evidence is unambiguous and consistent across the source, the README, the project report and the data itself, and the finding is independently corroborated by three earlier passes. It remains a scope question only the engagement owner can answer, not a technical finding this pass can close."
+      },
+      "evidence_refs": [
+        {
+          "name": "Application domain per the catalog pass",
+          "detail": "Catalogued as a standalone WinForms tool for managing student academic records, described by its own author as a single-developer academic/portfolio project with no network, web or batch component.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "Independent mismatch findings upstream",
+          "detail": "The structural-analysis open questions and the data-flow trace both record the governing-profile discrepancy, as does the catalog pass — three independent passes, same conclusion.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Data content",
+          "detail": "The single table holds ten student-record columns for BCA/MCA/IIMCA course programmes with admission years 2019-2023. No aviation-domain field exists.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "legacy-store-source-of-record-unverified",
+      "action": "resolve",
+      "title": "Identify which copy of the student database is the real one before any data is migrated.",
+      "why": "Two different copies of the database exist and neither is confirmed authoritative, so a migration run today could faithfully carry across the wrong or a damaged dataset.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The application's database location is hard-coded to a folder path on the original developer's own machine, and that path does not match where the database file actually sits in the delivered code. So the copy we have has no code that opens it, and the copy the running application uses is somewhere we have not seen. The delivered copy is also questionable in itself: a Microsoft Access lock file was committed alongside it, which only happens when the database is copied while still open — meaning it may be an incomplete snapshot. Before any data is moved, someone needs to confirm which copy is authoritative and verify it is intact.",
+      "reasoning": "The connection string points at a triply-nested folder under a D: drive on a workstation; the repository contains a single level of that folder name. The two cannot both be right, and no deployment step, copy script or reconciliation job exists anywhere in the source to bridge them, so the runtime file and the version-controlled file diverge from first use. Separately, Microsoft Access deletes its lock file on clean closure of the last connection, so the presence of a committed lock file naming a workstation and the default database account is positive evidence that the file was captured mid-session. Both upstream database passes record these facts, and one recommends a compact-and-repair plus row count before the file is trusted as a migration source.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The path mismatch and the committed lock file are both directly observable in the delivered artifacts and are independently recorded by two upstream passes. What is genuinely unknown is which copy the business actually uses, and that requires the owner, not more analysis."
+      },
+      "evidence_refs": [
+        {
+          "name": "Hardcoded path that resolves nowhere",
+          "detail": "The connection string targets a three-deep nested folder on the author's D: drive, while the database ships one level deep in the repository; a clean checkout cannot connect without editing the source, which is exactly what the README instructs.",
+          "artifact_path": "Flat Design/Module1.vb"
+        },
+        {
+          "name": "Committed Access lock file",
+          "detail": "A 64-byte lock file naming one workstation and the default database account is committed next to the database, evidencing capture while open. Access removes this file on clean close.",
+          "artifact_path": "Flat Design/studentDB.laccdb"
+        },
+        {
+          "name": "Divergent-copies finding upstream",
+          "detail": "The data-flow trace records that the runtime file and the version-controlled file are distinct artifacts diverging from first use, with no reconciliation, sync or deployment-copy step anywhere in the source.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/data-flow-trace.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "access-schema-metadata-unresolved",
+      "action": "resolve",
+      "title": "Open the Access database with a real database tool to settle its column types and record key.",
+      "why": "A new database design cannot be generated from guessed column types, and if student roll numbers turn out not to be unique, a migration built on that assumption will lose or merge records.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "We know the ten column names in the student table, but not their declared data types, whether they can be left empty, or whether the roll-number column is actually enforced as unique. The database file was only ever read as raw bytes, never opened through a database engine, and the application itself gives no clue because it passes every value through as text. The two earlier passes that examined the file disagree on whether a record key exists at all. This must be settled with Access or an equivalent tool before any replacement database schema is designed.",
+      "reasoning": "Column names and their on-disk order were recovered from the file's internal catalog, but the type bytes, lengths, nullability and validation settings live in binary structures that text-oriented tooling did not resolve, and every pass that touched the file says so explicitly rather than guessing. The application cannot substitute for the schema: strict typing is disabled and every value is bound from a text control, so even date of birth and year of admission may be stored as text. The specific decision-critical gap is the roll number — it is used as the unique row selector by every single-row read, update and delete, yet no duplicate check exists in the insert path, so uniqueness is assumed by the code and may be enforced nowhere. One pass reports a single-column primary key on it; another reports no key established.",
+      "confidence": {
+        "level": "high",
+        "score": 0.88,
+        "rationale": "The gap is explicitly and consistently declared by every upstream pass that read the file, and the upstream disagreement about the primary key makes the uncertainty concrete rather than theoretical. The remedy is unambiguous and cheap: one catalog query against a live engine."
+      },
+      "evidence_refs": [
+        {
+          "name": "Types declared unknown, not guessed",
+          "detail": "The database-schema-summary states that column data types, nullability and index definitions sit in binary structures the decode did not resolve, and are reported as unknown rather than inferred.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Conflicting primary-key findings",
+          "detail": "One db-archaeology pass reports a single-column PrimaryKey index on the roll number with the column marked required; the structural pass reports that no primary key or index was established and that this should be treated as not-established rather than absent.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/db-archaeology.json"
+        },
+        {
+          "name": "Roll number used as a key with no enforcement in code",
+          "detail": "Every single-row select, update and delete selects by roll number, and the insert path performs no duplicate check — so uniqueness is assumed by the application and confirmed nowhere.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Superseded column layout still in the file",
+          "detail": "A second table definition inside the file carries ClassN and Sec where the live definition carries Course and YOA, so a generic catalog read could pick up the wrong shape.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "wave-assignment-absent",
+      "action": "context",
+      "title": "This analysis is not yet tied to a migration wave.",
+      "why": "Anyone reading the artifact later needs to know the wave field is a placeholder, not a wave number, so it is not mistaken for a scheduling decision.",
+      "subject": {
+        "kind": "artifact",
+        "id": "shared-db-analysis.json",
+        "label": "Shared Database Analysis — Student Management System (VB.NET)"
+      },
+      "assessment": "This analysis ran as part of Discovery, which happens before applications are grouped into migration waves. No wave had been assigned, and no portfolio-wide map of shared databases existed to compare against. The artifact's wave field therefore carries the explicit placeholder 'unassigned' rather than a made-up wave number, and should be re-anchored once the application is actually waved. There is no practical consequence for scheduling: this application's database constrains no other application's timing.",
+      "reasoning": "The required wave field has a non-empty constraint, so some value had to be written. No wave identifier was present in the dispatch context, no wave-scoped artifacts were staged, and no shared-database cluster map was supplied — all consistent with a pre-Rationalization Discovery pass. A sentinel was chosen over a plausible-looking default because a fabricated wave number would be indistinguishable from a real scheduling decision downstream. Separately worth recording: the dispatch named the structural analysis and database schema summary as required inputs but staged neither, so both were read from the prior passes' own outputs.",
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "Directly observable from the dispatch context, which contained no wave identifier and no staged wave-scoped artifacts."
+      },
+      "evidence_refs": [
+        {
+          "name": "Dispatch context contains no wave scope",
+          "detail": "The dispatch declares only output schemas and two required inputs; it carries no wave identifier, no target-plan entry and no shared-database cluster map reference.",
+          "artifact_path": "input-artifacts/discovery-shared-database-analysis/_dispatch-context-discovery-shared-database-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "decomposition-strategy-recorded",
+      "action": "aware",
+      "title": "For the record: this application's database is not shared with any other system.",
+      "why": "It is the headline result of the analysis and it removes this application from the shared-database scheduling risk that normally drives wave composition.",
+      "subject": {
+        "kind": "artifact",
+        "id": "shared-db-analysis.json",
+        "label": "Shared Database Analysis — Student Management System (VB.NET)"
+      },
+      "assessment": "The analysis found one database containing one table of student records, used by one application which is its only writer. Nothing is shared with any other system: no shared tables, no cross-system database links, no reports, feeds or scheduled jobs reaching into the data, and no second application anywhere in the delivered code. The practical consequence is positive — this application can be scheduled independently of every other application, needs no temporary bridging layer over a shared database, and needs no negotiation over who owns which data. The approach recorded is a clean, dedicated database for the replacement system with a single scheduled switchover.",
+      "reasoning": "The conclusion rests on four mutually corroborating checks — the build manifests, the complete inventory of database statements in the code, the database file's own internal catalog, and the complete absence of any integration surface — and matches what three earlier Discovery passes found independently. The remaining questions are about the quality and location of the legacy data, not about who else uses it, and are raised separately above.",
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "Convergent evidence from four independent angles, consistent with three prior passes. Held short of certainty by the one residual gap that code analysis cannot close: a file-based database cannot prove nobody opened it directly."
+      },
+      "evidence_refs": [
+        {
+          "name": "Cluster inventory",
+          "detail": "One cluster entry with exactly one participating application and one write owner; coupling severity recorded as none.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/shared-db-analysis.json"
+        },
+        {
+          "name": "Single-project solution",
+          "detail": "The solution declares exactly one project producing one Windows executable, with no project references and no class library, service or second executable.",
+          "artifact_path": "Student Management System Siddharth Jain.sln"
+        }
+      ]
+    }
+  ]
+}
