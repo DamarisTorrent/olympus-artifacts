@@ -1,0 +1,164 @@
+{
+  "artifact": "dotnet-fingerprint.json",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "repo": "Student-Management-System-VB.Net",
+  "governing_profile_note": "This task's governing client profile is 'faa' per task declaration (profiles/faa/). profiles/ is not present in this repo checkout, so profile-specific risk-classification tier banding could not be read directly by this pass; banding below is deferred to the catalog entry's own open_questions, which already records a profile/application scope mismatch (a generic student-record desktop app under an FAA aviation-modernization profile). This skill does not restate the FAA-specific facts as application facts and defers to the prior catalog entry's finding on this discrepancy.",
+  "upstream_catalog_entry": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+  "projects": [
+    {
+      "project_path": "Flat Design/Student Management System Siddharth Jain.vbproj",
+      "project_style": "legacy-csproj",
+      "project_style_evidence": "Root element has no Sdk attribute: '<Project ToolsVersion=\"14.0\" DefaultTargets=\"Build\" xmlns=\"http://schemas.microsoft.com/developer/msbuild/2003\">' and item inclusion is explicit <Compile Include=.../> per file, not implicit globbing.",
+      "target_framework": "net48",
+      "target_framework_raw": "v4.8",
+      "language": "vbnet",
+      "output_type": "WinExe",
+      "assembly_name": "Student Management System",
+      "root_namespace": "Student_Management_System_Siddharth_Jain",
+      "startup_object": "Student_Management_System_Siddharth_Jain.My.MyApplication",
+      "citations": [
+        "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:2",
+        "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:8",
+        "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:9",
+        "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:14"
+      ]
+    }
+  ],
+  "solution": {
+    "file": "Student Management System Siddharth Jain.sln",
+    "format_version": "12.00",
+    "visual_studio_version": "17.5.33627.172",
+    "projects_referenced": 1,
+    "citation": "Student-Management-System-VB.Net:Student Management System Siddharth Jain.sln:6"
+  },
+  "nuget_dependency_inventory": {
+    "packages": [],
+    "note": "No NuGet packages consumed by this solution. No packages.config file exists anywhere in the repo and the .vbproj contains zero <PackageReference> elements. All ten <Reference Include=.../> entries (System, System.Data, System.Deployment, System.Drawing, System.Windows.Forms, System.Xml, System.Core, System.Xml.Linq, System.Data.DataSetExtensions, System.Net.Http) are .NET Framework GAC/framework assemblies, not NuGet packages.",
+    "citation": "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:76-85"
+  },
+  "archetype_classification": {
+    "result": "no-match-manual-review-required",
+    "catalog_enum_evaluated": ["web-app", "api-service", "scheduled-job", "batch-etl", "hybrid"],
+    "rationale": "Applying the methodology's decision rules in order: not web-app (no Microsoft.AspNetCore.App or System.Web reference, no Razor/.aspx/.ascx/.master files); not api-service (no ControllerBase/ApiController, no AspNetCore/WebApi.Core reference); not scheduled-job (no class derives from ServiceBase, no BackgroundService/IHostedService); not batch-etl (OutputType=WinExe not Exe, and the data movement is interactive single-row CRUD via a GUI, not an unattended bulk file-drop/SSIS/bulk-SqlClient pattern); not hybrid (zero of the above matched, let alone two). Per the methodology's explicit fallback instruction ('If none match... flag the app for manual archetype review — do not guess'), no enum value is emitted here. This independently confirms the upstream catalog entry's own 'Archetype taxonomy gap' open_question, which used an out-of-enum 'desktop' label for the same reason.",
+    "evidence": [
+      "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:8 (OutputType=WinExe)",
+      "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:13 (MyType=WindowsForms)",
+      "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:80 (Reference Include=System.Windows.Forms, no System.Web/AspNetCore reference present anywhere in the ItemGroup)",
+      "Student-Management-System-VB.Net:Flat Design/Form1.vb:3 (Public Class Form1 — WinForms code-behind, event-handler driven, not a controller or hosted service)"
+    ],
+    "recommendation": "Catalog taxonomy owner should add an explicit 'desktop' or 'thick-client' archetype value to the shared enum consumed by both catalog-application and this skill; until then this app cannot be force-fit without misrepresenting its runtime shape."
+  },
+  "hosting_model_findings": [
+    {
+      "finding_id": "dotnet-fingerprint.json:hosting:F-001",
+      "result": "no-match-manual-review-required",
+      "catalog_enum_evaluated": ["iis-aspnet", "iis-aspnet-core-module", "kestrel-selfhost", "windows-service", "worker-service", "console"],
+      "rationale": "No Program.cs/Startup.cs minimal-hosting pattern, no web.config (none exists in the repo at all, so no AspNetCoreModule* check is even possible), no class deriving from ServiceBase, no BackgroundService/IHostedService. The actual hosting model is a locally-launched Windows Forms desktop executable started via the VB 'My.Application' framework bootstrap (StartupObject = My.MyApplication, which in turn loads MainForm=Form1). This is a double-click/Explorer-launched GUI process on the end-user's own Windows machine — the closest value in the given enum, 'console', is also inaccurate because the app has a GUI message loop (Application.Run against a Form), not a console host.",
+      "citations": [
+        "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:9",
+        "Student-Management-System-VB.Net:Flat Design/My Project/Application.myapp:4"
+      ]
+    }
+  ],
+  "di_container_finding": {
+    "result": "none",
+    "rationale": "No ConfigureServices/builder.Services call sites (not an ASP.NET Core app), and a repo-wide search for ContainerBuilder, UnityContainer, StandardKernel, StructureMap.Container, and SimpleInjector instantiation across all five hand-written .vb files (Module1.vb, Form1.vb, InsertForm.vb, EditForm.vb, ViewForm.vb) returned zero matches. Forms are constructed directly with 'New InsertForm()' / 'New EditForm(rollNo)' / 'New ViewForm()' — plain object construction, no container.",
+    "citations": [
+      "Student-Management-System-VB.Net:Flat Design/Form1.vb:104",
+      "Student-Management-System-VB.Net:Flat Design/ViewForm.vb:65"
+    ]
+  },
+  "data_access_findings": [
+    {
+      "project_path": "Flat Design/Student Management System Siddharth Jain.vbproj",
+      "style": "ado-net",
+      "rationale": "Direct System.Data.OleDb usage (OleDbConnection, OleDbCommand, OleDbDataAdapter, OleDbDataReader) against a single shared Module-level connection; no ORM (no EF Core/EF6/EF-classic DbContext or .edmx, no NHibernate .hbm.xml, no Dapper, no .dbml LINQ-to-SQL mapping) found anywhere in the solution.",
+      "backing_store": "Microsoft Access (.accdb) via Microsoft.ACE.OLEDB.12.0 provider",
+      "citations": [
+        "Student-Management-System-VB.Net:Flat Design/Module1.vb:1",
+        "Student-Management-System-VB.Net:Flat Design/Module1.vb:4",
+        "Student-Management-System-VB.Net:Flat Design/Module1.vb:7",
+        "Student-Management-System-VB.Net:Flat Design/Form1.vb:25",
+        "Student-Management-System-VB.Net:Flat Design/InsertForm.vb:11",
+        "Student-Management-System-VB.Net:Flat Design/EditForm.vb:16",
+        "Student-Management-System-VB.Net:Flat Design/ViewForm.vb:39"
+      ]
+    }
+  ],
+  "config_and_secrets_surface": {
+    "files_scanned": [
+      "Flat Design/App.config"
+    ],
+    "connection_strings_in_config_files": [],
+    "connection_strings_in_source_code": [
+      {
+        "location": "Student-Management-System-VB.Net:Flat Design/Module1.vb:7",
+        "value_redacted": "Provider=Microsoft.ACE.OLEDB.12.0; data source=<REDACTED-ABSOLUTE-PATH>; Persist Security Info=False;",
+        "note": "No credentials are embedded (Access/Jet file-based auth has none), but the connection string is hardcoded directly in VB source rather than externalized to App.config's <connectionStrings> section, and the data source is an absolute developer-machine path ('D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb'). This is a portability/deployment finding, not a credential-leak finding: the app will fail to connect on any machine other than the original author's, including the CI/discovery environment used for this pass."
+      }
+    ],
+    "dotnet_user_secrets_references": [],
+    "app_config_summary": "App.config contains only a <startup><supportedRuntime .../></startup> element pinning the CLR to v4.0/.NET Framework 4.8; it defines no <connectionStrings>, <appSettings>, or <system.webServer> sections. This is expected for a WinForms app with a hardcoded in-code connection string, but it also means the standard 'four places connection strings hide' check (web.config / app.config / appsettings.json / user-secrets) under-reports for this app — the actual connection string is in a fifth, non-standard location (a VB code module), which this pass additionally scanned per the data-access methodology step."
+  },
+  "findings": [
+    {
+      "finding_id": "dotnet-fingerprint.json:archetype:F-002",
+      "severity_hint": "informational",
+      "summary": "Application archetype does not fit any value in the catalog enum (web-app | batch-etl | api-service | scheduled-job | hybrid); confirms and cross-references the upstream catalog entry's own open_question on the same taxonomy gap.",
+      "citation": "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:8"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:hosting:F-003",
+      "severity_hint": "informational",
+      "summary": "Hosting-model enum (iis-aspnet | iis-aspnet-core-module | kestrel-selfhost | windows-service | worker-service | console) has no value for a locally double-click-launched WinForms GUI process; closest-available value 'console' is misleading because the app runs a GUI message loop.",
+      "citation": "Student-Management-System-VB.Net:Flat Design/My Project/Application.myapp:4"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:security:F-004",
+      "severity_hint": "security-high",
+      "summary": "SQL-injection vector in ViewForm's search feature: LoadSData builds the WHERE clause by direct string concatenation of unsanitized user input (txtSearch.Text) instead of using a parameterized OleDbCommand/OleDbDataAdapter.SelectCommand.Parameters, unlike every other data-access call site in this solution (InsertForm/EditForm/the delete path all use .Parameters.AddWithValue correctly).",
+      "citation": "Student-Management-System-VB.Net:Flat Design/ViewForm.vb:50",
+      "related_citation": "Student-Management-System-VB.Net:Flat Design/ViewForm.vb:105"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:portability:F-005",
+      "severity_hint": "medium",
+      "summary": "Hardcoded absolute developer-machine file path for the Access database connection string, embedded in source rather than externalized to App.config; the app cannot connect on any other machine without a source-code edit and rebuild.",
+      "citation": "Student-Management-System-VB.Net:Flat Design/Module1.vb:7"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:build:F-006",
+      "severity_hint": "medium",
+      "summary": "The .vbproj references a ClickOnce signing key file ('Student Management System Siddharth Jain_TemporaryKey.pfx' via ManifestKeyFile, with SignManifests=true and GenerateManifests=true) that does not exist anywhere in the repository tree. A clean checkout cannot reproduce a signed-manifest build without the missing key.",
+      "citation": "Student-Management-System-VB.Net:Flat Design/Student Management System Siddharth Jain.vbproj:67"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:hygiene:F-007",
+      "severity_hint": "low",
+      "summary": "A Microsoft Access lock file (studentDB.laccdb), which is a transient runtime artifact normally excluded from source control, is committed alongside the .accdb database file.",
+      "citation": "Student-Management-System-VB.Net:Flat Design/studentDB.laccdb:1"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:repo-hygiene:F-008",
+      "severity_hint": "low",
+      "summary": "fixtures/default.json, found inside this application's own source tree at the repo root, is an unrelated QA fixture payload for the identity-landscape-analyzer Discovery skill (a synthetic three-app federation scenario with no relation to this student-management app). Disregarded as a source of facts about this application; corroborates the same contamination already flagged in the upstream catalog entry's open_questions. The repo root also contains several other Discovery-skill reference/asset/script files (references/, assets/, scripts/) unrelated to the VB.NET application itself (which lives entirely under 'Flat Design/').",
+      "citation": "Student-Management-System-VB.Net:fixtures/default.json:2"
+    },
+    {
+      "finding_id": "dotnet-fingerprint.json:profile:F-009",
+      "severity_hint": "informational",
+      "summary": "Governing client profile for this Discovery task is declared as 'faa', but no profiles/ directory is present in this repo checkout for this pass to read risk-classification or technology-mapping YAML from directly. This pass defers to the upstream catalog entry's own open_question, which already records that the application has no detectable FAA/NAS/aviation relevance and that the FAA profile's dotnet modernization-target mapping does not cover a VB.NET WinForms + MS Access desktop stack. Not restated here as a new fact — flagged only as a cross-check gap in this pass's own inputs.",
+      "citation": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json:open_questions:0"
+    }
+  ],
+  "quality_rule_self_check": {
+    "every_project_has_fingerprint_record": true,
+    "every_fingerprint_record_cites_source_line": true,
+    "archetype_from_catalog_enum_only": "not-applicable: no enum value matched, manual review flagged per methodology fallback instead of forcing a value",
+    "nuget_packages_record_consumer_project_id_version_source": "not-applicable: zero NuGet packages found",
+    "hosting_finding_cites_config_or_class_line": true,
+    "data_access_finding_per_project_not_per_solution": true,
+    "hardcoded_connection_strings_surfaced_with_redacted_values": true,
+    "every_finding_has_artifact_section_id_and_source_citation": true
+  }
+}
