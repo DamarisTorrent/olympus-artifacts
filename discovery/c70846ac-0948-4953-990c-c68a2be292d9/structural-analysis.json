@@ -1,0 +1,1207 @@
+{
+  "$schema": "olympus:artifact:structural-analysis:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "source_root": "Flat Design/",
+  "discovery_pass": "Discovery Pass 1 — Structural Analysis (legacy-architecture-mapper)",
+  "methodology_note": "Full-tree walk of a single VB.NET WinForms solution; no fan-out. The skill's fan-out rule names this an explicit do-not-fan-out case on three independent counts: 1 top-level build module (threshold >8), 2,787 LOC (threshold >50 KLOC), 1 database table (threshold >20). Every one of the 13 .vb files, the .vbproj, the .sln, and all four config/manifest files was read in full rather than sampled, so no claim here rests on a partial read. LOC figures were recomputed independently and reconcile exactly with the Pass 0 catalog (2,787 total = 461 hand-written + 2,326 Designer-generated), which is corroboration, not a copy. The database schema was NOT taken from the catalog's inference: the catalog explicitly asked Pass 1 to confirm the table count against the real .accdb, and this pass did so by decoding the Access ACE table-definition records out of the binary studentDB.accdb directly (UTF-16LE object/TDEF regions), recovering the actual table name, the actual 10 column names and their on-disk casing. That decode confirms the catalog's inferred count of 1 table and adds facts the SQL text could not give. WHAT THE WALK COULD NOT REACH: (a) Access column data types, NULL-ability and primary-key/index definitions are held in binary TDEF type bytes and index structures this text-oriented decode did not resolve — they are reported as unknown, never guessed; (b) row counts were not extracted, so no table carries a row_count_estimate; (c) 'Siddharth Jain Project Report.pdf' (868 KB) and the three PNG screenshots were not parsed, so any design intent documented only there is absent; (d) the .accdb was read as a file and never opened through a database engine, so no runtime catalog query corroborates the decode. SCOPE: 26 files across four untracked directories (assets/, references/, scripts/, fixtures/) are Olympus skill scaffolding injected into the working tree, confirmed non-application by `git status` (untracked) against 35 tracked application files; they are excluded from every metric below and recorded in duplication_map. This document covers only the legacy-architecture-mapper contract (structural map, call graph, database-schema-summary and interface-inventory sections); the sibling Discovery artifacts named in the dispatch contract (language-detection, db-archaeology, data-flow-trace, identity-landscape, sqlserver-object-inventory, tiff-corpus-assessment) are produced by their own separately-dispatched skills and are not emitted here — see open_questions.",
+  "summary_metrics": {
+    "build_projects": 1,
+    "solutions": 1,
+    "deployment_surfaces": 1,
+    "logical_modules": 6,
+    "vb_source_files": 13,
+    "tracked_application_files": 35,
+    "total_loc_vb": 2787,
+    "handwritten_loc_vb": 461,
+    "designer_generated_loc_vb": 2326,
+    "winforms_forms": 4,
+    "shared_vb_modules": 1,
+    "ui_controls_total": 137,
+    "ui_controls_in_largest_form": 77,
+    "largest_file_loc": 1211,
+    "accessible_name_annotations": 0,
+    "database_files": 1,
+    "database_tables": 1,
+    "database_columns": 10,
+    "stored_procedures": 0,
+    "triggers": 0,
+    "views": 0,
+    "database_links": 0,
+    "inline_sql_statements": 16,
+    "modules_containing_inline_sql": 4,
+    "unparameterized_sql_statements": 6,
+    "sql_statements_concatenating_user_input": 1,
+    "http_endpoints": 0,
+    "scheduled_jobs": 0,
+    "message_queues": 0,
+    "outbound_integrations": 1,
+    "human_facing_interfaces": 4,
+    "authentication_mechanisms": 0,
+    "circular_module_dependency_cycles": 3,
+    "shared_global_mutable_state_objects": 1,
+    "hardcoded_absolute_filesystem_paths": 2,
+    "config_files": 4,
+    "config_files_binding_the_database": 0,
+    "ci_cd_pipelines": 0,
+    "git_commits_in_history": 1,
+    "untracked_non_application_directories": 4,
+    "untracked_non_application_files": 26
+  },
+  "primary_technology": {
+    "languages": [
+      {
+        "name": "Visual Basic .NET",
+        "loc": 2787,
+        "percent_of_source": 100,
+        "note": "Single-language tree. 83% of those lines (2,326) are WinForms Designer-generated layout, so hand-written logic is only 461 lines.",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:183"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "Windows Forms",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:13",
+        "note": "MyType=WindowsForms; OutputType=WinExe; MySubMain=true with MainForm=Form1."
+      },
+      {
+        "name": "ADO.NET / System.Data.OleDb",
+        "evidence": "Flat Design/Module1.vb:1",
+        "note": "Raw OleDbConnection/OleDbCommand/OleDbDataAdapter. No ORM, no Entity Framework, no DataSet designer."
+      }
+    ],
+    "runtimes": [
+      {
+        "name": ".NET Framework 4.8",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:14",
+        "note": "Windows-only. Corroborated by App.config supportedRuntime at Flat Design/App.config:4."
+      },
+      {
+        "name": "Microsoft ACE OLEDB 12.0 provider",
+        "evidence": "Flat Design/Module1.vb:7",
+        "note": "An out-of-band runtime prerequisite, not a NuGet/assembly reference: the Access Database Engine redistributable must be installed on every host. Release builds target x86 (vbproj:35), so the 32-bit redistributable is required."
+      }
+    ],
+    "build_tools": [
+      {
+        "name": "MSBuild (legacy non-SDK VB project format)",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:2",
+        "note": "ToolsVersion 14.0, Microsoft.VisualBasic.targets. No PackageReference, no packages.config — all 10 references are GAC assembly references."
+      },
+      {
+        "name": "Visual Studio 2022 solution",
+        "evidence": "Student Management System Siddharth Jain.sln:3"
+      },
+      {
+        "name": "ClickOnce publishing / Bootstrapper",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:18",
+        "note": "BootstrapperEnabled with PublishUrl pinned to the author's local D:\\PROGRAMING path; manifest signing is enabled against a .pfx that is gitignored and absent from the tree."
+      }
+    ],
+    "ci_cd": []
+  },
+  "architecture": {
+    "style": "single-assembly thick-client forms-over-data monolith, with no layering inside the assembly",
+    "major_components": [
+      {
+        "name": "Form1 (dashboard shell / MDI-style host)",
+        "kind": "ui",
+        "responsibility": "Application entry form. Runs ten COUNT(*) aggregate queries to populate gender, course and academic-year tiles, and hosts the three child forms inside Panel5 by reparenting them (TopLevel=False). Acts as both the navigation shell and a reporting surface."
+      },
+      {
+        "name": "InsertForm",
+        "kind": "ui",
+        "responsibility": "Data-entry form for a new student record; issues the single parameterized INSERT against students."
+      },
+      {
+        "name": "EditForm",
+        "kind": "ui",
+        "responsibility": "Loads one student by roll number and issues the parameterized UPDATE. Constructed with the roll number as a constructor argument."
+      },
+      {
+        "name": "ViewForm",
+        "kind": "ui",
+        "responsibility": "Grid listing of all students with free-text search, plus the DELETE path and the launch point for EditForm."
+      },
+      {
+        "name": "Module1 (shared connection holder)",
+        "kind": "data-access",
+        "responsibility": "The entire data-access layer: one Public shared OleDbConnection and a connectDB() that lazily opens it against a hardcoded absolute path. Holds no queries — every SQL statement lives in a form."
+      },
+      {
+        "name": "My Project (generated application infrastructure)",
+        "kind": "shared-library",
+        "responsibility": "Designer-generated WinForms application plumbing: MyApplication startup/single-instance wiring, assembly metadata, resource and settings accessors. No hand-written logic beyond AssemblyInfo attributes."
+      }
+    ]
+  },
+  "deployment_surfaces": [
+    {
+      "surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "modules": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form",
+        "module1-db-connection",
+        "my-project-infrastructure"
+      ]
+    }
+  ],
+  "modules": [
+    {
+      "id": "form1-dashboard",
+      "path": "Flat Design/Form1.vb",
+      "role": "Startup form, navigation shell and statistics dashboard; hosts the other three forms inside Panel5 by reparenting them.",
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms",
+      "runtime": ".NET Framework 4.8",
+      "loc": 1371,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:8"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [
+        {
+          "module": "module1-db-connection",
+          "mechanism": "calls Module1.connectDB() and uses the global dbcon",
+          "evidence": "Flat Design/Form1.vb:16"
+        },
+        {
+          "module": "insert-form",
+          "mechanism": "instantiates New InsertForm() and reparents it into Panel5",
+          "evidence": "Flat Design/Form1.vb:104"
+        },
+        {
+          "module": "view-form",
+          "mechanism": "instantiates New ViewForm(), reparents it, then calls RefreshData() through a DirectCast",
+          "evidence": "Flat Design/Form1.vb:141"
+        }
+      ],
+      "external_dependencies": [
+        "System.Windows.Forms",
+        "System.Data.OleDb",
+        "System.Diagnostics (Process.Start to launch an external URL)"
+      ],
+      "db_access": {
+        "style": "inline SQL in the form, executed on the shared global connection",
+        "database": "studentDB.accdb (Microsoft Access)",
+        "tables": [
+          "students"
+        ],
+        "operations": [
+          "SELECT COUNT(*) x10"
+        ],
+        "parameterized": false,
+        "evidence": "Flat Design/Form1.vb:24"
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 1,
+        "ui_controls": 77,
+        "event_handlers": 4
+      },
+      "coupling_signals": [
+        {
+          "signal": "god-form",
+          "detail": "Form1.Designer.vb is 1,211 lines and declares 77 controls (21 Labels, 20 Panels, 17 PictureBoxes) — 43% of the entire codebase sits in one generated layout file, and the dashboard, the navigation chrome and the child-form host are all the same class.",
+          "evidence": "Flat Design/Form1.Designer.vb:1"
+        },
+        {
+          "signal": "circular-dependency",
+          "detail": "Form1 constructs InsertForm and ViewForm, and both call back into Form1. Two of the three dependency cycles in the application run through this module.",
+          "evidence": "Flat Design/Form1.vb:104"
+        },
+        {
+          "signal": "presentation-owns-aggregation-logic",
+          "detail": "All ten dashboard aggregates are hand-written COUNT(*) round-trips in a UI method, with the course and gender value sets hardcoded in the SQL literals. There is no reporting or query component to migrate — the report IS the form.",
+          "evidence": "Flat Design/Form1.vb:22"
+        },
+        {
+          "signal": "hardcoded-temporal-baseline",
+          "detail": "`Dim currentYear As Integer = 2023` drives all five academic-year tiles by subtraction. Every year bucket on the dashboard has been wrong since 1 Jan 2024; this is a silent data-correctness defect, not a cosmetic one.",
+          "evidence": "Flat Design/Form1.vb:59"
+        },
+        {
+          "signal": "value-domain-mismatch-with-ui",
+          "detail": "The dashboard counts only gender = 'Male' and 'Female', but the entry form's gender combo also offers 'Other'. Any student recorded as 'Other' exists in the table yet is invisible in every dashboard total, so the tiles do not sum to the row count.",
+          "evidence": "Flat Design/Form1.vb:24"
+        },
+        {
+          "signal": "unparameterized-sql",
+          "detail": "The five academic-year queries concatenate the year into the SQL text rather than binding it. The value is integer-derived so it is not an injection vector today, but it is the same unsafe construction habit that is exploitable in ViewForm.",
+          "evidence": "Flat Design/Form1.vb:62"
+        }
+      ],
+      "config": [
+        {
+          "setting": "MainForm = Form1",
+          "source": "Flat Design/My Project/Application.myapp:4",
+          "note": "Designated startup form via MySubMain."
+        }
+      ],
+      "evidence": [
+        "Flat Design/Form1.vb:1",
+        "Flat Design/Form1.Designer.vb:1",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:107"
+      ]
+    },
+    {
+      "id": "insert-form",
+      "path": "Flat Design/InsertForm.vb",
+      "role": "Create path: collects the ten student fields and issues the parameterized INSERT.",
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms",
+      "runtime": ".NET Framework 4.8",
+      "loc": 434,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:8"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [
+        {
+          "module": "module1-db-connection",
+          "mechanism": "calls Module1.connectDB() and uses the global dbcon",
+          "evidence": "Flat Design/InsertForm.vb:7"
+        },
+        {
+          "module": "form1-dashboard",
+          "mechanism": "calls Form1.LoadData() through VB's implicit default-instance property, NOT through the hosting instance",
+          "evidence": "Flat Design/InsertForm.vb:27"
+        },
+        {
+          "module": "view-form",
+          "mechanism": "calls ViewForm.LoadData() through VB's implicit default instance",
+          "evidence": "Flat Design/InsertForm.vb:28"
+        }
+      ],
+      "external_dependencies": [
+        "System.Windows.Forms",
+        "System.Data.OleDb",
+        "Microsoft.VisualBasic (MsgBox)"
+      ],
+      "db_access": {
+        "style": "inline parameterized SQL in the button handler",
+        "database": "studentDB.accdb (Microsoft Access)",
+        "tables": [
+          "students"
+        ],
+        "operations": [
+          "INSERT"
+        ],
+        "parameterized": true,
+        "evidence": "Flat Design/InsertForm.vb:9"
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 1,
+        "ui_controls": 24,
+        "event_handlers": 2
+      },
+      "coupling_signals": [
+        {
+          "signal": "default-instance-aliasing",
+          "detail": "THE MOST CONSEQUENTIAL STRUCTURAL DEFECT FOUND. Form1 displays child forms it creates with `New InsertForm()` / `New ViewForm()`, but InsertForm refreshes its siblings via the bare `Form1.LoadData()` / `ViewForm.LoadData()` default-instance properties. Those resolve to different objects than the ones on screen, so after a successful insert the application updates two forms the user is not looking at while the visible dashboard and grid keep showing stale data. Any migration that naively preserves these call sites will preserve the bug; a migration to C# cannot preserve them at all, because C# has no default-instance feature.",
+          "evidence": "Flat Design/InsertForm.vb:27"
+        },
+        {
+          "signal": "duplicated-field-mapping",
+          "detail": "The ten-field parameter block is near-identical to EditForm's UPDATE block, and the two Designer files declare byte-for-byte identical control sets (24 controls each, 373 vs 371 lines). Field-level validation and formatting rules would have to be changed in two places.",
+          "evidence": "Flat Design/InsertForm.vb:12"
+        },
+        {
+          "signal": "no-input-validation",
+          "detail": "No field is checked before the INSERT: no required-field check, no roll-number uniqueness check, no mobile-number format check, no MaxLength on any TextBox (zero MaxLength properties across all four Designer files). The only guard is a catch-all Try/Catch that surfaces the raw provider exception text in a MsgBox.",
+          "evidence": "Flat Design/InsertForm.vb:31"
+        },
+        {
+          "signal": "unguarded-selecteditem-dereference",
+          "detail": "cmbGender/cmbCourse/cmbyoa are dereferenced with .SelectedItem.ToString() with no null check, so saving with any combo left unselected throws NullReferenceException into the generic handler and is reported to the user as a database error.",
+          "evidence": "Flat Design/InsertForm.vb:18"
+        }
+      ],
+      "config": [],
+      "evidence": [
+        "Flat Design/InsertForm.vb:1",
+        "Flat Design/InsertForm.Designer.vb:1",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:117"
+      ]
+    },
+    {
+      "id": "edit-form",
+      "path": "Flat Design/EditForm.vb",
+      "role": "Update path: loads one student by roll number into the field set and issues the parameterized UPDATE.",
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms",
+      "runtime": ".NET Framework 4.8",
+      "loc": 447,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:8"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [
+        {
+          "module": "module1-db-connection",
+          "mechanism": "calls Module1.connectDB() in both LoadData and btnSave_Click",
+          "evidence": "Flat Design/EditForm.vb:15"
+        },
+        {
+          "module": "form1-dashboard",
+          "mechanism": "calls Form1.LoadData() through VB's implicit default instance after a successful update",
+          "evidence": "Flat Design/EditForm.vb:67"
+        }
+      ],
+      "external_dependencies": [
+        "System.Windows.Forms",
+        "System.Data.OleDb",
+        "Microsoft.VisualBasic (MsgBox)"
+      ],
+      "db_access": {
+        "style": "inline parameterized SQL in the form",
+        "database": "studentDB.accdb (Microsoft Access)",
+        "tables": [
+          "students"
+        ],
+        "operations": [
+          "SELECT",
+          "UPDATE"
+        ],
+        "parameterized": true,
+        "evidence": "Flat Design/EditForm.vb:14"
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 1,
+        "ui_controls": 24,
+        "event_handlers": 2
+      },
+      "coupling_signals": [
+        {
+          "signal": "only-non-default-constructor-in-the-app",
+          "detail": "EditForm is the one form with a parameterized constructor `New(rollNo As String)`, which calls InitializeComponent() and then LoadData() before the form is shown. It therefore cannot be reached through VB's default-instance mechanism the other forms rely on, and ViewForm must special-case it with a separate UpdateRollNo() re-entry path.",
+          "evidence": "Flat Design/EditForm.vb:7"
+        },
+        {
+          "signal": "roll-number-as-implicit-key",
+          "detail": "SELECT and UPDATE both key on rollno with no uniqueness guarantee anywhere in the schema or the insert path. If two rows share a roll number, LoadData silently binds the first (stReader.Read() once) while UPDATE rewrites every match — a silent multi-row update.",
+          "evidence": "Flat Design/EditForm.vb:51"
+        },
+        {
+          "signal": "culture-dependent-date-parse",
+          "detail": "`DateTime.Parse(stReader(\"dob\").ToString())` on read and `dtpDOB.Text` (a formatted display string) on write, with no IFormatProvider on either side. Round-tripping a date through the UI culture, combined with OptionStrict Off, makes day/month transposition possible on any non-matching workstation locale.",
+          "evidence": "Flat Design/EditForm.vb:30"
+        },
+        {
+          "signal": "unused-import",
+          "detail": "Imports System.Windows.Forms.VisualStyles.VisualStyleElement.Status — an accidental IDE-completion artifact, present identically in ViewForm. Dead, but a marker of how the code was assembled.",
+          "evidence": "Flat Design/EditForm.vb:2"
+        }
+      ],
+      "config": [],
+      "evidence": [
+        "Flat Design/EditForm.vb:1",
+        "Flat Design/EditForm.Designer.vb:1",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:104"
+      ]
+    },
+    {
+      "id": "view-form",
+      "path": "Flat Design/ViewForm.vb",
+      "role": "Read/search/delete path: binds the whole students table to a DataGridView, filters it by a free-text search box, deletes the selected row, and launches EditForm.",
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms",
+      "runtime": ".NET Framework 4.8",
+      "loc": 313,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:8"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [
+        {
+          "module": "module1-db-connection",
+          "mechanism": "calls Module1.connectDB(), uses the global dbcon, and calls dbcon.Close() on it directly",
+          "evidence": "Flat Design/ViewForm.vb:11"
+        },
+        {
+          "module": "edit-form",
+          "mechanism": "instantiates New EditForm(rollNo) or re-targets an existing one via UpdateRollNo()",
+          "evidence": "Flat Design/ViewForm.vb:65"
+        },
+        {
+          "module": "form1-dashboard",
+          "mechanism": "reaches into Form1.Panel5.Controls through VB's implicit default instance to host EditForm — a child form mutating its grandparent's control tree",
+          "evidence": "Flat Design/ViewForm.vb:72"
+        }
+      ],
+      "external_dependencies": [
+        "System.Windows.Forms",
+        "System.Data.OleDb",
+        "Microsoft.VisualBasic (MsgBox)"
+      ],
+      "db_access": {
+        "style": "inline SQL in the form; SELECT * bound straight to the grid",
+        "database": "studentDB.accdb (Microsoft Access)",
+        "tables": [
+          "students"
+        ],
+        "operations": [
+          "SELECT *",
+          "SELECT * with WHERE",
+          "DELETE"
+        ],
+        "parameterized": "mixed — DELETE is parameterized, the search SELECT is string-concatenated",
+        "evidence": "Flat Design/ViewForm.vb:39"
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 1,
+        "ui_controls": 12,
+        "event_handlers": 4
+      },
+      "coupling_signals": [
+        {
+          "signal": "sql-injection",
+          "detail": "The only place in the application where raw user keystrokes are concatenated into SQL: `query += \" WHERE rollno = '\" + searchQuery + \"' OR fname LIKE '%\" + searchQuery + \"%'\"` from txtSearch.Text. Access/ACE permits stacked expressions and the result is bound directly to the grid, so this is a live injection and data-disclosure vector, and it is the one SQL statement in the app that takes untrusted input without binding it.",
+          "evidence": "Flat Design/ViewForm.vb:50"
+        },
+        {
+          "signal": "closes-shared-global-connection",
+          "detail": "btnDelete_Click calls `dbcon.Close()` on the application-wide connection owned by Module1. Every other module then depends on its own connectDB() call re-opening it. One module unilaterally tearing down shared global state is the tightest coupling in the application and the single hardest thing to preserve under any decomposition.",
+          "evidence": "Flat Design/ViewForm.vb:94"
+        },
+        {
+          "signal": "reaches-into-parent-control-tree",
+          "detail": "ViewForm adds EditForm to `Form1.Panel5.Controls` — Panel5 had to be widened from the Designer default to Friend/Public visibility for this to compile. The child form drives its host's layout, so Form1 and ViewForm cannot be separated without redesigning the navigation contract.",
+          "evidence": "Flat Design/ViewForm.vb:72"
+        },
+        {
+          "signal": "unbounded-full-table-read",
+          "detail": "SELECT * FROM students with AutoGenerateColumns=True and no paging: the grid's columns, and therefore the UI contract, are defined by whatever the table currently holds. A column rename in Access silently changes the screen, and `Cells(\"rollno\")` lookups break at runtime rather than at compile time.",
+          "evidence": "Flat Design/ViewForm.vb:39"
+        },
+        {
+          "signal": "duplicate-load-paths",
+          "detail": "LoadData() and LoadSData() build the same grid binding twice, and RefreshData() is a one-line passthrough to LoadData() that exists only so Form1 has a public name to call. Three entry points, one behaviour.",
+          "evidence": "Flat Design/ViewForm.vb:34"
+        },
+        {
+          "signal": "handler-leak-on-repeat-edit",
+          "detail": "AddHandler editForm.FormClosed is attached every time btnUpdate is clicked, but never removed, so a reused EditForm accumulates FormClosed subscriptions and LoadData() runs once per accumulated click.",
+          "evidence": "Flat Design/ViewForm.vb:75"
+        }
+      ],
+      "config": [],
+      "evidence": [
+        "Flat Design/ViewForm.vb:1",
+        "Flat Design/ViewForm.Designer.vb:1",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:135"
+      ]
+    },
+    {
+      "id": "module1-db-connection",
+      "path": "Flat Design/Module1.vb",
+      "role": "The application's entire data-access layer: one Public shared OleDbConnection plus a lazy open. 13 lines.",
+      "language": "Visual Basic .NET",
+      "framework": "ADO.NET / System.Data.OleDb",
+      "runtime": ".NET Framework 4.8",
+      "loc": 13,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:120"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [],
+      "external_dependencies": [
+        "System.Data.OleDb",
+        "Microsoft.ACE.OLEDB.12.0 provider (external runtime prerequisite, not an assembly reference)"
+      ],
+      "db_access": {
+        "style": "owns the single shared connection; contains no SQL of its own",
+        "database": "studentDB.accdb (Microsoft Access)",
+        "tables": [],
+        "operations": [
+          "CONNECT"
+        ],
+        "connection_string_location": "hardcoded string literal in source",
+        "evidence": "Flat Design/Module1.vb:7"
+      },
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 0
+      },
+      "coupling_signals": [
+        {
+          "signal": "global-mutable-shared-state",
+          "detail": "`Public dbcon As New OleDb.OleDbConnection` at module scope is a process-wide singleton with no ownership discipline: all four forms open it, one closes it (ViewForm.vb:94), nobody disposes it, and no Using block exists anywhere in the application. This is the central coupling fact of the architecture — the four forms look independent in the file tree but are joined through one connection object. Each form's independence is an illusion created by directory layout, exactly the trap the methodology warns about.",
+          "evidence": "Flat Design/Module1.vb:4"
+        },
+        {
+          "signal": "hardcoded-absolute-developer-path",
+          "detail": "The connection string pins `data source=D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb` — a three-deep nested path on the original author's D: drive. The .accdb actually ships at `Flat Design/studentDB.accdb`, so a clean clone CANNOT connect on any machine but the author's. There is no configuration indirection of any kind: App.config declares no connectionStrings section and Settings.settings is empty, so this literal is the only database binding in the application and changing it requires a recompile.",
+          "evidence": "Flat Design/Module1.vb:7"
+        },
+        {
+          "signal": "no-data-access-abstraction",
+          "detail": "13 lines is the whole of the DAL. All 16 SQL statements live in UI event handlers across the four forms, so there is no seam at which to intercept, test, retarget, or audit data access. Any re-platforming must create this layer rather than port it.",
+          "evidence": "Flat Design/Module1.vb:1"
+        },
+        {
+          "signal": "silent-state-check-swallows-broken-states",
+          "detail": "connectDB() only acts when State = Closed. A connection left in Broken or Connecting state falls through and every caller proceeds to execute against it.",
+          "evidence": "Flat Design/Module1.vb:6"
+        }
+      ],
+      "config": [
+        {
+          "setting": "connection string",
+          "source": "Flat Design/Module1.vb:7",
+          "externalized": false,
+          "note": "Provider=Microsoft.ACE.OLEDB.12.0; Persist Security Info=False. No credentials — the Access file is unprotected, so filesystem permissions are the only access control over the entire dataset."
+        }
+      ],
+      "evidence": [
+        "Flat Design/Module1.vb:1",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:120"
+      ]
+    },
+    {
+      "id": "my-project-infrastructure",
+      "path": "Flat Design/My Project/",
+      "role": "Designer-generated WinForms application infrastructure: startup/single-instance plumbing, assembly metadata, resource and settings accessors, UAC manifest.",
+      "language": "Visual Basic .NET",
+      "framework": "Windows Forms (My namespace)",
+      "runtime": ".NET Framework 4.8",
+      "loc": 209,
+      "build_target": {
+        "target": "Student Management System.exe",
+        "kind": "WinExe",
+        "evidence": "Flat Design/Student Management System Siddharth Jain.vbproj:121"
+      },
+      "deployment_surface": "Student Management System.exe (single Windows desktop executable, x86, manually installed per workstation)",
+      "internal_dependencies": [
+        {
+          "module": "form1-dashboard",
+          "mechanism": "MyApplication sets Form1 as MainForm",
+          "evidence": "Flat Design/My Project/Application.myapp:4"
+        }
+      ],
+      "external_dependencies": [
+        "Microsoft.VisualBasic.ApplicationServices"
+      ],
+      "db_access": "none",
+      "endpoint_totals": {
+        "http": 0,
+        "ui_forms": 0
+      },
+      "coupling_signals": [
+        {
+          "signal": "default-instance-provider",
+          "detail": "The generated My.Forms collection is what makes the bare `Form1.LoadData()` / `ViewForm.LoadData()` calls in InsertForm and EditForm compile at all. This module is therefore the enabling mechanism for the aliasing defect recorded against insert-form, and it is VB-only — the mechanism has no C# equivalent.",
+          "evidence": "Flat Design/My Project/Application.Designer.vb:1"
+        },
+        {
+          "signal": "no-authentication",
+          "detail": "AuthenticationMode=0 (Windows, unused) with no login form anywhere in the application. There is no user concept, no roles and no audit column on the table: every operator has unrestricted create/read/update/delete over all student records, including the PII fields.",
+          "evidence": "Flat Design/My Project/Application.myapp:8"
+        },
+        {
+          "signal": "empty-settings-store",
+          "detail": "Settings.settings declares zero settings and Settings.Designer.vb is a bare generated shell. The configuration mechanism exists and is entirely unused, which is why the connection string ended up hardcoded.",
+          "evidence": "Flat Design/My Project/Settings.settings:5"
+        }
+      ],
+      "config": [
+        {
+          "setting": "requestedExecutionLevel = asInvoker",
+          "source": "Flat Design/My Project/app.manifest:19",
+          "note": "No elevation requested, so the Access file must be writable by the ordinary user — which rules out installing under Program Files alongside the database."
+        },
+        {
+          "setting": "SingleInstance = false",
+          "source": "Flat Design/My Project/Application.myapp:5",
+          "note": "Multiple instances may run concurrently against the same .accdb; see the shared-file-concurrency coupling indicator."
+        },
+        {
+          "setting": "SaveMySettingsOnExit = true",
+          "source": "Flat Design/My Project/Application.myapp:10"
+        }
+      ],
+      "evidence": [
+        "Flat Design/My Project/Application.myapp:1",
+        "Flat Design/My Project/AssemblyInfo.vb:1",
+        "Flat Design/My Project/app.manifest:1"
+      ]
+    }
+  ],
+  "coupling_indicators": {
+    "shared-global-connection": {
+      "severity": "critical",
+      "kind": "shared mutable state",
+      "description": "A single process-wide OleDbConnection (Module1.dbcon) is the join point for all four forms. Four modules open it, ViewForm closes it, nothing disposes it, and no Using block exists in the application. The forms are separate files and separate classes but share one lifecycle-managed resource with no owner, so they are not independently extractable without first introducing a connection-per-operation or repository seam.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form",
+        "module1-db-connection"
+      ],
+      "evidence": [
+        "Flat Design/Module1.vb:4",
+        "Flat Design/ViewForm.vb:94",
+        "Flat Design/Form1.vb:16",
+        "Flat Design/InsertForm.vb:7",
+        "Flat Design/EditForm.vb:15",
+        "Flat Design/ViewForm.vb:11"
+      ],
+      "decomposition_impact": "Every decomposition boundary below must cut this edge. It is the first thing to fix and it blocks nothing else until it is fixed."
+    },
+    "default-instance-aliasing": {
+      "severity": "critical",
+      "kind": "latent correctness defect at a module boundary",
+      "description": "Form1 hosts child forms it builds with New InsertForm()/New ViewForm(), but InsertForm and EditForm refresh their siblings through VB's bare default-instance properties (Form1.LoadData(), ViewForm.LoadData()), and ViewForm hosts EditForm inside the default Form1's Panel5. Two parallel object graphs therefore exist at runtime, and post-write refreshes land on the invisible one: after an insert the on-screen dashboard and grid keep showing stale data. This is not a style problem — it is a live defect, and because C# has no default-instance feature any port must consciously re-establish the intended parent-child wiring rather than translate these call sites.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form",
+        "my-project-infrastructure"
+      ],
+      "evidence": [
+        "Flat Design/InsertForm.vb:27",
+        "Flat Design/InsertForm.vb:28",
+        "Flat Design/EditForm.vb:67",
+        "Flat Design/ViewForm.vb:72",
+        "Flat Design/Form1.vb:104",
+        "Flat Design/Form1.vb:141"
+      ],
+      "decomposition_impact": "The real navigation/refresh contract between the shell and the three child forms has to be discovered and re-specified, not read off the code, because the code as written does not express what the UI appears to do."
+    },
+    "circular-form-dependencies": {
+      "severity": "high",
+      "kind": "dependency cycle",
+      "description": "Three cycles, all through the dashboard shell: Form1 <-> InsertForm, Form1 <-> ViewForm, and Form1 -> ViewForm -> EditForm -> Form1. No form is a leaf except by accident, so there is no acyclic extraction order among the four UI modules as they stand.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form"
+      ],
+      "cycle_count": 3,
+      "evidence": [
+        "Flat Design/Form1.vb:104",
+        "Flat Design/InsertForm.vb:27",
+        "Flat Design/Form1.vb:141",
+        "Flat Design/ViewForm.vb:72",
+        "Flat Design/ViewForm.vb:65",
+        "Flat Design/EditForm.vb:67"
+      ],
+      "decomposition_impact": "Break with an event/mediator seam at the shell before attempting per-screen extraction."
+    },
+    "ui-owns-all-sql": {
+      "severity": "high",
+      "kind": "missing layer",
+      "description": "All 16 SQL statements are inline in UI event handlers across four of the six modules; the nominal data-access module holds 13 lines and zero queries. There is no service layer, repository, DAL, ORM or stored procedure anywhere, so business meaning (the dashboard's aggregate definitions, the roll-number key, the ten-field record shape) exists only inside form code.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form"
+      ],
+      "sql_statement_count": 16,
+      "evidence": [
+        "Flat Design/Form1.vb:24",
+        "Flat Design/InsertForm.vb:9",
+        "Flat Design/EditForm.vb:14",
+        "Flat Design/EditForm.vb:51",
+        "Flat Design/ViewForm.vb:39",
+        "Flat Design/ViewForm.vb:48",
+        "Flat Design/ViewForm.vb:90"
+      ],
+      "decomposition_impact": "Pass 2 business-logic extraction must read form event handlers, not a service layer. There is no seam to intercept."
+    },
+    "hardcoded-environment-binding": {
+      "severity": "high",
+      "kind": "configuration coupling",
+      "description": "The application has zero externalized configuration. The database path is a string literal naming the author's D: drive (Module1.vb:7) and the ClickOnce PublishUrl names the same drive (vbproj:18). App.config declares no connectionStrings, Settings.settings is empty, and no environment variable is read anywhere. A clean clone cannot connect to the .accdb that ships beside it, because the literal points at a three-deep nested path that does not exist in the repository layout.",
+      "modules_involved": [
+        "module1-db-connection",
+        "my-project-infrastructure"
+      ],
+      "evidence": [
+        "Flat Design/Module1.vb:7",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:18",
+        "Flat Design/App.config:1",
+        "Flat Design/My Project/Settings.settings:5"
+      ],
+      "decomposition_impact": "Externalizing configuration is a prerequisite for ANY target environment, including a like-for-like rehost."
+    },
+    "shared-file-database-concurrency": {
+      "severity": "high",
+      "kind": "deployment/data coupling",
+      "description": "A file-based Access database plus SingleInstance=false means multiple application instances — and, if the .accdb is placed on a share, multiple workstations — contend for one file with only Jet/ACE page locking and no transaction use anywhere in the code. A committed studentDB.laccdb lock file proves the database was open in Access at commit time. There are no transactions: the INSERT, UPDATE and DELETE paths each execute a bare ExecuteNonQuery with no BeginTransaction, so there is no atomicity beyond a single statement.",
+      "modules_involved": [
+        "module1-db-connection",
+        "my-project-infrastructure",
+        "view-form",
+        "insert-form",
+        "edit-form"
+      ],
+      "evidence": [
+        "Flat Design/My Project/Application.myapp:5",
+        "Flat Design/studentDB.laccdb",
+        "Flat Design/Module1.vb:7",
+        "Flat Design/ViewForm.vb:93"
+      ],
+      "decomposition_impact": "Sets a hard ceiling on concurrent users and is the main driver for moving to a server database rather than rehosting the file."
+    },
+    "insert-edit-near-duplication": {
+      "severity": "medium",
+      "kind": "code duplication across module boundaries",
+      "description": "InsertForm and EditForm are parallel implementations of the same ten-field record editor: identical 24-control Designer layouts (373 vs 371 lines), the same combo value domains, and the same field-to-parameter mapping written twice. Field-level rules must be changed in two places and are already capable of drifting.",
+      "modules_involved": [
+        "insert-form",
+        "edit-form"
+      ],
+      "evidence": [
+        "Flat Design/InsertForm.Designer.vb:1",
+        "Flat Design/EditForm.Designer.vb:1",
+        "Flat Design/InsertForm.vb:12",
+        "Flat Design/EditForm.vb:54"
+      ],
+      "decomposition_impact": "Collapse into one record-editor component during redesign; a 1:1 port would carry the duplication forward."
+    },
+    "unenforced-identity": {
+      "severity": "medium",
+      "kind": "data-integrity coupling",
+      "description": "rollno is the de-facto primary key — every SELECT-one, UPDATE and DELETE keys on it, and the grid reads Cells(\"rollno\") — yet no primary key or unique index could be found in the decoded .accdb, and InsertForm performs no duplicate check. Duplicate roll numbers would make EditForm bind only the first match while UPDATE rewrites all of them and DELETE removes all of them.",
+      "modules_involved": [
+        "insert-form",
+        "edit-form",
+        "view-form"
+      ],
+      "evidence": [
+        "Flat Design/EditForm.vb:14",
+        "Flat Design/EditForm.vb:51",
+        "Flat Design/ViewForm.vb:90",
+        "Flat Design/ViewForm.vb:62",
+        "Flat Design/InsertForm.vb:9"
+      ],
+      "decomposition_impact": "The target schema must declare the key explicitly and the migration must de-duplicate first. Confirm against a live engine — see open_questions."
+    },
+    "optionstrict-off-late-binding": {
+      "severity": "medium",
+      "kind": "type-safety coupling",
+      "description": "OptionStrict is Off project-wide, so implicit narrowing and late binding compile silently. Combined with reader access by string name (stReader(\"fname\")), DataGridView AutoGenerateColumns, and culture-free DateTime.Parse, the entire column contract is resolved at runtime: a column rename in Access produces a runtime failure or a wrong value, never a build error.",
+      "modules_involved": [
+        "edit-form",
+        "view-form",
+        "form1-dashboard",
+        "insert-form"
+      ],
+      "evidence": [
+        "Flat Design/Student Management System Siddharth Jain.vbproj:51",
+        "Flat Design/EditForm.vb:30",
+        "Flat Design/ViewForm.vb:14"
+      ],
+      "decomposition_impact": "Turning OptionStrict On is likely to surface a backlog of real defects; budget for it rather than treating it as a flag flip."
+    },
+    "unsafe-sql-construction": {
+      "severity": "high",
+      "kind": "security coupling",
+      "description": "6 of 16 SQL statements are built by string concatenation. Five (the dashboard year buckets) interpolate an integer and are not currently exploitable; one interpolates raw user keystrokes from txtSearch into both a quoted equality and a LIKE clause and is a live injection point against the whole dataset.",
+      "modules_involved": [
+        "view-form",
+        "form1-dashboard"
+      ],
+      "evidence": [
+        "Flat Design/ViewForm.vb:50",
+        "Flat Design/Form1.vb:62",
+        "Flat Design/Form1.vb:67",
+        "Flat Design/Form1.vb:72",
+        "Flat Design/Form1.vb:77",
+        "Flat Design/Form1.vb:82"
+      ],
+      "decomposition_impact": "Fix in place before any migration; do not carry the construction pattern into the target."
+    },
+    "unprotected-pii-in-source-control": {
+      "severity": "high",
+      "kind": "data-governance finding",
+      "description": "The committed studentDB.accdb (784 KB) holds real student records, not an empty schema — the decode recovered surname and gender values from data pages. The record shape is itself personal data: first/last name, father's name, two mobile numbers and date of birth. The file carries no database password, the application has no authentication, and the repository is a public GitHub project per the README and the hardcoded report URL. A live dataset of minors' PII is therefore in public source control.",
+      "modules_involved": [
+        "module1-db-connection",
+        "my-project-infrastructure"
+      ],
+      "evidence": [
+        "Flat Design/studentDB.accdb",
+        "Flat Design/Module1.vb:7",
+        "Flat Design/My Project/Application.myapp:8",
+        "Flat Design/Form1.vb:156"
+      ],
+      "decomposition_impact": "Flag to the data-protection reviewer immediately; independent of modernization sequencing. Pass 1 reports the structural fact and does not classify it — see open_questions."
+    },
+    "accessibility-surface-unannotated": {
+      "severity": "medium",
+      "kind": "interface quality finding",
+      "description": "Zero AccessibleName and zero AccessibleDescription properties across all four Designer files, against 137 controls — including 17 PictureBoxes and 20 Panels used as purely visual dashboard chrome, and generic Label1..Label27 / Button8 naming. All four interfaces are human-facing, so every one carries a Section 508 / WCAG 2.1 AA obligation that nothing in the current UI satisfies.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form"
+      ],
+      "evidence": [
+        "Flat Design/Form1.Designer.vb:1",
+        "Flat Design/InsertForm.Designer.vb:1",
+        "Flat Design/EditForm.Designer.vb:1",
+        "Flat Design/ViewForm.Designer.vb:1"
+      ],
+      "decomposition_impact": "Hand to the downstream ux-accessibility pass as a measured zero, not an impression."
+    },
+    "broken-clean-clone-build": {
+      "severity": "medium",
+      "kind": "build/deployment coupling",
+      "description": "SignManifests=true with ManifestKeyFile=Student Management System Siddharth Jain_TemporaryKey.pfx and a pinned ManifestCertificateThumbprint, but *.pfx is gitignored (.gitignore:239) and no .pfx exists in the tree. The .vbproj also lists the missing pfx as a None item. A clean clone therefore fails manifest signing. Separately, the solution maps the Debug configuration to Release (ActiveCfg = Release|Any CPU for Debug|Any CPU), so there is no working debug build, and Release pins PlatformTarget x86 to match the 32-bit ACE provider.",
+      "modules_involved": [
+        "my-project-infrastructure"
+      ],
+      "evidence": [
+        "Flat Design/Student Management System Siddharth Jain.vbproj:64",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:67",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:166",
+        ".gitignore:239",
+        "Student Management System Siddharth Jain.sln:14",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:35"
+      ],
+      "decomposition_impact": "Establish a reproducible build before measuring anything that depends on compiling; no CI exists to have caught this."
+    },
+    "no-automated-verification": {
+      "severity": "high",
+      "kind": "process gap constraining migration",
+      "description": "No test project, no test file, no CI/CD pipeline and no build script anywhere in the tree, and a single-commit git history. There is no executable specification of current behaviour, so no migration can be verified by regression — the behavioural contract has to be reconstructed from source and the screenshots.",
+      "modules_involved": [
+        "form1-dashboard",
+        "insert-form",
+        "edit-form",
+        "view-form",
+        "module1-db-connection",
+        "my-project-infrastructure"
+      ],
+      "evidence": [
+        "Student Management System Siddharth Jain.sln:6",
+        "README.md:1"
+      ],
+      "decomposition_impact": "Characterization tests against the current build are a prerequisite for any transformation beyond a lift-and-shift."
+    },
+    "hardcoded-external-url-as-reporting": {
+      "severity": "low",
+      "kind": "external coupling",
+      "description": "The dashboard's 'Report' button does not generate a report: it shells out to Process.Start against a hardcoded github.com URL for the author's project-report PDF. This is the application's only outbound integration, and it means the sole 'reporting' affordance depends on public internet access and a third-party host. Any genuine reporting requirement is unimplemented.",
+      "modules_involved": [
+        "form1-dashboard"
+      ],
+      "evidence": [
+        "Flat Design/Form1.vb:156",
+        "Flat Design/Form1.vb:157"
+      ],
+      "decomposition_impact": "Treat as a requirements gap to confirm with stakeholders, not as an integration to migrate."
+    }
+  },
+  "duplication_map": {
+    "non_application_tool_scaffolding_injected_into_source_tree": [
+      "assets/ (7 files: broker-recommendation-template.md, corpus-assessment-template.yaml, data-flow-trace-template.yaml, db-archaeology-report-template.yaml, identity-landscape-template.yaml, language-detection-output-template.json, sampling-plan-worksheet.md)",
+      "references/ (17 files: adabas-ddm-parsing.md, classic-asp-patterns.md, cross-system-tracing-patterns.md, detection-heuristics.md, dispatch-matrix.md, engine-selection-matrix.md, implicit-transformation-detection.md, migration-sequencing-strategy.md, multi-language-apps.md, nist-800-63-mapping.md, ocr-readiness-rubric.md, pii-phi-tracking.md, proliferation-patterns.md, retire-recommendations.md, stored-proc-classification.md, unused-table-detection.md, vb6-patterns.md)",
+      "scripts/ (1 file: classify_procs_template.sql)",
+      "fixtures/ (1 file: default.json)"
+    ],
+    "non_application_scaffolding_basis": "All 26 files across these four directories are UNTRACKED in git (`git status --porcelain -uall`), against 35 tracked application files, and their mtimes match the workspace staging time rather than the source commit. Their content is Olympus Discovery-skill assets and reference documentation — ADABAS DDM parsing, classic ASP patterns, NIST 800-63 mapping, OCR readiness rubrics — none of which has any relationship to a VB.NET WinForms student-records tool. They are skill scaffolding that leaked into the working tree, NOT application source, and they are excluded from every metric in summary_metrics. The Pass 0 catalog independently flagged fixtures/default.json for the same reason; this pass finds the contamination is four directories wide, not one file.",
+    "near_duplicate_application_modules": [
+      "Flat Design/InsertForm.Designer.vb (373 lines) and Flat Design/EditForm.Designer.vb (371 lines) declare byte-for-byte identical control sets — 24 controls each, same names, same combo value domains. The hand-written halves duplicate the same ten-field parameter mapping (InsertForm.vb:12-23 against EditForm.vb:54-63). One record-editor component is doing the work of two."
+    ],
+    "superseded_schema_retained_in_database_file": [
+      "Flat Design/studentDB.accdb retains an earlier table-definition record for `students` whose eighth and ninth columns are `ClassN` and `Sec` where the live definition has `Course` and `YOA`. The application references only Course and YOA, so ClassN/Sec are dead schema residue from a prior revision, still occupying the file. Recovered by decoding the ACE table-definition regions at two offsets in the binary."
+    ],
+    "dead_code_in_application_source": [
+      "Flat Design/EditForm.vb:2 and Flat Design/ViewForm.vb:2 both carry an identical accidental `Imports System.Windows.Forms.VisualStyles.VisualStyleElement.Status` — an IDE-completion artifact, unused in both files.",
+      "Flat Design/ViewForm.vb:12 holds a commented-out LoadData() call immediately superseded by RefreshData() on the next line; RefreshData() is itself a one-line passthrough to LoadData() (ViewForm.vb:34-36) existing only to give Form1 a public name to call.",
+      "Flat Design/My Project/Settings.Designer.vb (73 lines) is a generated accessor shell over an empty settings store — the configuration mechanism exists and is entirely unused, which is why the connection string is hardcoded."
+    ],
+    "committed_build_and_runtime_artifacts": [
+      "Flat Design/studentDB.laccdb — an Access lock file committed to source control, proving the database was open in Access when the commit was made.",
+      "Siddharth Jain Project Report.pdf (868 KB) and three Student Management(N).png screenshots are committed documentation/binaries, not source; they were not parsed by this pass."
+    ]
+  },
+  "recommended_decomposition_boundaries": [
+    {
+      "boundary": "student-record-crud-service",
+      "modules": [
+        "module1-db-connection",
+        "insert-form",
+        "edit-form",
+        "view-form"
+      ],
+      "note": "The one genuine business capability in the application: own the students table and expose create/read/update/delete/search over it. The SQL to build it already exists but must be LIFTED OUT of the four form event handlers that currently hold it, because there is no data-access layer to extract (module1-db-connection is 13 lines and holds no queries). Cutting this boundary requires fixing the shared-global-connection indicator first — introduce connection-per-operation and real transactions — and declaring rollno as an enforced key, which the current schema does not. Validation is a NEW requirement here, not a port: the insert path has no field validation at all, and the search path must be reparameterized to close the injection at ViewForm.vb:50."
+    },
+    {
+      "boundary": "student-statistics-read-model",
+      "modules": [
+        "form1-dashboard"
+      ],
+      "note": "The ten dashboard aggregates are a read-only reporting concern and separate cleanly from the CRUD path — the natural second service. Two defects must be treated as requirements questions rather than carried over: the hardcoded `currentYear = 2023` baseline (Form1.vb:59), which has made every academic-year tile wrong since 2024, and the gender tiles counting only Male/Female while the entry form offers Other (Form1.vb:24), so the tiles do not sum to the row count. Confirm the intended aggregate definitions with stakeholders before reimplementing; the current SQL is evidence of intent, not a specification."
+    },
+    {
+      "boundary": "ui-shell-and-navigation",
+      "modules": [
+        "form1-dashboard",
+        "my-project-infrastructure"
+      ],
+      "note": "Deliberately overlaps student-statistics-read-model on form1-dashboard, and that overlap IS the finding: Form1 is simultaneously the navigation shell, the child-form host and the statistics dashboard, so the two concerns cannot be assigned to disjoint module sets at the current granularity — splitting the 1,211-line Form1.Designer.vb is itself a work item. This boundary owns the three dependency cycles and the default-instance aliasing defect; the parent-child refresh contract must be re-specified rather than translated, since the code does not express what the UI appears to do and C# has no default-instance equivalent."
+    },
+    {
+      "boundary": "persistence-platform-replacement",
+      "modules": [
+        "module1-db-connection"
+      ],
+      "note": "Not a service boundary but an unavoidable infrastructure work item, listed so it is not lost: a file-based Access database reached through a 32-bit ACE OLEDB provider over a hardcoded absolute path cannot be rehosted as-is. It caps concurrency (file locking plus SingleInstance=false, no transactions), forces x86, requires a per-workstation redistributable, offers no credential or encryption story over a PII dataset, and binds the database with a literal that no clean clone can resolve. Externalizing configuration is a prerequisite for every other boundary, including a like-for-like rehost."
+    }
+  ],
+  "database-schema-summary": {
+    "$schema": "olympus:artifact:database-schema-summary:v1",
+    "engine": "Microsoft Access (ACE / 'Standard ACE DB' file format, read from the file header of studentDB.accdb; reached through the Microsoft.ACE.OLEDB.12.0 provider). The precise Access product version was not determinable from the file.",
+    "schema_names": [],
+    "tables": [
+      {
+        "name": "students",
+        "access": "owner",
+        "owning_module": "module1-db-connection",
+        "columns": [
+          {
+            "name": "RollNo",
+            "constraint": "Application-enforced only: used as the de-facto record key by every single-row SELECT, UPDATE and DELETE, and read from the grid as Cells(\"rollno\"). NO primary key or unique index was found in the decoded file, and the insert path performs no duplicate check, so uniqueness is assumed by the code and enforced nowhere. Bound as a string from a TextBox with no MaxLength and no format validation. | Evidence: Flat Design/studentDB.accdb; Flat Design/EditForm.vb:14; Flat Design/ViewForm.vb:90; Flat Design/InsertForm.vb:12"
+          },
+          {
+            "name": "FName",
+            "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data. Also the only field other than RollNo that the search path matches on, via LIKE. | Evidence: Flat Design/studentDB.accdb; Flat Design/ViewForm.vb:50; Flat Design/InsertForm.vb:13"
+          },
+          {
+            "name": "LName",
+            "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:14"
+          },
+          {
+            "name": "FatherName",
+            "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data about a third party who is not the record subject. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:15"
+          },
+          {
+            "name": "MobNo",
+            "constraint": "Application-enforced only: free text, no MaxLength, no numeric or phone-format validation. Contact PII. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:16"
+          },
+          {
+            "name": "AltMobNo",
+            "constraint": "Application-enforced only: free text, no MaxLength, no format validation, not required. Contact PII, typically a next-of-kin number. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:17"
+          },
+          {
+            "name": "Gender",
+            "constraint": "Application-enforced closed domain, NOT a database constraint: the entry and edit combos offer exactly 'Male', 'Female', 'Other'. The dashboard counts only Male and Female, so 'Other' is storable but invisible in every statistic — the enumeration is enforced in two UI files and disagrees with the one place that aggregates it. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:24; Flat Design/Form1.vb:29"
+          },
+          {
+            "name": "Course",
+            "constraint": "Application-enforced closed domain, NOT a database constraint: the combos offer exactly 'BCA', 'MCA', 'IIMCA', and the dashboard's three course tiles hardcode the same three literals. Adding a course requires editing both Designer files and Form1's SQL. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:38; Flat Design/Form1.vb:43; Flat Design/Form1.vb:48"
+          },
+          {
+            "name": "YOA",
+            "constraint": "Year of admission. Application-enforced closed domain, NOT a database constraint: the combos offer a static literal list '2019'..'2023' that cannot express any later intake, and the dashboard derives its five academic-year buckets by subtracting from a hardcoded currentYear = 2023. Stored and compared as a string, not a number. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:59; Flat Design/Form1.vb:62"
+          },
+          {
+            "name": "DOB",
+            "constraint": "Date of birth; PII and the basis of any age calculation. No database constraint found. Written as dtpDOB.Text — a culture-formatted display string — and read back with a culture-free DateTime.Parse, with OptionStrict Off, so day/month transposition is possible across workstation locales. No range or plausibility check. | Evidence: Flat Design/studentDB.accdb; Flat Design/EditForm.vb:30; Flat Design/EditForm.vb:62; Flat Design/InsertForm.vb:23"
+          }
+        ],
+        "evidence_refs": [
+          "Flat Design/studentDB.accdb",
+          "Flat Design/InsertForm.vb:9",
+          "Flat Design/EditForm.vb:14",
+          "Flat Design/EditForm.vb:51",
+          "Flat Design/ViewForm.vb:39",
+          "Flat Design/ViewForm.vb:48",
+          "Flat Design/ViewForm.vb:90",
+          "Flat Design/Form1.vb:24"
+        ]
+      }
+    ],
+    "relationships": [],
+    "stored_procedures": [],
+    "triggers": [],
+    "views": [],
+    "database_links": [],
+    "open_questions": [
+      "CONFIRMED, NOT INFERRED: the Pass 0 catalog inferred a single table from embedded SQL text and asked Pass 1 to verify against the real .accdb. This pass decoded the ACE table-definition records directly out of the binary and confirms exactly one user table, `students`, with exactly these ten columns. The only other objects in the file's catalog are Access system objects (MSysObjects, MSysACEs, MSysRelationships, MSysNavPane*, MSysComplexType_*, the empty Forms/Reports/SysRel/UserDefined containers and __Semaphores). There are therefore no user queries, forms, reports, macros or VBA modules inside the database: zero stored procedures, zero views, zero triggers, zero database links — all database logic lives in the application, and those empty arrays are measured findings rather than unfilled fields.",
+      "COLUMN DATA TYPES ARE UNKNOWN AND ARE NOT GUESSED. Column names and their on-disk order were recovered, but the ACE type bytes, lengths, NULL-ability and AllowZeroLength/Required/ValidationRule settings sit in binary structures this text-oriented decode did not resolve. The application is no guide: OptionStrict is Off and every value is bound via AddWithValue from a string control, so even DOB and YOA may well be stored as text. Resolve by opening the .accdb through an Access/ACE engine or ODBC and querying the catalog before any schema is generated for a target database.",
+      "NO PRIMARY KEY OR INDEX WAS FOUND, and this should be treated as 'not established' rather than 'absent'. No PrimaryKey definition and no autonumber/ID column were recovered (an `ID` column does not occur in the file at all), while 62 'Index' string occurrences in the file are mostly Access catalog boilerplate and were not resolved to actual index definitions. Since rollno is the de-facto key used by every single-row operation with no uniqueness enforcement in code, confirming this against a live engine is a prerequisite for migration — and if duplicates exist, de-duplication must precede it.",
+      "ROW COUNT IS NOT REPORTED because it was not measured; no table carries a row_count_estimate rather than carrying a fabricated one. The 784 KB file does contain real data — the decode recovered surname and gender values from data pages — but Access does not store a reliable row count in a text-extractable location, and the dataset is small enough that file size implies nothing.",
+      "THE FILE RETAINS A SUPERSEDED COLUMN LAYOUT: a second `students` table-definition record carries `ClassN` and `Sec` in the positions where the live definition carries `Course` and `YOA`. The application references only Course and YOA, so this is dead residue from an earlier schema revision. Worth confirming whether any data rows still carry the old shape before migrating, since nothing in the application would read them.",
+      "COLUMN NAME CASING DIFFERS BETWEEN SCHEMA AND CODE: the database declares PascalCase (RollNo, FName, FatherName, AltMobNo), while every SQL statement and every reader lookup in the application uses lowercase (rollno, fname, fathername, altmobno). Access/Jet is case-insensitive so this is harmless today, but it will break on a case-sensitive target such as PostgreSQL, and it breaks in the places that are resolved at runtime rather than compile time — stReader(\"fname\") and DataGridView Cells(\"rollno\"). Decide the target casing convention once, deliberately.",
+      "The schema has no audit, soft-delete or provenance column — no created/modified timestamp, no user stamp, no row version. Combined with the application having no authentication, there is no way to attribute or reconstruct any change to a student record, and DELETE is physical and immediate. If any retention or auditability obligation applies, the current design cannot satisfy it and the history is already unrecoverable.",
+      "The .accdb carries no database password and the connection string sets only Persist Security Info=False, so filesystem permissions are the sole access control over the entire dataset. Unverified whether the deployed copy was ever placed on a restricted share."
+    ]
+  },
+  "interface-inventory": {
+    "$schema": "olympus:artifact:interface-inventory:v1",
+    "interfaces": [
+      {
+        "name": "Form1 — dashboard, navigation shell and statistics view",
+        "kind": "ui-page",
+        "address": "Application startup form (MySubMain, MainForm=Form1); hosts child forms inside Panel5",
+        "technology": "VB.NET WinForms (.NET Framework 4.8)",
+        "audience": "internal",
+        "human_facing": true,
+        "authentication": "none — no login form, no user concept, no roles anywhere in the application",
+        "capability_hint": "View student population statistics by gender, course and academic year; navigate to the record-management screens",
+        "evidence_refs": [
+          "Flat Design/Form1.vb:15",
+          "Flat Design/My Project/Application.myapp:4",
+          "Flat Design/Form1.Designer.vb:1"
+        ]
+      },
+      {
+        "name": "InsertForm — new student record entry",
+        "kind": "form",
+        "address": "Reparented into Form1.Panel5 by btnNew_Click",
+        "technology": "VB.NET WinForms (.NET Framework 4.8)",
+        "audience": "internal",
+        "human_facing": true,
+        "authentication": "none",
+        "capability_hint": "Register a new student: roll number, name, father's name, two contact numbers, gender, course, year of admission, date of birth",
+        "evidence_refs": [
+          "Flat Design/InsertForm.vb:4",
+          "Flat Design/Form1.vb:104",
+          "Flat Design/InsertForm.Designer.vb:1"
+        ]
+      },
+      {
+        "name": "EditForm — existing student record editor",
+        "kind": "form",
+        "address": "Reparented into Form1.Panel5 by ViewForm.btnUpdate_Click; constructed with a roll number",
+        "technology": "VB.NET WinForms (.NET Framework 4.8)",
+        "audience": "internal",
+        "human_facing": true,
+        "authentication": "none",
+        "capability_hint": "Amend a student's details, keyed by roll number (the roll number itself is not updatable — it is the WHERE clause)",
+        "evidence_refs": [
+          "Flat Design/EditForm.vb:7",
+          "Flat Design/ViewForm.vb:65",
+          "Flat Design/EditForm.Designer.vb:1"
+        ]
+      },
+      {
+        "name": "ViewForm — student record grid, search and delete",
+        "kind": "ui-page",
+        "address": "Reparented into Form1.Panel5 by btnView_Click",
+        "technology": "VB.NET WinForms DataGridView, bound to an OleDbDataAdapter DataSet with AutoGenerateColumns=True",
+        "audience": "internal",
+        "human_facing": true,
+        "authentication": "none",
+        "capability_hint": "List and search all student records; launch the editor; delete a record after a Yes/No confirmation",
+        "evidence_refs": [
+          "Flat Design/ViewForm.vb:10",
+          "Flat Design/Form1.vb:141",
+          "Flat Design/ViewForm.vb:39",
+          "Flat Design/ViewForm.Designer.vb:1"
+        ]
+      },
+      {
+        "name": "studentDB.accdb — local Access database file",
+        "kind": "file-exchange",
+        "address": "D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb (hardcoded absolute literal; the file actually ships at Flat Design/studentDB.accdb, so a clean clone cannot resolve it)",
+        "technology": "Microsoft ACE OLEDB 12.0 provider over a file-based Access database",
+        "audience": "system",
+        "human_facing": false,
+        "authentication": "none — no database password; filesystem permissions are the only access control over the full PII dataset",
+        "capability_hint": "Sole persistence store for all student records. Listed as an interface because it is a file the application reaches through an out-of-process provider, and because the same file is directly openable in Microsoft Access by any user who can read it — an uncontrolled second access path to the data that bypasses the application entirely.",
+        "evidence_refs": [
+          "Flat Design/Module1.vb:7",
+          "Flat Design/studentDB.accdb",
+          "Flat Design/studentDB.laccdb"
+        ]
+      },
+      {
+        "name": "Project report link (outbound browser launch)",
+        "kind": "unknown",
+        "address": "https://github.com/siddharth9300/Student-Management-System-VB.Net/blob/master/Siddharth%20Jain%20Project%20Report.pdf",
+        "technology": "System.Diagnostics.Process.Start against the default browser",
+        "audience": "public",
+        "human_facing": true,
+        "authentication": "none",
+        "capability_hint": "Labelled 'Report' on the dashboard, but it generates nothing: it shells out to a hardcoded public GitHub URL for the author's PDF. Classified 'unknown' deliberately — it is neither a report the application produces nor an api/file-exchange integration, so no value in the closed set describes it honestly. Any real reporting capability is unimplemented, and this is the application's only outbound network call.",
+        "evidence_refs": [
+          "Flat Design/Form1.vb:155",
+          "Flat Design/Form1.vb:156",
+          "Flat Design/Form1.vb:157"
+        ]
+      }
+    ],
+    "counts": {
+      "total": 6,
+      "human_facing": 5,
+      "machine_facing": 1
+    },
+    "open_questions": [
+      "ZERO accessibility annotations were found: no AccessibleName and no AccessibleDescription on any of the 137 controls across all four Designer files. That is a measured count, not an impression. It matters disproportionately here because the dashboard's meaning is carried by 17 PictureBoxes and 20 Panels used as visual chrome, with values in unlabelled TextBoxes and generic Label1..Label27 names, so a screen reader has nothing to announce. All five human-facing surfaces carry a Section 508 / WCAG 2.1 AA obligation that the current UI does not meet; hand this to the downstream ux-accessibility pass as a starting fact.",
+      "No MaxLength is set on any TextBox anywhere in the application, so every text interface accepts unbounded input against columns of unknown declared width — a truncation or provider-error path on save that no validation intercepts.",
+      "Four of the six interfaces are reparented child forms (TopLevel=False inside Form1.Panel5) rather than independent windows, so 'interface' here means a screen region, not a window. Two of them are additionally reached through VB default instances that are not the displayed objects, which is why the post-save refresh lands on an off-screen copy — see the default-instance-aliasing coupling indicator before treating these as four clean screens.",
+      "The audience of every interface is recorded as 'internal' on the inference that administrative student-record screens are staff-facing, but the repository documents no deployment, no user population and no business owner, and the application has no authentication to distinguish one. Confirm with stakeholders; if any of these screens is in fact public-facing, the complete absence of authentication becomes a critical finding rather than a structural observation.",
+      "No HTTP endpoint, no API, no message queue, no scheduled job, no batch entry point and no file import/export path exists anywhere in the tree. The endpoint_count the Pass 0 catalog left unset is therefore confirmed as a genuine zero rather than an unmeasured value."
+    ]
+  },
+  "integration_points": [
+    {
+      "name": "studentDB.accdb local Access database",
+      "direction": "bidirectional",
+      "protocol": "OLE DB (Microsoft.ACE.OLEDB.12.0) over a local file",
+      "target": "Flat Design/studentDB.accdb (code points at a hardcoded D:\\PROGRAMING\\... absolute path)",
+      "evidence_refs": [
+        "Flat Design/Module1.vb:7",
+        "Flat Design/Module1.vb:4",
+        "Flat Design/studentDB.accdb"
+      ]
+    },
+    {
+      "name": "GitHub project-report PDF link",
+      "direction": "outbound",
+      "protocol": "HTTPS via Process.Start browser launch",
+      "target": "github.com/siddharth9300/Student-Management-System-VB.Net",
+      "evidence_refs": [
+        "Flat Design/Form1.vb:156",
+        "Flat Design/Form1.vb:157"
+      ]
+    },
+    {
+      "name": "Microsoft Access Database Engine redistributable (ACE OLEDB 12.0)",
+      "direction": "outbound",
+      "protocol": "in-process COM provider, installed out-of-band per workstation",
+      "target": "Local Windows host prerequisite; 32-bit build required because Release pins PlatformTarget x86",
+      "evidence_refs": [
+        "Flat Design/Module1.vb:7",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:35"
+      ]
+    }
+  ],
+  "open_questions": [
+    "GOVERNING-PROFILE DISCREPANCY (recorded as a finding, per the governing-profile declaration). The authoritative governing client profile for this task is `faa`, and this pass reads policy only from profiles/faa/. Nothing in this application's source supports that scope: the tree is a single-developer VB.NET WinForms student-records tool with a GPL licence, a public GitHub origin, a one-commit history and an author-credited project report, and it contains no aviation, NAS, air-traffic, certification or FAA-adjacent artifact of any kind. The Pass 0 catalog raised the same mismatch independently. This pass does NOT adopt any alternative governing profile and does not restate one as fact; it maps the application as found and flags the discrepancy for the engagement owner to resolve before any FAA-specific gating (safety tiering, NAS impact assessment, compliance mapping) consumes these boundaries.",
+    "SOURCE-TREE CONTAMINATION IS WIDER THAN PASS 0 REPORTED, and it is an upstream pipeline defect worth fixing at the source. The catalog flagged one stray file (fixtures/default.json). This pass finds 26 untracked files across four directories — assets/, references/, scripts/, fixtures/ — whose contents are Olympus Discovery-skill assets and reference documents (ADABAS DDM parsing, classic ASP patterns, NIST 800-63 mapping, OCR readiness rubrics, stored-proc classification SQL). They are excluded from every metric here, but their presence inside a customer source tree is how a later pass silently inflates a file count, 'detects' ADABAS or SQL Server in a VB.NET/Access application, or treats a template as evidence. Recommend the workspace-staging owner separate skill scaffolding from the source checkout.",
+    "DATABASE INTERNALS NEED A LIVE ENGINE TO CLOSE OUT. The .accdb was decoded as a binary file, never opened through a database engine, which is enough to confirm the table and column set but not enough for column data types, NULL-ability, declared widths, validation rules, primary keys, indexes or row counts. Those are reported as unknown rather than guessed. One ODBC/ACE session against the file would close all of them, and it is a prerequisite for generating any target schema. See the database-schema-summary open_questions for the specific items.",
+    "SCOPE OF THIS ARTIFACT vs THE DISPATCH CONTRACT. The dispatch context declares eight output schemas under files/structural-analysis/, six of which belong to sibling Discovery skills that are dispatched separately and write to their own output directories (legacy-language-reader, legacy-database-archaeologist, legacy-data-flow-tracer, identity-landscape-analyzer, tiff-corpus-assessor, discovery-patterns-sqlserver). This skill emits only its own contract — structural-analysis.json with its two governed sections, structural-analysis.md, and call-graph.json. Two of those sibling artifacts are additionally INAPPLICABLE to this application on the evidence: sqlserver-object-inventory describes SQL Server objects where this application uses a file-based Access database with zero procedures, views and triggers, and tiff-corpus-assessment describes an image corpus where this tree holds three PNG screenshots and no TIFF at all. Emitting either would mean fabricating a corpus and a server that do not exist; flagging them as not-applicable is the honest answer and the gate should read it that way.",
+    "db-schema.json IS A MIRROR, NOT A SECOND SOURCE OF TRUTH. The skill's artifact list names a db-schema.json while the structural-analysis schema states that the database schema is a SECTION of this document and warns that giving it a file path manufactures an undeclared file. The authoritative content is the `database-schema-summary` section here; db-schema.json is written beside it as a byte-equivalent convenience copy of that section, with no content that diverges. If the contract owner wants one or the other, the section is the one to keep.",
+    "NO BEHAVIOURAL BASELINE EXISTS, which constrains every downstream pass more than any single defect here. There is no test project, no CI pipeline, no build script, and a single-commit history, so nothing executable specifies current behaviour. Several defects this pass found are ambiguous between bug and intent precisely because of that — the 2023 year baseline, the Male/Female-only dashboard against a three-value gender domain, the post-insert refresh landing on off-screen form instances. Those need stakeholder adjudication, not a code reading, and characterization tests against the current build are the prerequisite for any transformation beyond a lift-and-shift.",
+    "THE BUILD DOES NOT RECONSTRUCT FROM A CLEAN CLONE, so no claim here that would require compiling has been verified by compiling. Manifest signing is enabled against a .pfx that .gitignore excludes and the tree does not contain; the solution maps the Debug configuration to Release so there is no debug build; and the connection string points at an absolute path that does not exist in the repository layout, so even a successful build cannot reach its database. Establish a reproducible build before any measurement that depends on one.",
+    "PII AND SAFETY CLASSIFICATION ARE DELIBERATELY NOT SET BY THIS PASS. The committed database holds live personal data about students — names, father's name, two mobile numbers, dates of birth — in a public repository, with no database password and no application authentication. This pass records that as a structural fact with evidence and stops there: classification is a data-protection and stakeholder decision, not a code inference, and the Pass 0 catalog likewise left safety_tier unset for want of an authoritative input. Route to the data-protection reviewer independently of modernization sequencing, since remediation of a public exposure should not wait on a migration plan.",
+    "WHETHER THIS APPLICATION SHOULD BE MODERNIZED AT ALL IS AN OPEN DISPOSITION QUESTION, and the structure is the argument. 461 lines of hand-written logic, one table, ten columns, three closed value domains, four screens and one genuine capability (student-record CRUD plus five aggregate tiles) is comfortably inside the range where rewriting on a current stack costs less than transforming, and the Pass 0 catalog's own note records that the active profile defines no modernization target for a VB.NET WinForms plus Access stack. The boundaries in recommended_decomposition_boundaries are offered for whichever disposition is chosen; they are not an argument that transformation is the right one. Retire/replace deserves explicit consideration by the disposition owner."
+  ]
+}

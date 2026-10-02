@@ -1,0 +1,38 @@
+{
+  "step": "synthesis",
+  "artifacts": [
+    "Done. All nine schema-governed artifacts validate, and every citation resolves against the input artifacts.\n\n## What I found\n\n**The most important finding is that the analysis target is unconfirmed.** The governing profile is declared authoritative as `faa`, and I honoured that \u2014 I read policy only from `profiles/faa/` and did not adopt any alternative. But the application is a single-developer VB.NET WinForms **student-records desktop tool** (GPL, public GitHub, one commit, academic project report) with no aviation content whatsoever. **Seven passes raised this independently.** I recorded it as a finding rather than restating the artifacts' framing as fact, and made it the first review ask \u2014 because every other artifact in the package is internally consistent with whatever target was analysed, so an automated pre-review would score it highly even if the target is wrong.\n\n**Input completeness:** ten canonical passes present and consumed; **nothing `absent_expected`**. Two specialist passes (document-imaging, SQL Server) are `na_by_subject` \u2014 and critically, both say so in their *own* text, so I didn't have to invent an explanation for a gap.\n\n**36 consolidated findings** (16 high / 12 medium / 8 low), **25 flagged architecturally significant** \u2014 that's the ADR denominator. The 8 low-confidence findings are retained as known-unknowns, not dropped.\n\n**12 cross-pass contradictions**, both claims preserved in every case. Three are only visible at synthesis:\n- **CON-004** \u2014 the capability pass ran *before* the data-domain input it requires existed, so its grain is under-informed rather than wrong.\n- **CON-011** \u2014 `quality-risk.json:vulnerabilities` is `[]` while the same artifact reports a confirmed exploitable SQL injection as its #2 risk driver. Any consumer reading that field gets zero and is wrong.\n- **CON-006** \u2014 the PII escalation calls it a \"live dataset\"; forensics measured **2 rows of implausible-looking test data**. Both are right about different things, so I kept the remediation ask at full severity while using the measured payload for the criticality rating.\n\nI also pinned the numbers that were drifting across passes (CON-008): **16 SQL statements, 10 computed statistics across 12 tiles, 1 injectable** \u2014 the variants (12/9/5 statistics, 15 statements) came from passes whose contract isn't to count them.\n\n**Business criticality: 1 of 5, `rated` at medium confidence.** I deliberately did *not* return `insufficient_evidence` \u2014 that's for \"we couldn't tell\", and here five passes converge on positive evidence: 2 live rows, an admission-year picker that expired in 2023, and a hardcoded path meaning a clean clone can't connect. I recorded the evidence that argued *the other way* (`raises`: sole system of record, no fallback), kept `safety_tier` null, copied `complexity_tier` verbatim without letting it influence the rating, and named six gaps in `missing_inputs`.\n\nTwo judgement calls worth flagging: I rated rather than declined on criticality, and on **CON-001** I resolved the primary-key dispute *against* the conservative structural pass (the specialist decoded the index leaf page) \u2014 but noted its \"incorrectly reported\" language shouldn't carry forward, since the operative risk is identical either way.\n\nThe SRS (70 requirements, 66 anomaly resolutions, 20 needing SME confirmation) was generated from a single source of truth so the index can't disagree with its detail files. Its headline caveat: **no target DDL may be generated** until one database-engine session closes OQ-003, because the legacy column types are genuinely disputed."
+  ],
+  "file_artifacts": [
+    "business-criticality.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-criticality.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/discovery-synthesis.md",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/downstream-pointers.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-accessibility-compliance.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-anomaly-resolution-log.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-data-model.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-requirements-functional.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-requirements-nonfunctional.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+    "discovery-synthesis.md",
+    "downstream-pointers.json",
+    "srs-accessibility-compliance.json",
+    "srs-anomaly-resolution-log.json",
+    "srs-data-model.json",
+    "srs-requirements-functional.json",
+    "srs-requirements-nonfunctional.json",
+    "srs.json",
+    "synthesis.json"
+  ],
+  "model_used": "claude-opus-5",
+  "duration_ms": 2055230,
+  "token_usage": {
+    "input": 1123,
+    "output": 222969
+  },
+  "cost_estimate_usd": 16.174037999999996,
+  "timestamp": "2026-10-02T19:17:16.842289+00:00",
+  "pass": "synthesis",
+  "skill_id": "discovery-synthesizer"
+}

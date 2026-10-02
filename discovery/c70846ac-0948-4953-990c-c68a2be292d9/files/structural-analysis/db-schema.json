@@ -1,0 +1,80 @@
+{
+  "$schema": "olympus:artifact:database-schema-summary:v1",
+  "engine": "Microsoft Access (ACE / 'Standard ACE DB' file format, read from the file header of studentDB.accdb; reached through the Microsoft.ACE.OLEDB.12.0 provider). The precise Access product version was not determinable from the file.",
+  "schema_names": [],
+  "tables": [
+    {
+      "name": "students",
+      "access": "owner",
+      "owning_module": "module1-db-connection",
+      "columns": [
+        {
+          "name": "RollNo",
+          "constraint": "Application-enforced only: used as the de-facto record key by every single-row SELECT, UPDATE and DELETE, and read from the grid as Cells(\"rollno\"). NO primary key or unique index was found in the decoded file, and the insert path performs no duplicate check, so uniqueness is assumed by the code and enforced nowhere. Bound as a string from a TextBox with no MaxLength and no format validation. | Evidence: Flat Design/studentDB.accdb; Flat Design/EditForm.vb:14; Flat Design/ViewForm.vb:90; Flat Design/InsertForm.vb:12"
+        },
+        {
+          "name": "FName",
+          "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data. Also the only field other than RollNo that the search path matches on, via LIKE. | Evidence: Flat Design/studentDB.accdb; Flat Design/ViewForm.vb:50; Flat Design/InsertForm.vb:13"
+        },
+        {
+          "name": "LName",
+          "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:14"
+        },
+        {
+          "name": "FatherName",
+          "constraint": "Application-enforced only: free text, no MaxLength, no required check. Personal data about a third party who is not the record subject. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:15"
+        },
+        {
+          "name": "MobNo",
+          "constraint": "Application-enforced only: free text, no MaxLength, no numeric or phone-format validation. Contact PII. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:16"
+        },
+        {
+          "name": "AltMobNo",
+          "constraint": "Application-enforced only: free text, no MaxLength, no format validation, not required. Contact PII, typically a next-of-kin number. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.vb:17"
+        },
+        {
+          "name": "Gender",
+          "constraint": "Application-enforced closed domain, NOT a database constraint: the entry and edit combos offer exactly 'Male', 'Female', 'Other'. The dashboard counts only Male and Female, so 'Other' is storable but invisible in every statistic — the enumeration is enforced in two UI files and disagrees with the one place that aggregates it. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:24; Flat Design/Form1.vb:29"
+        },
+        {
+          "name": "Course",
+          "constraint": "Application-enforced closed domain, NOT a database constraint: the combos offer exactly 'BCA', 'MCA', 'IIMCA', and the dashboard's three course tiles hardcode the same three literals. Adding a course requires editing both Designer files and Form1's SQL. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:38; Flat Design/Form1.vb:43; Flat Design/Form1.vb:48"
+        },
+        {
+          "name": "YOA",
+          "constraint": "Year of admission. Application-enforced closed domain, NOT a database constraint: the combos offer a static literal list '2019'..'2023' that cannot express any later intake, and the dashboard derives its five academic-year buckets by subtracting from a hardcoded currentYear = 2023. Stored and compared as a string, not a number. | Evidence: Flat Design/studentDB.accdb; Flat Design/InsertForm.Designer.vb; Flat Design/Form1.vb:59; Flat Design/Form1.vb:62"
+        },
+        {
+          "name": "DOB",
+          "constraint": "Date of birth; PII and the basis of any age calculation. No database constraint found. Written as dtpDOB.Text — a culture-formatted display string — and read back with a culture-free DateTime.Parse, with OptionStrict Off, so day/month transposition is possible across workstation locales. No range or plausibility check. | Evidence: Flat Design/studentDB.accdb; Flat Design/EditForm.vb:30; Flat Design/EditForm.vb:62; Flat Design/InsertForm.vb:23"
+        }
+      ],
+      "evidence_refs": [
+        "Flat Design/studentDB.accdb",
+        "Flat Design/InsertForm.vb:9",
+        "Flat Design/EditForm.vb:14",
+        "Flat Design/EditForm.vb:51",
+        "Flat Design/ViewForm.vb:39",
+        "Flat Design/ViewForm.vb:48",
+        "Flat Design/ViewForm.vb:90",
+        "Flat Design/Form1.vb:24"
+      ]
+    }
+  ],
+  "relationships": [],
+  "stored_procedures": [],
+  "triggers": [],
+  "views": [],
+  "database_links": [],
+  "open_questions": [
+    "NON-AUTHORITATIVE MIRROR: the authoritative database schema for application c70846ac-0948-4953-990c-c68a2be292d9 (Student Management System (VB.NET)) is the database-schema-summary SECTION of structural-analysis.json, governed there as a property of its parent (deliberately without a file path of its own). This file is a content-equivalent copy of that section, written only because the legacy-architecture-mapper artifact list names a db-schema.json. Nothing in it diverges from the section. If a contract owner must choose one, keep the section.",
+    "CONFIRMED, NOT INFERRED: the Pass 0 catalog inferred a single table from embedded SQL text and asked Pass 1 to verify against the real .accdb. This pass decoded the ACE table-definition records directly out of the binary and confirms exactly one user table, `students`, with exactly these ten columns. The only other objects in the file's catalog are Access system objects (MSysObjects, MSysACEs, MSysRelationships, MSysNavPane*, MSysComplexType_*, the empty Forms/Reports/SysRel/UserDefined containers and __Semaphores). There are therefore no user queries, forms, reports, macros or VBA modules inside the database: zero stored procedures, zero views, zero triggers, zero database links — all database logic lives in the application, and those empty arrays are measured findings rather than unfilled fields.",
+    "COLUMN DATA TYPES ARE UNKNOWN AND ARE NOT GUESSED. Column names and their on-disk order were recovered, but the ACE type bytes, lengths, NULL-ability and AllowZeroLength/Required/ValidationRule settings sit in binary structures this text-oriented decode did not resolve. The application is no guide: OptionStrict is Off and every value is bound via AddWithValue from a string control, so even DOB and YOA may well be stored as text. Resolve by opening the .accdb through an Access/ACE engine or ODBC and querying the catalog before any schema is generated for a target database.",
+    "NO PRIMARY KEY OR INDEX WAS FOUND, and this should be treated as 'not established' rather than 'absent'. No PrimaryKey definition and no autonumber/ID column were recovered (an `ID` column does not occur in the file at all), while 62 'Index' string occurrences in the file are mostly Access catalog boilerplate and were not resolved to actual index definitions. Since rollno is the de-facto key used by every single-row operation with no uniqueness enforcement in code, confirming this against a live engine is a prerequisite for migration — and if duplicates exist, de-duplication must precede it.",
+    "ROW COUNT IS NOT REPORTED because it was not measured; no table carries a row_count_estimate rather than carrying a fabricated one. The 784 KB file does contain real data — the decode recovered surname and gender values from data pages — but Access does not store a reliable row count in a text-extractable location, and the dataset is small enough that file size implies nothing.",
+    "THE FILE RETAINS A SUPERSEDED COLUMN LAYOUT: a second `students` table-definition record carries `ClassN` and `Sec` in the positions where the live definition carries `Course` and `YOA`. The application references only Course and YOA, so this is dead residue from an earlier schema revision. Worth confirming whether any data rows still carry the old shape before migrating, since nothing in the application would read them.",
+    "COLUMN NAME CASING DIFFERS BETWEEN SCHEMA AND CODE: the database declares PascalCase (RollNo, FName, FatherName, AltMobNo), while every SQL statement and every reader lookup in the application uses lowercase (rollno, fname, fathername, altmobno). Access/Jet is case-insensitive so this is harmless today, but it will break on a case-sensitive target such as PostgreSQL, and it breaks in the places that are resolved at runtime rather than compile time — stReader(\"fname\") and DataGridView Cells(\"rollno\"). Decide the target casing convention once, deliberately.",
+    "The schema has no audit, soft-delete or provenance column — no created/modified timestamp, no user stamp, no row version. Combined with the application having no authentication, there is no way to attribute or reconstruct any change to a student record, and DELETE is physical and immediate. If any retention or auditability obligation applies, the current design cannot satisfy it and the history is already unrecoverable.",
+    "The .accdb carries no database password and the connection string sets only Persist Security Info=False, so filesystem permissions are the sole access control over the entire dataset. Unverified whether the deployed copy was ever placed on a restricted share."
+  ]
+}

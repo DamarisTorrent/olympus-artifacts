@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "standard": "WCAG 2.1 AA / Section 508",
+  "pages_audited": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+  "violations": {
+    "critical": 1,
+    "serious": 2,
+    "moderate": 4,
+    "minor": 2
+  },
+  "508_compliance": "fail",
+  "accessibility_score": null,
+  "wcag_conformance_pct": null,
+  "audit_method_note": "This is a standalone WinForms (.NET Framework 4.8) desktop application: there is no HTML, DOM, URL, or running build in this sandbox, so axe-core / scripts/run_axe_audit.sh (a browser-based DOM scanner) cannot run at all -- there is nothing to point a browser at. This audit instead manually inspected the four WinForms Designer source files (Form1.Designer.vb, InsertForm.Designer.vb, EditForm.Designer.vb, ViewForm.Designer.vb) and their code-behind .vb files, reading control-level properties (AccessibleName, AccessibleDescription, TabIndex, BackColor, ForeColor, Font, Text, control type) directly from source, cross-referenced against the three provided screenshots for rendered appearance. accessibility_score and wcag_conformance_pct are reported as null rather than estimated, because no automated or rendered measurement was possible -- there is no percentage to compute without a running build. This method CANNOT detect: actual runtime screen-reader announcement behavior (NVDA/JAWS/Narrator), real keyboard-trap edge cases during live focus traversal, dynamic/async content changes, exact rendered pixel colors (contrast findings below are qualitative, derived from the designer's declared ARGB values and the screenshots, not from pixel-sampled measurement), or High-Contrast-mode / Windows theme interactions with SystemColors.*. Automated DOM tools, when available, typically catch only ~30-40% of WCAG issues; here 0% of findings came from automated tooling, so confidence is correspondingly lower and manual assistive-technology testing (NVDA/JAWS/Narrator against a real compiled build) is required before this audit's findings can be considered conclusive or complete.",
+  "total_violations": 9,
+  "gate_decision": "FAIL",
+  "audit_date": "2026-10-02",
+  "tool": "Manual source-code accessibility review (Designer.vb property inspection + screenshot review) -- axe-core not applicable, no DOM/build/URL available for a WinForms desktop app",
+  "recommendation": "Treat this as a legacy-baseline 'fail' gate. Before any modernization migration, (1) set explicit AccessibleName/AccessibleDescription on all 137 controls across the four forms -- this is the single highest-impact fix since it is currently a measured zero; (2) replace DataGridView AutoGenerateColumns=True with explicit columns carrying human-readable HeaderText instead of raw DB field names; (3) give the five visually-identical 'Year Students' dashboard tiles distinct accessible text, not just a decorative numeral image, to differentiate them non-visually; (4) fix the duplicate TabIndex values and remove the two overlapping/off-position duplicate dashboard panels; (5) replace theme-dependent SystemColors.ActiveCaption with a fixed, pre-validated AA-contrast color on the 'Male Students' tile and the grid background; (6) add MaxLength/input validation with field-specific error messages. None of this is a one-week fix at legacy baseline -- plan for a dedicated accessibility remediation pass in the modernization backlog, followed by real NVDA/JAWS/Narrator testing against a compiled build.",
+  "findings": [
+    {
+      "id": "A11Y-001",
+      "rule_id": "winforms-missing-accessible-name",
+      "section_508": "Section 508 (ICT Final Rule, 36 CFR 1194.1) incorporates WCAG 2.0/2.1 AA 4.1.2 by reference",
+      "wcag": "4.1.2",
+      "level": "A",
+      "impact": "critical",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:173-215 (btnNew, btnView have no AccessibleName/AccessibleDescription)",
+        "InsertForm.Designer.vb:85-331 (cmbyoa, cmbCourse, cmbGender, dtpDOB, txtRollNo, txtFirstName, txtLastName, txtFatherName, txtMobNo, txtAltMobNo, btnSave, btnCancel all lack AccessibleName/AccessibleDescription)",
+        "EditForm.Designer.vb:53-330 (same 10-field pattern, no AccessibleName/AccessibleDescription)",
+        "ViewForm.Designer.vb:42-171 (txtSearch, btnSearch, DataGridView1, btnUpdate, btnDelete all lack AccessibleName/AccessibleDescription)"
+      ],
+      "elements_affected": 137,
+      "summary": "A full read of all four Designer.vb files confirms zero AccessibleName and zero AccessibleDescription property assignments across all 137 controls in the application (corroborating the prior structural-analysis pass). For controls that render visible .Text (buttons, labels) Windows UI Automation generally falls back to Text for a name, which is usually adequate, but for controls without inherent text content -- ComboBox, DateTimePicker, DataGridView, PictureBox, TextBox -- there is no reliable programmatic name at all, since WinForms has no formal label-for association comparable to HTML; adjacency to a Label is only a heuristic some screen readers use, and it is undermined here by the duplicate-TabIndex and overlapping-panel issues documented in A11Y-004/A11Y-005. This is the only mechanism (keyboard + screen reader) a non-visual user has to operate the application at all, so its total absence is classified critical.",
+      "remediation": "Set Control.AccessibleName (and AccessibleDescription where the name alone is ambiguous) on every interactive control, starting with the 10 data-entry fields in InsertForm/EditForm, the search box, grid, and action buttons in ViewForm, and the nav buttons and all decorative-vs-informational PictureBoxes in Form1 (set AccessibleRole = AccessibleRole.None or empty AccessibleName for purely decorative icons so screen readers skip them, consistent with 1.1.1 for non-text content).",
+      "description": "Verified by reading every line of all four *.Designer.vb files; no occurrence of the strings 'AccessibleName' or 'AccessibleDescription' was found in any of them.",
+      "code_before": "Me.btnNew.Text = \"   Insert\"\n' ... no Me.btnNew.AccessibleName or AccessibleDescription set anywhere in Form1.Designer.vb (true for all 137 controls across all 4 Designer files)",
+      "code_after": "Me.btnNew.Text = \"   Insert\"\nMe.btnNew.AccessibleName = \"Insert new student record\"\nMe.btnNew.AccessibleRole = System.Windows.Forms.AccessibleRole.PushButton"
+    },
+    {
+      "id": "A11Y-002",
+      "rule_id": "datagridview-autogenerated-raw-column-headers",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.3.1 and 3.3.2 by reference",
+      "wcag": "1.3.1",
+      "level": "A",
+      "impact": "serious",
+      "page": "view-form",
+      "location": [
+        "ViewForm.vb:14 (DataGridView1.AutoGenerateColumns = True)",
+        "ViewForm.vb:37-45 (LoadData: DataGridView1.DataSource = stDS.Tables(\"students\"))",
+        "ViewForm.vb:47-58 (LoadSData: same pattern for search results)",
+        "ViewForm.Designer.vb:81-130 (DataGridView1 has styling but no explicit Columns collection or HeaderText overrides)"
+      ],
+      "elements_affected": 1,
+      "summary": "DataGridView1 is bound directly to the raw 'students' table with AutoGenerateColumns=True and no explicit Columns/HeaderText configuration in either ViewForm.vb or ViewForm.Designer.vb, so the rendered column headers are the literal database field names -- confirmed in screenshot 2 as RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB. Abbreviations like 'YOA' and 'FName'/'LName' are not expanded anywhere in code or markup, so a screen reader announces the raw DB token with no explanation, and the information/relationship between the visually-obvious column grouping and its semantic meaning is conveyed only through an un-expanded abbreviation.",
+      "remediation": "Set DataGridView1.AutoGenerateColumns = False and explicitly add DataGridViewColumn entries with human-readable HeaderText (e.g. \"Year of Admission\" instead of \"YOA\", \"Father's Name\" instead of \"FatherName\"), binding each via DataPropertyName to the underlying field.",
+      "description": "Verified via ViewForm.vb LoadData()/LoadSData() and ViewForm.Designer.vb InitializeComponent(); no DataGridView1.Columns.Add or .HeaderText assignment exists anywhere in either file.",
+      "code_before": "DataGridView1.AutoGenerateColumns = True\n...\nDataGridView1.DataSource = stDS.Tables(\"students\") ' columns auto-named from raw DB fields: FName, LName, MobNo, AltMobNo, YOA, DOB",
+      "code_after": "DataGridView1.AutoGenerateColumns = False\nDataGridView1.Columns.Add(\"colFName\", \"First Name\")\nDataGridView1.Columns(\"colFName\").DataPropertyName = \"fname\"\n' repeat for each column with a descriptive HeaderText; also set DataGridView1.AccessibleName = \"Student records\""
+    },
+    {
+      "id": "A11Y-003",
+      "rule_id": "year-tiles-indistinguishable-without-color-image",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.4.1 by reference",
+      "wcag": "1.4.1",
+      "level": "A",
+      "impact": "serious",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:442-454 (Label27.Text = \"Year Students\")",
+        "Form1.Designer.vb:491-503 (Label17.Text = \"Year Students\")",
+        "Form1.Designer.vb:689-701 (Label23.Text = \"Year Students\")",
+        "Form1.Designer.vb:738-750 (Label25.Text = \"Year Students\")",
+        "Form1.Designer.vb:787-799 (Label12.Text = \"Year Students\")",
+        "Form1.Designer.vb:456-464,505-513,703-711,752-760,801-809 (PictureBox17/12/15/16/9 -- decorative numeral images, TabStop=False, no AccessibleName)"
+      ],
+      "elements_affected": 5,
+      "summary": "The five 'Year Wise' dashboard tiles (1st-5th year) all carry the identical generic text caption \"Year Students\" (Label27/Label17/Label23/Label25/Label12); per the screenshot, the only element that actually distinguishes which year a given tile represents is a decorative numeral graphic (PictureBox9/17/12/16/15, image of '1'/'2'/'3'/'4'/'5') rendered in a different color per tile, and none of those PictureBoxes has an AccessibleName. A user who cannot perceive the image/color (screen-reader user, or low-vision user who can read the black text but not resolve the small numeral glyph against its pastel tile) has no way to tell the five tiles apart -- all five announce as, or appear as, plain \"Year Students\" with a count.",
+      "remediation": "Give each tile's label distinct, specific text (\"1st Year Students\", \"2nd Year Students\", etc.) rather than reusing the generic \"Year Students\" caption, and set a matching AccessibleName on the corresponding numeral PictureBox (e.g. \"1st year icon\") so the information is not conveyed by color/image alone.",
+      "description": "Verified by reading the Text property of all five year-tile Labels in Form1.Designer.vb; all five are the literal string \"Year Students\" with no distinguishing ordinal, and no AccessibleName exists on the paired numeral PictureBoxes.",
+      "code_before": "Me.Label27.Text = \"Year Students\" ' identical caption reused on Label17/Label23/Label25/Label12; only differentiator is a decorative numeral image with no AccessibleName",
+      "code_after": "Me.Label27.Text = \"2nd Year Students\"\nMe.PictureBox17.AccessibleName = \"2nd year icon\""
+    },
+    {
+      "id": "A11Y-004",
+      "rule_id": "duplicate-tabindex-nav-rail",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.4.3 by reference",
+      "wcag": "2.4.3",
+      "level": "A",
+      "impact": "moderate",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:167 (btnReport.TabIndex = 6)",
+        "Form1.Designer.vb:211 (btnView.TabIndex = 6)",
+        "Form1.Designer.vb:189 (btnNew.TabIndex = 7)",
+        "Form1.Designer.vb:254 (btnHome.TabIndex = 7)"
+      ],
+      "elements_affected": 4,
+      "summary": "In the left navigation rail of Form1, btnReport and btnView both declare TabIndex = 6, and btnNew and btnHome both declare TabIndex = 7. Duplicate TabIndex values make the keyboard focus order through the primary navigation ambiguous/implementation-defined, which is a focus-order defect for keyboard-only users.",
+      "remediation": "Assign unique, sequential TabIndex values to the five nav buttons reflecting their intended visual/logical order (e.g. Dashboard=0, View=1, Insert=2, Report=3, Exit=4).",
+      "description": "Verified directly from the TabIndex assignments in Form1.Designer.vb's InitializeComponent().",
+      "code_before": "Me.btnReport.TabIndex = 6\n...\nMe.btnView.TabIndex = 6 ' duplicate\nMe.btnNew.TabIndex = 7\n...\nMe.btnHome.TabIndex = 7 ' duplicate",
+      "code_after": "Me.btnHome.TabIndex = 0\nMe.btnView.TabIndex = 1\nMe.btnNew.TabIndex = 2\nMe.btnReport.TabIndex = 3\nMe.Button8.TabIndex = 4"
+    },
+    {
+      "id": "A11Y-005",
+      "rule_id": "overlapping-duplicate-dashboard-panels",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.3.2 by reference",
+      "wcag": "1.3.2",
+      "level": "A",
+      "impact": "moderate",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:528-537 (Panel11, relative Location (373, 0) inside Panel10 located at (909, 237) -> absolute (1282, 237))",
+        "Form1.Designer.vb:577-586 (Panel13, relative Location (-373, 0) inside Panel10 -> absolute (536, 237), overlapping Panel9 at (538, 237))"
+      ],
+      "elements_affected": 2,
+      "summary": "Panel11 (duplicate 'IIMCA Students' tile: Label3/Label8/PictureBox8) and Panel13 (duplicate 'BCA Students' tile: Label13/Label14/PictureBox10) are nested inside Panel10 with Location offsets of (373,0) and (-373,0) respectively. Because Panel10 itself sits at (909,237), these resolve to absolute positions (1282,237) and (536,237) -- the latter directly overlapping Panel9 (the real 'MCA Students' tile at (538,237)), and the former sitting outside/at the edge of the visible dashboard area. These appear to be leftover duplicate controls from copy-paste (Panel10 already has its own direct-child Label10/txtIIMCAStudents/PictureBox7 for 'IIMCA Students', and Panel8 already provides the real 'BCA Students' tile). Regardless of visual rendering, these controls remain part of the form's control collection and tab order, so a keyboard/screen-reader user tabbing through the dashboard can land on content ('0', 'BCA Students', 'IIMCA Students') that does not correspond to anything sensible at that point in the visual/reading sequence.",
+      "remediation": "Remove the duplicate Panel11 and Panel13 (and their child controls Label3/Label8/PictureBox8 and Label13/Label14/PictureBox10) entirely, since the equivalent tiles already exist as Panel8 (BCA) and the direct children of Panel10 (IIMCA).",
+      "description": "Verified by computing absolute positions from the nested Location values declared in Form1.Designer.vb; this is a structural/code-cleanliness defect that also has an accessibility consequence via focus/reading order.",
+      "code_before": "Me.Panel13.Location = New System.Drawing.Point(-373, 0) ' nested inside Panel10 at (909,237) => absolute (536,237), overlapping Panel9 (538,237)\nMe.Panel11.Location = New System.Drawing.Point(373, 0) ' absolute (1282,237)",
+      "code_after": "' Panel11 and Panel13 (and their child controls) removed; Panel8 and Panel10's direct children already represent BCA and IIMCA Students"
+    },
+    {
+      "id": "A11Y-006",
+      "rule_id": "theme-dependent-color-coded-tile",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 1.4.3 by reference",
+      "wcag": "1.4.3",
+      "level": "AA",
+      "impact": "moderate",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:960 (Panel6.BackColor = System.Drawing.SystemColors.ActiveCaption)",
+        "Form1.Designer.vb:989 (Label4.ForeColor = System.Drawing.Color.Black)",
+        "ViewForm.Designer.vb:89 (DataGridView1.BackgroundColor = System.Drawing.SystemColors.ActiveCaption)"
+      ],
+      "elements_affected": 2,
+      "summary": "Most of the dashboard's color-coded tiles use fixed, very light pastel ARGB values (e.g. FromArgb(192,255,255), FromArgb(255,192,192), FromArgb(255,255,192)) paired with black text, which generally has a wide contrast margin and is unlikely to fail 1.4.3. The 'Male Students' tile (Panel6) and the ViewForm DataGridView background are the exceptions: they use the theme-dependent SystemColors.ActiveCaption instead of a fixed color. In the provided screenshot this renders as a noticeably darker steel-blue than the other pastel tiles, which qualitatively looks like it has a narrower contrast margin against the black label text than the lighter pastels elsewhere -- but an exact contrast ratio cannot be asserted without pixel-sampling a rendered build or running a real contrast tool, which this source-only audit cannot do. More importantly, SystemColors.ActiveCaption varies by Windows theme/accent color and by OS version, so the actual rendered color -- and therefore its contrast against the hard-coded black text -- is not fixed or verifiable at design time; a user with a different theme or a Windows high-contrast theme could get a combination that fails AA even if the color shown in this screenshot happens to pass.",
+      "remediation": "Replace SystemColors.ActiveCaption with a fixed, explicitly chosen and pre-validated AA-contrast ARGB value (consistent with the other hard-coded pastel tiles), and verify the final chosen color against its paired text/selection colors with a real contrast-ratio tool once a build is available.",
+      "description": "Flagged qualitatively per the FAA contrast-reviewer guidance (profiles/faa/skills/accessibility-checker/references/faa-visualization-contrast-notes.md) against status/metric-tile color coding; this audit did not pixel-sample the screenshot or measure an exact ratio, and says so explicitly rather than asserting a fabricated number.",
+      "code_before": "Me.Panel6.BackColor = System.Drawing.SystemColors.ActiveCaption\n...\nMe.Label4.ForeColor = System.Drawing.Color.Black",
+      "code_after": "Me.Panel6.BackColor = System.Drawing.Color.FromArgb(176, 196, 222) ' fixed color, chosen to be re-validated with a contrast checker, instead of theme-dependent SystemColors.ActiveCaption\nMe.Label4.ForeColor = System.Drawing.Color.Black"
+    },
+    {
+      "id": "A11Y-007",
+      "rule_id": "no-maxlength-no-field-validation",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 3.3.2 by reference",
+      "wcag": "3.3.2",
+      "level": "A",
+      "impact": "moderate",
+      "page": "insert-form",
+      "location": [
+        "InsertForm.Designer.vb:131-158,193-200,213-220,222-229,275-282 (txtAltMobNo, txtMobNo, txtFatherName, txtLastName, txtFirstName -- no MaxLength set)",
+        "EditForm.Designer.vb:105-112,125-132,166-173,186-193,249-256 (same fields, same absence)",
+        "InsertForm.vb:4-34 (btnSave_Click builds the INSERT with no field-level validation before AddWithValue)",
+        "EditForm.vb:49-73 (btnSave_Click builds the UPDATE with no field-level validation; errors surface only as MsgBox(ex.Message))"
+      ],
+      "elements_affected": 10,
+      "summary": "No TextBox in InsertForm or EditForm has MaxLength set (confirmed zero occurrences of 'MaxLength' in either Designer.vb, corroborating the prior structural-analysis pass), and neither code-behind file performs field-specific input validation (e.g. numeric-only Mob No, non-empty Roll No) before submitting to the database -- the only error surfaced is a single generic MsgBox tied to the exception message, not to the offending field. Assistive-technology users get no advance indication of expected input length/format and no way to associate a validation failure with a specific field.",
+      "remediation": "Set an appropriate MaxLength on each TextBox (Roll No, Mob No, Alt Mob No in particular, which have an implicit expected digit length visible in the screenshots), and add field-level validation with an ErrorProvider or inline message tied to the specific control, rather than a single generic Catch/MsgBox.",
+      "description": "Verified via a full read of InsertForm.Designer.vb, EditForm.Designer.vb, InsertForm.vb, and EditForm.vb; no MaxLength assignment and no per-field validation exists in any of them.",
+      "code_before": "Me.txtMobNo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle\n' no MaxLength, no input mask, no validation in btnSave_Click before stcommand.Parameters.AddWithValue(\"@MobNo\", txtMobNo.Text)",
+      "code_after": "Me.txtMobNo.MaxLength = 10\n' plus client-side validation with an ErrorProvider tied to txtMobNo specifically, instead of a single generic Catch ... MsgBox(ex.Message)"
+    },
+    {
+      "id": "A11Y-008",
+      "rule_id": "no-access-key-mnemonics",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.1.1 by reference",
+      "wcag": "2.1.1",
+      "level": "A",
+      "impact": "minor",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:168,190,212,233,255 (btnReport/btnNew/btnView/Button8/btnHome .Text values, none contain '&')",
+        "InsertForm.Designer.vb:303,318 (btnCancel.Text = \"Cancel\", btnSave.Text = \"Save\", no '&')",
+        "EditForm.Designer.vb:64,79 (btnCancel.Text = \"Cancel\", btnSave.Text = \"Update\", no '&')",
+        "ViewForm.Designer.vb:68,143,158 (btnSearch/btnDelete/btnUpdate .Text, no '&')"
+      ],
+      "elements_affected": 11,
+      "summary": "No Button.Text in any of the four forms contains an ampersand ('&'), confirming the prior structural-analysis pass's finding that there are no keyboard-shortcut/access-key (mnemonic) annotations anywhere in the application. All buttons remain reachable via Tab, so this is not a blocking keyboard failure, but it removes the Alt+accelerator efficiency path that keyboard-only and some motor-impaired users rely on, and is inconsistent with typical Windows desktop-app conventions.",
+      "remediation": "Add a single '&' mnemonic character to each button caption (e.g. '&Save', 'C&ancel', '&Search', '&Update', '&Delete', '  &Insert', '  &View') ensuring no two controls on the same form/panel share a mnemonic letter.",
+      "description": "Verified by inspecting every Button.Text assignment across all four Designer.vb files; none contains '&'.",
+      "code_before": "Me.btnSave.Text = \"Save\"\nMe.btnCancel.Text = \"Cancel\" ' no '&' accelerator in any Button.Text across all 4 forms",
+      "code_after": "Me.btnSave.Text = \"&Save\"\nMe.btnCancel.Text = \"C&ancel\""
+    },
+    {
+      "id": "A11Y-009",
+      "rule_id": "generic-internal-names-vs-visible-text",
+      "section_508": "Section 508 (ICT Final Rule) incorporates WCAG 2.0/2.1 AA 2.4.6 by reference",
+      "wcag": "2.4.6",
+      "level": "AA",
+      "impact": "minor",
+      "page": "form1-dashboard",
+      "location": [
+        "Form1.Designer.vb:97,217 (Label1/Button8 -- generic internal Name, descriptive visible .Text: \" Sudent Management System\", \"  Exit\")",
+        "InsertForm.Designer.vb:49,324-331 (Label8 -- generic internal Name, visible .Text = \"INSERT DATA\")",
+        "EditForm.Designer.vb:28,84-92 (Label8 -- generic internal Name, visible .Text = \"EDIT DATA\")",
+        "ViewForm.Designer.vb:37,162-171 (Label8 -- generic internal Name, visible .Text = \"VIEW DATA\")"
+      ],
+      "elements_affected": 137,
+      "summary": "Confirming and refining the prior structural-analysis observation: internal control Name values are overwhelmingly generic/auto-generated (Label1 through Label27, Button8, Panel1 through Panel20, PictureBox1 through PictureBox17, with Label8 reused as a distinct control in three different forms) and carry no semantic meaning on their own. However, this is a separate fact from visible-label quality: in nearly every case the VISIBLE .Text caption actually rendered to a sighted user IS descriptive (\"Project Report\", \"Insert\", \"View\", \"Dashboard\", \"Exit\", \"INSERT DATA\", \"Roll No\", \"Father Name\", etc.), so 2.4.6 is largely satisfied at the visual layer. The generic internal names only become a user-facing accessibility problem in combination with A11Y-001: for controls that have no .Text at all (TextBox, ComboBox, DateTimePicker, DataGridView, PictureBox), Windows UI Automation has no visible caption to fall back on and may expose the literal internal Name (e.g. \"PictureBox14\", \"cmbyoa\") -- or nothing informative -- to a screen reader, which is why setting explicit AccessibleName (A11Y-001) matters more here than renaming the internal identifiers.",
+      "remediation": "Low priority relative to A11Y-001: optionally rename internal Name values to match purpose for maintainability (e.g. Label9 -> lblRollNo), but prioritize setting explicit AccessibleName on the non-text controls, since that is what actually reaches assistive technology.",
+      "description": "Verified by cross-referencing every control's declared Name against its Text property across all four Designer.vb files; visible Text is descriptive in nearly all cases even though internal Name values are generic defaults.",
+      "code_before": "Me.Label9.Name = \"Label9\"\nMe.Label9.Text = \"Roll No\" ' internal Name is generic/non-descriptive, but the VISIBLE .Text caption IS descriptive",
+      "code_after": "' Internal rename (optional, maintainability only): Label9 -> lblRollNo\n' Accessibility-relevant fix is on the paired non-text control instead:\nMe.txtRollNo.AccessibleName = \"Roll No\""
+    }
+  ]
+}

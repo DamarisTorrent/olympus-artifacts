@@ -1,0 +1,162 @@
+{
+  "$schema": "olympus:artifact:srs-accessibility-compliance:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "prescribed_standard": "WCAG 2.1 Level AA, with Section 508 as incorporated by the ICT Final Rule at 36 CFR 1194.1",
+  "conformance_target": "Full WCAG 2.1 Level AA conformance across every human-facing surface, verified against a rendered build with assistive technology, with zero open Level A or Level AA violations at release.",
+  "source_note": "The standard is carried forward verbatim from the applicable standards the UX and accessibility pass identified for this application (ux-accessibility.json:accessibility_findings.applicable_standards). It is NOT derived from the governing client profile, because the profile's applicability to this application is itself unresolved \u2014 see synthesis review ask 'analysis-scope-unconfirmed'. The accessibility obligation is asserted here independently of that question: a critical WCAG violation on a human-facing surface fails at any classification tier, which the UX pass states explicitly, so this requirement does not wait on the scope decision.",
+  "prescribed_requirement": "NFR-001 requires conformance of every human-facing surface; NFR-002 through NFR-010 and NFR-024 prescribe the specific remediations below. All eleven are held in srs-requirements-nonfunctional.json.",
+  "unassessed_gaps": [
+    "No live screen-reader session (NVDA, JAWS or Narrator) was performed against a compiled build, because no compiled build could be produced \u2014 a clean checkout fails manifest signing against a key the repository excludes and does not contain. Runtime announcement behaviour is therefore unverified, which matters most where the duplicate focus positions and overlapping panels could affect live reading order in ways source inspection cannot confirm.",
+    "No pixel-sampled or tool-measured contrast ratio was produced. The one contrast finding is qualitative, derived from declared colour values and screenshots, and the affected surfaces use a theme-dependent system colour whose rendered value is not fixed at design time.",
+    "No end-to-end keyboard-only interaction test was performed, so whether the duplicate focus positions and the two overlapping duplicate panels produce an actual keyboard trap or merely an inefficient order is unconfirmed.",
+    "No automated scan contributed any finding: the checker's browser-based tooling cannot run against a WinForms desktop application with no HTML, DOM or URL. Zero per cent of the baseline findings came from automated tooling, against a tool that typically catches only 30 to 40 per cent of issues even when it can run.",
+    "TREAT THE BASELINE AS A FLOOR, NOT A CEILING. The nine findings below are the violations a manual source read could establish. The true violation count is higher, and the conformance verification NFR-001 prescribes \u2014 screen reader and keyboard testing against a rendered build \u2014 is precisely the method the baseline audit could not apply."
+  ],
+  "baseline_posture": {
+    "method": "Manual source-code accessibility review: control-level property inspection across all four interface definition files, cross-referenced against three application screenshots. Browser-based automated scanning was not applicable \u2014 this is a WinForms desktop application with no HTML, DOM, URL or running build.",
+    "surfaces_reviewed": "4 of 4 human-facing surfaces reviewed (statistics and navigation shell, record entry, record amendment, record list and search). A fifth human-facing interface recorded by the structural pass \u2014 the outbound browser launch to a third-party URL \u2014 was out of scope because it renders no application-owned interface.",
+    "gate_decision": "FAIL",
+    "gate_decision_note": "Driven by one critical finding \u2014 zero accessible names and zero accessible descriptions across all 137 controls in all four surfaces, the application's only non-visual access mechanism entirely absent \u2014 plus two serious findings. A critical violation forces the fail verdict. This is a legacy-baseline measurement for modernization comparison, not a verdict on shipped code.",
+    "total_findings": {
+      "critical": 1,
+      "serious": 2,
+      "moderate": 4,
+      "minor": 2,
+      "total": 9
+    },
+    "by_category": {
+      "missing-programmatic-name": 1,
+      "information-and-relationships": 1,
+      "use-of-colour-or-image-alone": 1,
+      "focus-order": 1,
+      "meaningful-sequence": 1,
+      "contrast": 1,
+      "input-assistance-and-labelling": 1,
+      "keyboard-accelerators": 1,
+      "descriptive-labels": 1
+    },
+    "measured_zeros": {
+      "controls_in_application": 137,
+      "controls_with_accessible_name": 0,
+      "controls_with_accessible_description": 0,
+      "text_inputs_with_declared_maximum_length": 0,
+      "controls_with_keyboard_accelerator": 0,
+      "note": "These are measured counts independently confirmed by two passes, not impressions. A measured zero is the strongest possible baseline for modernization comparison: any non-zero result after remediation is a demonstrable improvement."
+    }
+  },
+  "findings": [
+    {
+      "id": "A11Y-001",
+      "wcag": "4.1.2",
+      "level": "A",
+      "impact": "critical",
+      "surface_id": "form1-dashboard",
+      "summary": "Zero accessible names and zero accessible descriptions across all 137 controls in all four surfaces. Controls that render visible text generally fall back to it for a name, but controls with no inherent text \u2014 selection lists, date pickers, the record grid, images and text inputs \u2014 have no reliable programmatic name at all, and this platform has no formal label-association mechanism comparable to the web's. This is the only means by which a non-visual user can operate the application, so its total absence is critical.",
+      "prescribed_fix": "NFR-002: every interactive control MUST expose a programmatic accessible name, and a control conveying meaning without text MUST expose an accessible description; purely decorative images MUST be marked so assistive technology skips them.",
+      "prescribed_requirements": [
+        "NFR-001",
+        "NFR-002"
+      ]
+    },
+    {
+      "id": "A11Y-002",
+      "wcag": "1.3.1",
+      "level": "A",
+      "impact": "serious",
+      "surface_id": "view-form",
+      "summary": "The record grid is bound with automatic column generation and no explicit heading configuration, so the rendered column headings are the literal database field names, including unexpanded abbreviations for first name, last name and year of admission. A screen reader announces the raw database token with no explanation.",
+      "prescribed_fix": "NFR-003: the record list MUST present human-readable column headings and MUST NOT expose raw database field names or unexpanded abbreviations. Reinforced by REQ-042, which requires the presented fields to come from an explicit declared contract rather than from the physical schema at runtime.",
+      "prescribed_requirements": [
+        "NFR-003",
+        "REQ-042"
+      ]
+    },
+    {
+      "id": "A11Y-003",
+      "wcag": "1.4.1",
+      "level": "A",
+      "impact": "serious",
+      "surface_id": "form1-dashboard",
+      "summary": "All five academic-year statistic tiles carry the identical caption, and the only element distinguishing which year a tile represents is a decorative numeral image rendered in a different colour per tile, none of which has an accessible name. A user who cannot perceive the image or the colour cannot tell the five tiles apart.",
+      "prescribed_fix": "NFR-004: information MUST NOT be conveyed by colour or image alone, and every statistic MUST carry a distinct text label identifying what it counts.",
+      "prescribed_requirements": [
+        "NFR-004"
+      ]
+    },
+    {
+      "id": "A11Y-004",
+      "wcag": "2.4.3",
+      "level": "A",
+      "impact": "moderate",
+      "surface_id": "form1-dashboard",
+      "summary": "Two pairs of navigation controls in the shell share duplicate focus positions, making keyboard focus order through the primary navigation ambiguous and implementation-defined.",
+      "prescribed_fix": "NFR-005: keyboard focus order MUST be unique, deterministic and follow the logical reading order of each surface.",
+      "prescribed_requirements": [
+        "NFR-005"
+      ]
+    },
+    {
+      "id": "A11Y-005",
+      "wcag": "1.3.2",
+      "level": "A",
+      "impact": "moderate",
+      "surface_id": "form1-dashboard",
+      "summary": "Two duplicate statistic tiles remain nested in the shell at offsets that resolve to one overlapping a real tile and one sitting outside the visible area. Both remain in the control collection and the focus order, so a keyboard or screen-reader user can land on content that means nothing at that point in the sequence. The loader never writes them, so they read zero permanently.",
+      "prescribed_fix": "NFR-006: every surface MUST contain only controls that are part of its intended presentation; orphaned, duplicated and off-position controls MUST NOT remain in the control collection or the focus order.",
+      "prescribed_requirements": [
+        "NFR-006",
+        "REQ-023"
+      ]
+    },
+    {
+      "id": "A11Y-006",
+      "wcag": "1.4.3",
+      "level": "AA",
+      "impact": "moderate",
+      "surface_id": "form1-dashboard",
+      "summary": "Most tiles use fixed light colour values against black text with a wide contrast margin. Two surfaces are exceptions: they use a theme-dependent system colour, so the rendered colour \u2014 and therefore its contrast against hardcoded black text \u2014 is not fixed or verifiable at design time, and an alternative or high-contrast system theme could produce a failing combination. No ratio was measured; this is a qualitative, source-grounded flag.",
+      "prescribed_fix": "NFR-007: colours MUST meet the AA contrast minimum against explicitly chosen values and MUST NOT depend on the operating-system theme for conformance, verified on a rendered build including under a high-contrast theme.",
+      "prescribed_requirements": [
+        "NFR-007"
+      ]
+    },
+    {
+      "id": "A11Y-007",
+      "wcag": "3.3.2",
+      "level": "A",
+      "impact": "moderate",
+      "surface_id": "insert-form",
+      "summary": "No text input in the entry or amendment surfaces declares a maximum length, and neither performs field-specific validation before submitting. The only error surfaced is one generic message tied to the raw exception, so assistive-technology users get no advance indication of expected length or format and no way to associate a failure with a specific field.",
+      "prescribed_fix": "NFR-008: every input MUST declare its expected format and maximum length in advance, and a validation failure MUST be programmatically associated with the field at fault. Reinforced by REQ-003 and REQ-040.",
+      "prescribed_requirements": [
+        "NFR-008",
+        "REQ-003",
+        "REQ-040"
+      ]
+    },
+    {
+      "id": "A11Y-008",
+      "wcag": "2.1.1",
+      "level": "A",
+      "impact": "minor",
+      "surface_id": "form1-dashboard",
+      "summary": "No control caption in any of the four surfaces contains an accelerator marker, so there are no keyboard shortcuts anywhere in the application. All controls remain reachable by sequential focus, so this is not a blocking keyboard failure, but it removes the accelerator efficiency path that keyboard-only and some motor-impaired users rely on.",
+      "prescribed_fix": "NFR-009: primary actions SHOULD provide a keyboard accelerator, and no two controls on the same surface may share one.",
+      "prescribed_requirements": [
+        "NFR-009"
+      ]
+    },
+    {
+      "id": "A11Y-009",
+      "wcag": "2.4.6",
+      "level": "AA",
+      "impact": "minor",
+      "surface_id": "form1-dashboard",
+      "summary": "Internal control identifiers are overwhelmingly generated sequences carrying no semantic meaning, with one identifier reused as a distinct control in three different surfaces. Visible captions are descriptive in nearly every case, so this is largely satisfied at the visual layer; it becomes user-facing only in combination with the missing accessible names, where a control with no text may have its literal internal identifier exposed to a screen reader.",
+      "prescribed_fix": "NFR-010: control identifiers SHOULD describe their purpose so that any identifier exposed to assistive technology is meaningful. Lower priority than NFR-002, which is what actually reaches assistive technology.",
+      "prescribed_requirements": [
+        "NFR-010"
+      ]
+    }
+  ]
+}

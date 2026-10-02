@@ -1,0 +1,143 @@
+{
+  "$schema": "olympus:artifact:business-criticality:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "produced_by": "discovery-synthesizer",
+  "generated": "2026-10-02T00:00:00Z",
+  "business_criticality": {
+    "rating": 1,
+    "assessment": "rated",
+    "confidence": "medium",
+    "scale_anchor": "1 — Negligible operational consequence: internal tooling, a reporting convenience, a decommissioned-in-practice surface.",
+    "rationale": "We asked the consequence question — what stops, for whom, and is there a fallback — and the converging answer across five passes is that nothing identified stops, because there is no evidence this application is operational anywhere. The 'decommissioned-in-practice surface' clause of the 1 anchor is what it matches, and it matches on measured facts rather than on absent evidence: the database holds two live rows totalling roughly 211 bytes inside an 800-kilobyte file that is otherwise stock-template furniture, and those two rows carry a 2009 date of birth against a 2019 admission year, which is implausible for a real student and reads as test data; the year-of-admission picker is a static list that expired in 2023, so no intake after 2023 can be recorded at all; and the database is bound by a hardcoded absolute path on the original author's D: drive, so a clean clone cannot connect to the database that ships beside it without a source change and a recompile. The repository is GPL-licensed with a public origin, a single commit and an author-credited academic project report. Why not 2: the 2 anchor requires a localised or deferrable impact with a workaround in routine use, which presupposes an operational user whose work is interrupted; no such user has been identified and no telemetry, CMDB entry, org chart or business owner exists to identify one. Why not 3 or above: a 3 requires material disruption to a business function, and the application is the sole system of record for its own data but that data is two rows of apparently synthetic content, so there is no business function to disrupt. The rating is deliberately NOT a statement that we could not tell — we could, and the evidence points one way. What we could not do is corroborate it against an authoritative operational record, which is why confidence is medium rather than high and why the gaps are named in missing_inputs. One further caveat the reviewer must weigh: this rating describes the repository that was analysed, and the governing-profile scope question (synthesis.json review ask 'analysis-scope-unconfirmed') is unresolved, so if the wrong application was staged against this portfolio slot then this rating is correct about the artifact and silent about the intended subject.",
+    "evidence_refs": [
+      {
+        "citation": "data-domains.json:method_notes.inherited_input_reconciliation",
+        "pass": "data-domains",
+        "statement": "A page-level census of the database file measured the entire user payload at two live rows of roughly 211 bytes on a single data page, with six further deleted rows recoverable from page slack. The 800-kilobyte file size is template furniture and uncompacted design churn, not data volume.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "BR-021",
+        "pass": "business-logic",
+        "statement": "The two live rows carry a 2009 date of birth against a 2019 year of admission, implying a nine-year-old admitted student — evidence that no plausibility rule has ever existed, and a strong indication the content is test data rather than a real student population.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "BR-015",
+        "pass": "business-logic",
+        "statement": "The year-of-admission picker is a static literal list of 2019 to 2023 with no later value available, so no intake after 2023 can be recorded at all. An application in genuine operational use for student admissions could not have functioned through the 2024 or 2025 intake.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "structural-analysis.json:coupling_indicators.hardcoded-environment-binding",
+        "pass": "structural",
+        "statement": "The database is bound by a hardcoded absolute literal naming the original author's D: drive, and the file actually ships at a different relative path. There is no configuration indirection of any kind, so a clean clone cannot connect on any machine but the author's without a recompile.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "catalog.json:description",
+        "pass": "catalog",
+        "statement": "The author's own README and project report describe this as a single-developer academic or portfolio project with no network, web or batch component.",
+        "supports": "lowers"
+      },
+      {
+        "citation": "ux-accessibility.json:adoption_baseline",
+        "pass": "ux-accessibility",
+        "statement": "There is no instrumentation of any kind — no logging framework, no analytics call, no usage-tracking table, no audit column and no login mechanism — so active user count, feature usage and session duration are all unmeasured. The pass is explicit that this is an instrumentation gap and NOT an observation of zero usage, and makes no claim about whether the application has ever run outside its author's development machine.",
+        "supports": "context"
+      },
+      {
+        "citation": "shared-db-analysis.json:cross_application_sharing_summary.sharing_verdict",
+        "pass": "shared-database",
+        "statement": "The cross-application sharing verdict is 'none-detected': this application is the sole writer and sole consumer of its store, imposes no co-wave constraint on any other application and receives none. Nothing else in the portfolio breaks if this stops — but equally, this application is the only system of record for whatever data it does hold, so there is no fallback for that data.",
+        "supports": "raises"
+      },
+      {
+        "citation": "catalog.json:user_facing",
+        "pass": "catalog",
+        "statement": "The application is recorded as user-facing with four human-facing screens covering the full create, read, update and delete path over student records. If it were in operational use, an outage would stop record maintenance entirely, because no second interface and no manual process is documented anywhere.",
+        "supports": "raises"
+      },
+      {
+        "citation": "ESC-1",
+        "pass": "quality-risk",
+        "statement": "An open critical escalation records live student personal data in a public repository with no authentication and a confirmed exploitable SQL-injection read path. This was weighed and deliberately did NOT raise the rating: criticality asks what breaks if the application stops, and an uncontrolled personal-data exposure is an argument for stopping it, not evidence that stopping it causes harm. It is routed separately as a data-protection remediation ask at full severity.",
+        "supports": "context"
+      },
+      {
+        "citation": "quality-risk.json:risk_summary.overall_risk_tier",
+        "pass": "quality-risk",
+        "statement": "Overall risk tier is HIGH and technical debt scores 74 of 100. Recorded as context only: this is a risk and debt assessment, not a consequence-of-outage assessment, and it must not be read as a criticality signal. A high-risk application can be entirely non-critical, which is precisely this case.",
+        "supports": "context"
+      }
+    ],
+    "missing_inputs": [
+      "CMDB export or equivalent authoritative asset record — none was provided at onboarding, so no deployment footprint, host inventory or support arrangement could be checked.",
+      "Named business owner or sponsoring office — the catalog pass records that neither the repository nor its documentation states one, so there is nobody identified whose work would be interrupted.",
+      "Operational criticality classification from the client — no existing rating was supplied for this synthesis to confirm, extend or contradict.",
+      "Confirmation of whether the application is deployed anywhere outside the author's development machine, and to how many workstations — no telemetry, no release record and a single-commit git history mean this cannot be established from the artifact.",
+      "Resolution of the governing-profile and analysis-scope discrepancy (synthesis.json review ask 'analysis-scope-unconfirmed'). If the wrong repository was staged against this portfolio slot, this rating describes the staged artifact and not the intended subject.",
+      "Contents of the 868-kilobyte author-credited project report committed at the repository root, which no Discovery pass parsed and which could state an operational purpose or deployment that the source does not reveal."
+    ]
+  },
+  "complexity_tier": "simple",
+  "safety_tier": null,
+  "review_asks": [
+    {
+      "ask_slug": "business-criticality-confirmed",
+      "action": "verify",
+      "title": "We rate this application 1 out of 5 for business criticality — nothing we can find breaks if it stops. Please confirm or override",
+      "why": "Criticality drives migration priority and remediation sequencing, so a wrong rating either sends a system that matters to the back of the queue or spends scarce effort on one that does not.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "medium",
+        "score": 0.62,
+        "rationale": "The underlying facts are strong and cross-corroborated: five passes converge on an application that holds two rows of apparently synthetic data, cannot record an intake after 2023, and cannot connect to its own database from a clean checkout. What is missing is corroboration against an authoritative operational record — there is no CMDB entry, no named business owner, no deployment confirmation and no telemetry of any kind — so we are reasoning from the artifact rather than from the organisation. Confidence would move to high on a single stakeholder confirmation that the application is not deployed, and would move sharply the other way if it turns out to be in live use somewhere we cannot see."
+      },
+      "assessment": "We rate business criticality 1 out of 5 — negligible operational consequence — matching the scale's 'decommissioned-in-practice surface' anchor. Plainly: if this application stopped working tomorrow, we cannot identify anybody whose work would be interrupted. The database holds two student records, and those two records contain a date of birth and an admission year that are impossible together, which reads as test data rather than a real student. The screen for choosing a year of admission only offers years up to 2023, so nobody could have used it to enrol a student in 2024 or 2025. And the application looks for its database at a fixed location on the original developer's own computer, so a fresh copy of this software cannot even open its own data without being rebuilt. The author's own documentation describes it as a personal academic project. IMPORTANT, AND PLEASE READ IT ALONGSIDE: this low rating is NOT a statement that the application is harmless. It carries an open critical finding — real student personal details sitting in a public code repository with no password, no login and a working flaw that lets a user read the whole table. That needs fixing on its own timetable and must not be deprioritised because the criticality rating is low; the two are separate questions and we have kept them separate. Equally important: criticality is independent of how hard the application is to change. Its complexity tier is 'simple', shown beside this rating for comparison only, and we did not let one influence the other. Finally, this rating describes the repository we were given. We have a separate, higher-priority question open about whether it is the right application for this programme at all, and if the answer is no then this rating tells you about the wrong system.",
+      "reasoning": "We asked what stops, for whom, and whether there is a fallback — not how big or how busy the application is. Volume and headcount are evidence, not the rating, and we were careful that a low-traffic system which is the sole system of record for a consequential decision would outrank a busy internal dashboard. Here the sole-system-of-record property does hold, and we recorded it as evidence that raises the rating, together with the fact that the application is user-facing and no manual fallback process is documented. We also recorded the high risk tier and the personal-data escalation as context that we weighed and deliberately did not let inflate the rating, because an uncontrolled data exposure is a reason to stop an application rather than evidence that stopping it causes harm. What decided the rating against those raising signals was the measured content of the store and the two independent indications that the application cannot have been in recent operational use: an admission-year list that expired in 2023, and a database binding that no clean checkout can resolve. We considered declining to rate and returning 'insufficient evidence' instead, and rejected that: declining is the right answer when we cannot tell what breaks, whereas here we have positive, converging, measured evidence pointing to negligible consequence. Reporting that as 'we could not tell' would understate what the passes actually established. The honest residual uncertainty is the absence of any authoritative operational record, which is why confidence is medium and why six specific gaps are named in the artifact rather than glossed.",
+      "evidence_refs": [
+        {
+          "name": "Measured data payload: two live rows",
+          "detail": "A page-level census of the Access file measured the entire user payload at two rows of roughly 211 bytes on one data page; the remaining 800 kilobytes are stock-template furniture, free pages and superseded design snapshots. Do not size anything from the file size.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/data-domains.json"
+        },
+        {
+          "name": "The two rows look like test data",
+          "detail": "Business rule BR-021 records that the two live rows carry a 2009 date of birth against a 2019 year of admission — a nine-year-old admitted student — which is evidence both that no plausibility rule ever existed and that the content is not a real student population.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Cannot record an intake after 2023",
+          "detail": "Business rule BR-015, severity critical and flagged for SME review: the year-of-admission picker is a static list of 2019 to 2023 duplicated across four locations, with no later value available.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "A clean checkout cannot connect to its own database",
+          "detail": "The connection string is a hardcoded absolute literal on the original author's D: drive while the database ships at a different relative path; App.config declares no connection strings and the settings store is empty, so changing it requires a recompile.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Raising signal we recorded: sole system of record, no fallback",
+          "detail": "The shared-database verdict is 'none-detected' — one application, one store, sole writer. Nothing else in the portfolio depends on it, but there is also no second system or documented manual process holding this data, so whatever it does hold has no fallback.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/shared-db-analysis.json"
+        },
+        {
+          "name": "Context we weighed and set aside: open critical PII escalation",
+          "detail": "ESC-1 records live student personal data in a public repository with no authentication, no encryption and a confirmed exploitable SQL-injection read path. Routed separately as a data-protection remediation ask at full severity; it did not raise the criticality rating, and the low rating must not be used to defer it.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/quality-risk-assessment/escalation-record.json"
+        },
+        {
+          "name": "What we could not check",
+          "detail": "No CMDB export, no named business owner, no operational criticality classification, no deployment confirmation and zero usage instrumentation. All six gaps are named in business_criticality.missing_inputs; they are why confidence is medium rather than high.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-criticality.json"
+        }
+      ]
+    }
+  ]
+}

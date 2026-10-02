@@ -1,0 +1,1060 @@
+{
+  "$schema": "olympus:artifact:discovery-synthesis:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "synthesis_pass": "Discovery Synthesis (discovery-synthesizer) — cross-pass reconciliation of the contract-driven Discovery pass set",
+  "generated": "2026-10-02",
+  "scope_caveat": "GOVERNING-PROFILE / ANALYSIS-SCOPE DISCREPANCY, CARRIED FORWARD UNRESOLVED. The governing client profile for this task is declared authoritative as 'faa' and this synthesis reads policy only from profiles/faa/. The application analysed is a single-developer VB.NET WinForms student-records desktop tool over a local Microsoft Access file, under a GPL licence, with a public GitHub origin, a one-commit history and an author-credited academic project report. It contains no aviation, NAS, air-traffic, certification or FAA-adjacent artifact of any kind. Seven Discovery passes independently reached the same conclusion (catalog, structural, business-logic, capability, data-domains, shared-database, ux-accessibility). This synthesis does NOT adopt an alternative governing profile and does not restate one as fact: it reconciles the application as found and routes the discrepancy to the engagement owner as the first review ask. Every downstream decision in this package — disposition, target binding, safety tiering, NAS impact, compliance mapping — is conditional on that ask being answered, because an internally consistent package built against the wrong analysis target will still score well on automated review.",
+  "input_inventory": [
+    {
+      "pass": "catalog",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+      "justification": "Application catalog entry consumed for identity, tech fingerprint, complexity_tier and the first statement of the governing-profile discrepancy."
+    },
+    {
+      "pass": "structural",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+      "justification": "Module map (6 logical modules), coupling_indicators, database-schema-summary and interface-inventory. This is the structural spine the per-module merge is keyed on."
+    },
+    {
+      "pass": "structural specialist — discovery-patterns-dotnet",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/discovery-patterns-dotnet/dotnet-fingerprint.json",
+      "justification": "Tech-stack specialist selected by the .NET fingerprint; corroborates net48/WinForms/WinExe and contributes findings F-001..F-009."
+    },
+    {
+      "pass": "business rules",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+      "justification": "60 rules (40 critical, 37 implicit, 23 flagged for SME review), 4 state machines and 34 implicit-logic findings. Delivered as a single document; no _paging member was present, so no slice-wise read applied."
+    },
+    {
+      "pass": "quality & risk",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/quality-risk.json",
+      "justification": "Debt score 74/100 (high), 21 code smells, test-coverage measurement 'unavailable', and escalation ESC-1 (regulatory_surface_area_pii)."
+    },
+    {
+      "pass": "ux & accessibility",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/ux-accessibility.json",
+      "justification": "4 UI surfaces, 1 persona, 9 accessibility findings and a Section 508 / WCAG 2.1 AA gate decision of FAIL. Applies by subject: the application is user_facing with four human-facing WinForms screens."
+    },
+    {
+      "pass": "data domains",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/data-domains.json",
+      "justification": "3 logical bounded contexts (D1/D2/D3) and 8 logical entities drawn over the single physical table, with 7 boundary violations carried forward."
+    },
+    {
+      "pass": "shared database",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/shared-db-analysis.json",
+      "justification": "Cross-application sharing verdict 'none-detected' over one degenerate single-participant cluster, plus 7 decomposition risks."
+    },
+    {
+      "pass": "capability",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/capability-catalog.json",
+      "justification": "2 capabilities and 1 business domain at the legacy-system grain. Consumed with a recorded caveat: this pass states its required data-domains input was unavailable at its execution time (see SYN-HCF-016 / contradiction CON-004)."
+    },
+    {
+      "pass": "compliance citations",
+      "status": "present",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/compliance-citations.json",
+      "justification": "Profile-declared Discovery pass. Scanned the source tree and emitted a measured zero: total_citations 0, unique_citations 0."
+    },
+    {
+      "pass": "document-imaging corpus (tiff-corpus-assessor)",
+      "status": "na_by_subject",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/tiff-corpus-assessment.json",
+      "justification": "N/A by subject: the application has no document-imaging corpus. A full-tree search found zero TIFF/TIF files and no scanning, imaging or OCR code. The artifact was nonetheless emitted because the Discovery line declares this specialist unconditionally, and it self-declares 'NOT APPLICABLE ... SHOULD NOT BE SCORED'. Its schema-forced placeholder values (image_count 4, ocr_readiness.overall_score 1) describe three README PNG screenshots and one .ico, not a corpus. Recorded as N/A rather than as a finding about this application — see contradiction CON-009."
+    },
+    {
+      "pass": "SQL Server object inventory (discovery-patterns-sqlserver)",
+      "status": "na_by_subject",
+      "artifact_ref": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/sqlserver-object-inventory.json",
+      "justification": "N/A by subject: no Microsoft SQL Server instance, connection or artifact exists. The only database is a file-based Microsoft Access .accdb reached through the Microsoft.ACE.OLEDB.12.0 provider. All twelve object/BI/ops collections are empty as a measured finding. The variant was declared unconditionally by the Discovery line and three artifacts independently flag the mismatch — see contradiction CON-009."
+    }
+  ],
+  "summary": {
+    "system_classification": "Single-assembly VB.NET WinForms thick-client forms-over-data monolith (archetype 'desktop', recorded by the catalog as a taxonomy gap), 2,787 total LOC of which 461 are hand-written, over one local Microsoft Access table with ten columns. Six logical modules, four human-facing screens, zero HTTP endpoints, zero scheduled jobs, zero message queues, zero authentication mechanisms, one outbound integration (a browser launch to a hardcoded public GitHub URL). Complexity tier 'simple' (catalog); overall risk tier 'HIGH' (quality & risk). The pairing is the point: this is a structurally simple application carrying a high-severity security and data-governance posture.",
+    "narrative": "See discovery-synthesis.md for the gate-review narrative, the consolidated BPM, the per-module merged view and the onboarding guide. Headline: the four forms look independent in the file tree but are joined through one process-wide, never-disposed OleDbConnection that one module unilaterally closes, and all sixteen SQL statements live in UI event handlers — so there is no seam at which to intercept, test, retarget or audit data access. Business meaning exists only inside form code: 60 rules were recovered from event handlers, 37 of them implicit and 23 flagged for SME confirmation. The application has no authentication of any kind, a live SQL-injection path at ViewForm.vb:50, and a committed Access file holding real (if small) student personal data in a public repository — escalated as ESC-1. Against that, the measured payload is two live rows, the admission-year picker expired in 2023, and the hardcoded database path means a clean clone cannot connect to the database that ships beside it. Twelve cross-pass contradictions are recorded below rather than silently resolved; the most consequential is that the analysis target itself is unconfirmed.",
+    "high_confidence_findings": [
+      {
+        "id": "SYN-HCF-001",
+        "statement": "The application has no authentication and no authorization of any kind. There is no login form, no user concept, no role model, no permission check and no actor audit column, so anyone who launches the executable has unrestricted create, read, update and delete over every student record including all personal data.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes using three independent techniques — structural source walk, quality-risk source re-read, identity/assurance analysis surfaced through the UX pass, and business-rule extraction. AuthenticationMode=0 is declared and My.User is never read. No pass found any contradicting signal.",
+        "contributing_passes": ["structural", "quality & risk", "ux & accessibility", "business rules"],
+        "source_findings": [
+          "structural-analysis.json:summary_metrics.authentication_mechanisms",
+          "BR-090",
+          "quality-risk.json:risk_summary.regulatory_surface_flags",
+          "ux-accessibility.json:personas"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-002",
+        "statement": "ViewForm.vb:50 contains a live, exploitable SQL-injection path: the free-text search box is concatenated verbatim into both a quoted equality clause and a LIKE clause, and the result is bound straight to the on-screen grid. It is the only statement in the application that takes attacker-controlled input without binding it, and it provides a direct read channel to the whole dataset.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes at the identical file and line — structural coupling analysis, quality-risk smell inventory (CS-18), business-rule extraction (BR-052), and the .NET pattern specialist (F-004). The quality-risk pass re-verified it by independent source read rather than copying Pass 1.",
+        "contributing_passes": ["structural", "quality & risk", "business rules", "structural specialist — discovery-patterns-dotnet"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.unsafe-sql-construction",
+          "quality-risk.json:code_smells[CS-18]",
+          "BR-052",
+          "ESC-1"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-003",
+        "statement": "A committed Microsoft Access database holding real student personal data — first and last name, father's name, two mobile numbers and date of birth — sits in a public source repository with no database password, no encryption and no application access control. Filesystem permissions are the only control over the entire dataset, and the Access file is directly openable by any user who can read it, bypassing the application entirely.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes, two of which used different techniques: a binary decode of the .accdb data pages recovered real stored values (ruling out an empty or seed schema), and an independent source read confirmed the absence of any credential or encryption path. Escalated unconditionally as ESC-1 under the profile's regulatory-surface rule.",
+        "contributing_passes": ["structural", "quality & risk", "data domains", "shared database"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.unprotected-pii-in-source-control",
+          "ESC-1",
+          "RISK-07",
+          "data-domains.json:domains"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-004",
+        "statement": "A single process-wide, globally mutable, never-disposed OleDbConnection is the sole join point for all four forms: four modules open it, ViewForm's delete path unilaterally closes it, nothing disposes it, and no Using block exists anywhere in the application. The four forms look independent in the file tree but share one lifecycle-managed resource with no owner.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes. The business-rule pass additionally traced the consequence to a reachable crash (a dashboard refresh after a delete throws an unhandled InvalidOperationException), and the quality-risk pass independently ranked this module the highest-risk in the application.",
+        "contributing_passes": ["structural", "quality & risk", "business rules"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.shared-global-connection",
+          "quality-risk.json:code_smells[CS-20]",
+          "BR-001",
+          "BR-004"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-005",
+        "statement": "There is no data-access layer, service layer, repository, ORM or stored procedure anywhere. All sixteen SQL statements are inline in UI event handlers across four of the six modules, while the nominal data-access module is thirteen lines holding zero queries. Business meaning — the aggregate definitions, the roll-number key, the ten-field record shape — exists only inside form code, so any re-platforming must create this layer rather than port it.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes; the business-rule pass is the operational proof, having had to read form event handlers rather than a service layer to recover all 60 rules.",
+        "contributing_passes": ["structural", "quality & risk", "business rules"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.ui-owns-all-sql",
+          "quality-risk.json:risk_summary.top_risk_drivers",
+          "business-logic.json:module_summary"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-006",
+        "statement": "All five academic-year dashboard statistics are derived by subtraction from a hardcoded constant currentYear = 2023 (Form1.vb:59); the system clock is never consulted. Every academic-year cohort has been mislabelled since 1 January 2024 and the error is silent — no exception is raised, no tile reports a reconciling total, and changing the workstation clock has no effect. This is a data-correctness defect, not a cosmetic one.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes — structural coupling signal 'hardcoded-temporal-baseline', quality-risk smell CS-03, business rule BR-072 (critical, high complexity, SME review required) and the implicit-logic finding IM-001 — plus the data-domains pass, which carries it as an open question on intended aggregate definitions.",
+        "contributing_passes": ["structural", "quality & risk", "business rules", "data domains"],
+        "source_findings": [
+          "structural-analysis.json:modules",
+          "quality-risk.json:code_smells[CS-03]",
+          "BR-072",
+          "BR-073",
+          "data-domains.json:open_questions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-007",
+        "statement": "Zero AccessibleName and zero AccessibleDescription properties exist across all 137 controls in all four forms — a measured count, not an impression. Because the dashboard carries its meaning through 17 PictureBoxes and 20 Panels used as visual chrome, and because WinForms has no label-for association comparable to HTML, a non-visual user has no reliable programmatic name for any control without inherent text. The accessibility gate decision is FAIL against WCAG 2.1 AA and Section 508.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes: the structural walk measured the zero, the quality-risk pass recorded it as smell CS-05 across 77 dashboard controls, and the UX pass's dispatched accessibility checker independently re-read all four Designer files and classified the absence critical (A11Y-001), forcing the FAIL verdict.",
+        "contributing_passes": ["structural", "quality & risk", "ux & accessibility"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.accessibility-surface-unannotated",
+          "quality-risk.json:code_smells[CS-05]",
+          "A11Y-001",
+          "ux-accessibility.json:accessibility_findings.gate_decision"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-008",
+        "statement": "The application has zero externalized configuration. The database is bound by a hardcoded absolute literal naming the original author's D: drive, App.config declares no connectionStrings section, Settings.settings is empty, and no environment variable is read anywhere. The .accdb actually ships at a different relative path, so a clean clone cannot connect to the database that ships beside it without a source change and a recompile.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes. The .NET specialist adds that the standard four-location connection-string check under-reports here because the string lives in a fifth, non-standard location — a VB code module.",
+        "contributing_passes": ["structural", "quality & risk", "business rules", "structural specialist — discovery-patterns-dotnet"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.hardcoded-environment-binding",
+          "quality-risk.json:code_smells[CS-21]",
+          "BR-002",
+          "quality-risk.json:risk_summary.top_risk_drivers"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-009",
+        "statement": "No test project, test file, test-runner configuration, CI/CD pipeline or build script exists anywhere in the repository, and the git history is a single commit. There is therefore no executable specification of current behaviour and no regression safety net, so no migration can be verified by regression and the behavioural contract must be reconstructed from source and screenshots.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes. The quality-risk pass reported test coverage as measurement method 'unavailable' with high confidence rather than as a 0% measurement, which is the correct treatment of absent tooling, and the structural pass independently confirmed zero test projects and zero CI pipelines.",
+        "contributing_passes": ["structural", "quality & risk", "shared database"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.no-automated-verification",
+          "quality-risk.json:test_coverage.measurement",
+          "shared-db-analysis.json:top_risks_for_decomposition"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-010",
+        "statement": "The persistence layer is exactly one user table, 'students', with exactly ten columns, and zero stored procedures, zero views, zero triggers, zero foreign keys and zero database links. The database is not shared with any other application: the cross-application sharing verdict is 'none-detected', write ownership is already singular, and the store imposes no co-wave constraint on any other application and receives none.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes, with the table and column set confirmed by direct binary decode of the Access table-definition records rather than inferred from embedded SQL text. The empty object collections are explicitly recorded as measured findings rather than unfilled fields.",
+        "contributing_passes": ["structural", "shared database", "data domains", "capability"],
+        "source_findings": [
+          "structural-analysis.json:database-schema-summary.tables",
+          "shared-db-analysis.json:cross_application_sharing_summary.sharing_verdict",
+          "data-domains.json:entity_assignment_summary",
+          "catalog.json:size_metrics.table_count"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-011",
+        "statement": "VB default-instance aliasing produces two parallel object graphs at runtime: the shell displays child forms it built with New, but the child forms refresh their siblings through bare default-instance properties that resolve to different objects. After a successful insert the application updates two forms the user is not looking at while the visible dashboard and grid keep showing stale data. Because C# has no default-instance feature, any port must consciously re-establish the intended parent-child wiring rather than translate these call sites.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes. The structural pass ranks it the most consequential structural defect found; the business-rule pass records it as BR-019 and models a transition in the navigation state machine that provably does not occur; the UX pass notes it changes what a screen-reader user is told happened after Save.",
+        "contributing_passes": ["structural", "business rules", "ux & accessibility"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.default-instance-aliasing",
+          "BR-019",
+          "quality-risk.json:code_smells[CS-10]",
+          "ux-accessibility.json:ui_inventory"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-012",
+        "statement": "The analysis target is unconfirmed. The governing client profile is declared authoritative as 'faa', but the application shows no aviation, NAS, air-traffic, certification or FAA-adjacent relevance anywhere in its source, README, licence or project report, and the profile's own .NET technology mapping defines no modernization target for a VB.NET WinForms plus Microsoft Access desktop stack. Seven Discovery passes raised this mismatch independently and none adopted an alternative profile.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by seven passes, each from a different angle: catalog (domain taxonomy forced to 'Admin'), structural (no FAA artifact in the tree), business rules (regulatory_applicability determination 'NOT APPLICABLE', no match on any profile regulatory source), capability (no governed capability vocabulary match), data domains (zero aviation entities in ten columns), shared database, and UX (no FAA user-segment taxonomy to map onto). This is the strongest multi-pass agreement in the package.",
+        "contributing_passes": ["catalog", "structural", "business rules", "capability", "data domains", "shared database", "ux & accessibility"],
+        "source_findings": [
+          "catalog.json:open_questions",
+          "structural-analysis.json:open_questions",
+          "business-logic.json:totals.regulatory_applicability.discrepancy_finding",
+          "capability-catalog.json:open_questions",
+          "data-domains.json:open_questions",
+          "ux-accessibility.json:scope_caveat"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-013",
+        "statement": "The gender value domain is enforced in the UI and nowhere in the database, and the two enforcement points disagree: the entry and edit combos offer exactly Male, Female and Other, while the dashboard census counts only Male and Female. A student recorded as 'Other' is storable but invisible in every statistic, and because no tile reports a grand total the undercount is undetectable from the screen.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes. The business-rule pass supplies both halves as separate rules (BR-013 establishing the three-value set, BR-070 establishing the two-query census) and states the inconsistency explicitly; the data-domains pass carries the same closed sets as a reference-data domain with no system of record.",
+        "contributing_passes": ["structural", "business rules", "data domains"],
+        "source_findings": [
+          "structural-analysis.json:database-schema-summary.tables",
+          "BR-013",
+          "BR-070",
+          "data-domains.json:domains"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-014",
+        "statement": "Deletion is physical, immediate and unrecoverable, and the schema carries no audit, soft-delete, provenance or row-version column — no created or modified timestamp, no user stamp, no lifecycle status. Combined with the total absence of authentication there is no way to attribute or reconstruct any change to a student record. Forensic decode nonetheless recovered six previously deleted rows intact from page slack in the database file, so deleted records remain readable in the artifact even though the application offers no recovery route.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by four passes. The structural and business-rule passes establish the absence of audit and the physical delete; the database forensics recovered the deleted rows from page slack; the data-domains pass carries it as a high-severity boundary violation and raises a dedicated review ask on recoverable deleted records.",
+        "contributing_passes": ["structural", "business rules", "data domains", "shared database"],
+        "source_findings": [
+          "structural-analysis.json:database-schema-summary.open_questions",
+          "BR-057",
+          "BR-095",
+          "data-domains.json:boundary_violations_carried_forward"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-015",
+        "statement": "Date of birth is round-tripped through the UI culture with no format provider on either side: it is written from a culture-formatted display string and read back with a culture-free DateTime.Parse, under project-wide OptionStrict Off. Day/month transposition is therefore possible on any workstation whose locale differs from the one that wrote the row, and no plausibility or range check exists anywhere — the two live rows carry a 2009 date of birth against a 2019 year of admission.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation by three passes at matching file and line evidence — structural coupling signal 'culture-dependent-date-parse', quality-risk smell CS-15, and two business rules covering the write side (BR-016) and the read side (BR-034), both critical and both flagged for SME review.",
+        "contributing_passes": ["structural", "quality & risk", "business rules"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.optionstrict-off-late-binding",
+          "quality-risk.json:code_smells[CS-15]",
+          "BR-016",
+          "BR-034"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-HCF-016",
+        "statement": "The Discovery pipeline ran the capability-extraction pass before the data-domain pass had produced its output, so the capability catalog was built without the input its own contract names as the strongest signal for capability boundaries. The capability pass records that the sibling task's output directory was empty at its execution time, yet data-domains.json exists and was consumed by this synthesis — so the two artifacts disagree about whether that input exists, and the capability grain is under-informed rather than wrong.",
+        "confidence": "high",
+        "signal": "cross-pass confirmation available only at synthesis: the capability pass states the input was unavailable, the artifact is demonstrably present in this synthesis input set, and the two passes' output directory timestamps order them capability-before-data-domains. No single pass could observe this.",
+        "contributing_passes": ["capability", "data domains"],
+        "source_findings": [
+          "capability-catalog.json:open_questions",
+          "data-domains.json:entity_assignment_summary",
+          "data-domains.json:method_notes.declared_inputs_not_staged"
+        ],
+        "architecturally_significant": false
+      }
+    ],
+    "medium_confidence_findings": [
+      {
+        "id": "SYN-MCF-001",
+        "statement": "Technical debt is scored 74 of 100, band 'high', from 21 distinct code-smell findings across 461 hand-written lines — roughly 45 smells per thousand lines. The score is a reproducible manual count from a full-file read, not a tool score: no linter or static-analysis tool was invoked, and the churn input was floored rather than estimated because a single-commit history cannot support a rate.",
+        "confidence": "medium",
+        "signal": "single pass with strong, self-documented evidence: the formula, every subscore, every weight and the measurement method are stated, and the smell inventory was cross-checked against the structural pass's independently derived coupling signals. Not raised to high because no second pass computed a debt figure and the pass itself rates its own measurement confidence 'medium'.",
+        "contributing_passes": ["quality & risk"],
+        "source_findings": [
+          "quality-risk.json:technical_debt_score",
+          "quality-risk.json:technical_debt_score.contributing_factors",
+          "quality-risk.json:code_smells[CS-01]"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-MCF-002",
+        "statement": "Sixty business rules were recovered, of which 40 are severity critical, 37 are implicit (present in behaviour but stated nowhere) and 23 are flagged as requiring SME confirmation. Four state machines were reconstructed although the application declares none — there is no status column, no state enum and no transition table — so a student record's state is its existence, and 'enrolled', 'graduated' and 'withdrawn' are indistinguishable.",
+        "confidence": "medium",
+        "signal": "single pass, but with unusually strong internal evidence: every stated total reconciles exactly against the rule array, all 118 inter-rule dependency references resolve, and every rule carries file and line traceability. Structurally corroborated by the finding that all SQL and therefore all business meaning sits in UI event handlers. Not raised to high because no second pass enumerated rules independently.",
+        "contributing_passes": ["business rules", "structural"],
+        "source_findings": [
+          "business-logic.json:totals",
+          "business-logic.json:totals.by_severity",
+          "BR-078",
+          "structural-analysis.json:coupling_indicators.ui-owns-all-sql"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-003",
+        "statement": "The two mobile-number columns are declared LONG INTEGER — a four-byte signed type with a maximum of 2,147,483,647 — so no ten-digit mobile number can be stored at all. Any such value overflows on a valid input that the UI accepts without complaint, because no field has a MaxLength and no format validation exists.",
+        "confidence": "medium",
+        "signal": "two passes agree on the consequence (the business-rule pass as critical rule BR-017 flagged for SME review, the data-domains pass as a carried defect on the contact entity), and both derive it from the same upstream binary type decode. Held at medium rather than high because the structural pass explicitly reports all column data types as unknown and refuses to guess them — see contradiction CON-002 — so the premise is contested.",
+        "contributing_passes": ["business rules", "data domains"],
+        "source_findings": [
+          "BR-017",
+          "data-domains.json:domains",
+          "structural-analysis.json:database-schema-summary.open_questions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-004",
+        "statement": "The year-of-admission picker is a static literal list of 2019 to 2023, duplicated across four locations and now expired: no intake after 2023 can be recorded at all. The course and gender value sets are likewise closed, UI-enforced and restated in eight and in two places respectively, so adding a course requires editing two Designer files and the dashboard SQL.",
+        "confidence": "medium",
+        "signal": "two passes agree — the business-rule pass as critical rule BR-015 flagged for SME review, and the data-domains pass which models all three closed sets as a reference-data domain that owns no physical column and has no system of record. Held at medium because the operational consequence (that the application cannot have been used for a post-2023 intake) is an inference from the value list rather than a measured fact.",
+        "contributing_passes": ["business rules", "data domains"],
+        "source_findings": [
+          "BR-015",
+          "BR-014",
+          "data-domains.json:domains",
+          "data-domains.json:boundary_arbitration_decisions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-005",
+        "statement": "Three circular module-dependency cycles exist and all three run through the dashboard shell: shell to insert form and back, shell to view form and back, and a three-module cycle in which the view form constructs the editor and hosts it inside the shell's own panel while the editor refreshes the shell. No UI module is a leaf except by accident, so there is no acyclic extraction order among the four screens as they stand.",
+        "confidence": "medium",
+        "signal": "the structural pass and its own call-graph output agree on the cycle count of three and on the membership of each cycle. Held at medium rather than high because both attestations come from the same pass family, and because the call graph records that the default-instance call targets are ambiguous by construction, so five edges admit two defensible readings.",
+        "contributing_passes": ["structural"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.circular-form-dependencies",
+          "BR-063",
+          "structural-analysis.json:recommended_decomposition_boundaries"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-006",
+        "statement": "Roll number is the de-facto record key used by every single-row select, update and delete, but it cannot function as a reliable identifier: it is a text column that admits the empty string, it orders lexically so roll number '10' sorts before '2', and the insert path performs no duplicate check. If two rows share a roll number the editor silently binds only the first while update rewrites every match and delete removes every match, each reporting success.",
+        "confidence": "medium",
+        "signal": "three passes agree that no uniqueness guarantee exists and that silent multi-row mutation is the consequence, and the data-domains pass rates the resulting boundary violation critical. Held at medium because the passes disagree on whether a primary-key index is declared at all — see contradiction CON-001 — so the key's existence, though not its inadequacy, is contested.",
+        "contributing_passes": ["structural", "business rules", "data domains"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.unenforced-identity",
+          "BR-023",
+          "BR-037",
+          "data-domains.json:boundary_violations_carried_forward"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-007",
+        "statement": "The recommended data strategy is database-per-service with a single scheduled big-bang cutover, with strangler-fig and database-facade both considered and rejected because there is exactly one participating application and nothing else reads the store. The recommendation is carried with a provisional target binding: the relationship, target service and wave are all unassigned or self-declared provisional, and the upstream pass puts the disposition itself to a reviewer at low confidence.",
+        "confidence": "medium",
+        "signal": "single pass with an explicit decision-tree trace and a documented critical path, consistent with the shared-database verdict that write ownership is already singular. Held at medium because the target binding is self-declared provisional and because the structural pass argues separately that retire or replace deserves explicit consideration ahead of any transformation.",
+        "contributing_passes": ["shared database"],
+        "source_findings": [
+          "shared-db-analysis.json:shared_database_clusters",
+          "shared-db-analysis.json:cross_application_sharing_summary",
+          "structural-analysis.json:open_questions"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-008",
+        "statement": "The persistence platform cannot be rehosted as it stands. A file-based Access database reached through a 32-bit ACE OLEDB provider sets a hard ceiling on concurrency: multiple instances are permitted, there is no transaction anywhere so every mutation is a single autocommitted statement with last-write-wins, and only Jet page locking protects the file. The engine reached end of support in 2017, forces an x86 build, and requires an out-of-band redistributable on every workstation.",
+        "confidence": "medium",
+        "signal": "three passes agree on the structural facts and on the conclusion that this is the main driver for moving to a server engine rather than rehosting the file. Held at medium because the concurrency consequence is inferential — no deployment exists to measure contention against, and a committed Access lock file is the only evidence the database was ever open outside the author's machine.",
+        "contributing_passes": ["structural", "business rules", "shared database"],
+        "source_findings": [
+          "structural-analysis.json:coupling_indicators.shared-file-database-concurrency",
+          "BR-093",
+          "BR-094",
+          "structural-analysis.json:recommended_decomposition_boundaries"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-009",
+        "statement": "A full scan of the source tree for statutory and regulatory citations returned a measured zero: no United States Code, Code of Federal Regulations, Public Law, Federal Register, Executive Order or agency-order reference appears anywhere in the application. Every rule in the business-rule catalog is therefore a business convention, a defect or an implementation artifact rather than a regulatory requirement, and regulatory traceability is omitted from every rule for that reason.",
+        "confidence": "medium",
+        "signal": "two passes agree from different directions — the compliance-citation scan found zero citations in source, and the business-rule pass independently recorded a regulatory-applicability determination of NOT APPLICABLE with no match on any profile regulatory source. Held at medium, and read with care: see contradiction CON-005, because an absence of in-source citations is not an absence of applicable obligation.",
+        "contributing_passes": ["compliance citations", "business rules"],
+        "source_findings": [
+          "compliance-citations.json:summary.total_citations",
+          "compliance-citations.json:citations",
+          "business-logic.json:totals.regulatory_applicability.determination"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-MCF-010",
+        "statement": "The measured user payload is two live rows totalling roughly 211 bytes on a single data page, inside an 800 kilobyte file of which about one page in 196 holds any user data. The bulk is template furniture and uncompacted design churn: 60 free pages, superseded design snapshots, 26 definitions for unused system catalog tables and an embedded Office Theme attachment, in a file derived from a stock blank-database template. The migration target must not be sized from the file size.",
+        "confidence": "medium",
+        "signal": "single pass, but by direct page-level census of the binary rather than estimation, with page offsets cited. Corroborated indirectly by a business rule observing that the two live rows carry an implausible 2009 date of birth against a 2019 admission year. Held at medium because two other passes state the row count was never measured — see contradiction CON-003.",
+        "contributing_passes": ["data domains", "business rules"],
+        "source_findings": [
+          "data-domains.json:method_notes.inherited_input_reconciliation",
+          "BR-021",
+          "shared-db-analysis.json:top_risks_for_decomposition"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-MCF-011",
+        "statement": "The student record has no persisted lifecycle state, and three of the four reconstructed state machines describe accidental rather than designed behaviour: a connection state the code never recovers from, an invisible parallel form instance that nothing ever leaves, and a navigation transition that provably does not occur. The only terminal transition in the record lifecycle is physical destruction.",
+        "confidence": "medium",
+        "signal": "single pass, but internally rigorous: every rule identifier referenced from a state transition resolves, dead and unreachable states are called out by name rather than dropped, and the pass states plainly that none of the four machines is declared as a state machine in the source. Held at medium because no second pass modelled lifecycle state.",
+        "contributing_passes": ["business rules"],
+        "source_findings": [
+          "BR-095",
+          "BR-004",
+          "BR-019",
+          "business-logic.json:totals.state_machines"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-MCF-012",
+        "statement": "The data-domains pass models three logical bounded contexts and eight logical entities over a single physical table of ten columns, and one of those contexts owns no physical column at all. The pass declares the over-modelling, explains that a physical-table-per-domain reading would emit one trivial domain and tell a reviewer nothing, concedes that the identity-versus-enrolment split is its weakest boundary, and states that the domains are logically separable but physically indivisible — a target-state design rather than a description of a separable present state.",
+        "confidence": "medium",
+        "signal": "single pass, consumed with its own stated caveats intact. The boundary is put to a reviewer by the pass itself at the lowest confidence in its own artifact, and a second pass independently warns that a non-empty cluster array here must not be read as evidence of coupling. Recorded at medium so that no downstream consumer treats three domains as three services.",
+        "contributing_passes": ["data domains"],
+        "source_findings": [
+          "data-domains.json:entity_assignment_summary",
+          "data-domains.json:boundary_arbitration_decisions",
+          "data-domains.json:method_notes.what_this_artifact_does_not_claim",
+          "data-domains.json:boundary_violations_carried_forward"
+        ],
+        "architecturally_significant": true
+      }
+    ],
+    "low_confidence_findings": [
+      {
+        "id": "SYN-LCF-001",
+        "statement": "Column data types, NULL-ability, declared widths, validation rules and index definitions are not established. One pass reports them as unknown and refuses to guess, another asserts concrete declared types recovered from binary type bytes, and two further passes record the disagreement as unresolved and name it a blocker for target-schema generation. One session against the file through an Access or ODBC engine would close all of it.",
+        "confidence": "low",
+        "signal": "the passes disagree and the most conservative of them explicitly labels the result 'not established' rather than 'absent'. Every downstream consumer that needs a target schema depends on this, and two independent passes rate the gap a high-severity blocker, so it is carried as a known-unknown rather than resolved in either direction.",
+        "contributing_passes": ["structural", "data domains", "shared database"],
+        "source_findings": [
+          "structural-analysis.json:database-schema-summary.open_questions",
+          "shared-db-analysis.json:top_risks_for_decomposition",
+          "data-domains.json:method_notes.inherited_input_reconciliation"
+        ],
+        "architecturally_significant": true
+      },
+      {
+        "id": "SYN-LCF-002",
+        "statement": "The nine accessibility findings are a floor on the true violation count, not a ceiling. No live screen-reader session, no pixel-measured contrast ratio and no end-to-end keyboard-interaction test was performed, because no HTML, DOM, URL or compiled build exists for a WinForms desktop application. The audit was a manual source read of control properties cross-referenced against three screenshots, and the checker rates that method lower in confidence than even a standard automated scan, which itself catches only a minority of issues.",
+        "confidence": "low",
+        "signal": "single pass, self-hedged. The pass reports its accessibility score and conformance percentage as null rather than estimating them, lists three specific items requiring manual assistive-technology review, and states that zero percent of findings came from automated tooling.",
+        "contributing_passes": ["ux & accessibility"],
+        "source_findings": [
+          "ux-accessibility.json:accessibility_findings.manual_review_required",
+          "ux-accessibility.json:accessibility_findings.gate_decision_note",
+          "A11Y-006"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-003",
+        "statement": "The persona model contains exactly one undifferentiated user class with an unknown headcount, and that is an inference from the absence of any role-enforcement mechanism in code rather than a measurement of who uses the application. A real deployment could have a supervisor who approves deletions or a read-only reporting user, and nothing in the source would reveal it.",
+        "confidence": "low",
+        "signal": "the UX pass itself scores this assessment at medium-low confidence and labels it an inference presented as an inference. Two other passes reach the same single-class conclusion from the identity and access-control angles, but the identity pass separately yields two user classes once the data tier is counted and its own broker rationale says one — see contradiction CON-007.",
+        "contributing_passes": ["ux & accessibility", "structural"],
+        "source_findings": [
+          "ux-accessibility.json:personas",
+          "ux-accessibility.json:review_asks",
+          "structural-analysis.json:interface-inventory.open_questions"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-004",
+        "statement": "Adoption, feature usage and session duration are entirely unmeasured because no instrumentation exists: no logging framework, no analytics call, no usage-tracking table, no audit column from which usage could be inferred retroactively, and no login mechanism by which distinct users could be counted. This is an instrumentation gap, not an observation of zero usage — the two are opposite findings and the pass is explicit that it makes no claim, measured or inferred, about whether the application has ever run outside its author's development machine.",
+        "confidence": "low",
+        "signal": "single pass, with the gap stated per metric and the data sources it checked enumerated. Carried deliberately as a known-unknown because it is the direct cause of this synthesis declining to rate business criticality by consequence evidence alone.",
+        "contributing_passes": ["ux & accessibility", "catalog"],
+        "source_findings": [
+          "ux-accessibility.json:adoption_baseline",
+          "ux-accessibility.json:training_state",
+          "catalog.json:open_questions"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-005",
+        "statement": "Whether anything other than this application has ever read or written the database cannot be established from code. The Access file carries no password, so any user with filesystem read access can open it directly in Microsoft Access with no engine-side audit trail; the file and a stale lock file are both committed to a public repository; and multiple application instances are permitted against the same file. The shared-database verdict of 'none-detected' is therefore a code-visible result, not a guarantee.",
+        "confidence": "low",
+        "signal": "single pass, which names three specifically undetectable sharing paths, rates the residual risk medium, records that it does not block a decisive cutover, and raises a dedicated review ask because the file-based design makes out-of-band access undetectable from source.",
+        "contributing_passes": ["shared database", "structural"],
+        "source_findings": [
+          "shared-db-analysis.json:cross_application_sharing_summary.undetectable_sharing_paths",
+          "RISK-01",
+          "structural-analysis.json:interface-inventory.interfaces"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-006",
+        "statement": "The database file retains a superseded column layout: a second table-definition record carries two column names in the positions the live definition uses for course and year of admission. The application references only the live names, so this is dead residue from an earlier schema revision — but the passes disagree on how many residual tokens exist and one of them hedges that Access name-map residue can also be produced by design-time renames rather than a prior layout.",
+        "confidence": "low",
+        "signal": "single pass family, internally inconsistent on the inventory (two tokens asserted as a second table-definition record versus three tokens hedged as catalogue name-map residue) and explicitly hedged on method, because the evidence is name tokens decoded from a binary file with text-oriented tooling rather than readable DDL.",
+        "contributing_passes": ["structural"],
+        "source_findings": [
+          "structural-analysis.json:duplication_map",
+          "structural-analysis.json:database-schema-summary.open_questions"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-007",
+        "statement": "An 868 kilobyte author-credited project report committed at the repository root was not parsed by any Discovery pass, and neither were the three screenshots beyond visual reference. If that document contains design intent, user-facing instructions or an authoritative statement of purpose, then the documentation posture recorded in this package understates the true position and some findings currently read as defects may be documented intent.",
+        "confidence": "low",
+        "signal": "flagged consistently as an evidence gap by three passes, each of which states the document was not parsed rather than assuming it empty. No pass claims to know its contents.",
+        "contributing_passes": ["structural", "ux & accessibility", "catalog"],
+        "source_findings": [
+          "structural-analysis.json:methodology_note",
+          "ux-accessibility.json:training_state",
+          "ux-accessibility.json:open_questions"
+        ],
+        "architecturally_significant": false
+      },
+      {
+        "id": "SYN-LCF-008",
+        "statement": "Twenty-six untracked files across four directories of Olympus Discovery-skill scaffolding were staged inside the application source tree, including reference material on ADABAS parsing, classic ASP patterns and OCR readiness, and QA fixtures describing wholly unrelated fictitious applications with SQL Server and shared-database topologies. Every pass that noticed excluded them, and several warn that their presence inside a customer checkout is precisely how a later pass could 'detect' a SQL Server shared-database cluster or an imaging corpus in a VB.NET desktop application.",
+        "confidence": "low",
+        "signal": "flagged independently by five passes, each widening the previous count — the catalog found one stray fixture, the structural pass found four directories and 26 files, and the data-domains, shared-database and imaging passes each identified the specific fixture that could have contaminated their own output. Recorded at low confidence as to downstream effect: no pass is known to have been misled, but the exposure was real and is an upstream pipeline defect rather than an application finding.",
+        "contributing_passes": ["catalog", "structural", "data domains", "shared database"],
+        "source_findings": [
+          "catalog.json:open_questions",
+          "structural-analysis.json:duplication_map",
+          "data-domains.json:method_notes.source_tree_contamination",
+          "shared-db-analysis.json:open_questions"
+        ],
+        "architecturally_significant": false
+      }
+    ]
+  },
+  "per_module_view": [
+    {
+      "module_id": "form1-dashboard",
+      "module_name": "Form1 — dashboard shell, navigation host and statistics view (1,371 LOC; observed by structural, business rules [12 rules], quality & risk [debt high, 5 smells], ux [surface form1-dashboard, 6 of 9 accessibility findings], data domains [derived read model, owned by no domain])"
+    },
+    {
+      "module_id": "insert-form",
+      "module_name": "InsertForm — new student record entry (434 LOC; observed by structural, business rules [14 rules], quality & risk [debt medium-high, 5 smells], ux [surface insert-form, A11Y-007], data domains [writes D1 and D2])"
+    },
+    {
+      "module_id": "edit-form",
+      "module_name": "EditForm — existing student record editor (447 LOC; observed by structural, business rules [9 rules], quality & risk [debt medium, 5 smells], ux [surface edit-form], data domains [reads and writes D1 and D2])"
+    },
+    {
+      "module_id": "view-form",
+      "module_name": "ViewForm — student record grid, search and delete (313 LOC; observed by structural, business rules [15 rules], quality & risk [debt high, 4 smells, sole confirmed injection], ux [surface view-form, A11Y-002], data domains [reads all of D1 and D2, physical delete])"
+    },
+    {
+      "module_id": "module1-db-connection",
+      "module_name": "Module1 — the entire data-access layer, 13 lines holding the shared connection and no queries (observed by structural, business rules [6 rules], quality & risk [debt high, highest-risk module, 2 smells]; not observed by ux — no UI surface)"
+    },
+    {
+      "module_id": "my-project-infrastructure",
+      "module_name": "My Project — Designer-generated application infrastructure and the default-instance provider (209 LOC; observed by structural, business rules [4 rules including the no-authentication rule], quality & risk [debt low]; not observed by ux — no UI surface)"
+    }
+  ],
+  "contradictions": [
+    {
+      "id": "CON-001",
+      "topic": "Whether the students table declares a primary key at all",
+      "claim_a": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:database-schema-summary.open_questions; structural-analysis.json:coupling_indicators.unenforced-identity",
+        "claim": "No primary key or unique index was found, and this should be treated as 'not established' rather than 'absent': no PrimaryKey definition and no autonumber column were recovered, and the 62 'Index' string occurrences in the file are mostly Access catalogue boilerplate that were not resolved to actual index definitions."
+      },
+      "claim_b": {
+        "pass": "business rules",
+        "finding_id": "BR-023; BR-037; data-domains.json:method_notes.inherited_input_reconciliation",
+        "claim": "The table has exactly one index named PrimaryKey, index type byte 1, single column roll number ascending, recovered from the index leaf page — and the structural pass's contrary report is characterised as having 'incorrectly reported' its absence."
+      },
+      "resolution": "RESOLVED IN FAVOUR OF CLAIM B ON THE NARROW QUESTION, WITH THE LOSING CLAIM RETAINED. Claim B rests on the stronger method: a byte-offset decode of the index leaf page and the index type byte, cited to specific file offsets, whereas claim A rests on an unresolved string-occurrence count and explicitly labels its own result 'not established' rather than 'absent' — a hedge that claim B's more specific evidence satisfies. Two further passes (shared database, and the decomposition strategy derived from it) decline to resolve and carry the disagreement as a high-severity blocker, which is why this synthesis records SYN-LCF-001 as a known-unknown and does not treat the schema as settled. CRITICALLY, THE RECONCILIATION DOES NOT CHANGE THE OPERATIVE RISK: both sides agree there is no effective uniqueness guarantee, because the key is a text column admitting the empty string and the insert path performs no duplicate check, so silent multi-row update and delete remain live (SYN-MCF-006). The correction to claim B's framing is that the structural pass was not wrong so much as more conservative, and the language of error should not be carried forward. Confirm against a live engine and de-duplicate before any migration."
+    },
+    {
+      "id": "CON-002",
+      "topic": "Whether the column data types are known",
+      "claim_a": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:database-schema-summary.open_questions",
+        "claim": "Column data types are unknown and are not guessed: the type bytes, lengths, NULL-ability and validation settings sit in binary structures this text-oriented decode did not resolve, and the application is no guide because every value is bound from a string control under OptionStrict Off."
+      },
+      "claim_b": {
+        "pass": "data domains",
+        "finding_id": "data-domains.json:method_notes.inherited_input_reconciliation; BR-017; data-domains.json:domains",
+        "claim": "Declared types were resolved in favour of the database-forensics input — roll number TEXT(255) with AllowZeroLength true, both mobile numbers LONG INTEGER, father's name MEMO, date of birth DATETIME — and that resolution is then used to assert a concrete defect, that no ten-digit mobile number can be stored at all."
+      },
+      "resolution": "NOT RESOLVED — RECORDED AS AN OPEN QUESTION (OQ-003). Neither side dominates. Claim B's types come from a genuine binary type-byte decode and produce a specific, testable consequence; but claim A is correct that the same decode did not resolve NULL-ability, declared widths or validation rules, and two further passes independently rate the types unresolved and name it a blocker for target-schema generation. This synthesis therefore carries the mobile-number ceiling at MEDIUM confidence (SYN-MCF-003) rather than high — the consequence is specific enough to act on and too consequential to drop, but its premise is contested. One ACE or ODBC session against the file settles it; until then no target DDL should be generated from either claim."
+    },
+    {
+      "id": "CON-003",
+      "topic": "Whether the row count was measured",
+      "claim_a": {
+        "pass": "data domains",
+        "finding_id": "data-domains.json:method_notes.inherited_input_reconciliation; BR-021",
+        "claim": "The live payload is two rows, plus six deleted rows still intact in page slack; the two live rows carry a 2009 date of birth against a 2019 year of admission."
+      },
+      "claim_b": {
+        "pass": "shared database",
+        "finding_id": "shared-db-analysis.json:top_risks_for_decomposition; structural-analysis.json:database-schema-summary.open_questions",
+        "claim": "The row count was never measured and no table carries a row-count estimate rather than carrying a fabricated one; Access does not store a reliable row count in a text-extractable location."
+      },
+      "resolution": "RESOLVED IN FAVOUR OF CLAIM A, WITH CLAIM B'S CAUTION PRESERVED. Claim A is a positive measurement — a page-level census reporting a specific number of rows on a named data page at a cited byte offset, with the deleted rows recovered as well — and a positive measurement outranks a statement that no measurement was taken, which is a true statement about a different pass's own scope rather than a contradicting finding. Claim B remains correct about method: the count is not available by text extraction, which is exactly why the pass that performed a binary page census could produce it and the passes that did not could not. This matters disproportionately for business criticality and for migration sizing, so it is recorded as SYN-MCF-010 at medium confidence and is cited in the criticality assessment as evidence that lowers the rating."
+    },
+    {
+      "id": "CON-004",
+      "topic": "Whether the data-domains artifact existed when the capability pass ran",
+      "claim_a": {
+        "pass": "capability",
+        "finding_id": "capability-catalog.json:open_questions",
+        "claim": "The required input data-domains.json was not available: the dispatch contract declares it as required and as the strongest signal for capability boundaries, but the sibling task's output directory was empty at execution time, so the catalog was built from the catalog entry and the structural analysis only."
+      },
+      "claim_b": {
+        "pass": "data domains",
+        "finding_id": "data-domains.json:entity_assignment_summary; data-domains.json:domains",
+        "claim": "The data-domain analysis exists and emitted three bounded contexts over eight logical entities with a full physical-column assignment, and it is present in this synthesis input set."
+      },
+      "resolution": "BOTH CLAIMS ARE TRUE AND THE CONTRADICTION IS A PIPELINE-ORDERING DEFECT, NOT A DISAGREEMENT ABOUT THE APPLICATION. The capability pass ran before the data-domain pass completed, so both statements were accurate at the moment each was written. The consequence is real and must not be lost: the capability grain in this package was derived without the input its own contract names as the strongest boundary signal, and it is therefore under-informed rather than wrong. This is visible only at synthesis, which is why it is recorded as SYN-HCF-016. Concretely, the capability catalog carries two capabilities while the data-domain pass identifies eight logical entities and three contexts, and at least two behaviours — the external document-retrieval link and the navigation shell, the latter being the single highest-complexity rule in the application — fall under neither declared capability. Recommended action: re-run capability extraction now that the input exists; the pass's own idempotency contract means a re-run should land on the same rows rather than duplicate them. Routed as OQ-002."
+    },
+    {
+      "id": "CON-005",
+      "topic": "Whether the application has a regulatory surface",
+      "claim_a": {
+        "pass": "compliance citations",
+        "finding_id": "compliance-citations.json:summary.total_citations; compliance-citations.json:citations",
+        "claim": "Zero regulatory citations of any authority were found anywhere in the source tree; the citation list is empty and total and unique citation counts are both zero."
+      },
+      "claim_b": {
+        "pass": "quality & risk",
+        "finding_id": "quality-risk.json:risk_summary.regulatory_surface_flags; ESC-1; A11Y-001",
+        "claim": "The application has an active regulatory surface: unencrypted personal data at rest with no access control, escalated unconditionally under the profile's regulatory-surface rule, and four human-facing surfaces carrying a Section 508 and WCAG 2.1 AA obligation that the current interface fails."
+      },
+      "resolution": "NOT A CONFLICT OF FACT, BUT A CONFLICT OF READING THAT WOULD MISLEAD A DOWNSTREAM CONSUMER, SO IT IS RECORDED RATHER THAN DROPPED. The citation pass detects citations present in source text; its measured zero means this codebase cites no statute, which is true and expected of a student-records tool written as an academic project. It does not and cannot mean no obligation applies. A consumer reading compliance-citations.json alone — for instance to decide whether a compliance package is required — would conclude there is no regulatory surface, which the escalation record and the accessibility gate decision directly contradict. Both artifacts stand as written; the correct composite reading is that the application has applicable obligations (personal-data protection, Section 508) and zero in-source regulatory lineage, and the absence of lineage is itself a finding because it means no rule in the catalog can be traced to an authority. Recorded at medium confidence as SYN-MCF-009 with this caveat attached, and routed as OQ-006."
+    },
+    {
+      "id": "CON-006",
+      "topic": "The scale and severity of the personal-data exposure",
+      "claim_a": {
+        "pass": "quality & risk",
+        "finding_id": "ESC-1; quality-risk.json:risk_summary.top_risk_drivers",
+        "claim": "This is an active, ongoing public exposure of real personal data rather than a latent or hypothetical risk, severity critical, layered with a working injection vector and no access control; the decode recovered real column values confirming a live dataset rather than an empty or seed schema."
+      },
+      "claim_b": {
+        "pass": "data domains",
+        "finding_id": "data-domains.json:method_notes.inherited_input_reconciliation; BR-021; BR-015",
+        "claim": "The measured payload is two live rows of roughly 211 bytes; those two rows carry a 2009 date of birth against a 2019 year of admission, implying a nine-year-old admitted student and evidencing that no plausibility rule has ever existed; and the admission-year picker expired in 2023."
+      },
+      "resolution": "BOTH STAND; THE RECONCILIATION IS THAT THEY ANSWER DIFFERENT QUESTIONS AND THE PACKAGE NEEDS BOTH ANSWERS. Claim A is correct that the exposure is real, present and compounded by an exploitable read path, and the escalation is correctly raised regardless of volume — a single real record of a named individual in a public repository is a disclosure. Claim B is correct that the volume is two rows of data whose internal values look implausible for a real student. Neither pass could see the other's point: the escalation pass measured the absence of controls, the forensics pass measured the payload. The composite finding is that the exposure is genuine and the dataset is tiny and probably test data, and the two facts drive different decisions — the remediation ask stands on claim A and must not be downgraded by volume, while the business-criticality rating and the migration sizing rest on claim B. This synthesis deliberately keeps the ESC-1 remediation ask at full severity while citing claim B as evidence that lowers the criticality rating, and flags that the word 'live' in claim A should be read as 'non-empty', not as 'in operational use'. Routed as OQ-001 and OQ-005."
+    },
+    {
+      "id": "CON-007",
+      "topic": "How many user classes the application has",
+      "claim_a": {
+        "pass": "ux & accessibility",
+        "finding_id": "ux-accessibility.json:personas",
+        "claim": "There is exactly one undifferentiated user class, the student-records operator, with an unknown headcount and no role differentiation observed anywhere."
+      },
+      "claim_b": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:interface-inventory.interfaces; ux-accessibility.json:personas",
+        "claim": "The identity analysis records two distinct identity models with two different user classes — the local desktop operator at the application tier, and the holder of the database file at the data tier, who can open the unprotected Access file directly and bypass the application entirely — while that same pass's brokering rationale states there is 'one user class only'."
+      },
+      "resolution": "RESOLVED BY DISTINGUISHING THE TIERS, WITH BOTH CLAIMS RETAINED. The two passes are counting different things and the identity pass contradicts itself between its model list and its brokering rationale. The application tier genuinely has one undifferentiated operator class, which is what claim A asserts and what the UX and accessibility findings are correctly built on. The data tier is a second, distinct access path: because the Access file carries no password, anyone with filesystem read access is effectively a second user class with full read access to all personal data and no audit trail, which is a materially different exposure from an application user. The honest composite is one application persona and two access paths. This matters because a target design that authenticates the application but leaves the data store openly readable would satisfy claim A and not claim B. Carried as SYN-LCF-003 and SYN-LCF-005; the persona count itself is low confidence in any case because it is inferred from the absence of role enforcement rather than measured."
+    },
+    {
+      "id": "CON-008",
+      "topic": "How many statistics the dashboard computes, and how many SQL statements the application holds",
+      "claim_a": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:summary_metrics.inline_sql_statements; structural-analysis.json:modules",
+        "claim": "There are sixteen inline SQL statements across four modules, of which ten are the dashboard's COUNT aggregates and six are string-concatenated."
+      },
+      "claim_b": {
+        "pass": "business rules",
+        "finding_id": "business-logic.json:module_summary; BR-076; shared-db-analysis.json:shared_database_clusters",
+        "claim": "The dashboard is described as reporting twelve statistics from twelve independent COUNT queries in several places and as having ten count controls in others, while a further pass reports fifteen inline SQL statements rather than sixteen and a fourth describes five aggregate tiles."
+      },
+      "resolution": "RESOLVED IN FAVOUR OF CLAIM A ON BOTH COUNTS, AND THE DIVERGENT FIGURES ARE RECORDED SO THEY ARE NOT PROPAGATED. Claim A's figures are stated as explicit summary metrics by the pass whose contract is to count them, derived from a full read of every file rather than sampled, and they reconcile internally: the ten dashboard aggregates decompose as two gender plus three course plus five academic-year queries. The 'twelve' figure in claim B is reconcilable only as ten computed statistics plus two orphaned duplicate tiles that the loader never writes, which means the related phrases 'twelve COUNT queries' and 'any of the twelve queries fails' are wrong as written even though the underlying observation about orphaned tiles is sound and independently corroborated by the accessibility pass. The 'fifteen statements' and 'five tiles' figures appear in passes whose contract is not to count them and are not supported by a stated method. THE DEFENSIBLE FIGURES ARE: sixteen inline SQL statements, ten computed dashboard statistics across twelve tiles, five of the ten invalidated by the hardcoded year baseline, six statements built by concatenation of which exactly one is injectable. Downstream consumers should cite these and not the variants."
+    },
+    {
+      "id": "CON-009",
+      "topic": "Whether this application has a document-imaging corpus and a SQL Server database",
+      "claim_a": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:open_questions",
+        "claim": "Two of the declared sibling artifacts are inapplicable to this application on the evidence: a SQL Server object inventory describes server objects where this application uses a file-based Access database with zero procedures, views and triggers, and a document-imaging corpus assessment describes an image corpus where this tree holds three PNG screenshots and no TIFF at all. Emitting either would mean fabricating a corpus and a server that do not exist, so flagging them as not-applicable is the honest answer."
+      },
+      "claim_b": {
+        "pass": "document-imaging corpus (tiff-corpus-assessor)",
+        "finding_id": "structural-analysis.json:duplication_map; catalog.json:open_questions",
+        "claim": "Both artifacts were nonetheless emitted with schema-required values populated: an imaging assessment reporting an image count of four, an OCR readiness score at the scale minimum and a one-wave migration sequence, and a SQL Server inventory carrying Access type risks and driver signatures under SQL-Server-shaped keys."
+      },
+      "resolution": "RESOLVED IN FAVOUR OF CLAIM A: BOTH PASSES ARE N/A BY SUBJECT AND ARE RECORDED AS SUCH IN THE INPUT INVENTORY, NOT SCORED. The two emitted artifacts agree with claim A in their own text — the imaging assessment self-declares 'NOT APPLICABLE ... SHOULD NOT BE SCORED' and states that the four files it counted are three README screenshots and one application icon, while the SQL Server inventory self-declares 'NOT APPLICABLE' and reports every object collection empty as a measured finding. So there is no factual dispute; the contradiction is between the Discovery line's unconditional dispatch and the subject's actual nature. The risk this records is specific and was nearly realised: an OCR readiness score at the scale minimum means 'no corpus assessed' and reads identically to 'a corpus was assessed and found unreadable', which are opposite findings, and three independent passes warn that the imaging and shared-database reference material staged in the source tree is exactly how such a corpus or server could have been fabricated. Recommended action: make both specialist dispatches conditional on the detected engine and on the presence of an image corpus. Routed as OQ-007."
+    },
+    {
+      "id": "CON-010",
+      "topic": "Whether the application has a network surface",
+      "claim_a": {
+        "pass": "structural",
+        "finding_id": "structural-analysis.json:integration_points; structural-analysis.json:coupling_indicators.hardcoded-external-url-as-reporting",
+        "claim": "The application makes exactly one outbound network call: the dashboard's Report button shells out through Process.Start to a hardcoded public GitHub URL for a PDF, which is its only outbound integration and means the sole reporting affordance depends on public internet access and a third-party host."
+      },
+      "claim_b": {
+        "pass": "ux & accessibility",
+        "finding_id": "ux-accessibility.json:personas; structural-analysis.json:summary_metrics.http_endpoints",
+        "claim": "The identity analysis states the application has no HTTP surface, no redirect capability and no token handling, and the structural metrics independently record zero HTTP endpoints, zero scheduled jobs and zero message queues."
+      },
+      "resolution": "RESOLVED BY SCOPE: BOTH ARE CORRECT AND THE APPARENT CONFLICT IS A PRESENCE-VERSUS-ABSENCE PHRASING ARTEFACT. There is no inbound HTTP surface — no listener, no endpoint, no redirect, no token — which is what claim B asserts and what makes the identity and assurance analysis valid. There is exactly one outbound action, and it is a browser launch rather than an in-process HTTP client, so it creates no inbound attack surface and no token-handling obligation while still constituting an external dependency and an information leak, since the fact of use is disclosed to a third-party host. The composite statement this synthesis uses is: zero inbound network surface, one outbound browser launch to a hardcoded third-party URL. Any downstream artifact that asserts 'no network surface' without qualification should be corrected, because the outbound call is a real external coupling that the sole 'reporting' affordance depends on, and the underlying requirement — genuine reporting — is unimplemented."
+    },
+    {
+      "id": "CON-011",
+      "topic": "Whether the quality-risk pass found any vulnerabilities",
+      "claim_a": {
+        "pass": "quality & risk",
+        "finding_id": "quality-risk.json:vulnerabilities",
+        "claim": "The vulnerabilities list is empty."
+      },
+      "claim_b": {
+        "pass": "quality & risk",
+        "finding_id": "quality-risk.json:code_smells[CS-18]; quality-risk.json:risk_summary.top_risk_drivers; ESC-1",
+        "claim": "The same artifact reports a confirmed, exploitable SQL-injection vector giving any user of the running application a live path to the entire personal-data set, records it as a code smell, names it the second of five top risk drivers, and escalates it as a critical regulatory-surface incident."
+      },
+      "resolution": "RESOLVED IN FAVOUR OF CLAIM B; CLAIM A IS A STRUCTURAL REPORTING GAP THAT MUST BE CORRECTED UPSTREAM. The pass's own scoring narrative explains the empty array as a scope decision — no CVE or software-composition database was applicable because the project has zero package-manager dependencies, all ten references being framework assembly references — and the vulnerability subscore of 50 of 100 was computed from the one confirmed injection plus five non-exploitable concatenations. So the pass did find a vulnerability; it recorded it everywhere except the field named for it. THE CONSEQUENCE IS NOT COSMETIC: a downstream consumer, dashboard or gate check that reads quality-risk.json:vulnerabilities to decide whether this application has any security finding would read zero and be wrong, while the confirmed injection is simultaneously the highest-severity technical finding in the package. This synthesis therefore carries the injection as a high-confidence finding (SYN-HCF-002) sourced to the smell inventory, the risk summary and the escalation record rather than to the empty array, and routes the reporting gap as OQ-004. Recommended action: the quality-risk pass should populate vulnerabilities with code-level findings, or the field should be renamed to reflect that it carries only dependency-scan results."
+    },
+    {
+      "id": "CON-012",
+      "topic": "Whether the business-rule catalog implies tests exist",
+      "claim_a": {
+        "pass": "business rules",
+        "finding_id": "business-logic.json:rules; BR-095",
+        "claim": "Every one of the sixty rules carries a populated test-hints block naming a happy path, error paths and boundary conditions."
+      },
+      "claim_b": {
+        "pass": "quality & risk",
+        "finding_id": "quality-risk.json:test_coverage.measurement; structural-analysis.json:coupling_indicators.no-automated-verification",
+        "claim": "No test project, test file, test-runner configuration or CI pipeline exists anywhere in the repository, so coverage is reported as measurement method 'unavailable' with high confidence rather than as a percentage."
+      },
+      "resolution": "NO ACTUAL CONTRADICTION, RECORDED TO PRE-EMPT A FALSE POSITIVE DOWNSTREAM. The test-hints blocks are prescriptive authoring by the extraction pass — the tests that should be written — not observations of tests that exist, and several make the absence explicit, one stating that a rule describing an absence is not exercisable and that a verifier should instead confirm no provenance column and no log output exist. A naive consumer counting sixty populated test-hints blocks could report test coverage where there is none and contradict the quality-risk pass. The composite position is: zero tests exist, and sixty test specifications are available to seed the characterization suite that the migration needs. That is a genuinely useful asset given SYN-HCF-009, and this synthesis points the Modernization consumer at it explicitly in the downstream hand-off."
+    }
+  ],
+  "confidence_scores": {
+    "SYN-HCF-001": 0.97,
+    "SYN-HCF-002": 0.97,
+    "SYN-HCF-003": 0.95,
+    "SYN-HCF-004": 0.96,
+    "SYN-HCF-005": 0.96,
+    "SYN-HCF-006": 0.95,
+    "SYN-HCF-007": 0.96,
+    "SYN-HCF-008": 0.95,
+    "SYN-HCF-009": 0.96,
+    "SYN-HCF-010": 0.93,
+    "SYN-HCF-011": 0.92,
+    "SYN-HCF-012": 0.96,
+    "SYN-HCF-013": 0.93,
+    "SYN-HCF-014": 0.9,
+    "SYN-HCF-015": 0.91,
+    "SYN-HCF-016": 0.9,
+    "SYN-MCF-001": 0.72,
+    "SYN-MCF-002": 0.78,
+    "SYN-MCF-003": 0.62,
+    "SYN-MCF-004": 0.74,
+    "SYN-MCF-005": 0.76,
+    "SYN-MCF-006": 0.7,
+    "SYN-MCF-007": 0.6,
+    "SYN-MCF-008": 0.72,
+    "SYN-MCF-009": 0.68,
+    "SYN-MCF-010": 0.65,
+    "SYN-MCF-011": 0.7,
+    "SYN-MCF-012": 0.6,
+    "SYN-LCF-001": 0.35,
+    "SYN-LCF-002": 0.4,
+    "SYN-LCF-003": 0.38,
+    "SYN-LCF-004": 0.42,
+    "SYN-LCF-005": 0.3,
+    "SYN-LCF-006": 0.32,
+    "SYN-LCF-007": 0.3,
+    "SYN-LCF-008": 0.4
+  },
+  "open_questions": [
+    {
+      "id": "OQ-001",
+      "domain_area": "Engagement ownership / portfolio scope",
+      "priority": "critical",
+      "blocking": true,
+      "question": "Is this application in scope for this engagement at all, and is the 'faa' governing profile correctly assigned to it? Seven Discovery passes independently found no aviation, NAS, air-traffic or certification relevance, and the profile defines no modernization target for a VB.NET WinForms plus Microsoft Access desktop stack. Either the application is mis-assigned, or the profile needs a classification path for non-aviation administrative systems. Every disposition, target-binding, safety-tiering and compliance decision downstream of this package is conditional on the answer.",
+      "routed_from": ["SYN-HCF-012", "CON-006"],
+      "source_findings": ["catalog.json:open_questions", "business-logic.json:totals.regulatory_applicability.discrepancy_finding", "data-domains.json:open_questions"]
+    },
+    {
+      "id": "OQ-002",
+      "domain_area": "Discovery pipeline operations",
+      "priority": "high",
+      "blocking": false,
+      "question": "Should the capability-extraction pass be re-run now that the data-domain analysis it names as a required input exists? The capability pass executed before that artifact was produced and built its grain without it, which is why two capabilities are recorded against eight logical entities and why the navigation shell — the single highest-complexity behaviour in the application — and the external document-retrieval link fall under no declared capability.",
+      "routed_from": ["SYN-HCF-016", "CON-004"],
+      "source_findings": ["capability-catalog.json:open_questions", "data-domains.json:entity_assignment_summary"]
+    },
+    {
+      "id": "OQ-003",
+      "domain_area": "Data engineering / database administration",
+      "priority": "high",
+      "blocking": false,
+      "question": "Will someone open the Access file through an ACE or ODBC engine and query its catalogue, to settle column data types, NULL-ability, declared widths, validation rules, the primary-key and index definitions and the live row count? Four passes depend on this and two rate it a blocker for target-schema generation; the passes currently disagree because one decoded the binary and another declined to guess. One session closes the whole set, and if duplicate roll numbers exist, de-duplication must precede any migration.",
+      "routed_from": ["SYN-LCF-001", "CON-001", "CON-002"],
+      "source_findings": ["structural-analysis.json:database-schema-summary.open_questions", "shared-db-analysis.json:top_risks_for_decomposition"]
+    },
+    {
+      "id": "OQ-004",
+      "domain_area": "Discovery pipeline operations / security reporting",
+      "priority": "high",
+      "blocking": false,
+      "question": "Should the quality-risk pass populate its vulnerabilities field with code-level security findings, or should that field be renamed to reflect that it carries dependency-scan results only? As written the array is empty while the same artifact reports a confirmed exploitable SQL injection as its second-highest risk driver, so any consumer that reads the vulnerabilities field to decide whether this application has a security finding will read zero and be wrong.",
+      "routed_from": ["CON-011"],
+      "source_findings": ["quality-risk.json:vulnerabilities", "quality-risk.json:code_smells[CS-18]"]
+    },
+    {
+      "id": "OQ-005",
+      "domain_area": "Data protection / privacy",
+      "priority": "critical",
+      "blocking": false,
+      "question": "Who owns remediation of the committed student personal data, and what is the disposition — purge the file from git history, restrict repository visibility, or accept the risk? This is routed independently of modernization sequencing because remediation of a public exposure should not wait on a migration plan. The escalation stands at full severity on the absence of controls and the exploitable read path; the reviewer should also know the measured payload is two rows whose values look implausible for real students, which bears on urgency but not on whether the exposure is real.",
+      "routed_from": ["SYN-HCF-003", "CON-006"],
+      "source_findings": ["ESC-1", "structural-analysis.json:coupling_indicators.unprotected-pii-in-source-control", "RISK-07"]
+    },
+    {
+      "id": "OQ-006",
+      "domain_area": "Compliance / accessibility governance",
+      "priority": "medium",
+      "blocking": false,
+      "question": "Which obligations actually apply to this application, given that the source cites no statute anywhere while the package records an unencrypted personal-data store with no access control and a Section 508 / WCAG 2.1 AA accessibility gate decision of FAIL? A consumer reading the citation artifact alone would conclude there is no regulatory surface. Confirm the applicable personal-data and accessibility obligations so the absence of in-source regulatory lineage is recorded as a traceability gap rather than as an absence of duty.",
+      "routed_from": ["SYN-MCF-009", "CON-005"],
+      "source_findings": ["compliance-citations.json:summary.total_citations", "quality-risk.json:risk_summary.regulatory_surface_flags", "ux-accessibility.json:accessibility_findings.gate_decision"]
+    },
+    {
+      "id": "OQ-007",
+      "domain_area": "Discovery pipeline operations",
+      "priority": "medium",
+      "blocking": false,
+      "question": "Should the document-imaging and SQL Server specialist passes be dispatched conditionally on detected engine and corpus presence rather than unconditionally? Both were emitted for a subject that has neither, both self-declare not-applicable, and the imaging artifact's schema-forced placeholders are actively misleading because a readiness score at the scale minimum means 'no corpus assessed' yet reads as 'assessed and found unreadable'. Separately, should the archetype taxonomy gain an explicit desktop or thick-client value, which three passes requested?",
+      "routed_from": ["CON-009", "SYN-LCF-008"],
+      "source_findings": ["structural-analysis.json:open_questions", "catalog.json:open_questions"]
+    },
+    {
+      "id": "OQ-008",
+      "domain_area": "Business stakeholder / product ownership",
+      "priority": "high",
+      "blocking": false,
+      "question": "Are the dashboard's aggregate definitions intended as written, and what is the intended behaviour of the three defects that are ambiguous between bug and intent — the hardcoded 2023 year baseline, the gender census counting two of three storable values with no reconciling total, and the post-insert refresh landing on off-screen form instances? No behavioural baseline exists, so these need stakeholder adjudication rather than a code reading, and the current SQL is evidence of intent rather than a specification.",
+      "routed_from": ["SYN-HCF-006", "SYN-HCF-011", "SYN-HCF-013"],
+      "source_findings": ["structural-analysis.json:recommended_decomposition_boundaries", "BR-072", "BR-070", "BR-019"]
+    },
+    {
+      "id": "OQ-009",
+      "domain_area": "Business stakeholder / data governance",
+      "priority": "high",
+      "blocking": false,
+      "question": "Does any retention, auditability or erasure obligation apply to this student data, and whose telephone number is the alternate mobile — the student's or the guardian's? The schema has no audit, soft-delete or provenance column and deletion is physical, so if any such obligation applies the current design cannot satisfy it and the history is already unrecoverable. Related: the father's name is personal data about a second, unconsented data subject held inside the student's row with no separate identity and no independent erasure path.",
+      "routed_from": ["SYN-HCF-014"],
+      "source_findings": ["BR-057", "BR-095", "data-domains.json:boundary_violations_carried_forward", "data-domains.json:open_questions"]
+    },
+    {
+      "id": "OQ-010",
+      "domain_area": "Disposition ownership",
+      "priority": "high",
+      "blocking": false,
+      "question": "Should this application be modernized at all, or retired or replaced? The structure is the argument: 461 lines of hand-written logic, one table, ten columns, three closed value domains, four screens, two live rows and one genuine capability sit comfortably inside the range where rewriting on a current stack costs less than transforming. The data strategy recommended upstream is database-per-service with a provisional target binding carried at low confidence, and the active profile defines no modernization target for this stack. Retire or replace deserves explicit consideration before the decomposition boundaries are consumed as a transformation plan.",
+      "routed_from": ["SYN-MCF-007", "SYN-MCF-010"],
+      "source_findings": ["structural-analysis.json:open_questions", "structural-analysis.json:recommended_decomposition_boundaries", "shared-db-analysis.json:shared_database_clusters"]
+    },
+    {
+      "id": "OQ-011",
+      "domain_area": "Business stakeholder / operations",
+      "priority": "medium",
+      "blocking": false,
+      "question": "Is there a real user population, and is there more than one role? The persona model contains one undifferentiated operator inferred from the absence of any role enforcement in code, with an unknown headcount and no telemetry, no CMDB entry and no org chart to check it against. If a real deployment has a supervisor who approves deletions or a read-only reporting user, the accessibility and adoption findings here rest on an incomplete persona model. Note also that because the Access file carries no password, anyone with filesystem read access is a second, unaudited access path to all personal data.",
+      "routed_from": ["SYN-LCF-003", "SYN-LCF-005", "CON-007"],
+      "source_findings": ["ux-accessibility.json:personas", "ux-accessibility.json:review_asks", "shared-db-analysis.json:cross_application_sharing_summary.undetectable_sharing_paths"]
+    },
+    {
+      "id": "OQ-012",
+      "domain_area": "Discovery evidence completeness",
+      "priority": "medium",
+      "blocking": false,
+      "question": "Should the 868 kilobyte author-credited project report committed at the repository root be extracted and assessed? No Discovery pass parsed it. If it documents design intent or user-facing instructions, the documentation posture recorded here understates the true position and some findings currently classified as defects may turn out to be documented intent.",
+      "routed_from": ["SYN-LCF-007"],
+      "source_findings": ["structural-analysis.json:methodology_note", "ux-accessibility.json:open_questions"]
+    },
+    {
+      "id": "OQ-013",
+      "domain_area": "Business stakeholder / data model",
+      "priority": "medium",
+      "blocking": false,
+      "question": "Is a student permitted to hold more than one enrolment, and what should happen to intakes after 2023? The admission-year picker is a static list that expired in 2023 so no later intake can be recorded at all, the enrolment columns sit in the same physical row as identity with no cardinality expressed, and the reference-data sets for course, gender and admission year have no system of record anywhere — they are restated in UI files and dashboard SQL.",
+      "routed_from": ["SYN-MCF-004", "SYN-MCF-012"],
+      "source_findings": ["BR-015", "data-domains.json:open_questions", "data-domains.json:boundary_arbitration_decisions"]
+    }
+  ],
+  "downstream_consumer_summary": {
+    "redundancy_analyzer": "Nothing to deduplicate across applications and nothing to consolidate against: the shared-database verdict is 'none-detected', the store has exactly one participating application and one write owner, there are zero cross-application read joins and zero foreign keys crossing an application boundary, and the capability pass found no strategy-of-record system or reference catalogue this application binds to. The one genuine internal redundancy is within the application — the insert and edit forms are parallel implementations of the same ten-field record editor with byte-identical 24-control layouts and the field-to-parameter mapping written twice. Treat the externally-facing redundancy question as answered 'none' and read SYN-HCF-010; treat OQ-001 as a precondition, because a mis-assigned application cannot be meaningfully compared against a portfolio it does not belong to.",
+    "disposition_recommender": "Read OQ-010 first and OQ-001 before that. The structural argument for retire-or-replace over transform is strong and is made by the structural pass itself: 461 hand-written lines, one table, ten columns, four screens, two live rows, one genuine capability, no behavioural baseline, and an active profile that defines no modernization target for this stack. Against that, the upstream data strategy recommends database-per-service with a rearchitect relationship but carries its target binding as provisional and puts the disposition to a reviewer at low confidence. Weight the high-confidence findings heavily — no authentication, a live injection, personal data in a public repository, no tests, no externalized configuration — and weight the criticality input honestly: business-criticality.json rates this 1 of 5 at medium confidence with named gaps, which lowers migration priority but must be read together with the ESC-1 remediation ask, which is independent of sequencing.",
+    "modernization_extraction": "The extraction target is small and the hazards are specific. Business meaning lives only in UI event handlers, so extract from form code and not from a service layer: business-logic.json carries 60 rules with file and line traceability, 40 of them critical, 37 implicit and 23 needing SME confirmation, plus four reconstructed state machines and 34 implicit-logic findings. Four things must be treated as new requirements rather than ports — input validation, which does not exist on the create path; a parameterized search, to close the injection; an explicit enforced record key with de-duplication first; and externalized configuration, which is a prerequisite for every other boundary including a like-for-like rehost. Three defects are ambiguous between bug and intent and must not be silently preserved: the hardcoded 2023 year baseline, the gender census counting two of three storable values, and the default-instance aliasing that lands post-write refreshes on off-screen instances — the last cannot be translated at all because C# has no default-instance feature. Note the one genuine asset against SYN-HCF-009: the 60 rules each carry a test-hints block, which is prescriptive rather than observational and is the natural seed for the characterization suite the migration needs. Do not generate target DDL until OQ-003 is closed.",
+    "architecture": "This synthesis is the traceability spine. Thirty-six consolidated findings carry stable SYN-* identifiers and TWENTY-FIVE are flagged architecturally_significant: fifteen of the sixteen high-confidence findings (all but the Discovery pipeline-ordering defect, which prescribes nothing about the target), nine of the twelve medium-confidence findings, and one of the eight low-confidence findings — SYN-LCF-001, the unresolved legacy column types, which is flagged precisely because it blocks target-schema generation. That count of twenty-five is the ADR-coverage denominator and must not be re-scored downstream. The unavoidable decisions it implies are a security posture with no existing authentication to extend, a data-access seam that must be created rather than ported, a persistence platform replacement off a file database, an explicit record key, an externalized configuration story, re-specified aggregate definitions, an explicit record lifecycle, and an accessibility remediation pass against a measured zero.",
+    "gate_review": "Answer the scope ask first; it ranks ahead of everything else because every other artifact in this package is internally consistent with whatever target was analysed, so an automated pre-review will score the package highly even if the target is wrong. Twelve cross-pass contradictions are recorded with both claims preserved and an explicit reconciliation; three are resolved in favour of the better-evidenced pass, three are reconciled by distinguishing scope, two are recorded as reporting or pipeline defects to fix upstream, and the rest are carried as open questions because neither side dominates. Thirteen open questions are routed by domain area, one of them blocking. Eight findings are retained at low confidence as known-unknowns rather than dropped."
+  },
+  "quality": {
+    "groundedness": "grounded",
+    "claims_total": 36,
+    "claims_cited": 36,
+    "uncited_claim_ids": [],
+    "checked_at": "2026-10-02T00:00:00Z"
+  },
+  "review_asks": [
+    {
+      "ask_slug": "analysis-scope-unconfirmed",
+      "action": "decide",
+      "title": "Before anything else: is this the right application? We analysed a student-records desktop tool under a programme profile for aviation systems",
+      "why": "If the analysis target is wrong then every other artifact in this package is scoped wrong — and an automated pre-review will still score the package highly, because each artifact is internally consistent with the wrong target.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "Seven Discovery passes independently reached the same conclusion from seven different angles — business-domain taxonomy, source tree contents, regulatory applicability, capability vocabulary, data-entity inventory, database topology and user-segment modelling — and not one found a single aviation, NAS, air-traffic or certification artifact anywhere in the application, its README, its licence or its project report. The underlying facts are as well corroborated as anything in this package. Confidence is not 1.0 only because the question of whether the assignment is nonetheless deliberate is a business fact no pass can read from code."
+      },
+      "assessment": "The governing client profile for this task is declared authoritative as 'faa', and we honoured that declaration: policy was read only from the FAA profile and no alternative profile was adopted or assumed. But the application we actually analysed is a single-developer Visual Basic .NET Windows desktop tool that manages student academic records — names, father's name, two phone numbers, date of birth, course and year of admission — in a local Microsoft Access file. It is under a GPL licence, originates from a public GitHub repository, has a one-commit history, and ships with an author-credited academic project report. It contains no aviation, air-traffic, airspace, certification or safety content of any kind, and the FAA profile's own technology mapping defines no modernization target for this technology stack. Two readings are possible and we cannot choose between them from the evidence: either the wrong repository was staged against this portfolio slot, or this application genuinely belongs to the portfolio as a minor administrative system and the profile needs a classification path for non-aviation administrative tools. We are not guessing which.",
+      "reasoning": "Every pass that could observe the mismatch did, and each recorded it as a finding rather than resolving it: the catalog pass had to force the business domain to 'Admin' as the closest available match and noted the application does not resemble an FAA system; the structural pass walked the whole tree and found no FAA-adjacent artifact; the business-rule pass ran a regulatory cross-reference and returned a determination of NOT APPLICABLE with no match on any profile regulatory source, noting additionally that the profile's own applicable-systems list still carries an unresolved marker; the capability pass found the governed capability vocabulary is aviation-oriented and has no entry for student-records administration, so it had to use a proxy label; the data-domain pass found zero aviation entities across ten columns in one table; and the UX pass observed that an application with no authentication, no roles and one undifferentiated user has no FAA user-segment taxonomy to map onto. The conflicting signal — and the only one — is the task declaration itself, which is authoritative and which we did not override. That is precisely why this is a decision for you rather than a finding we close.",
+      "evidence_refs": [
+        {
+          "name": "Catalog pass: business domain forced, no FAA resemblance",
+          "detail": "Business domain set to 'Admin' as the closest match from the profile's taxonomy because neither the repository nor its docs state a business owner, sponsoring office or domain, and the application does not resemble an FAA system. Also records that the profile's .NET technology mapping covers only ASP.NET/C#/WCF and defines no target for VB.NET WinForms plus Access.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "Business-rule pass: regulatory applicability NOT APPLICABLE",
+          "detail": "Determination 'NOT APPLICABLE — no regulatory cross-reference was performed, and this is a finding rather than an omission', with no match on any profile regulatory source, and the consequence that all 60 rules are business conventions, defects or implementation artifacts rather than regulatory requirements.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Data-domain pass: zero aviation entities",
+          "detail": "All three bounded contexts concern students, guardians, course enrolments and academic code lists; zero aviation entities were found in ten columns across one table. Raised as a blocking open question for any FAA-specific gating.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/data-domains.json"
+        },
+        {
+          "name": "Structural pass: whole-tree walk found no FAA artifact",
+          "detail": "Full read of all 13 source files, the project and solution files and all four config and manifest files: a GPL-licensed, one-commit, publicly-originating student-records tool with no aviation, NAS, air-traffic or certification artifact of any kind.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Source-tree contamination, which may explain the staging error",
+          "detail": "26 untracked files across four directories of Discovery-skill scaffolding and QA fixtures for unrelated fictitious applications were found inside the application source tree, flagged independently by five passes as an upstream staging defect.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "accept-scope",
+          "label": "Accept the scope — this application does belong in the portfolio",
+          "description": "Confirms the application is correctly assigned and this Discovery package may be consumed as scoped. You are also accepting that FAA-specific gating has no basis in the application's own content, so safety tiering, NAS impact assessment and compliance mapping must be driven by stakeholder input rather than by evidence from this package. The profile owner should then add a classification path for non-aviation administrative systems and a modernization target for the VB.NET WinForms plus Access stack, neither of which exists today."
+        },
+        {
+          "key": "rescope",
+          "label": "Rescope — the wrong application or the wrong profile was staged",
+          "description": "Halts consumption of this package and returns the application to onboarding. All 36 synthesized findings, the criticality rating and the SRS remain valid descriptions of the repository that was analysed, but they do not describe whatever application was intended to occupy this portfolio slot, and they must not be carried forward against it. Given that Discovery-skill scaffolding and unrelated QA fixtures were found staged inside the source tree, a staging error is a live possibility worth checking first."
+        }
+      ]
+    },
+    {
+      "ask_slug": "synthesis-recorded",
+      "action": "aware",
+      "title": "For the record: what this Discovery synthesis found, and what it could not settle",
+      "why": "A reviewer needs to know what the synthesis was built from and what it deliberately left open, so that retained uncertainty reads as honesty rather than as an oversight.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.88,
+        "rationale": "Ten Discovery passes were present and consumed, and the two recorded as not-applicable self-declare that status in their own text. The merge is keyed on a structural spine of six modules whose identifiers are used consistently by every pass that references a module, so the join is exact rather than fuzzy. Confidence is held below the mid-nineties because thirteen open questions remain and the scope question above is unresolved."
+      },
+      "assessment": "Ten Discovery passes were available and all ten were consumed: catalog, structural analysis and its .NET specialist, business rules, quality and risk, UX and accessibility, data domains, shared database, capability, and compliance citations. Two further specialist passes were emitted by the pipeline but do not apply to this application by subject — a document-imaging corpus assessment for an application with no images, and a SQL Server inventory for an application that uses Microsoft Access — and both say so themselves; they are recorded as not-applicable rather than scored. No expected pass was missing, so nothing in this synthesis rests on an unexplained gap. From those inputs we consolidated 36 findings: 16 at high confidence because two or more passes confirmed them independently, 12 at medium, and 8 deliberately retained at low confidence as known-unknowns. Twenty-five of the 36 are flagged as needing a target-architecture decision. We also recorded 12 genuine disagreements between passes, each with both claims preserved and an explicit reconciliation, and routed 13 open questions to the domain areas that can answer them. One of those is blocking: whether this is the right application at all. The headline technical picture is a structurally simple application with a serious security and data-governance posture — no authentication anywhere, a live SQL-injection path, student personal data in a public repository, zero accessibility annotations against a Section 508 obligation, no tests and no externalized configuration — while the measured data payload is two rows.",
+      "reasoning": "The merge was keyed on the structural pass's six module identifiers, which every other pass that references a module uses verbatim, so the join is exact. Findings were promoted to high confidence only where passes reached the same conclusion by independent means — for example the injection path was found by a structural walk, re-verified by a separate source read, recorded as a code smell, and independently flagged by the .NET specialist, all at the same file and line. Contradictions were resolved in favour of the better-evidenced pass where one clearly was better evidenced, reconciled by distinguishing scope where both were right about different things, and left open where neither dominated; in no case was a losing claim deleted. Two of the twelve are not disagreements about the application at all but defects in the pipeline — a capability pass that ran before its required input existed, and a vulnerabilities field left empty in an artifact that reports a confirmed exploitable injection elsewhere in the same document — and both are routed upstream because a consumer reading either field in isolation would be misled.",
+      "evidence_refs": [
+        {
+          "name": "Input completeness: ten passes present, two not applicable by subject",
+          "detail": "Recorded row by row in input_inventory, with the justification for each not-applicable classification stated from the subject's own evidence rather than from an assumption about the pipeline.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json"
+        },
+        {
+          "name": "36 consolidated findings, 25 architecturally significant",
+          "detail": "16 high confidence (cross-pass confirmed), 12 medium (single pass with strong evidence), 8 low (retained known-unknowns). The 25 flagged architecturally significant are the ADR-coverage denominator for the Architecture line and must not be re-scored downstream.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json"
+        },
+        {
+          "name": "12 cross-pass contradictions, both claims preserved",
+          "detail": "Includes two pipeline defects visible only at synthesis: a capability pass that ran before the data-domain input it requires, and an empty vulnerabilities array in an artifact whose own risk summary reports a confirmed exploitable SQL injection.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json"
+        },
+        {
+          "name": "Escalation ESC-1 remains open and is routed independently",
+          "detail": "Student personal data committed to a public repository with no database password, no application authentication and a confirmed injection path. Routed to a named data-protection owner as OQ-005, deliberately decoupled from modernization sequencing.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/quality-risk-assessment/escalation-record.json"
+        }
+      ]
+    }
+  ]
+}

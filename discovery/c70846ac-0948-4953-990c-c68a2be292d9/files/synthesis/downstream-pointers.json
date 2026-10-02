@@ -1,0 +1,100 @@
+{
+  "$schema": "olympus:artifact:downstream-pointers:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "generated": "2026-10-02",
+  "synthesis_artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+  "resolution_note": "Deterministic by construction: every finding reference below is a stable SYN-* identifier declared in synthesis.json, every module reference is a structural-pass module id used verbatim by every pass that references a module, and every source-evidence reference is an input artifact path plus a key path or an id-bearing entry. Given the same pass inputs, two runs of this synthesis produce the same pointers. No pointer uses a list position, because a position names a different entry as soon as a list is reordered.",
+  "precondition": "READ BEFORE CONSUMING ANY POINTER. The analysis target is unconfirmed: the governing profile is declared as 'faa' and the application has no aviation relevance, flagged independently by seven passes. The gate review ask 'analysis-scope-unconfirmed' in synthesis.json must be answered first. If the gate rescopes the application, every pointer below resolves correctly but describes the wrong subject.",
+  "pointers": {
+    "redundancy-analyzer": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+      "relevant_findings": ["SYN-HCF-010", "SYN-HCF-016", "SYN-MCF-012", "SYN-LCF-005"],
+      "relevant_modules": ["insert-form", "edit-form"],
+      "source_evidence": [
+        "shared-db-analysis.json:cross_application_sharing_summary.sharing_verdict",
+        "shared-db-analysis.json:shared_database_clusters",
+        "capability-catalog.json:legacy_system",
+        "capability-catalog.json:capabilities",
+        "structural-analysis.json:coupling_indicators.insert-edit-near-duplication",
+        "shared-db-analysis.json:cross_application_sharing_summary.undetectable_sharing_paths"
+      ],
+      "note": "The cross-application redundancy question is already answered 'none' and you can take that as read: the sharing verdict is 'none-detected', the store has one participating application and one write owner, there are zero cross-application read joins and zero foreign keys crossing an application boundary, and the capability pass found no strategy-of-record system or reference catalogue this application binds to. Two cautions. First, the shared_database_clusters array is NON-EMPTY but describes a DEGENERATE cluster of exactly one application; treating a non-empty array as evidence of cross-application coupling, or deriving a co-wave constraint from it, produces a false positive, and the originating pass says so explicitly. Second, SYN-LCF-005 records that out-of-band consumers are undetectable from code because the store carries no password, so 'none-detected' is a code-visible result rather than a guarantee. The only genuine redundancy is INTERNAL: the insert and edit surfaces are parallel implementations of the same ten-field record editor with byte-identical control sets and the field mapping written twice, which the SRS collapses into one record-editor concern."
+    },
+    "disposition-recommender": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+      "relevant_findings": ["SYN-HCF-012", "SYN-HCF-003", "SYN-HCF-001", "SYN-HCF-002", "SYN-HCF-009", "SYN-MCF-007", "SYN-MCF-010", "SYN-MCF-008", "SYN-MCF-001"],
+      "relevant_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form", "module1-db-connection", "my-project-infrastructure"],
+      "source_evidence": [
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-criticality.json",
+        "structural-analysis.json:open_questions",
+        "structural-analysis.json:recommended_decomposition_boundaries",
+        "shared-db-analysis.json:shared_database_clusters",
+        "quality-risk.json:technical_debt_score",
+        "quality-risk.json:risk_summary.overall_risk_tier",
+        "catalog.json:complexity_tier",
+        "catalog.json:size_metrics"
+      ],
+      "note": "Four inputs, in priority order. (1) SCOPE: synthesis open question OQ-001 is blocking — do not recommend a disposition for an application whose assignment to this portfolio is unconfirmed. (2) CRITICALITY: business-criticality.json rates this 1 of 5 at medium confidence with six named gaps. Read it as an independent axis from complexity_tier 'simple' — the two are orthogonal by contract and must not be summed or correlated. Low criticality lowers migration priority; it does NOT license deferring the ESC-1 personal-data remediation, which is routed separately as OQ-005 and is independent of sequencing. (3) THE RETIRE-OR-REPLACE ARGUMENT, which the structural pass makes itself: 461 hand-written lines, one table, ten columns, three closed value domains, four screens, two live rows and one genuine capability sit comfortably inside the range where rewriting on a current stack costs less than transforming, and the active profile defines no modernization target for this stack. Routed as OQ-010. (4) THE COUNTERVAILING RECOMMENDATION: the upstream data strategy selects database-per-service with a rearchitect relationship, but carries its target binding as self-declared provisional and puts the disposition to a reviewer at low confidence, so it is not a settled input. Weight the high-confidence findings heavily — no authentication, a live injection, personal data in a public repository, no tests, no externalized configuration, an out-of-support engine — and note that none of them is cheaper to fix by transforming than by rewriting."
+    },
+    "extraction": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs.json",
+      "relevant_findings": ["SYN-HCF-005", "SYN-HCF-002", "SYN-HCF-006", "SYN-HCF-011", "SYN-HCF-013", "SYN-HCF-015", "SYN-MCF-002", "SYN-MCF-003", "SYN-MCF-004", "SYN-MCF-006", "SYN-MCF-011", "SYN-LCF-001"],
+      "relevant_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form", "module1-db-connection"],
+      "source_evidence": [
+        "business-logic.json:rules",
+        "business-logic.json:totals",
+        "business-logic.json:module_summary",
+        "structural-analysis.json:coupling_indicators.ui-owns-all-sql",
+        "structural-analysis.json:database-schema-summary.tables",
+        "structural-analysis.json:database-schema-summary.open_questions",
+        "structural-analysis.json:recommended_decomposition_boundaries",
+        "data-domains.json:domains"
+      ],
+      "note": "Extract from presentation event handlers, NOT from a service layer: all sixteen statements are inline in UI handlers and the nominal data-access module holds thirteen lines and zero queries, so there is no seam to intercept. business-logic.json:rules carries 60 rules with file and line traceability — 40 critical, 37 implicit, 23 flagged for subject-matter confirmation — plus four reconstructed state machines. FOUR THINGS ARE NEW REQUIREMENTS, NOT PORTS: input validation, which does not exist on the create path at all; a parameterized search, to close the injection; an enforced record key with de-duplication before load; and externalized configuration, which is a prerequisite for every other boundary including a like-for-like rehost. THREE DEFECTS MUST NOT BE SILENTLY PRESERVED because they are ambiguous between bug and intent and need stakeholder adjudication (OQ-008): the hardcoded 2023 year baseline, the gender census counting two of three storable values, and the default-instance aliasing — the last cannot be translated at all, because the target language has no default-instance feature, so the navigation and refresh contract must be re-specified rather than ported. ONE HARD STOP: do not generate target DDL or a migration mapping until OQ-003 is answered, because the legacy column types and key definitions are disputed between passes (CON-001, CON-002). ONE ASSET: each of the 60 rules carries a test-hints block. These are prescriptive, not observational — no tests exist — and they are the natural seed for the characterization suite that SYN-HCF-009 makes a prerequisite for any transformation beyond a lift-and-shift (CON-012)."
+    },
+    "architecture": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+      "relevant_findings": [
+        "SYN-HCF-001", "SYN-HCF-002", "SYN-HCF-003", "SYN-HCF-004", "SYN-HCF-005", "SYN-HCF-006",
+        "SYN-HCF-007", "SYN-HCF-008", "SYN-HCF-009", "SYN-HCF-010", "SYN-HCF-011", "SYN-HCF-012",
+        "SYN-HCF-013", "SYN-HCF-014", "SYN-HCF-015",
+        "SYN-MCF-002", "SYN-MCF-003", "SYN-MCF-004", "SYN-MCF-005", "SYN-MCF-006", "SYN-MCF-007",
+        "SYN-MCF-008", "SYN-MCF-011", "SYN-MCF-012",
+        "SYN-LCF-001"
+      ],
+      "relevant_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form", "module1-db-connection", "my-project-infrastructure"],
+      "source_evidence": [
+        "structural-analysis.json:recommended_decomposition_boundaries",
+        "structural-analysis.json:coupling_indicators",
+        "data-domains.json:domains",
+        "shared-db-analysis.json:shared_database_clusters",
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs.json"
+      ],
+      "note": "THE TRACEABILITY SPINE. synthesis.json carries 36 consolidated findings with stable SYN-* ids, of which 25 are flagged architecturally_significant: 15 of the 16 high-confidence findings (all but the Discovery pipeline-ordering defect), 9 of the 12 medium-confidence findings, and 1 of the 8 low-confidence findings — SYN-LCF-001, flagged because the unresolved legacy column types block target-schema generation. THAT COUNT OF 25 IS THE ADR-COVERAGE DENOMINATOR AND MUST NOT BE RE-SCORED — significance is declared once, here, by the pass with cross-pass context. The list above is exactly those 25. One of them, SYN-HCF-012, is the scope finding: it is architecturally significant because it conditions every other decision, but it is resolved by an engagement decision rather than by an ADR, so expect it to be discharged by the gate record rather than by a design document. Four structural boundaries are proposed upstream — a record CRUD service, a statistics read model, a shell and navigation concern, and a persistence-platform replacement — and the third deliberately OVERLAPS the second on the dashboard module, which is itself the finding: that module is simultaneously the shell, the child-view host and the statistics surface, so the two concerns cannot be assigned to disjoint module sets at the current granularity. Treat the data-domain pass's three bounded contexts as a target-state proposal and not a service split: the originating pass rates that boundary its own lowest-confidence judgement and states the domains are physically indivisible (SYN-MCF-012, OQ-013)."
+    },
+    "gate-review": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/synthesis.json",
+      "relevant_findings": ["SYN-HCF-012", "SYN-HCF-003", "SYN-HCF-016"],
+      "relevant_modules": [],
+      "source_evidence": [
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-criticality.json",
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/quality-risk-assessment/escalation-record.json",
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/discovery-synthesis.md"
+      ],
+      "note": "Three asks reach you from this pass and one from upstream. Answer 'analysis-scope-unconfirmed' FIRST: it ranks ahead of everything else because every other artifact in the package is internally consistent with whatever target was analysed, so an automated pre-review will score the package highly even if the target is wrong. Then 'business-criticality-confirmed', which asks you to confirm or override a rating of 1 of 5 — produced at medium confidence with its evidence, including the evidence that argued the other way, and with six named gaps. Note that the rating is ORTHOGONAL to complexity_tier 'simple', shown beside it for side-by-side reading only, and that safety_tier is deliberately null because a safety tier is a formal determination a safety authority makes and inferring one from Discovery evidence would manufacture a safety claim. Then 'synthesis-recorded', which states the outcome for the record. Separately, escalation ESC-1 remains OPEN and needs a named data-protection owner (OQ-005); it is deliberately decoupled from modernization sequencing because remediation of a public exposure should not wait on a migration plan. Finally, read the input-completeness table at the top of discovery-synthesis.md: no expected pass was missing, so nothing in this synthesis rests on an unexplained gap, and the two not-applicable passes say so in their own text rather than being excused by this one."
+    },
+    "validation": {
+      "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-requirements-functional.json",
+      "relevant_findings": ["SYN-HCF-009", "SYN-HCF-007", "SYN-MCF-002"],
+      "relevant_modules": ["form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "source_evidence": [
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-requirements-nonfunctional.json",
+        "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/synthesis/srs-from-discovery/srs-accessibility-compliance.json",
+        "business-logic.json:rules",
+        "ux-accessibility.json:accessibility_findings.findings"
+      ],
+      "note": "Grade against the 70 requirements in the two requirement files; each carries acceptance criteria written to be checkable, and each traces to a measured Discovery finding. There is NO legacy baseline to compare against: no tests, no pipeline, a single-commit history, and no compiled build could be produced because a clean checkout fails manifest signing against a key the repository excludes. So behavioural equivalence cannot be asserted by regression and must be established by characterization tests, for which the 60 rules' test-hints blocks are the seed. For accessibility, the legacy baseline is a FAIL with one critical and two serious findings and a measured zero on accessible names across 137 controls — which makes it an unusually clean comparison point, since any non-zero result is a demonstrable improvement. Treat the nine baseline findings as a FLOOR, not a ceiling: zero per cent came from automated tooling and no screen-reader, contrast or keyboard test was possible, so NFR-001 requires verification against a rendered build with assistive technology, which is exactly the method the baseline could not apply."
+    }
+  }
+}

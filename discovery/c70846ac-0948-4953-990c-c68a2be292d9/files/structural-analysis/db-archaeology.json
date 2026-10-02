@@ -1,0 +1,146 @@
+{
+  "$schema": "olympus:artifact:db-archaeology:v1",
+  "application": {
+    "name": "Student Management System (VB.NET)",
+    "id": "c70846ac-0948-4953-990c-c68a2be292d9"
+  },
+  "database_engine": {
+    "type": "other",
+    "version": "Microsoft Access ACE 12 (.accdb, 'Standard ACE DB' file header; ACE format version byte 0x02 at offset 0x14 = Access 2007 file format), accessed via the Microsoft.ACE.OLEDB.12.0 provider. 'other' is used because the engine enum for this artifact offers no 'access'/'msaccess'/'jet' member — a taxonomy gap recorded in findings below, not a detection failure.",
+    "end_of_life": "2017-10-10"
+  },
+  "schemas": [
+    {
+      "name": "(default)",
+      "owner": "Admin",
+      "table_count": 1,
+      "view_count": 0,
+      "proc_count": 0,
+      "trigger_count": 0,
+      "size_gb": 0.000803,
+      "purpose": "Microsoft Access has no schema-namespace concept; the single file-level container is reported here as '(default)'. It holds exactly one user table, 'students', plus Access system catalogue objects (MSysObjects family, MSysACEs, MSysRelationships, MSysNavPane*, MSysComplexType_*), which are engine metadata and are not counted as user objects. Owner 'Admin' is the built-in Access account named in the committed lock file, not a configured principal.",
+      "is_shadow": false
+    }
+  ],
+  "tables": [
+    {
+      "schema": "(default)",
+      "name": "students",
+      "has_foreign_keys": false,
+      "usage_status": "active",
+      "business_purpose": "The application's only persistent store. One row per enrolled student, holding roll number, first/last name, father's name, primary and alternate mobile numbers, gender, course, year of admission and date of birth. Ten columns confirmed present in the .accdb catalogue: RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB. Read, inserted, updated and deleted by all four forms; the dashboard aggregates over it by gender, course and year of admission.",
+      "shared_with_other_apps": [],
+      "citation": "Flat Design/studentDB.accdb:catalogue (UTF-16 object/column name map; table and all ten column names located) — write path INSERT at Flat Design/InsertForm.vb:9, read path SELECT * at Flat Design/ViewForm.vb:39, UPDATE at Flat Design/EditForm.vb:51, DELETE at Flat Design/ViewForm.vb:90, aggregate reads at Flat Design/Form1.vb:24-83"
+    }
+  ],
+  "stored_procedures": [],
+  "triggers": [],
+  "findings": [
+    {
+      "category": "eol-engine",
+      "severity": "high",
+      "description": "The database is in the Access 2007 (ACE 12) file format and is reached through the Microsoft.ACE.OLEDB.12.0 provider. Microsoft Office Access 2007 left extended support on 2017-10-10, so the format and its matching provider generation receive no security fixes. The provider is also an out-of-band redistributable that must be bitness-matched to the host process, which makes the application non-portable to any 64-bit-only or non-Windows host and blocks a straight lift to a managed runtime.",
+      "affected_objects": [
+        "Flat Design/studentDB.accdb",
+        "Microsoft.ACE.OLEDB.12.0"
+      ],
+      "remediation_hint": "Migrate the single 'students' table to a supported managed relational engine and replace the OleDb data path with a parameterised client. The schema is one table of ten scalar columns with no procedures, views, triggers or foreign keys, so the data-tier migration is low-risk; the real work is in the four forms that embed SQL directly.",
+      "citation": "Flat Design/studentDB.accdb:header(offset 0x04 'Standard ACE DB', offset 0x14 format byte 0x02) and Flat Design/Module1.vb:7"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "high",
+      "description": "The entire data-access path is a single module-level shared OleDbConnection ('Public dbcon As New OleDb.OleDbConnection') opened lazily by connectDB() and never closed or disposed. One process-wide mutable connection is shared by all four forms, so connection state is global mutable state: any form can leave the connection in a state another form depends on, there is no transaction scope, no pooling benefit, and no error path that restores a known state. This is a deprecated data-access pattern with no modern equivalent to lift.",
+      "affected_objects": [
+        "Module1.dbcon",
+        "Module1.connectDB"
+      ],
+      "remediation_hint": "Replace the shared global connection with a short-lived, per-operation connection acquired from a pooled factory and disposed in a using block, behind a repository boundary that the forms call instead of holding the connection themselves.",
+      "citation": "Flat Design/Module1.vb:4-10"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "critical",
+      "description": "Six of the sixteen inline SQL statements are assembled by string concatenation rather than parameter binding, and one of those interpolates unvalidated end-user input directly into the WHERE clause: the ViewForm search box value is concatenated into \"SELECT * FROM students\" as \" WHERE rollno = '\" + searchQuery + \"' OR fname LIKE '%\" + searchQuery + \"%'\". A search term containing a single quote is sufficient to alter the statement, making this a SQL-injection defect reachable from the primary UI, not a theoretical one. The remaining five concatenations (Form1 year-of-admission aggregates) interpolate a computed integer and are not externally reachable, but share the unsafe construction.",
+      "affected_objects": [
+        "students",
+        "ViewForm.LoadSData",
+        "Form1 year-of-admission aggregate queries"
+      ],
+      "remediation_hint": "Bind every value as an OleDbParameter, as InsertForm.vb:9 and EditForm.vb:14/:51 already do correctly. Treat the ViewForm search path as the priority fix; carry this finding into the Extract pass so the rewritten search preserves the intended 'exact roll number OR partial first-name match' semantics while parameterised.",
+      "citation": "Flat Design/ViewForm.vb:48-53 (reachable injection, concatenation at :50) and Flat Design/Form1.vb:62-83 (five concatenated aggregates)"
+    },
+    {
+      "category": "missing-fk",
+      "severity": "info",
+      "description": "The database declares no foreign keys. This is reported for completeness rather than as a defect: with exactly one user table there is no relationship to express. It is recorded because downstream decomposition should not read 'no foreign keys' as evidence of a deliberately denormalised design — there is simply nothing to relate. Course, gender and year-of-admission are free-text columns on students rather than referenced lookup tables, which is the one place a future schema would gain a relation.",
+      "affected_objects": [
+        "students"
+      ],
+      "remediation_hint": "On migration, consider promoting course and gender to constrained lookups or check constraints; the application already hardcodes their permitted values in the dashboard aggregates ('BCA', 'MCA', 'IIMCA', 'Male', 'Female').",
+      "citation": "Flat Design/studentDB.accdb:catalogue (MSysRelationships present but carries no user relationship rows) and Flat Design/Form1.vb:38-49"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "low",
+      "description": "The .accdb name map retains column-name tokens that no current code path references — 'Sec', 'SName' and 'ClassN', alongside the 'O'-prefixed name-map entries for the live columns. The most likely reading is that an earlier revision of the students table carried section, student-name and class columns that were later removed, leaving residue in the Access catalogue. HEDGED: this is inferred from catalogue name tokens in a binary file read with text-only tooling, not from readable DDL, and Access name-map residue can also be produced by design-time renames. It is recorded so that a migration does not mistake these tokens for live columns, and so a reviewer with Access tooling can settle it cheaply.",
+      "affected_objects": [
+        "students"
+      ],
+      "remediation_hint": "Open the .accdb with Access or a schema-reading tool and confirm the live column list is exactly the ten columns inventoried here before generating target DDL. Compact and repair the database to clear stale catalogue residue.",
+      "citation": "Flat Design/studentDB.accdb:catalogue (UTF-16 name-map tokens 'Sec', 'SName', 'ClassN')"
+    },
+    {
+      "category": "orphan-object",
+      "severity": "medium",
+      "description": "The Access lock file studentDB.laccdb is committed to version control next to the database. Its 64-byte payload is the developer workstation hostname 'SIDDHARTH-WINDO' followed by the account name 'Admin'. A committed lock file means the database was copied into the repository while open, so the .accdb may be a torn copy rather than a cleanly closed one; it also leaks a hostname and confirms the database runs under the built-in Access Admin account with no workgroup security applied.",
+      "affected_objects": [
+        "Flat Design/studentDB.laccdb",
+        "Flat Design/studentDB.accdb"
+      ],
+      "remediation_hint": "Remove the .laccdb from version control and add it to .gitignore. Verify the integrity of the committed .accdb (compact and repair, then row-count) before trusting it as the migration source of record, since it was captured while open.",
+      "citation": "Flat Design/studentDB.laccdb:1"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "medium",
+      "description": "The database location is a hardcoded absolute developer-workstation path, 'D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb', embedded in a string literal in code. App.config contains only a supportedRuntime element and no connectionStrings section, so there is no configuration seam at all: the application cannot be pointed at another database without recompiling, and the path does not match the database's actual location inside the repository ('Flat Design/studentDB.accdb'), meaning the build as committed cannot connect on any machine but the author's.",
+      "affected_objects": [
+        "Module1.connectDB",
+        "Flat Design/App.config"
+      ],
+      "remediation_hint": "Externalise the connection target to configuration or environment binding as a prerequisite for any environment promotion; this is a blocking defect for building a test harness around the current code.",
+      "citation": "Flat Design/Module1.vb:7 and Flat Design/App.config:1-6"
+    },
+    {
+      "category": "logic-in-proc",
+      "severity": "info",
+      "description": "No business logic resides in the database: the engine holds zero stored procedures, zero functions, zero views and zero triggers. Access data macros were specifically looked for in the .accdb and none are present. This is a positive structural finding and an unusual one for a legacy Discovery — all business rules live in the VB.NET forms, so the data tier can be migrated independently of rule extraction. The rules that do exist are embedded in UI event handlers, which is where the Extract pass must look.",
+      "affected_objects": [
+        "(default)"
+      ],
+      "remediation_hint": "Record in the decomposition plan that the data tier carries no executable logic, so database migration and business-rule extraction can be sequenced in parallel rather than serially.",
+      "citation": "Flat Design/studentDB.accdb:catalogue (no saved query, procedure or data-macro objects; DataMacro marker count 0, user query count 0)"
+    },
+    {
+      "category": "cross-app-sharing",
+      "severity": "info",
+      "description": "No cross-application sharing of this database was detected. The .accdb is a single file bundled inside this application's own repository, reached only through the one hardcoded path in Module1.vb; there are no linked servers, no external data sources, no replication, and no other consumer in scope. Recorded explicitly so that the absence is readable as a measured result rather than an unexamined dimension — though note that a file-share database has no engine-side audit trail, so an out-of-band consumer opening the file directly would leave no trace this walk could find.",
+      "affected_objects": [
+        "Flat Design/studentDB.accdb"
+      ],
+      "remediation_hint": "Confirm with the business owner that no user opens this .accdb directly in Access outside the application, since the file-based design makes that undetectable from code and it is the one way a hidden dependency could exist.",
+      "citation": "Flat Design/Module1.vb:7"
+    },
+    {
+      "category": "deprecated-feature",
+      "severity": "info",
+      "description": "TAXONOMY GAP, not a property of the application. The database_engine.type enum for this artifact admits oracle, sql-server, adabas, db2, postgresql, mysql, informix, sybase, mongodb and other, with no member for Microsoft Access / Jet / ACE. The engine is therefore reported as 'other' with the precise identification carried in the version string. Separately, the Discovery line declared the discovery-patterns-sqlserver variant for this application, which does not match the detected engine; sqlserver-object-inventory.json is emitted with empty object collections for that reason.",
+      "affected_objects": [
+        "schemas/discovery/db-archaeology.schema.json#/properties/database_engine/properties/type"
+      ],
+      "remediation_hint": "Recommend the schema owner add an 'access' (or 'jet-ace') engine member, and that the Discovery line select its database pattern variant from detected engine rather than declaring sqlserver unconditionally.",
+      "citation": "Flat Design/studentDB.accdb:header(offset 0x04 'Standard ACE DB')"
+    }
+  ]
+}

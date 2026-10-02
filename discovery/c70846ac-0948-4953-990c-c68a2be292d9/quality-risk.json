@@ -1,0 +1,134 @@
+{
+  "$schema": "olympus:artifact:quality-risk:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "assessment_date": "2026-10-02",
+  "assessment_pass": "Discovery Pass 3 — Quality & Risk Assessment (quality-risk-assessor)",
+  "structural_map_source": "artifacts/discovery-structural-analysis/structural-analysis.json",
+  "risk_summary": {
+    "overall_risk_tier": "HIGH",
+    "top_risk_drivers": [
+      "Live, unredacted student PII (first/last name, father's name, two mobile numbers, date of birth) is stored in studentDB.accdb, committed to a public source repository, behind an application with zero authentication, authorization, or encryption anywhere in the 461 hand-written lines.",
+      "Confirmed, exploitable SQL-injection vector: ViewForm.vb:50 concatenates raw txtSearch.Text into both an equality clause and a LIKE clause with no parameterization, giving any user of the running app a live path to the entire PII dataset.",
+      "Zero automated test coverage and no CI/CD pipeline anywhere in the repository — there is no regression safety net for any change, and no executable specification of current behavior exists to migrate against.",
+      "Hardcoded, author-machine-only absolute database path (Module1.vb:7, 'D:\\PROGRAMING\\...') with no App.config/Settings indirection — a clean clone of this repository cannot connect to its own bundled database without a source change.",
+      "No data-access layer: all 16 SQL statements live inline in UI event handlers across 4 of 6 modules, joined only by one shared, globally mutable, never-disposed OleDbConnection (Module1.dbcon) that one module (ViewForm) unilaterally closes — the tightest and riskiest coupling point in the application."
+    ],
+    "highest_risk_modules": [
+      {
+        "module": "module1-db-connection",
+        "reason": "13-line 'data access layer' that is really just a shared, undisposed, globally mutable connection object with a hardcoded unreachable path; every other module's correctness depends on this module's lifecycle discipline, which does not exist."
+      },
+      {
+        "module": "view-form",
+        "reason": "Contains the application's only confirmed SQL-injection vector (ViewForm.vb:50), unilaterally closes the shared global connection (ViewForm.vb:94), and triplicates its own data-loading logic across three methods."
+      },
+      {
+        "module": "form1-dashboard",
+        "reason": "1,211-line Designer file / 77 controls acting simultaneously as navigation shell, child-form host, and statistics engine; owns 2 of the application's 3 circular module-dependency cycles and a silent data-correctness defect (hardcoded currentYear = 2023)."
+      }
+    ],
+    "regulatory_surface_flags": [
+      "PII at rest with no encryption or access control: studentDB.accdb stores first/last name, father's name, two mobile numbers, and date of birth for what the project materials describe as minor students.",
+      "No authentication or authorization layer protects any create/read/update/delete operation against the PII-bearing 'students' table (AuthenticationMode=0, no login form in any of the 4 forms).",
+      "The PII dataset is exposed in public source control alongside a live SQL-injection path capable of exfiltrating it (see escalation-record.json ESC-1)."
+    ]
+  },
+  "technical_debt_score": {
+    "score": 74,
+    "scale": "0-100 (higher = more debt)",
+    "band": "high",
+    "per_module": [
+      {
+        "module": "module1-db-connection",
+        "debt_band": "high",
+        "rationale": "3 code smells (shared-mutable-global-state, resource-leak-no-disposal, hardcoded-configuration) concentrated in 13 lines; this module is the application's sole coupling point and its defects propagate to all 4 UI modules."
+      },
+      {
+        "module": "view-form",
+        "debt_band": "high",
+        "rationale": "4 code smells including the application's only confirmed SQL-injection (ViewForm.vb:50), an event-handler leak, and triplicated load-data logic across LoadData/LoadSData/RefreshData."
+      },
+      {
+        "module": "form1-dashboard",
+        "debt_band": "high",
+        "rationale": "God-class/god-form Designer file (1,211 LOC, 77 controls), a 72-line unbranched long-method (LoadData), a hardcoded temporal constant that has produced wrong dashboard output since 1 Jan 2024, and 5 unparameterized (if not currently exploitable) SQL statements."
+      },
+      {
+        "module": "insert-form",
+        "debt_band": "medium-high",
+        "rationale": "Zero input validation anywhere on the create path, 3 unguarded ComboBox.SelectedItem dereferences, a broad catch-all exception handler that surfaces raw provider text to end users, and the default-instance aliasing defect that leaves sibling forms stale after a successful insert."
+      },
+      {
+        "module": "edit-form",
+        "debt_band": "medium",
+        "rationale": "Duplicates InsertForm's field-mapping logic, performs no uniqueness check on the de-facto rollno key, parses dates culture-independently on read but culture-dependently on write, and carries the same broad exception-handling pattern."
+      },
+      {
+        "module": "my-project-infrastructure",
+        "debt_band": "low",
+        "rationale": "Entirely Designer/IDE-generated plumbing (startup wiring, assembly metadata, settings accessor shell); no hand-written logic beyond AssemblyInfo attributes, no SQL, no PII access."
+      }
+    ],
+    "contributing_factors": {
+      "smell_density": "21 distinct code-smell findings recorded across 461 hand-written LOC (~45 per KLOC) → subscore 85/100, weight 40%.",
+      "coverage_gap": "No test project, test file, or coverage tool output exists anywhere in the repository (method=unavailable, see test_coverage below); treated as the maximal gap (100/100) for THIS debt-scoring formula only — this is a deliberate scoring-time assumption, not a restatement of test_coverage.line_pct, which correctly stays null/omitted per the measurement-unavailable rule. Weight 30%.",
+      "vuln_count": "1 confirmed exploitable SQL-injection (ViewForm.vb:50) plus 5 non-exploitable string-concatenated SQL statements (Form1.vb:62,67,72,77,82); no CVE/SCA database was available or applicable because the project has zero package-manager dependencies (all 10 references are GAC assembly references, no NuGet/packages.config) → subscore 50/100, weight 20%.",
+      "churn_rate": "Git history contains exactly 1 commit (structural-analysis.json summary_metrics.git_commits_in_history=1); no churn rate is computable from a single commit, so this input is floored at 0/100 with low confidence rather than estimated. Weight 10%.",
+      "formula": "debt = 0.40×smell_density + 0.30×coverage_gap + 0.20×vuln_count + 0.10×churn_rate = 0.40×85 + 0.30×100 + 0.20×50 + 0.10×0 = 34 + 30 + 10 + 0 = 74"
+    },
+    "measurement": {
+      "method": "repository-scan",
+      "source": {
+        "citation": {
+          "type": "artifact",
+          "artifact": "artifacts/discovery-structural-analysis/structural-analysis.json",
+          "section": "coupling_indicators; modules[].coupling_signals"
+        }
+      },
+      "confidence": "medium",
+      "notes": "Smell inventory and per-module rationale were produced by a direct, full-file read of all 5 hand-written .vb files plus Module1.vb (461 LOC total) performed in this pass, cross-checked against Pass 1's independently-derived coupling_indicators/coupling_signals (same file:line evidence, corroborating rather than copied). No linter or static-analysis tool was invoked — hence 'repository-scan' rather than 'tool-run' — so the subscores above are a reproducible manual count, not a tool score. churn_rate carries low confidence because a single-commit history cannot support a real rate estimate."
+    }
+  },
+  "vulnerabilities": [],
+  "test_coverage": {
+    "measurement": {
+      "method": "unavailable",
+      "reason": "No test project, test file, test runner configuration, or CI/CD pipeline exists anywhere in the repository. Direct listing of the 'Flat Design' tree found 13 .vb source files and no corresponding test assembly; this is corroborated by Pass 1's 'no-automated-verification' coupling indicator (structural-analysis.json), which independently confirms zero test projects and zero CI pipelines. There is no coverage report, no instrumented build, and no tool to invoke, so no line/branch/overall percentage can be stated. Per the skill's own constraint, this absence of tooling is reported as 'unavailable', not as a 0% measurement.",
+      "confidence": "high"
+    }
+  },
+  "code_smells": [
+    { "id": "CS-01", "kind": "god-class", "module": "form1-dashboard", "count": 1 },
+    { "id": "CS-02", "kind": "long-method", "module": "form1-dashboard", "count": 1 },
+    { "id": "CS-03", "kind": "hardcoded-temporal-constant", "module": "form1-dashboard", "count": 1 },
+    { "id": "CS-04", "kind": "unparameterized-sql-construction", "module": "form1-dashboard", "count": 5 },
+    { "id": "CS-05", "kind": "accessibility-unannotated", "module": "form1-dashboard", "count": 77 },
+    { "id": "CS-06", "kind": "duplicated-code", "module": "insert-form", "count": 1 },
+    { "id": "CS-07", "kind": "missing-input-validation", "module": "insert-form", "count": 1 },
+    { "id": "CS-08", "kind": "unguarded-null-dereference", "module": "insert-form", "count": 3 },
+    { "id": "CS-09", "kind": "broad-exception-handling", "module": "insert-form", "count": 1 },
+    { "id": "CS-10", "kind": "default-instance-aliasing-defect", "module": "insert-form", "count": 2 },
+    { "id": "CS-11", "kind": "duplicated-code", "module": "edit-form", "count": 1 },
+    { "id": "CS-12", "kind": "broad-exception-handling", "module": "edit-form", "count": 1 },
+    { "id": "CS-13", "kind": "dead-code", "module": "edit-form", "count": 1 },
+    { "id": "CS-14", "kind": "no-primary-key-enforcement", "module": "edit-form", "count": 1 },
+    { "id": "CS-15", "kind": "culture-dependent-date-handling", "module": "edit-form", "count": 1 },
+    { "id": "CS-16", "kind": "dead-code", "module": "view-form", "count": 2 },
+    { "id": "CS-17", "kind": "duplicate-logic-paths", "module": "view-form", "count": 1 },
+    { "id": "CS-18", "kind": "sql-injection-vulnerable-construction", "module": "view-form", "count": 1 },
+    { "id": "CS-19", "kind": "event-handler-leak", "module": "view-form", "count": 1 },
+    { "id": "CS-20", "kind": "resource-leak-no-disposal", "module": "module1-db-connection", "count": 1 },
+    { "id": "CS-21", "kind": "hardcoded-configuration", "module": "module1-db-connection", "count": 1 }
+  ],
+  "escalation_triggers": [
+    {
+      "id": "ET-1",
+      "escalation_record": "escalation-record.json#ESC-1",
+      "trigger": "regulatory_surface_area_pii",
+      "threshold": "Regulatory surface area: any module touching PII, financial calculations, or safety-critical paths — unconditional, applies regardless of metric scores.",
+      "modules_affected": ["module1-db-connection", "form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "note": "All five modules read, write, or aggregate the PII-bearing 'students' table (names, father's name, two mobile numbers, date of birth). Combined with zero authentication and a confirmed SQL-injection path, this was escalated per profiles/faa quality-risk-assessor methodology as ESC-1 regardless of this application's low cyclomatic complexity and low afferent coupling."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "step": "capability-extraction",
+  "artifacts": [
+    "## Summary\n\nI executed the `capability-extraction` skill for application `c70846ac-0948-4953-990c-c68a2be292d9` and wrote both outputs to `artifacts/discovery-capability-extraction/`:\n\n**Key finding first:** The declared governing profile `faa` does not match this application. The source tree is a single-developer VB.NET WinForms \"Student Management System\" (CRUD over a local MS Access `.accdb` of student records) \u2014 no aviation/NAS/FAA relevance whatsoever. Both upstream Discovery passes (catalog, structural-analysis) independently flagged this same mismatch. Per instructions, I did **not** adopt or restate the mismatch as settled fact \u2014 I recorded it as a finding/open_question in both outputs and proceeded to extract the capability grain as the application actually is.\n\n**Input gap:** `data-domains.json` is a required input per the dispatch contract, but the sibling `discovery-data-domain-discovery` task hadn't run (0/4 checklist items, empty output dir). I proceeded using `application-catalog-entry.json` and `structural-analysis.json` (interface-inventory + database-schema-summary sections) only, and flagged the gap for a future re-run \u2014 the natural-key UPSERT contract means a later re-run with real data-domains.json should land on the same rows rather than duplicate them, as long as names aren't changed.\n\n**No reference catalog:** No `faa` strategy-of-record capability/system catalog was reachable, so every `external_id` field was left unset (omitted, not `null`) rather than guessed.\n\n**Extracted grain:**\n- `legacy_system`: a standalone, unbound system (\"Student Management System (standalone VB.NET/Access application)\"), role `primary`.\n- 1 business domain: **Student Records Administration**.\n- 2 capabilities, bound to the closest available governed vocabulary ids (neither is a precise fit, since the vocabulary is aviation-oriented):\n  - `personnel-records-management` (confidence 0.6) \u2014 the CRUD on the single `students` table.\n  - `reporting-and-analytics` (confidence 0.75) \u2014 the dashboard's 10 `COUNT(*)` tiles.\n\nBoth the JSON (schema-conformant, verified by manual re-read) and the Markdown narrative document all of this, including why the vocabulary and profile don't fit, for the G-DC reviewer. I also updated the task's `work_log.json` checklist/outcomes to reflect completion and the flagged gaps."
+  ],
+  "file_artifacts": [
+    "capability-catalog.json",
+    "capability-catalog.md"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 261427,
+  "token_usage": {
+    "input": 1090,
+    "output": 22159
+  },
+  "cost_estimate_usd": 0.9250242000000001,
+  "timestamp": "2026-10-02T18:01:14.344701+00:00",
+  "pass": "capability-extraction",
+  "skill_id": "capability-extraction"
+}

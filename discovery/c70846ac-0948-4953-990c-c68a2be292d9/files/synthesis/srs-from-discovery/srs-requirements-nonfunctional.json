@@ -1,0 +1,502 @@
+{
+  "$schema": "olympus:artifact:srs-requirements:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "requirements": [
+    {
+      "id": "NFR-001",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Every human-facing surface MUST conform to WCAG 2.1 Level AA and Section 508 as incorporated by the ICT Final Rule at 36 CFR 1194.1.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each surface, when it is audited against WCAG 2.1 AA, then no Level A or Level AA violation remains open.",
+        "Given a compiled build, when it is tested with a screen reader and by keyboard only, then every function can be completed without a pointing device and without sight."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-001",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 173,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy baseline is a measured zero: no accessible name or description on any of 137 controls across all four surfaces, producing a critical violation and an accessibility gate decision of FAIL."
+    },
+    {
+      "id": "NFR-002",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Every interactive control MUST expose a programmatic accessible name, and a control conveying meaning without text MUST expose an accessible description.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each interactive control, when its accessibility properties are inspected, then a non-empty accessible name is present.",
+        "Given a purely decorative image, when it is inspected, then it is marked so that assistive technology skips it."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-001",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 85,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Zero accessible names and zero accessible descriptions existed across the whole application, so controls without inherent text had no programmatic name at all."
+    },
+    {
+      "id": "NFR-003",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "The record list MUST present human-readable column headings, and MUST NOT expose raw database field names or unexpanded abbreviations.",
+      "module_hint": "MOD-001",
+      "acceptance_criteria": [
+        "Given the record list, when its headings are read, then each is a human-readable label with no abbreviation unexpanded.",
+        "Given a screen reader, when it announces a column heading, then the announcement is meaningful without database knowledge."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-002",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy automatic column generation exposed raw field names as headings, including unexpanded abbreviations for first name, last name and year of admission."
+    },
+    {
+      "id": "NFR-004",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Information MUST NOT be conveyed by colour or by image alone; every statistic MUST carry a distinct text label identifying what it counts.",
+      "module_hint": "MOD-002",
+      "acceptance_criteria": [
+        "Given the statistics view, when each statistic is read as text only, then it is uniquely identifiable.",
+        "Given two statistics of the same family, when they are compared as text, then their labels differ."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-003",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 442,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "All five academic-year statistics carried the identical caption and were distinguished only by a decorative coloured numeral image with no accessible name, so a user who could not perceive the image could not tell them apart."
+    },
+    {
+      "id": "NFR-005",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Keyboard focus order MUST be unique, deterministic and follow the logical reading order of each surface.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given any surface, when focus order is inspected, then no two controls share a position.",
+        "Given keyboard-only traversal of each surface, when it is performed, then focus proceeds in reading order and no focus trap occurs."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-004",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 167,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Two pairs of navigation controls in the legacy shell shared duplicate focus positions, making focus order through the primary navigation implementation-defined."
+    },
+    {
+      "id": "NFR-006",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Every surface MUST contain only controls that are part of its intended presentation; orphaned, duplicated and off-position controls MUST NOT remain in the control collection or the focus order.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each surface, when its control collection is inspected, then no control is unreachable, duplicated or positioned outside the visible area.",
+        "Given keyboard traversal, when it is performed, then focus never lands on content with no meaning at that point in the sequence."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-005",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 528,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Two duplicate statistic tiles remained in the legacy shell, one overlapping a real tile and one outside the visible area, both still in the control collection and focus order and never written by the loader."
+    },
+    {
+      "id": "NFR-007",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Text and interface colours MUST meet the WCAG 2.1 AA contrast minimum against explicitly chosen colour values, and MUST NOT depend on the operating-system theme for conformance.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each text and background pair, when its contrast ratio is measured on a rendered build, then it meets the AA minimum.",
+        "Given a high-contrast or alternative system theme, when the interface is rendered, then every pair still meets the AA minimum."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-006",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 960,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Two legacy surfaces used a theme-dependent system colour whose rendered value, and therefore its contrast against hardcoded black text, was not fixed or verifiable at design time. The legacy finding is qualitative only; no ratio was measured, so verification requires a rendered build."
+    },
+    {
+      "id": "NFR-008",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Every input MUST declare its expected format and maximum length to the operator in advance, and a validation failure MUST be associated with the specific field at fault.",
+      "module_hint": "MOD-001",
+      "acceptance_criteria": [
+        "Given each input, when it is presented, then its expected format and maximum length are available to assistive technology and visible to a sighted operator.",
+        "Given a validation failure, when it is reported, then it is programmatically associated with the offending field."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-007",
+        "source_file": "Flat Design/InsertForm.Designer.vb",
+        "source_line": 131,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "No legacy text input declared a maximum length and no field-specific validation existed; the only error surfaced was one generic message tied to the raw exception."
+    },
+    {
+      "id": "NFR-009",
+      "type": "non-functional",
+      "priority": "should",
+      "description": "Primary actions SHOULD provide a keyboard accelerator, and no two controls on the same surface may share one.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each surface, when accelerators are inspected, then each primary action has one and none collides."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-008",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 168,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "No legacy control caption carried an accelerator anywhere in the application, removing the accelerator efficiency path that keyboard-only and some motor-impaired users rely on. All controls remained reachable by sequential focus, which is why this is a lower priority than the naming defect."
+    },
+    {
+      "id": "NFR-010",
+      "type": "non-functional",
+      "priority": "should",
+      "description": "Control identifiers SHOULD describe their purpose so that any identifier exposed to assistive technology is meaningful.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given each control, when its identifier is inspected, then it names the control's purpose rather than a generated sequence."
+      ],
+      "traces_to": {
+        "discovery_finding": "A11Y-009",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 97,
+        "discovery_artifact": "ux-accessibility"
+      },
+      "anomaly_resolution": "RENAME",
+      "anomaly_details": "Legacy identifiers were overwhelmingly generated sequences. Visible captions were descriptive in nearly every case, so this is a maintainability and fallback-announcement concern, lower priority than the accessible-name defect."
+    },
+    {
+      "id": "NFR-011",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST use a database engine that is within vendor support and MUST NOT depend on a file-based store reached through an out-of-band client component.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given the target deployment, when the engine is inspected, then it is a supported server engine with a published support date in the future.",
+        "Given a target workstation, when the client is installed, then no separate database engine redistributable is required.",
+        "Given the target build, when its platform is inspected, then it is not constrained to a 32-bit target by the data client."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-MCF-008",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy engine reached end of support in 2017, forced a 32-bit build, required a per-workstation redistributable and offered no credential or encryption story over a personal-data store."
+    },
+    {
+      "id": "NFR-012",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST support concurrent use by multiple operators without data loss, and MUST NOT rely on file-level locking for isolation.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given the declared number of concurrent operators, when all perform mutations simultaneously, then every committed change is durable and none is silently lost.",
+        "Given concurrent writes to the same record, when they are applied, then conflict detection refuses the later write as required by the concurrency requirement."
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 4,
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy permitted multiple instances against one file store with only page locking, no transactions and no conflict detection, which set a hard ceiling on concurrent use."
+    },
+    {
+      "id": "NFR-013",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Personal data MUST be encrypted at rest and in transit, and access to the data store MUST be restricted to the application's service identity.",
+      "module_hint": "MOD-004",
+      "acceptance_criteria": [
+        "Given the data store, when it is inspected, then it is encrypted at rest and requires authentication to open.",
+        "Given a user with filesystem or network access but no application authorization, when direct access to the store is attempted, then it is refused.",
+        "Given data in transit between the application and the store, when it is captured, then it is encrypted."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-003",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 7,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy store carried no database password, so filesystem permissions were the only control over the entire personal-data set and the file was directly openable by any user who could read it, bypassing the application completely. The file was additionally committed to a public repository; remediation of that exposure is routed separately as synthesis open question OQ-005 and must not wait on this requirement."
+    },
+    {
+      "id": "NFR-014",
+      "type": "constraint",
+      "priority": "must",
+      "description": "No persisted personal data MUST be committed to source control, and no credential or environment-specific value MUST appear in the source tree.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given the repository, when it is scanned, then it contains no database file, no personal data and no credential.",
+        "Given the build, when it runs from a clean checkout, then it succeeds and requires no artifact absent from the repository."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-003",
+        "source_file": "Flat Design/studentDB.accdb",
+        "source_line": 1,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy repository committed the populated database, a stale database lock file, an absolute developer path and a reference to a signing key that the repository excludes and does not contain, so a clean checkout could neither build with a signed manifest nor reach its data."
+    },
+    {
+      "id": "NFR-015",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Every data access MUST pass through an explicit data-access layer, and no query MUST be constructed in presentation code.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given the source tree, when it is scanned, then no query text appears in any presentation component.",
+        "Given the data-access layer, when it is inspected, then every store operation is reachable through it and can be intercepted, substituted and tested in isolation."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-005",
+        "source_file": "Flat Design/Module1.vb",
+        "source_line": 1,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "All sixteen legacy statements were inline in presentation event handlers while the nominal data-access module held thirteen lines and zero queries, so there was no seam at which to intercept, test, retarget or audit data access. The target must create this layer rather than port it."
+    },
+    {
+      "id": "NFR-016",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST NOT contain a circular dependency between its components.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given the component dependency graph, when it is analysed, then it is acyclic.",
+        "Given a build, when dependency rules are enforced, then a newly introduced cycle fails the build."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-MCF-005",
+        "source_file": "Flat Design/Form1.vb",
+        "source_line": 104,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy had three dependency cycles, all through the shell, so no presentation component was a leaf except by accident and there was no acyclic extraction order among the four screens."
+    },
+    {
+      "id": "NFR-017",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST be built with strict type checking enabled, and MUST NOT resolve a data contract at runtime where it can be resolved at build time.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given the build configuration, when it is inspected, then strict type checking is enabled and no implicit narrowing or late binding is permitted.",
+        "Given a renamed or removed store column, when the system is built, then the build fails rather than deferring the failure to runtime."
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-091",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 45,
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy disabled strict type checking project-wide, so implicit narrowing and late binding compiled silently; combined with reader access by string name and automatic grid column generation, the entire column contract resolved at runtime. Enabling it is expected to surface a backlog of real defects and should be budgeted rather than treated as a flag change."
+    },
+    {
+      "id": "NFR-018",
+      "type": "constraint",
+      "priority": "must",
+      "description": "String comparison semantics MUST be declared explicitly and MUST be consistent between the application and the database engine.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given a comparison that differs between case-sensitive and case-insensitive evaluation, when it is performed in the application and in the database, then both yield the same result.",
+        "Given the declared collation, when it is inspected, then it is stated explicitly in both the application configuration and the schema."
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-092",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 48,
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "MAKE_EXPLICIT",
+      "anomaly_details": "Legacy selected case-sensitive comparison in the application while the database engine compared case-insensitively, so the same comparison could yield different results on either side of the boundary."
+    },
+    {
+      "id": "NFR-019",
+      "type": "constraint",
+      "priority": "must",
+      "description": "Identifier naming MUST be consistent between the application and the schema, and MUST NOT depend on the engine being case-insensitive.",
+      "module_hint": "MOD-003",
+      "acceptance_criteria": [
+        "Given every column reference in the application, when it is compared to the schema, then the identifier matches exactly.",
+        "Given deployment on a case-sensitive engine, when the system runs, then every data access succeeds."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-LCF-001",
+        "source_file": "Flat Design/ViewForm.vb",
+        "source_line": 14,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy schema declared one casing convention while every query and every reader lookup used another. The engine's case-insensitivity made this harmless in place, but it breaks on a case-sensitive target and it breaks precisely at the sites resolved at runtime rather than at build time."
+    },
+    {
+      "id": "NFR-020",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST have an automated test suite covering every requirement in this specification, executed by a continuous integration pipeline on every change.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given the repository, when a change is pushed, then a pipeline builds the system and runs the full suite.",
+        "Given each requirement in this specification, when the suite is mapped to it, then at least one automated test exercises its acceptance criteria.",
+        "Given the suite, when it runs against the legacy behaviour it is intended to preserve, then characterization tests assert that behaviour explicitly."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-009",
+        "source_file": "Student Management System Siddharth Jain.sln",
+        "source_line": 6,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy repository contained no test project, no test file, no pipeline and no build script, with a single-commit history, so there was no executable specification of current behaviour and no migration could be verified by regression. The sixty extracted business rules each carry a test-hints block which is prescriptive rather than observational and is the natural seed for the characterization suite; see synthesis contradiction CON-012."
+    },
+    {
+      "id": "NFR-021",
+      "type": "constraint",
+      "priority": "must",
+      "description": "The system MUST build and run from a clean checkout of the repository using only artifacts the repository contains or configuration it documents.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given a clean checkout on a machine with the documented toolchain, when the build runs, then it succeeds with no manual intervention.",
+        "Given a clean checkout, when the system starts against a documented configuration, then it connects to its data store successfully.",
+        "Given the repository, when its build configurations are inspected, then each named configuration builds what its name states."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-008",
+        "source_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "source_line": 64,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy clean checkout failed manifest signing against a key the repository excludes and does not contain, mapped its debug configuration to release so no debug build existed, and bound its database to a path absent from the repository layout, so even a successful build could not reach its data."
+    },
+    {
+      "id": "NFR-022",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "The system MUST log every operation with sufficient detail to diagnose a failure without reproducing it, and MUST NOT record personal data in any log.",
+      "module_hint": "MOD-001",
+      "acceptance_criteria": [
+        "Given any operation, when it completes or fails, then a log entry records the action, the outcome, the correlation reference and the acting identity.",
+        "Given any log entry, when it is inspected, then it contains no name, telephone number or date of birth."
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-022",
+        "source_file": "Flat Design/InsertForm.vb",
+        "source_line": 31,
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy had no logging of any kind; the only diagnostic was a message box showing the raw provider exception to the operator, so no failure could be diagnosed after the fact."
+    },
+    {
+      "id": "NFR-023",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "A session MUST expire after a declared period of inactivity and MUST require re-authentication thereafter.",
+      "module_hint": "MOD-004",
+      "acceptance_criteria": [
+        "Given an idle session, when the declared inactivity period elapses, then the session is terminated and any further request requires re-authentication.",
+        "Given an unattended client, when the inactivity period has elapsed, then no record data remains accessible without re-authentication."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-001",
+        "source_file": "Flat Design/My Project/Application.myapp",
+        "source_line": 8,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "Legacy had no session concept at all: one connection was held open for the entire process lifetime, so an unattended instance was a permanently privileged window onto the personal-data store with no timeout and no re-authentication."
+    },
+    {
+      "id": "NFR-024",
+      "type": "non-functional",
+      "priority": "should",
+      "description": "The interface SHOULD adapt to the display it is presented on and SHOULD remain usable at the operator's configured text size.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given a display smaller than the design size, when the interface is presented, then all content remains reachable without clipping.",
+        "Given an increased system text size, when the interface is presented, then no text is truncated or overlapped."
+      ],
+      "traces_to": {
+        "discovery_finding": "SYN-HCF-007",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 1072,
+        "discovery_artifact": "synthesis"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy shell was fixed at a hardcoded size with absolutely positioned controls and no layout adaptation, which is also why two duplicate tiles could sit outside the visible area while remaining in the focus order."
+    },
+    {
+      "id": "NFR-025",
+      "type": "non-functional",
+      "priority": "must",
+      "description": "Operator-visible text MUST be correct and MUST be maintained in one place.",
+      "module_hint": "MOD-005",
+      "acceptance_criteria": [
+        "Given every operator-visible string, when it is reviewed, then it is free of spelling errors.",
+        "Given a string requiring amendment, when it is changed in its single definition, then every surface that presents it reflects the change."
+      ],
+      "traces_to": {
+        "discovery_finding": "BR-081",
+        "source_file": "Flat Design/Form1.Designer.vb",
+        "source_line": 518,
+        "discovery_artifact": "business-logic"
+      },
+      "anomaly_resolution": "FIX",
+      "anomaly_details": "The legacy application title was misspelled on the operator-facing shell, and the five academic-year statistics shared one caption restated in five separate definitions."
+    }
+  ],
+  "totals": {
+    "requirements": 25,
+    "by_type": {
+      "non-functional": 14,
+      "constraint": 11
+    },
+    "by_priority": {
+      "must": 22,
+      "should": 3
+    },
+    "by_module": {
+      "MOD-005": 13,
+      "MOD-001": 3,
+      "MOD-002": 1,
+      "MOD-003": 6,
+      "MOD-004": 2
+    },
+    "with_anomaly_resolution": 25
+  }
+}

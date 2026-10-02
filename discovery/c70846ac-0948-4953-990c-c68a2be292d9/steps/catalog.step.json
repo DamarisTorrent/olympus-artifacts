@@ -1,0 +1,20 @@
+{
+  "step": "catalog",
+  "artifacts": [
+    "I've completed the `catalog-application` skill run for application `c70846ac-0948-4953-990c-c68a2be292d9`.\n\n**Outputs written to `/workspace/discovery-c70846ac-0948-4953-990c-c68a2be292d9-01a0fd8a041f/artifacts/discovery-catalog/`:**\n- `catalog.json` \u2014 flat-shape artifact conforming to the `olympus:artifact:application-catalog-entry:v1` schema\n- `application-catalog-entry.md` \u2014 reviewer narrative\n\n**What the repo actually is:** a single-project VB.NET WinForms desktop app (\"Student Management System\") with a dashboard + insert/view/edit forms, backed by a local Microsoft Access `.accdb`, ~2,787 LOC (83% WinForms Designer-generated), 1 module, 1 table (`students`), no HTTP surface, no CI/CD.\n\n**Key catalog decisions:**\n- `archetype`: `desktop` \u2014 none of the schema's suggested buckets (web-app/batch/hybrid/service/headless/cli/library/mainframe/embedded) fit a GUI thick-client cleanly, so I picked the honest closest label and documented the taxonomy gap rather than forcing a false fit.\n- `complexity_tier`: `simple` (LOC/module counts well under default thresholds; no FAA profile override found).\n- `safety_tier`: `null` \u2014 no authoritative input exists, and the methodology forbids inferring it from code, so it's left null with context in `open_questions` rather than guessed.\n- `business_domain`: `\"Admin\"` \u2014 closest general match to the FAA profile's own domain taxonomy (found in `profiles/faa/README.md`), flagged as a best-guess.\n\n**The important finding (reported, not silently resolved):** the governing profile is `faa` (FAA/NAS/aviation legacy-modernization), but this application has zero aviation or FAA relevance \u2014 it's a generic academic student-records tool. Per your standing instruction, I kept `faa` as governing and did **not** adopt any artifact-implied alternative, but recorded the mismatch prominently in `open_questions` and at the top of the markdown for gate reviewers. I also flagged that `fixtures/default.json` sitting inside the app's own source tree is actually a test fixture for this skill (describing an unrelated fictitious C#/ASP.NET app) \u2014 I disregarded it as a factual input and noted its presence as a possible repo/fixture contamination issue."
+  ],
+  "file_artifacts": [
+    "application-catalog-entry.md",
+    "catalog.json"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 268176,
+  "token_usage": {
+    "input": 1055,
+    "output": 23244
+  },
+  "cost_estimate_usd": 0.6847110000000001,
+  "timestamp": "2026-10-02T16:59:09.668097+00:00",
+  "pass": "catalog",
+  "skill_id": "catalog-application"
+}

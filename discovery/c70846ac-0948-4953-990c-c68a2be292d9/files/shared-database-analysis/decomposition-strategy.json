@@ -1,0 +1,406 @@
+{
+  "$schema": "olympus:artifact:decomposition-strategy:v1",
+  "skill_id": "decomposition-patterns",
+  "step": "decomposition-strategy",
+  "pass": "discovery-shared-database-analysis",
+  "target_app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "target_service_id": "system",
+  "relationship": "rearchitect",
+  "source_app_ids": [
+    "c70846ac-0948-4953-990c-c68a2be292d9"
+  ],
+  "source_app_names": [
+    "Student Management System (VB.NET)"
+  ],
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "target_name": "Student Management System (target)",
+  "target_pattern": "database-per-service",
+  "wave_id": "unassigned",
+  "generated_at": "2026-10-02T00:00:00Z",
+  "analysis_date": "2026-10-02",
+  "metadata": {
+    "TARGET_BINDING_IS_PROVISIONAL": "READ FIRST. The skill's authoritative scope for this artifact is context.target_plan_entry, taken from the active wave's architecture-target-plan.json. NO target_plan_entry was supplied at this dispatch, because this is a Discovery-line pass that runs before Rationalization produces an architecture target plan. The four required target-binding fields were therefore derived, not received, and are PROVISIONAL: target_app_id and source_app_ids are the source application's own id (it is its own target placeholder at Discovery grain); target_service_id is 'system' because the application is a single-assembly monolith with no established service decomposition; and relationship is 'rearchitect' as the closest evidence-supported value, NOT an approved disposition. Review ask 'target-binding-not-supplied' carries the decision. Do not treat any of these four values as an architecture-target-plan fact, and re-bind this artifact when a real target-plan entry exists.",
+    "relationship_basis": "'rearchitect' is the closest fit on the evidence rather than a decision: the Access Database Engine reached end of life on 2017-10-10; a file-based Access database behind a 32-bit in-process OLEDB provider over a hardcoded absolute path cannot be rehosted as-is (it caps concurrency via file locking with no transactions anywhere in the code, forces an x86 build, and requires a per-workstation redistributable); and the whole application is 461 lines of hand-written logic over 2,326 lines of designer-generated layout, delivering one capability. Both the data layer and the UI must change, which is what 'rearchitect' means. Upstream structural analysis nonetheless records as an open question whether this application should be modernized at all, so retire/retain remains live and is offered as an option on the decide ask.",
+    "wave_id_basis": "'unassigned' is an explicit sentinel, not a wave number — Discovery runs before wave assignment, and no wave-scoped context or staged wave artifact was supplied. See the companion shared-db-analysis.json.",
+    "governing_client_profile": "faa",
+    "profile_discrepancy": "The governing profile is declared as 'faa' and that declaration governs this run. The application is a student-records desktop tool with no aviation, NAS or FAA content; the discrepancy is recorded as a finding and no alternative profile was adopted. Upstream analysis records that the FAA profile's legacy-technology mapping covers only ASP.NET/C#/WCF and defines no modernization target for a VB.NET WinForms + MS Access stack, so no profile-driven decomposition policy was applied.",
+    "co_wave_constraints_artifact": "NOT EMITTED, deliberately. The skill's step-3 contract names co-wave-constraints.json, but this dispatch declared only shared-db-analysis.json and decomposition-strategy.json as output schemas and supplied no schema for the co-wave artifact; writing a file against an unseen schema risks a hard validation failure. The substantive result is the meaningful empty one — this target participates in no multi-application cluster and so constrains nobody. Emit the artifact when its schema is in scope for the dispatch."
+  },
+  "methodology_bias": "AI-native decisive decomposition. Database-per-service with a single scheduled cutover driven by a big-bang-rewrite-replay data migration is the default and was selected. Strangler-fig and DB-facade were both considered and rejected: each is an exception requiring a documented justification, and none of the documented exceptions applies here.",
+  "methodology_compliance": {
+    "decision_tree_step_1_database_per_service": "SELECTED. The decisive path is not merely feasible but trivially so — there is exactly one participating application, so co-waving is vacuous (there is nobody to co-wave with) and the typical threshold of three or fewer apps in one wave is met with margin. Write ownership is already singular. The target is AI-regenerated and the behaviour to verify is one table's create/read/update/delete plus five aggregate tiles, which is well within replay coverage.",
+    "decision_tree_step_2_strangler_fig": "REJECTED. Strangler-fig is an exception, not a default, and requires one of three documented conditions. None holds: (a) apps that genuinely cannot be co-waved — not applicable, there is only one application and no organizational or compliance boundary splitting it; (b) a hard compliance dual-running control — none exists; no regulatory dual-run obligation was identified for this application, and the governing profile defines no policy for this stack; (c) an unscheduleable cutover window — not applicable, the application is a manually installed single-workstation desktop executable with no service-level commitment, no scheduler and no listener, so the cutover window is whenever the operator is not using it. strangler_justification is therefore deliberately absent: no exception applies, and defaulting to incremental because it 'feels safer' is rejected in this platform.",
+    "decision_tree_step_3_db_facade": "REJECTED. The facade path exists only for the cross-wave hazard of four or more sharing applications spread across multiple waves with no feasible co-waving path. There is one sharing application and no cross-wave hazard. Introducing a facade here would create a long-lived integration point to retire in front of a single-table single-user file database — strictly worse than the thing it replaces, and it would require a sunset date to avoid becoming permanent technical debt.",
+    "no_shared_write_in_end_state": "SATISFIED by construction. The single cluster strategy declares role 'owner' (sole writer) with end-state pattern 'database-per-service'. No entry declares role 'write' or 'both', so no shared write exists in the end state and no transitional sunset marker is required.",
+    "facades_emitted": 0,
+    "facade_lifecycle_plans": "none — no facade is proposed, so there is no sunset obligation to declare.",
+    "out_of_scope_tenants_on_the_cluster": "none — the cluster has exactly one participating application, so no out-of-scope tenant's tables are at risk of being folded into this target.",
+    "consolidation_applicable": "No. relationship is not 'consolidate' and source_app_ids has a single member, so the many-to-one consolidation rules and the absorbed_sources block do not apply and are deliberately omitted."
+  },
+  "decision_tree_trace": {
+    "input_topology": "One embedded Microsoft Access ACE 12 single-file database (studentDB.accdb) holding one user table ('students', 10 columns), reached through one hardcoded connection string by one process-wide OleDbConnection shared by four WinForms. Zero stored procedures, zero views, zero saved queries, zero triggers or data macros, zero VBA modules, zero user foreign keys, zero database links or linked servers, zero cross-database SQL references, zero configuration files binding the database.",
+    "participating_application_count": 1,
+    "co_waveable": "vacuously true — no second application exists to co-wave with, so the co-waving precondition for the decisive path is satisfied without any scheduling cost.",
+    "write_contention": "none — the one application is the sole writer. Within the application, write paths are InsertForm (INSERT), EditForm (UPDATE) and ViewForm (DELETE), and read paths are Form1 (10 COUNT(*) aggregates), ViewForm (grid and search) and EditForm (single-row read). These are modules of one deployable, not independent writers, so there is no dual-write to resolve.",
+    "behaviour_verifiable_at_machine_speed": "yes in principle — the behavioural surface is create/read/update/delete/search over one table plus five aggregate tiles, all of it synchronous and local, with no asynchronous or integration behaviour to reproduce. Qualified: no behavioural baseline exists today (no tests, no audit columns, no change history), so the replay corpus must be built from a confirmed data extract rather than captured from the legacy system's own records.",
+    "stored_procedure_or_trigger_untangling_required": "none — all logic already lives in application code, not in the database. Both database passes confirm zero database-resident logic by independent methods.",
+    "rejected_alternatives": [
+      "strangler-fig — no documented exception applies (see methodology_compliance)",
+      "db-facade — no cross-wave hazard; would add a long-lived integration point in front of a single-table file database",
+      "shared-read-only — nothing reads this store but the owning application",
+      "retain / rehost as-is — blocked on the engine itself: the Access Database Engine is end-of-life as of 2017-10-10, the provider is a 32-bit out-of-band redistributable that pins the build to x86 and is non-portable to any 64-bit-only or non-Windows host, and the file-share concurrency model does not survive a multi-user deployment"
+    ],
+    "outcome": "database-per-service, sole ownership, single scheduled cutover driven by big-bang-rewrite-replay. The decomposition is degenerate in the best way: there is nothing entangled to decompose, so the only real work is the data migration and its verification."
+  },
+  "cluster_strategies": [
+    {
+      "cluster_id": "CLU-STUDENTDB-ACCDB-01",
+      "role": "owner",
+      "pattern": "database-per-service",
+      "target_schema": "student_records (single bounded context — the one genuine capability is: own the student record and expose create, read, update, delete and search over it, plus enrolment aggregates by gender, course and year of admission)",
+      "rationale": "Sole-writer end-state shape, selected because it is already the de-facto shape of the legacy system. The target service gets its own dedicated store on a server engine; the legacy Access file is retired at cutover with no residual consumer to carry. role is 'owner' (sole writer) and pattern is an end-state one, so no sunset marker is required and none is emitted — this is deliberate, not an omission.",
+      "notes": "Three data-model decisions are deferred to the target design rather than inherited: (1) column types — the legacy declared types are unresolved and must be read from a live ACE engine before target DDL is generated, since the application binds every value as a string under OptionStrict Off and so cannot be used to infer them; (2) the record key — roll number is the de-facto key used by every single-row operation, but uniqueness is enforced nowhere in code and the upstream passes disagree on whether a primary key is declared, so uniqueness must be confirmed and duplicates removed before migration; (3) reference data — Gender ('Male','Female','Other'), Course ('BCA','MCA','IIMCA') and year of admission ('2019'-'2023') are closed value domains enforced only in two UI designer files, with the year list and a hardcoded current year of 2023 unable to express any later intake, and 'Other' storable but invisible in every dashboard statistic. The target should normalize these into reference tables with real constraints, which is the one place the target schema legitimately gains relations the legacy single-table shape has none of. Do not retrofit foreign keys onto the legacy shape — the absence of foreign keys there is correct by construction, with only one table to relate. Also pin the migration to the ten live columns: the file retains a superseded table definition carrying ClassN and Sec where the live one carries Course and YOA. Finally, resolve the casing convention deliberately — the database declares PascalCase while every call site uses lowercase, which is harmless on case-insensitive Access and breaks at runtime on a case-sensitive target."
+    }
+  ],
+  "write_ownership_after_cutover": {
+    "students_or_its_target_successor": "The target service (target_service_id 'system') is the sole writer. Ownership is singular before and after cutover, so no dual-write window, no facade-mediated write and no ownership handover is required.",
+    "dual_write_windows": "none",
+    "legacy_write_access_after_cutover": "none — the legacy Access file becomes read-only at cutover and is then retired. There is no consumer to keep it writable for.",
+    "singularity_check": "PASS — exactly one write owner per store, at both source and target grain."
+  },
+  "rac_guidance_applicable": false,
+  "rac_guidance_rationale": "No Oracle RAC cluster exists. The store is a single-file Microsoft Access ACE 12 database with no server process, no instance and no network listener, so the 'the RAC cluster, not the instance or schema, is the unit of analysis' heuristic has nothing to apply to. Recorded explicitly so the absence reads as a measured finding rather than an unexamined dimension. Note also that a sqlserver-object-inventory artifact exists for this application with every collection empty: the Discovery line declared the SQL Server variant unconditionally and the detected engine is not SQL Server.",
+  "strategy_summary": {
+    "headline": "Nothing is entangled. One application, one embedded file database, one table, sole writer — so the decisive path is available at zero scheduling cost and was taken.",
+    "pattern": "database-per-service",
+    "cluster_count": 1,
+    "clusters_requiring_ownership_resolution": 0,
+    "facades_proposed": 0,
+    "co_wave_constraints_imposed_on_others": 0,
+    "co_wave_constraints_received_from_others": 0,
+    "cutover_style": "single scheduled cutover, big-bang-rewrite-replay",
+    "cutover_window_constraint": "none material — a manually installed single-workstation desktop executable with no listener, no scheduler, no service-level commitment and, on the evidence of the lock file, a single concurrent user. The window is whenever the operator is not using it.",
+    "critical_path": "The decomposition is not the hard part; the data is. The real prerequisites are, in order: confirm which copy of the .accdb is authoritative and verify it is not a torn copy; read the live schema through an ACE engine to settle types, nullability and the record key; de-duplicate roll numbers if duplicates exist; take a data baseline to replay against, since the legacy store carries no audit, provenance or change history to build one from.",
+    "rollback_posture": "Hold the confirmed legacy file read-only and unmodified after cutover as the rollback source. This is cheap here — the dataset is one small table — and it is the only rollback source available, because the legacy system records no change history of its own."
+  },
+  "risks_and_mitigations": [
+    {
+      "risk_id": "DS-RISK-01",
+      "severity": "high",
+      "risk": "Migration source of record is ambiguous and may be a torn copy. The hardcoded connection path exists on no machine and does not match the repository layout, so the committed database has no code path that opens it while the runtime database is elsewhere, with no reconciliation or deployment-copy step anywhere in the source. The committed copy's Access lock file is committed alongside it, which only happens when the file is captured while open.",
+      "mitigation": "Establish the authoritative copy with the business owner, then compact-and-repair and row-count it before trusting it as the replay source. Blocks the cutover, not the strategy.",
+      "blocks": "data-migration"
+    },
+    {
+      "risk_id": "DS-RISK-02",
+      "severity": "high",
+      "risk": "Target DDL cannot be generated yet: legacy column types, lengths, nullability and index definitions are unresolved, the application cannot be used to infer them (OptionStrict Off, every value bound as a string), and the upstream passes disagree on whether a primary key on roll number exists at all.",
+      "mitigation": "One catalog query against a live ACE engine or ODBC connection settles it. Confirm roll-number uniqueness specifically; if duplicates exist, de-duplication must precede migration.",
+      "blocks": "target-schema-generation"
+    },
+    {
+      "risk_id": "DS-RISK-03",
+      "severity": "high",
+      "risk": "No behavioural or data baseline exists to verify the cutover against. There are no tests, no audit or provenance columns, no row version, no authentication and so no attribution for any change; DELETE is physical and immediate, and row count was never measured. Replay verification is the premise of the decisive path, and it has nothing to replay against yet.",
+      "mitigation": "Build the baseline before cutover: a full extract plus row count from the confirmed source of record, and a behavioural specification derived from the recorded CRUD and aggregate behaviour. Do not expect the legacy store to supply history.",
+      "blocks": "cutover-verification"
+    },
+    {
+      "risk_id": "DS-RISK-04",
+      "severity": "medium",
+      "risk": "An out-of-band consumer of the legacy file would be undetectable. A file-share Access database keeps no engine-side audit trail, so a person or tool opening studentDB.accdb directly in Access bypasses the application entirely and leaves no trace any code or file walk could find. A decisive cutover would silently break such a consumer.",
+      "mitigation": "One question to the business owner closes the dimension; it is carried as review ask 'out-of-band-database-consumers-unverifiable' on the companion shared-db-analysis artifact. Does not change the chosen pattern — if a consumer is found, it is a reader and can be served from the target store or a published read model, not a reason to adopt a facade.",
+      "blocks": "nothing"
+    },
+    {
+      "risk_id": "DS-RISK-05",
+      "severity": "medium",
+      "risk": "Silent data change at migration. Access DATE/TIME is a double-precision serial with a 1899-12-30 epoch and no timezone, and permits a time component on a semantically date-only field; date of birth is additionally written as a culture-formatted display string and read back with a culture-free parse under OptionStrict Off, so day/month transposition is possible across workstation locales and may already be present in the stored data. Year of admission is compared as a string against an integer rendered with ToString().",
+      "mitigation": "Map date of birth to a date type deliberately and record the dropped time component as an intended change. Inspect stored dates for already-transposed values before replay rather than assuming the legacy data is clean.",
+      "blocks": "nothing"
+    },
+    {
+      "risk_id": "DS-RISK-06",
+      "severity": "high",
+      "risk": "Unprotected personal data in public source control. The table holds names, parent name, two contact numbers, date of birth and gender; the database carries no password and is unencrypted; the application has no authentication, so every operator has unrestricted CRUD over all records; and the file plus its lock file are committed to a public repository where Git history retains them even if deleted from HEAD. This is not a decomposition choice but it governs how every copy of the legacy file must be handled during migration.",
+      "mitigation": "Treat every copy as exposed and handle the migration extract as personal data. Escalate the public-repository exposure through the engagement's data-protection route; it is independently recorded by upstream passes and no decomposition choice resolves it.",
+      "blocks": "nothing"
+    },
+    {
+      "risk_id": "DS-RISK-07",
+      "severity": "medium",
+      "risk": "The target binding in this artifact is derived rather than received, because no architecture-target-plan entry existed at Discovery grain. If a later target plan assigns a different relationship — in particular retire, or consolidation into a wider student-administration service — the cluster strategy would need revisiting, since 'database-per-service for a dedicated target store' presupposes that a target service is actually being built.",
+      "mitigation": "Re-bind this artifact against the real architecture-target-plan entry when one exists; carried as review ask 'target-binding-not-supplied'.",
+      "blocks": "nothing"
+    }
+  ],
+  "inputs_consumed": {
+    "staged_into_this_dispatch": [
+      "input-artifacts/discovery-shared-database-analysis/_dispatch-context-discovery-shared-database-analysis.json"
+    ],
+    "declared_required_but_not_staged": [
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json (declared required; not present in this dispatch's input directory)",
+      "database-schema-summary (declared required; not addressable as a file, read from the section of structural-analysis.json)"
+    ],
+    "read_from_prior_pass_outputs_instead": [
+      "artifacts/discovery-structural-analysis/structural-analysis.json",
+      "artifacts/discovery-structural-analysis/db-schema.json",
+      "artifacts/discovery-structural-analysis/db-archaeology.json",
+      "artifacts/discovery-structural-analysis/sqlserver-object-inventory.json",
+      "artifacts/discovery-structural-analysis/data-flow-trace.json",
+      "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json",
+      "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json",
+      "artifacts/discovery-catalog/catalog.json"
+    ],
+    "read_first_hand_from_source": [
+      "Flat Design/Module1.vb (the single connection string, line 7)",
+      "Flat Design/Form1.vb, InsertForm.vb, EditForm.vb, ViewForm.vb (all 15 inline SQL statements)",
+      "Flat Design/App.config and My Project/Settings.settings (confirmed zero configuration binding of the database)",
+      "Student Management System Siddharth Jain.sln and Flat Design/*.vbproj (confirmed one project, one executable, no project references)",
+      "Flat Design/studentDB.accdb and studentDB.laccdb (byte-level read of the catalog and lock file)",
+      "README.md and .git/config, .git/logs/HEAD (origin, single commit, documented setup procedure)"
+    ],
+    "not_supplied_at_this_dispatch": [
+      "context.target_plan_entry (architecture-target-plan.json entry) — absent; target binding is provisional",
+      "context.shared_db_cluster_map (rationalization/wave-{wave_id}/shared-db-cluster-map.json) — absent; no portfolio cluster map exists before Rationalization, and the global view was deliberately not re-derived here",
+      "wave plan / co-waveability input — absent",
+      "profiles/faa/ policy material — not reachable from this sandbox at this dispatch; no profile-specific decomposition policy was applied"
+    ],
+    "deliberately_disregarded": [
+      "fixtures/shared-db-analysis.json — this skill's own QA fixture, found inside the application's source tree. It describes a fictitious CORE_ODS cluster with CUSTOMER/ADDRESS/BILLING_ACCOUNT tables shared across 'billing-portal' and 'crm-lite'. None of it describes this application and none of it was carried into this artifact.",
+      "scripts/classify_procs_template.sql — a generic Oracle/SQL Server/DB2 stored-procedure inventory template from the harness, not application DDL.",
+      "references/, assets/, schemas/ — Discovery-harness scaffolding present in the working tree, not application source."
+    ]
+  },
+  "references": {
+    "companion_artifact": "shared-db-analysis.json — the source-grain shared-database topology this strategy is built on, including the cluster inventory, the cross-application sharing summary and the seven ranked decomposition risks.",
+    "narrative_sidecars": "shared-db-analysis.md and decomposition-strategy.md — the reviewer-facing narratives for the G-DT review card.",
+    "cluster_id_crosswalk": "CLU-STUDENTDB-ACCDB-01 is the same cluster in both artifacts; the id is the join key."
+  },
+  "downstream_projection": {
+    "application_data_pattern": "database-per-service",
+    "shared_db_cluster_rows": [
+      {
+        "cluster_id": "CLU-STUDENTDB-ACCDB-01",
+        "role": "owner",
+        "pattern": "database-per-service"
+      }
+    ],
+    "projection_note": "These are the values the post-G-DT persist_data_side_effects activity reads from cluster_strategies and projects onto application.data_pattern and the shared_db_cluster table. Both values are inside the enforced whitelists. Caveat for whoever consumes the projected row: a shared_db_cluster row will exist for this application even though the cluster is NOT shared — it has one participating application and one write owner. Presence of a row must not be read as cross-application coupling."
+  },
+  "side_effect_projections": {
+    "writes_performed_by_this_skill": "none — this skill emits artifacts only and performs no direct database writes.",
+    "post_gate_activity": "persist_data_side_effects, after G-DT approval, per the architecture assembly line.",
+    "fields_projected": [
+      "application.data_pattern",
+      "shared_db_cluster.cluster_id",
+      "shared_db_cluster.role",
+      "shared_db_cluster.pattern"
+    ]
+  },
+  "open_questions": [
+    "TARGET BINDING IS PROVISIONAL, NOT AUTHORITATIVE. No context.target_plan_entry was supplied, so target_app_id, target_service_id, relationship and source_app_ids were derived at Discovery grain rather than read from an architecture-target-plan entry. relationship 'rearchitect' is the closest evidence-supported value, not an approved disposition; target_service_id 'system' reflects that no service decomposition has been established. Re-bind when a real target-plan entry exists. Carried as the first review ask.",
+    "WHETHER THIS APPLICATION SHOULD BE MODERNIZED AT ALL IS STILL OPEN, and it is upstream of everything in this artifact. The application is 461 lines of hand-written logic delivering one capability — student-record CRUD plus five aggregate tiles — over a dataset whose row count was never measured and which may hold as few as a handful of records. Upstream structural analysis records the disposition as an open question. If the answer is retire or replace with an off-the-shelf tool, this decomposition strategy is moot; it is emitted so the data-layer facts are on the record either way.",
+    "NO CO-WAVE-CONSTRAINTS ARTIFACT WAS EMITTED. The dispatch declared no schema for it and writing against an unseen schema risks a hard validation failure. The substantive answer is the meaningful empty one: zero constraints, because this target participates in no multi-application cluster. See metadata.co_wave_constraints_artifact.",
+    "NO LIVE DATABASE ENGINE WAS AVAILABLE. Every statement about the legacy store's internals derives from reading the .accdb as bytes, never from opening it through an engine. This is the root cause of DS-RISK-02 and DS-RISK-05 and is the highest-value gap to close before target DDL is generated.",
+    "UPSTREAM ARTIFACTS CONFLICT ON DETAILS AND THE CONFLICTS ARE NOT SILENTLY RESOLVED HERE. The two db-archaeology passes disagree on the logical schema name, file size, whether a primary key on roll number is established, SQL-injection severity and how many statements are unparameterized; the two data-flow traces disagree on whether Access column types are known and on the dashboard aggregate count. None of these changes the chosen pattern — all are internal to a single-application, single-table store — but none should be treated as settled.",
+    "GOVERNING-PROFILE DISCREPANCY. The declared governing profile is 'faa' and governs this run; the application is a student-records desktop tool with no aviation, NAS or FAA content, as independently recorded by three prior Discovery passes. No alternative profile was adopted and no FAA-specific decomposition policy was applied. The engagement owner should settle the application-to-profile assignment before FAA-specific gating consumes this artifact.",
+    "STRANGLER_JUSTIFICATION IS DELIBERATELY ABSENT. The field exists to name which documented exception justifies an incremental path. No exception applies, so the field is omitted rather than filled with a non-reason. Its absence is the finding."
+  ],
+  "regeneration_note": "If this artifact is regenerated after an architecture-target-plan entry exists, the four target-binding fields and the relationship rationale must be replaced with the plan's values; the cluster strategy itself is unlikely to change, because a single-application single-table store admits no other sound end-state shape than sole ownership of a dedicated store.",
+  "review_asks": [
+    {
+      "ask_slug": "target-binding-not-supplied",
+      "action": "decide",
+      "title": "What should happen to this application — rebuild it, replace it, or stop work on it?",
+      "why": "This strategy assumes a replacement system is being built, and if that assumption is wrong the data-migration work it prescribes is wasted effort.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "This analysis ran before any decision was recorded about the application's future, so no approved disposition was available to work from. We proceeded on the assumption that a replacement is being built with a modern database, because the current one cannot be kept running: the Microsoft Access database engine it depends on went out of support in October 2017, it only works as a 32-bit Windows program with an extra component installed on each machine, and a file-based database cannot support more than one user safely. But the application itself is very small — one screen of student records plus a summary dashboard, a few hundred lines of real logic — so rebuilding it may not be the right answer. A decision is needed before the data-migration work described here is scheduled.",
+      "reasoning": "Three options are genuinely live on the evidence. Rebuilding fits the technical findings best: both the data layer and the user interface have to change, so nothing can be carried over as-is. Replacing it with an existing off-the-shelf student-records product is credible precisely because the application is so small and does nothing unusual — it would avoid the rebuild entirely. Stopping work is also credible: the earlier structural analysis explicitly left open whether this application warrants modernization at all, the dataset size was never measured and may be tiny, and the application is a single-developer project with no recorded business owner, criticality or user population. Whichever is chosen, the database facts in this artifact stand — there is nothing shared to untangle.",
+      "confidence": {
+        "level": "low",
+        "score": 0.35,
+        "rationale": "The technical constraints are well established, but the disposition is a business judgment with no inputs available: no business owner, no criticality rating, no user count and no measured data volume were supplied at onboarding. This is deliberately not decided here."
+      },
+      "evidence_refs": [
+        {
+          "name": "No target plan was supplied",
+          "detail": "The dispatch carried no architecture-target-plan entry, so the four target-binding fields in this artifact were derived at Discovery grain rather than received.",
+          "artifact_path": "input-artifacts/discovery-shared-database-analysis/_dispatch-context-discovery-shared-database-analysis.json"
+        },
+        {
+          "name": "Current platform cannot be retained as-is",
+          "detail": "The Access Database Engine reached end of life on 2017-10-10; the provider is a 32-bit out-of-band redistributable that pins the build to x86 and is non-portable to 64-bit-only or non-Windows hosts; the file-share concurrency model has no transactions anywhere in the code.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/db-archaeology.json"
+        },
+        {
+          "name": "Very small functional footprint",
+          "detail": "One capability — student-record create/read/update/delete/search plus five aggregate tiles — in roughly 461 lines of hand-written logic; the other 2,326 of 2,787 lines are designer-generated layout.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Disposition left open upstream",
+          "detail": "The structural-analysis pass records as an explicit open question whether this application should be modernized at all.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "No ownership or criticality input",
+          "detail": "No CMDB export or ownership/criticality documentation was provided at onboarding; business owner, operational criticality and user population are all unconfirmed.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "rearchitect",
+          "label": "Rebuild it on a modern database and user interface",
+          "description": "The assumption this artifact was written against. The replacement gets its own dedicated database, the student data is migrated once in a scheduled switchover, and the Access file is retired. Commits the data-preparation work described here: confirm the authoritative database copy, read its real schema, de-duplicate roll numbers, and build a data baseline to verify against."
+        },
+        {
+          "key": "replace",
+          "label": "Replace it with an existing student-records product",
+          "description": "Buy rather than build, which is credible given how small and unremarkable the application is. The data migration described here is still needed — into the product's schema rather than a bespoke one — but no application rebuild happens. Likely the cheapest path if a suitable product exists."
+        },
+        {
+          "key": "retain-or-retire",
+          "label": "Leave it alone for now, or retire it",
+          "description": "Stop modernization work pending a business decision. Appropriate if the application has no real business owner or user population, or if the data volume turns out to be negligible. Note that leaving it running is not risk-free: the database engine is already out of support and the student data is currently exposed in a public code repository, which needs handling regardless of this choice."
+        }
+      ]
+    },
+    {
+      "ask_slug": "legacy-store-source-of-record-unverified",
+      "action": "resolve",
+      "title": "Identify which copy of the student database is the real one before any data is migrated.",
+      "why": "Two different copies exist and neither is confirmed authoritative, so a migration run today could faithfully carry across the wrong or a damaged dataset.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The application's database location is hard-coded to a folder path on the original developer's own machine, and that path does not match where the database file actually sits in the delivered code. The copy we have therefore has no code that opens it, and the copy the running application uses is somewhere we have not seen. The delivered copy is itself questionable: a Microsoft Access lock file was committed alongside it, which only happens when a database is copied while still open, so it may be an incomplete snapshot. This must be resolved before any data is moved — it is the single hardest prerequisite for the scheduled switchover this strategy depends on.",
+      "reasoning": "The connection string points at a three-deep nested folder on a D: drive; the repository contains one level of that folder name. Both cannot be right, and no deployment step, copy script or reconciliation job exists anywhere in the source to bridge them, so the runtime file and the version-controlled file diverge from first use. Microsoft Access deletes its lock file when the last connection closes cleanly, so a committed lock file naming a workstation and the default database account is positive evidence of capture mid-session. Both upstream database passes record these facts and one recommends a compact-and-repair plus row count before the file is trusted as a migration source.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The path mismatch and the committed lock file are directly observable in the delivered artifacts and independently recorded by two upstream passes. What is genuinely unknown is which copy the business uses, and that needs the owner rather than more analysis."
+      },
+      "evidence_refs": [
+        {
+          "name": "Hardcoded path that resolves nowhere",
+          "detail": "The sole connection string targets a three-deep nested folder on the author's D: drive while the database ships one level deep in the repository; a clean checkout cannot connect without editing source, which is exactly what the README instructs as the setup procedure.",
+          "artifact_path": "Flat Design/Module1.vb"
+        },
+        {
+          "name": "Committed Access lock file",
+          "detail": "A 64-byte lock file naming one workstation and the default database account sits in version control next to the database.",
+          "artifact_path": "Flat Design/studentDB.laccdb"
+        },
+        {
+          "name": "Divergent-copies finding upstream",
+          "detail": "The data-flow trace records that the runtime file and the version-controlled file are distinct artifacts diverging from first use, with no reconciliation, sync or deployment-copy step anywhere in the source.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/data-flow-trace.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "access-schema-metadata-unresolved",
+      "action": "resolve",
+      "title": "Open the Access database with a real database tool to settle its column types and record key.",
+      "why": "A replacement database cannot be designed from guessed column types, and if student roll numbers are not actually unique, a migration built on that assumption will lose or merge records.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "We know the ten column names in the student table but not their declared data types, whether they can be left empty, or whether the roll-number column is actually enforced as unique. The database file was only ever read as raw bytes, never opened through a database engine, and the application gives no clue because it passes every value through as text. The two earlier passes that examined the file disagree on whether a record key exists at all. One query against a live database engine settles all of it, and it has to happen before the replacement schema is designed.",
+      "reasoning": "Column names and on-disk order were recovered from the file's internal catalog, but type bytes, lengths, nullability and validation settings live in binary structures that text-oriented tooling did not resolve — and every pass that touched the file says so explicitly rather than guessing. The application cannot substitute for the schema: strict typing is disabled and every value is bound from a text control, so even date of birth and year of admission may be stored as text. The decision-critical gap is the roll number: every single-row read, update and delete selects by it, yet the insert path performs no duplicate check, so uniqueness is assumed by the code and may be enforced nowhere. One upstream pass reports a single-column primary key on it; the other reports no key established. Two further items resolve in the same sitting: whether any rows still carry the superseded ClassN/Sec column layout the file retains, and the actual row count, which was never measured.",
+      "confidence": {
+        "level": "high",
+        "score": 0.88,
+        "rationale": "The gap is explicitly and consistently declared by every upstream pass that read the file, and the upstream disagreement about the primary key makes the uncertainty concrete rather than theoretical. The remedy is unambiguous and cheap."
+      },
+      "evidence_refs": [
+        {
+          "name": "Types declared unknown, not guessed",
+          "detail": "The database-schema-summary states that column data types, nullability and index definitions sit in binary structures the decode did not resolve and are reported as unknown rather than inferred.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Conflicting primary-key findings",
+          "detail": "One pass reports a single-column primary key index on roll number with the column required; the other reports no primary key or index established, to be treated as not-established rather than absent.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/db-archaeology.json"
+        },
+        {
+          "name": "Superseded column layout still in the file",
+          "detail": "A second table definition carries ClassN and Sec where the live definition carries Course and YOA, so a generic catalog read could pick up the wrong shape.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "governing-profile-scope-mismatch",
+      "action": "context",
+      "title": "Confirm this student-records application really belongs in the FAA programme scope.",
+      "why": "If the application was assigned to this programme in error, every FAA-specific gate applied to it is being spent on the wrong system.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The governing profile for this analysis is the FAA programme, and that declaration is authoritative for how this pass was run. Nothing in the application supports it: it is a small single-developer Windows desktop tool for managing college student records, published under an open-source licence on a public code-sharing site, with no aviation, air-traffic, certification or safety content of any kind. This looks like a scope or assignment error and should be settled by the engagement owner before further programme-specific gating is applied.",
+      "reasoning": "The mismatch was reached by comparing the declared profile against the application's own README, project report, source tree and database contents, all of which describe student-record administration for BCA/MCA/IIMCA course programmes. Three prior Discovery passes raised the same discrepancy independently. Upstream analysis also records that the FAA profile's legacy-technology mapping covers only ASP.NET/C#/WCF and defines no modernization target for this application's VB.NET WinForms plus Microsoft Access stack, so even if it were in scope, no profile-driven decomposition policy currently applies. This pass adopted no alternative profile and applied no profile-specific shared-database policy.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "The domain evidence is unambiguous and consistent across the source, the README, the project report and the data itself, and is independently corroborated by three earlier passes. It remains a scope question only the engagement owner can answer."
+      },
+      "evidence_refs": [
+        {
+          "name": "Application domain per the catalog pass",
+          "detail": "Catalogued as a standalone WinForms tool for managing student academic records, described by its own author as a single-developer academic/portfolio project with no network, web or batch component.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "Independent mismatch findings upstream",
+          "detail": "The structural-analysis open questions, the data-flow trace cross-flow findings and the catalog pass each record the same governing-profile discrepancy.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "decomposition-strategy-recorded",
+      "action": "aware",
+      "title": "For the record: the replacement gets its own dedicated database, cut over in one scheduled move.",
+      "why": "It states the approach chosen and confirms that no temporary bridging layer or multi-stage migration is being carried, which is the usual source of lingering cost.",
+      "subject": {
+        "kind": "artifact",
+        "id": "decomposition-strategy.json",
+        "label": "Decomposition Strategy — Student Management System (VB.NET)"
+      },
+      "assessment": "Because this application's database is used by nothing else, there is no entanglement to unpick. The replacement system gets its own dedicated database and becomes its sole owner, the student data is migrated in a single scheduled switchover, and the old Access file is retired immediately afterwards with nothing left reading it. Two slower alternatives were considered and rejected as unnecessary: gradually redirecting traffic over several rounds, and putting a temporary service layer in front of the old database. Both exist to manage databases shared between several applications, and neither applies to one application with one table — either would add a bridging component that itself has to be removed later. No temporary layer and no dual-write period are proposed, so there is no sunset date to track.",
+      "reasoning": "The decision followed the standard decision tree and stopped at the first option. A dedicated database per service is the default where the participating applications can be switched over together, and here that condition is met trivially because there is only one application. Ownership of the data is already held by a single writer, so there is nothing to negotiate, and the behaviour to verify after the switchover is a single table's create, read, update, delete and search plus five summary tiles — small enough to check thoroughly. The real work sits in the data rather than the decomposition, and the prerequisites are raised as separate asks above: confirm which copy of the database is authoritative, read its real schema, and build a baseline to verify the migration against.",
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "The topology driving the decision is established from four independent angles and matches three prior passes. The qualifier is that the strategy presupposes a replacement is being built, which is itself the open decision raised in the first ask."
+      },
+      "evidence_refs": [
+        {
+          "name": "Cluster strategy",
+          "detail": "One cluster, sole ownership, dedicated database per service; zero temporary layers proposed, zero co-wave constraints imposed on or received from other applications.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/shared-database-analysis/decomposition-strategy.json"
+        },
+        {
+          "name": "Shared-database topology it rests on",
+          "detail": "One cluster with exactly one participating application and one write owner; coupling severity recorded as none.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/shared-db-analysis.json"
+        }
+      ]
+    }
+  ]
+}

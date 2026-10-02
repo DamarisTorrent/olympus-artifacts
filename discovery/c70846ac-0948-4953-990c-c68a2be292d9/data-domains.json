@@ -1,0 +1,890 @@
+{
+  "$schema": "olympus:artifact:data-domains:v1",
+  "target_app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "target_service_id": "unassigned",
+  "relationship": "refactor",
+  "source_app_ids": [
+    "c70846ac-0948-4953-990c-c68a2be292d9"
+  ],
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "source_app_names": [
+    "Student Management System (VB.NET)"
+  ],
+  "skill": "data-domain-patterns",
+  "skill_id": "data-domain-patterns",
+  "task": "discovery-data-domain-discovery",
+  "task_type": "discovery",
+  "generated_date": "2026-10-02",
+  "model_used": "us.anthropic.claude-opus-5[1m]",
+  "method": "Five-heuristic domain boundary derivation (changes-together, queried-together, same-lifecycle, same-security-classification, same-business-owner) applied to the logical entities implied by the single physical table studentDB.students, cross-checked against first-hand reads of all five hand-written VB source files.",
+  "method_rationale": "This application has exactly ONE physical user table with ten columns, so a physical-table-per-domain reading would emit a single trivial domain and tell a reviewer nothing. The domains below are therefore drawn at the LOGICAL entity level: the eight logical entities the code actually manipulates (Student, StudentContactPoint, GuardianReference, Enrolment, CourseCode, GenderCode, IntakeYear, and the derived StudentPopulationStatistics read-model) were recovered from the SQL statements, the UI value domains, and the dashboard aggregates, then grouped by the five heuristics. The grouping deliberately does NOT follow the dashboard's co-query pattern where that would let a UI artifact dictate a business boundary (see boundary_arbitration_decisions, decision BA-01).",
+  "heuristics_applied": [
+    "changes-together — INSERT (Flat Design/InsertForm.vb:9) writes all ten columns atomically, but UPDATE (Flat Design/EditForm.vb:51) rewrites only nine and uses rollno solely as the WHERE predicate, so the identifier is write-once while every other attribute is freely mutable. That is the one genuine mutation-profile split in the schema.",
+    "queried-together — three distinct read-sets exist: the ten dashboard COUNT(*) aggregates touch ONLY gender, course and yoa (Flat Design/Form1.vb:24-84); the search path predicates ONLY on rollno and fname (Flat Design/ViewForm.vb:50); the grid and edit-load paths are SELECT * (Flat Design/ViewForm.vb:39, Flat Design/EditForm.vb:14) and therefore carry no discriminating signal.",
+    "same-lifecycle — every column shares one lifecycle: created by the single INSERT, hard-deleted by the single DELETE (Flat Design/ViewForm.vb:90). There is no archival, no purge, no soft-delete, no tombstone and no retention logic anywhere, and no created/modified/user/version column exists, so no lifecycle sub-boundary can be drawn from observed behaviour.",
+    "same-security-classification — the OBSERVED classification is uniform and uniformly absent: no authentication (Flat Design/My Project/Application.myapp:8), no roles, no row or column filtering, and ViewForm binds SELECT * with AutoGenerateColumns=True so every column is visible to anyone who launches the executable. The classification DIFFERENCES recorded per domain below are the target-state distinctions the data warrants, not distinctions the legacy system enforces.",
+    "same-business-owner — no organisational owner is documented for any entity. The repository names no business owner, sponsoring office or user population; the catalog recorded the absence of any CMDB or ownership input. Ownership is therefore emitted as unassigned on every domain rather than inferred, and raised as the domain-owner-unassigned review ask."
+  ],
+  "domains": [
+    {
+      "domain_id": "D1",
+      "name": "Student Identity and Contact",
+      "capability": "Student record administration — register, retrieve, amend and delete the person-level record of a student",
+      "aggregate_root": "Student",
+      "owner": "unassigned — no business owner, sponsoring office or custodian is documented anywhere in the repository or in any inherited Discovery artifact",
+      "owner_basis": "Not inferred. The application has zero authentication, zero roles and zero audit columns, so no organisational unit can be read off the code; see review ask domain-owner-unassigned.",
+      "security_classification": "PII — highest in the application. Directly identifying personal data (given name, family name, date of birth) plus two contact telephone numbers plus personal data about a named third party. Contains data about minors if the student population is school-age, which is undetermined.",
+      "observed_access_control": "none — filesystem permissions on Flat Design/studentDB.accdb are the only control; the file carries no database password and the application no login. Evidence: Flat Design/Module1.vb:7; Flat Design/My Project/Application.myapp:8",
+      "write_paths": [
+        "INSERT all ten columns — Flat Design/InsertForm.vb:9",
+        "UPDATE nine columns excluding rollno — Flat Design/EditForm.vb:51",
+        "DELETE by rollno — Flat Design/ViewForm.vb:90"
+      ],
+      "read_paths": [
+        "SELECT * full-table grid bind — Flat Design/ViewForm.vb:39",
+        "SELECT * single row by rollno for the editor — Flat Design/EditForm.vb:14",
+        "SELECT * with a concatenated WHERE on rollno and a LIKE on fname — Flat Design/ViewForm.vb:50"
+      ],
+      "core_entities": [
+        {
+          "entity": "Student",
+          "role": "aggregate root",
+          "physical_columns": [
+            "studentDB.students.RollNo",
+            "studentDB.students.FName",
+            "studentDB.students.LName",
+            "studentDB.students.Gender",
+            "studentDB.students.DOB"
+          ],
+          "identity": "RollNo — declared TEXT(255) with a single-column index named PrimaryKey, but AllowZeroLength=True so the empty string is an admissible key value, and the insert path performs no duplicate or presence check.",
+          "pii": true,
+          "heuristic_signals": {
+            "changes_together": "RollNo is written once by INSERT and never appears in the UPDATE SET list; the other four attributes are rewritten on every update. Evidence: Flat Design/InsertForm.vb:9; Flat Design/EditForm.vb:51",
+            "queried_together": "RollNo and FName are the only two columns the search predicate touches. Evidence: Flat Design/ViewForm.vb:50",
+            "lifecycle": "Created by INSERT, destroyed by a physical DELETE with no tombstone. Evidence: Flat Design/ViewForm.vb:90",
+            "security": "Identifying PII; DOB additionally underpins any age derivation. Evidence: Flat Design/InsertForm.vb:23",
+            "owner": "unassigned"
+          },
+          "evidence": [
+            "Flat Design/InsertForm.vb:12",
+            "Flat Design/InsertForm.vb:13",
+            "Flat Design/InsertForm.vb:14",
+            "Flat Design/InsertForm.vb:18",
+            "Flat Design/InsertForm.vb:23",
+            "Flat Design/EditForm.vb:21",
+            "Flat Design/ViewForm.vb:62"
+          ]
+        }
+      ],
+      "supporting_entities": [
+        {
+          "entity": "StudentContactPoint",
+          "role": "supporting — two unlabelled telephone slots denormalised into the student row",
+          "physical_columns": [
+            "studentDB.students.MobNo",
+            "studentDB.students.AltMobNo"
+          ],
+          "cardinality_in_legacy": "exactly two, positionally distinguished only; there is no contact-type, no preference order and no validity window",
+          "pii": true,
+          "boundary_note": "Ownership of AltMobNo is genuinely unresolved. The inherited schema summary describes it as 'typically a next-of-kin number', which would make it a contact point of GuardianReference rather than of Student, but nothing in the code or the UI labels distinguishes the two. Recorded as a carried-forward boundary violation (BV-02) rather than guessed.",
+          "defect_carried": "Both columns are declared LONG INTEGER in the parsed table definition while the application binds a raw TextBox string into them, so a valid ten-digit number exceeds the 2,147,483,647 ceiling and cannot be stored at all. Evidence: Flat Design/InsertForm.vb:16; Flat Design/InsertForm.vb:17",
+          "evidence": [
+            "Flat Design/InsertForm.vb:16",
+            "Flat Design/InsertForm.vb:17",
+            "Flat Design/EditForm.vb:57",
+            "Flat Design/EditForm.vb:58"
+          ]
+        },
+        {
+          "entity": "GuardianReference",
+          "role": "supporting — a named related party who is NOT the record subject",
+          "physical_columns": [
+            "studentDB.students.FatherName"
+          ],
+          "pii": true,
+          "distinct_data_subject": true,
+          "boundary_note": "This is the sharpest classification line inside D1: FatherName is personal data about a second, unconsented data subject held inside the student's row, with no separate identity, no consent basis and no independent erasure path. A separate related-party domain is defensible on security grounds; it was rejected at this scale as one-column-one-domain over-engineering (decision BA-02), and the distinction is instead carried as an explicit obligation on D1.",
+          "evidence": [
+            "Flat Design/InsertForm.vb:15",
+            "Flat Design/EditForm.vb:56"
+          ]
+        }
+      ],
+      "boundary_justification": "All eight of these columns are written by one atomic INSERT and rewritten by one atomic UPDATE, share one creation-and-hard-delete lifecycle, and have one (absent) owner — heuristics 1, 3 and 5 all point to a single person-level domain. The internal structure (write-once identity, contact points, related party) is recorded as entity structure inside the domain rather than as additional domains, because no transaction, query or lifecycle in the application ever touches those groups separately.",
+      "cross_domain_consumers": [
+        "D2 Student Enrolment — references Student by RollNo",
+        "StudentPopulationStatistics derived read-model — consumes Gender only"
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.86,
+        "rationale": "Every column assignment is confirmed from a first-hand read of the SQL statement that writes it and the statement that reads it. The residual uncertainty is the AltMobNo subject-ownership question and the FatherName carve-out judgment, not the membership of the domain."
+      }
+    },
+    {
+      "domain_id": "D2",
+      "name": "Student Enrolment",
+      "capability": "Academic placement — record which programme a student is admitted to and in which intake year, and report the resulting cohort population",
+      "aggregate_root": "Enrolment",
+      "owner": "unassigned — plausibly an academic registry function, but no such unit is named anywhere in the source, the README or the project report",
+      "security_classification": "Internal / business-sensitive. The inherited data-flow trace classifies this cluster as 'sensitive' rather than 'pii' (flow DF-SMS-005), which is the one place an inherited artifact drew a classification line between columns of the same row.",
+      "observed_access_control": "none — same single uncontrolled file as D1",
+      "write_paths": [
+        "INSERT course and yoa as part of the ten-column insert — Flat Design/InsertForm.vb:19; Flat Design/InsertForm.vb:20",
+        "UPDATE course and yoa, i.e. a student's programme and intake year are freely mutable after admission — Flat Design/EditForm.vb:60; Flat Design/EditForm.vb:61"
+      ],
+      "read_paths": [
+        "Three course COUNT(*) aggregates — Flat Design/Form1.vb:38; Flat Design/Form1.vb:43; Flat Design/Form1.vb:48",
+        "Five year-of-admission COUNT(*) aggregates — Flat Design/Form1.vb:62; Flat Design/Form1.vb:67; Flat Design/Form1.vb:72; Flat Design/Form1.vb:77; Flat Design/Form1.vb:82",
+        "SELECT * grid bind — Flat Design/ViewForm.vb:39"
+      ],
+      "core_entities": [
+        {
+          "entity": "Enrolment",
+          "role": "aggregate root",
+          "physical_columns": [
+            "studentDB.students.Course",
+            "studentDB.students.YOA"
+          ],
+          "identity": "none of its own — the enrolment has no key and is reachable only through the student row it is denormalised into, so it is addressable only as Student.RollNo",
+          "cardinality_in_legacy": "forced to exactly one enrolment per student by the single-table shape. This is a MODELLING CONSTRAINT, not a stated business rule: nothing in the source says a student may not hold two enrolments, the schema simply cannot express it.",
+          "pii": false,
+          "heuristic_signals": {
+            "changes_together": "Course and YOA are always written and always rewritten together, and never written apart from each other. Evidence: Flat Design/InsertForm.vb:19; Flat Design/InsertForm.vb:20; Flat Design/EditForm.vb:60; Flat Design/EditForm.vb:61",
+            "queried_together": "These are the only two columns the eight programme and intake-year dashboard aggregates read. Evidence: Flat Design/Form1.vb:38-48; Flat Design/Form1.vb:62-82",
+            "lifecycle": "Conceptually set at admission and stable thereafter, yet technically mutable by the same UPDATE as every other attribute — an unenforced lifecycle expectation, recorded as boundary violation BV-03.",
+            "security": "Non-identifying on its own; classified 'sensitive' rather than 'pii' by the inherited data-flow trace.",
+            "owner": "unassigned"
+          },
+          "defect_carried": "YOA is TEXT(255), holds a free-text year, and is compared by string equality against a year rendered from a hardcoded 'Dim currentYear As Integer = 2023'. Every intake-year figure on the dashboard has therefore been wrong since 1 January 2024, and no cohort older than five years is represented by any bucket. Evidence: Flat Design/Form1.vb:59; Flat Design/Form1.vb:62",
+          "evidence": [
+            "Flat Design/InsertForm.vb:9",
+            "Flat Design/InsertForm.vb:19",
+            "Flat Design/InsertForm.vb:20",
+            "Flat Design/EditForm.vb:51",
+            "Flat Design/Form1.vb:38",
+            "Flat Design/Form1.vb:62"
+          ]
+        }
+      ],
+      "boundary_justification": "Separated from D1 on heuristic 2 and heuristic 4 together. Course and YOA are the sole read-set of eight of the ten dashboard aggregates and are never read by the search path, and they are the one cluster an inherited artifact classified differently from the rest of the row. Conceptually they describe a relationship between a person and a programme, not an attribute of the person: the same student could hold a second enrolment and the current schema simply cannot say so. Gender was deliberately NOT pulled in despite being co-queried by the same aggregate pass — see decision BA-01.",
+      "cross_domain_consumers": [
+        "StudentPopulationStatistics derived read-model — consumes Course and YOA"
+      ],
+      "confidence": {
+        "level": "medium",
+        "score": 0.62,
+        "rationale": "The read-set and classification evidence for the split is real and first-hand, but the counter-evidence is equally real: these two columns are written by the same two statements as everything in D1 and share its lifecycle and owner. A reviewer could reasonably collapse D2 into D1 — that is review ask domain-boundary-ambiguous."
+      }
+    },
+    {
+      "domain_id": "D3",
+      "name": "Academic Reference Data",
+      "capability": "Governance of the closed code lists the student record depends on — programme catalogue, gender code list, and admissible intake years",
+      "aggregate_root": "CodeList",
+      "owner": "unassigned — and critically, no system owns these values at all today; they are source-code literals",
+      "security_classification": "Non-sensitive reference data. Note that GenderCode describes a protected characteristic, so its value set is a policy artifact even though individual code values are not personal data.",
+      "observed_access_control": "not applicable — the values are compiled into the executable and into the dashboard SQL; changing any of them requires a recompile",
+      "owns_physical_columns": false,
+      "physical_system_of_record": "none — there is no reference table, no lookup table, no Access saved query and no configuration file. The parsed database contains exactly one user table and zero views, zero saved queries and zero validation rules, so these three code lists exist ONLY as duplicated literals in two Designer files and in Form1's SQL text.",
+      "core_entities": [
+        {
+          "entity": "CourseCode",
+          "role": "code list",
+          "values_observed": [
+            "BCA",
+            "MCA",
+            "IIMCA"
+          ],
+          "physical_system_of_record": "none",
+          "declared_in": [
+            "Flat Design/InsertForm.Designer.vb (cmbCourse item list)",
+            "Flat Design/EditForm.Designer.vb (cmbCourse item list)",
+            "Flat Design/Form1.vb:38",
+            "Flat Design/Form1.vb:43",
+            "Flat Design/Form1.vb:48"
+          ],
+          "integrity_finding": "Triply duplicated with no single source of truth. Adding a programme requires editing two Designer files and three SQL literals; the database holds no CHECK, lookup or value list that would reject an unknown code. Deleted rows recovered from page slack contain Course values of '2' and '3', proving the gap has already been exercised.",
+          "pii": false
+        },
+        {
+          "entity": "GenderCode",
+          "role": "code list",
+          "values_observed": [
+            "Male",
+            "Female",
+            "Other"
+          ],
+          "physical_system_of_record": "none",
+          "declared_in": [
+            "Flat Design/InsertForm.Designer.vb (cmbGender item list)",
+            "Flat Design/EditForm.Designer.vb (cmbGender item list)",
+            "Flat Design/Form1.vb:24",
+            "Flat Design/Form1.vb:29"
+          ],
+          "integrity_finding": "The code list CONTRADICTS the only code that aggregates it. The entry and edit forms offer three values; the dashboard counts only 'Male' and 'Female' (Flat Design/Form1.vb:24; Flat Design/Form1.vb:29). A student recorded as 'Other' is stored, is listed in the grid, and is counted by no tile — so the gender tiles provably do not sum to the row count, and no total is displayed against which a reviewer could notice.",
+          "pii": false
+        },
+        {
+          "entity": "IntakeYear",
+          "role": "code list",
+          "values_observed": [
+            "2019",
+            "2020",
+            "2021",
+            "2022",
+            "2023"
+          ],
+          "physical_system_of_record": "none",
+          "declared_in": [
+            "Flat Design/InsertForm.Designer.vb (cmbyoa item list)",
+            "Flat Design/EditForm.Designer.vb (cmbyoa item list)",
+            "Flat Design/Form1.vb:59"
+          ],
+          "integrity_finding": "A static literal list that cannot express any intake after 2023, read against a dashboard baseline hardcoded to 2023. The capture side and the reporting side therefore expire together and have already done so. The UI additionally labels this field 'Session' while the column is named YOA, a label inherited from a retired column generation still readable inside the database file.",
+          "pii": false
+        }
+      ],
+      "boundary_justification": "Carved out on heuristic 5 read as a question of custodianship rather than of organisational unit: a code list is governed by whoever owns the taxonomy, not by whoever owns an individual student record, and all three of these lists are currently governed by nobody. Keeping them as mere column constraints on D1 and D2 would hide the finding that this application has three closed value domains, zero enforcement, and two active contradictions between the capture side and the reporting side. The distinction from D2 is strict and deliberate: the COLUMN studentDB.students.Course belongs to D2; the CODE LIST of admissible course values belongs to D3. No physical column is assigned twice.",
+      "cross_domain_consumers": [
+        "D1 Student Identity and Contact — Gender must resolve against GenderCode",
+        "D2 Student Enrolment — Course and YOA must resolve against CourseCode and IntakeYear"
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.82,
+        "rationale": "The three code lists, their exact values, their duplication across files and the Male/Female-versus-Other contradiction were all confirmed by direct read of Form1.vb and the inherited Designer-file inventory. The only judgment call is whether a code list with no persistence deserves domain status; the governance gap it exposes is what makes it worth the carve-out."
+      }
+    }
+  ],
+  "entity_assignment_summary": {
+    "physical_tables_in_scope": 1,
+    "physical_columns_in_scope": 10,
+    "physical_columns_assigned": 10,
+    "physical_columns_unassigned": 0,
+    "physical_columns_assigned_more_than_once": 0,
+    "logical_entities_identified": 8,
+    "logical_entities_owned_by_a_domain": 7,
+    "derived_read_models_excluded_from_ownership": 1,
+    "domains_emitted": 3,
+    "physical_columns_by_domain": {
+      "D1 Student Identity and Contact": 8,
+      "D2 Student Enrolment": 2,
+      "D3 Academic Reference Data": 0
+    },
+    "logical_entities_by_domain": {
+      "D1 Student Identity and Contact": "Student, StudentContactPoint, GuardianReference",
+      "D2 Student Enrolment": "Enrolment",
+      "D3 Academic Reference Data": "CourseCode, GenderCode, IntakeYear"
+    },
+    "assignment_rule": "Every one of the ten physical columns of studentDB.students is assigned to exactly one domain, per the one-entity-one-domain contract. D3 owns zero physical columns BY DESIGN and this is not an omission: it owns the three closed code lists, which have no system of record anywhere in the application. StudentPopulationStatistics is excluded from ownership entirely because it is fully derived at read time by ten COUNT(*) statements and persists nothing.",
+    "verification": "Column-by-column walk of the INSERT column list at Flat Design/InsertForm.vb:9 against the three domain memberships above: rollno, fname, lname, fathername, mobno, altmobno, gender and dob to D1; course and yoa to D2. Ten of ten accounted for."
+  },
+  "cross_domain_reference_map": [
+    {
+      "reference_id": "XD-01",
+      "from_domain": "D2 Student Enrolment",
+      "to_domain": "D1 Student Identity and Contact",
+      "logical_reference": "Enrolment identifies its student by RollNo",
+      "legacy_mechanism": "none — the two domains occupy the same physical row, so the reference is implicit in row co-location rather than expressed as a key",
+      "target_interface": "foreign key from Enrolment to Student, plus a read interface on D1 exposing student identity to D2",
+      "owner_of_the_referenced_data": "D1",
+      "evidence": [
+        "Flat Design/InsertForm.vb:9",
+        "Flat Design/EditForm.vb:51"
+      ]
+    },
+    {
+      "reference_id": "XD-02",
+      "from_domain": "D2 Student Enrolment",
+      "to_domain": "D3 Academic Reference Data",
+      "logical_reference": "Enrolment.Course must resolve against CourseCode and Enrolment.YOA against IntakeYear",
+      "legacy_mechanism": "none — enforced only by the item lists of two ComboBox controls, which the database does not consult",
+      "target_interface": "reference-data lookup, published by D3 as a read-only data product",
+      "owner_of_the_referenced_data": "D3",
+      "evidence": [
+        "Flat Design/InsertForm.vb:19",
+        "Flat Design/InsertForm.vb:20",
+        "Flat Design/Form1.vb:38"
+      ]
+    },
+    {
+      "reference_id": "XD-03",
+      "from_domain": "D1 Student Identity and Contact",
+      "to_domain": "D3 Academic Reference Data",
+      "logical_reference": "Student.Gender must resolve against GenderCode",
+      "legacy_mechanism": "none — enforced only by a ComboBox item list, and contradicted by the aggregation code which recognises only two of the three values",
+      "target_interface": "reference-data lookup, published by D3 as a read-only data product",
+      "owner_of_the_referenced_data": "D3",
+      "evidence": [
+        "Flat Design/InsertForm.vb:18",
+        "Flat Design/Form1.vb:24",
+        "Flat Design/Form1.vb:29"
+      ]
+    },
+    {
+      "reference_id": "XD-04",
+      "from_domain": "StudentPopulationStatistics (derived read-model, owned by no domain)",
+      "to_domain": "D1 Student Identity and Contact and D2 Student Enrolment",
+      "logical_reference": "Ten COUNT(*) aggregates read Gender from D1 and Course and YOA from D2 to populate the dashboard tiles",
+      "legacy_mechanism": "ten separate synchronous COUNT(*) round-trips issued from a UI method on the shared global connection",
+      "target_interface": "this is the application's one genuine cross-domain data product — a read-only population-statistics product consuming published interfaces from D1 and D2, not reaching into their tables. It is the single clearest case in the artifact of an access pattern that spans two domains and must therefore become an interface rather than a shared table.",
+      "owner_of_the_referenced_data": "D1 for Gender, D2 for Course and YOA — the read-model owns nothing",
+      "evidence": [
+        "Flat Design/Form1.vb:22",
+        "Flat Design/Form1.vb:24",
+        "Flat Design/Form1.vb:38",
+        "Flat Design/Form1.vb:62"
+      ]
+    }
+  ],
+  "boundary_arbitration_decisions": [
+    {
+      "decision_id": "BA-01",
+      "contested_entity": "studentDB.students.Gender",
+      "candidate_domains": [
+        "D1 Student Identity and Contact",
+        "D2 Student Enrolment"
+      ],
+      "assigned_to": "D1 Student Identity and Contact",
+      "signal_for_D2": "Gender is read by exactly the same dashboard aggregate pass as Course and YOA and by nothing else in that pass, so the queried-together heuristic scores it into the cohort cluster. Evidence: Flat Design/Form1.vb:24; Flat Design/Form1.vb:29",
+      "signal_for_D1": "Gender is an attribute of a person, not of a placement. It is captured on the same person-level form, written by the same statement, and would survive unchanged if the student's enrolment were deleted.",
+      "rationale": "Conceptual ownership beats UI co-query. The dashboard groups Gender with Course and YOA because all three happen to be rendered as tiles, not because they describe one thing. Letting a tile layout draw a business data boundary is exactly the failure mode the methodology warns against, so the dashboard is modelled as a cross-domain CONSUMER (reference XD-04) rather than as an owner.",
+      "confidence": "high"
+    },
+    {
+      "decision_id": "BA-02",
+      "contested_entity": "studentDB.students.FatherName",
+      "candidate_domains": [
+        "D1 Student Identity and Contact",
+        "a separate Related Party domain that was considered and rejected"
+      ],
+      "assigned_to": "D1 Student Identity and Contact, as the supporting entity GuardianReference",
+      "signal_for_a_separate_domain": "It is personal data about a DIFFERENT data subject from the record subject, which under the same-security-classification heuristic is a genuine boundary: a different consent basis, a different erasure obligation, and a person who has no record of their own in the system.",
+      "signal_for_D1": "One column, one value, no identity of its own, written and deleted by exactly the same statements as the student's own attributes. A single-column domain at this scale manufactures a boundary the business does not have.",
+      "rationale": "Kept inside D1 but recorded as an explicit obligation on D1 rather than absorbed silently. If a data-protection reviewer rules that related-party data needs independent handling, this is the entity to promote, and the promotion is cheap because the column is isolated.",
+      "confidence": "medium"
+    },
+    {
+      "decision_id": "BA-03",
+      "contested_entity": "studentDB.students.Course and studentDB.students.YOA",
+      "candidate_domains": [
+        "D1 Student Identity and Contact, as plain student attributes",
+        "D2 Student Enrolment, as its own domain"
+      ],
+      "assigned_to": "D2 Student Enrolment",
+      "signal_for_D1": "Both columns are written by the same INSERT and the same UPDATE as every D1 column, share D1's hard-delete lifecycle, and have D1's absent owner. Heuristics 1, 3 and 5 all argue for one domain.",
+      "signal_for_D2": "They are the sole read-set of eight of the ten dashboard aggregates and are never touched by the search path, and the inherited data-flow trace classified them 'sensitive' where it classified every other column 'pii'. They also describe a relation between a person and a programme, which has a cardinality the single-table schema cannot express.",
+      "rationale": "Split, because the read-set and classification evidence is specific and first-hand while the changes-together evidence is an artifact of the single-table shape rather than of the business: ONE table means every column is necessarily written by one statement, so heuristic 1 cannot discriminate here and should not be allowed to outvote heuristics that can. This is nonetheless the weakest boundary in the artifact and is put to the reviewer as the domain-boundary-ambiguous ask.",
+      "confidence": "medium"
+    },
+    {
+      "decision_id": "BA-04",
+      "contested_entity": "the CourseCode, GenderCode and IntakeYear closed value domains",
+      "candidate_domains": [
+        "absorbed as column constraints on D1 and D2",
+        "D3 Academic Reference Data as a domain in its own right"
+      ],
+      "assigned_to": "D3 Academic Reference Data",
+      "signal_for_absorption": "They persist nothing. A domain that owns no physical column is unusual and arguably an abstraction the legacy system does not contain.",
+      "signal_for_D3": "Three independent closed value domains, each duplicated across two Designer files and the dashboard SQL, none enforced by the database, and two of them in active contradiction with the code that reads them. Absorbing them as constraints would hide a governance gap that has already produced wrong numbers on the dashboard and junk values in the stored data.",
+      "rationale": "Carved out so the gap is visible to the data-modeling step rather than buried in a column comment. The carve-out is strictly at the code-list level and never at the column level, so no physical column is double-assigned.",
+      "confidence": "high"
+    },
+    {
+      "decision_id": "BA-05",
+      "contested_entity": "StudentPopulationStatistics — the ten dashboard tiles",
+      "candidate_domains": [
+        "a Reporting or Statistics domain",
+        "no domain — a derived read-model",
+        "D2 Student Enrolment"
+      ],
+      "assigned_to": "no domain — modelled as a derived read-model and a cross-domain data product (XD-04)",
+      "signal_for_a_domain": "Structural analysis names student-statistics-read-model as a candidate service boundary, and the aggregates do carry real business meaning about what the institution wants to know.",
+      "signal_against": "It owns no entity and persists no byte. All ten values are computed at read time by COUNT(*) and discarded. Under the one-entity-one-domain contract a domain with no owned entity is not a domain, and promoting it would force Gender, Course or YOA to be owned twice.",
+      "rationale": "Recorded as a data product consuming D1 and D2 rather than as a fourth domain. This is also where the methodology's own guidance lands: data needed by two domains is owned by one and consumed through an interface.",
+      "confidence": "high"
+    }
+  ],
+  "boundary_violations_carried_forward": [
+    {
+      "violation_id": "BV-01",
+      "domain": "D1 Student Identity and Contact",
+      "violation": "The aggregate root's key is not a usable identity. RollNo carries an index named PrimaryKey but is TEXT(255) with AllowZeroLength=True, so the empty string is an admissible key, and the insert path performs no duplicate or presence check.",
+      "consequence": "Two rows can share a roll number. The editor binds only the first match while UPDATE rewrites every match and DELETE removes every match, so one user action silently mutates or destroys records the user never selected.",
+      "owner_of_the_fix": "data-modeling — declare an integer surrogate key and keep RollNo as a NOT NULL UNIQUE business key with an empty-string check",
+      "evidence": "Flat Design/InsertForm.vb:9; Flat Design/EditForm.vb:14; Flat Design/EditForm.vb:51; Flat Design/ViewForm.vb:90",
+      "severity": "critical"
+    },
+    {
+      "violation_id": "BV-02",
+      "domain": "D1 Student Identity and Contact",
+      "violation": "The data subject of AltMobNo is undetermined. The inherited schema summary describes it as typically a next-of-kin number, which would make it a contact point of GuardianReference rather than of Student, but no label, comment or code path distinguishes them.",
+      "consequence": "A target contact model cannot be drawn without knowing whose number it is, and a data-subject access or erasure request cannot be scoped correctly.",
+      "owner_of_the_fix": "stakeholder confirmation, then data-modeling",
+      "evidence": "Flat Design/InsertForm.vb:17; Flat Design/EditForm.vb:58",
+      "severity": "medium"
+    },
+    {
+      "violation_id": "BV-03",
+      "domain": "D2 Student Enrolment",
+      "violation": "Enrolment has no identity and no lifecycle enforcement. It is addressable only through the student row it is denormalised into, its cardinality is pinned to exactly one by the table shape rather than by any stated rule, and Course and YOA are mutable by the same UPDATE as every other attribute, so a student's programme and intake year can be rewritten after admission with no record that they changed.",
+      "consequence": "The target model must decide whether a student may hold more than one enrolment. The legacy schema cannot answer the question and the legacy code does not ask it.",
+      "owner_of_the_fix": "stakeholder confirmation, then data-modeling",
+      "evidence": "Flat Design/InsertForm.vb:9; Flat Design/EditForm.vb:51; Flat Design/EditForm.vb:60; Flat Design/EditForm.vb:61",
+      "severity": "high"
+    },
+    {
+      "violation_id": "BV-04",
+      "domain": "D3 Academic Reference Data",
+      "violation": "The GenderCode list and the code that aggregates it disagree. Capture offers Male, Female and Other; the dashboard counts only Male and Female.",
+      "consequence": "A student recorded as Other is stored and listed but counted by no tile, so the gender tiles provably do not sum to the population, and no total is displayed that would reveal the shortfall.",
+      "owner_of_the_fix": "stakeholder adjudication of intent, then data-modeling and the statistics read-model",
+      "evidence": "Flat Design/InsertForm.vb:18; Flat Design/Form1.vb:24; Flat Design/Form1.vb:29",
+      "severity": "high"
+    },
+    {
+      "violation_id": "BV-05",
+      "domain": "D3 Academic Reference Data",
+      "violation": "The IntakeYear list and the reporting baseline both expire. The capture list stops at 2023 and the dashboard derives its five buckets from a hardcoded currentYear of 2023, comparing a stringified integer against a TEXT column.",
+      "consequence": "No intake after 2023 can be captured through the UI, and every intake-year figure on the dashboard has been wrong since 1 January 2024. The target model must store the intake year as a number or a date, not as free text.",
+      "owner_of_the_fix": "data-modeling and the statistics read-model",
+      "evidence": "Flat Design/Form1.vb:59; Flat Design/Form1.vb:62; Flat Design/Form1.vb:82",
+      "severity": "high"
+    },
+    {
+      "violation_id": "BV-06",
+      "domain": "all domains",
+      "violation": "No domain has a lineage or retention boundary. The table carries no created, modified, user-stamp or row-version column; DELETE is physical and immediate; and deleted rows remain fully readable in page slack, with all ten field values intact, because nothing compacts the file.",
+      "consequence": "No change to any student record can be attributed or reconstructed, and a deletion performed through the UI is not an erasure. Any retention or auditability obligation is already unsatisfiable for history already lost.",
+      "owner_of_the_fix": "data-modeling for the audit and soft-delete columns; the data-protection reviewer for the remanence exposure, independently of modernization sequencing",
+      "evidence": "Flat Design/ViewForm.vb:90; Flat Design/ViewForm.vb:94",
+      "severity": "high"
+    },
+    {
+      "violation_id": "BV-07",
+      "domain": "all domains",
+      "violation": "The domains are logically separable but physically indivisible. All three share one process-wide mutable OleDbConnection declared at Flat Design/Module1.vb:4, no statement anywhere runs in a transaction, and the delete path closes the shared connection mid-session at Flat Design/ViewForm.vb:94.",
+      "consequence": "No domain can be extracted, retargeted or independently deployed until a connection-per-operation seam exists. The boundaries below are a target-state design, not a description of a separable present state.",
+      "owner_of_the_fix": "data-decomposition and the persistence-platform replacement work item",
+      "evidence": "Flat Design/Module1.vb:4; Flat Design/ViewForm.vb:94; Flat Design/InsertForm.vb:7; Flat Design/EditForm.vb:15",
+      "severity": "critical"
+    }
+  ],
+  "hub_entities_and_coupling_hotspots": [
+    {
+      "entity": "studentDB.students",
+      "kind": "hub table — the application's only user table",
+      "detail": "All sixteen SQL statements in the application target this one table. Four of the six logical modules read or write it, and it is the sole system of record for every domain above. There is no second table, no view, no saved query, no stored procedure and no trigger.",
+      "coupling_consequence": "Domain boundaries here are necessarily logical rather than physical. Every boundary is a line drawn inside one row, which makes the decomposition cheap in data-movement terms and expensive in code terms.",
+      "evidence": "Flat Design/InsertForm.vb:9; Flat Design/EditForm.vb:14; Flat Design/EditForm.vb:51; Flat Design/ViewForm.vb:39; Flat Design/ViewForm.vb:90; Flat Design/Form1.vb:24"
+    },
+    {
+      "entity": "Module1.dbcon",
+      "kind": "coupling hotspot — shared global mutable connection",
+      "detail": "A single Public OleDbConnection at module scope is opened lazily by four modules, closed unilaterally by one, and disposed by none. No Using block and no transaction exists anywhere in the application.",
+      "coupling_consequence": "This is the single edge every domain boundary must cut, and it must be cut first: until it is, the three domains are one deployable unit with one failure mode.",
+      "evidence": "Flat Design/Module1.vb:4; Flat Design/Module1.vb:6; Flat Design/ViewForm.vb:94"
+    },
+    {
+      "entity": "Flat Design/Form1.vb LoadData",
+      "kind": "coupling hotspot — presentation owns the only aggregation logic",
+      "detail": "The ten COUNT(*) aggregates that constitute the entire reporting surface live in a UI method, with the gender and course value sets written as SQL literals. There is no reporting component, no view and no query object to migrate.",
+      "coupling_consequence": "The statistics data product must be specified from stakeholder intent, not ported: the current SQL is evidence of intent and is demonstrably wrong in two places.",
+      "evidence": "Flat Design/Form1.vb:22; Flat Design/Form1.vb:24; Flat Design/Form1.vb:59"
+    },
+    {
+      "entity": "studentDB.students retired column generations",
+      "kind": "schema residue — not an entity of any domain",
+      "detail": "The database file retains four superseded table-definition generations whose columns include SName, Class, ClassN, Sec, Session and Field1, none of which is live. The retired name Session still drives the UI label on the control that writes YOA.",
+      "coupling_consequence": "A schema-extraction tool pointed at the raw file can pick up a superseded generation. Compact the file before any extraction, and treat the live ten-column definition as the only source of schema truth.",
+      "evidence": "Flat Design/studentDB.accdb"
+    }
+  ],
+  "cross_target_inbound_references": [],
+  "deployment_coupling_constraints": [
+    "All three domains compile into one executable and read one Microsoft Access file; there is no deployable seam between them today. Evidence: Flat Design/Student Management System Siddharth Jain.vbproj:8",
+    "All three domains transact through one process-wide OleDbConnection with no transaction scope, so no domain can be given independent consistency guarantees before that connection is replaced. Evidence: Flat Design/Module1.vb:4",
+    "The database is bound by a hardcoded absolute path on the original author's D: drive that does not match where the file actually ships, so no domain can be reached at all from a clean clone until configuration is externalised. Evidence: Flat Design/Module1.vb:7",
+    "The persistence engine is a file-based Access database reached through the 32-bit out-of-process Microsoft.ACE.OLEDB.12.0 provider, past vendor support, requiring a per-workstation redistributable and pinning the build to x86. No domain can be rehosted on this engine. Evidence: Flat Design/Module1.vb:7",
+    "SingleInstance is false and concurrency is mediated only by an Access lock file, so multiple instances contend for the same file with no server process. This caps every domain at single-writer use in practice. Evidence: Flat Design/My Project/Application.myapp:5",
+    "There is no test project, no CI pipeline and no build script, and the solution maps the Debug configuration to Release, so no domain boundary can be verified by regression against current behaviour."
+  ],
+  "evidence_provenance": [
+    {
+      "source": "first-hand source read",
+      "locator": "Flat Design/Module1.vb, Flat Design/Form1.vb, Flat Design/InsertForm.vb, Flat Design/EditForm.vb, Flat Design/ViewForm.vb",
+      "supports": "Every SQL statement, every parameter binding, every dashboard aggregate and every value-domain literal cited in this artifact was read directly from these five files in full, not taken on trust from an inherited artifact. They total 461 hand-written lines.",
+      "confidence": "high"
+    },
+    {
+      "source": "inherited artifact — structural-analysis",
+      "locator": "artifacts/discovery-structural-analysis/structural-analysis.json, sections modules, coupling_indicators, database-schema-summary, interface-inventory",
+      "supports": "Module inventory, the six coupling indicators, the four recommended decomposition boundaries, the measured zero on authentication and accessibility annotations, and the per-interface capability hints used in place of the absent capability-extraction output.",
+      "confidence": "high"
+    },
+    {
+      "source": "inherited artifact — db-archaeology",
+      "locator": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json",
+      "supports": "Declared column types and widths, the existence of the PrimaryKey index on RollNo with AllowZeroLength=True, the absence of any validation rule or lookup on all ten columns, the four retired column generations, the two live and six slack-recoverable rows, and the zero stored procedures / views / triggers / relationships.",
+      "confidence": "high"
+    },
+    {
+      "source": "inherited artifact — data-flow-trace",
+      "locator": "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json, flows DF-SMS-001 through DF-SMS-005",
+      "supports": "The per-element PII classification that is the basis of heuristic 4, including the single classification line any inherited artifact drew between columns of the same row: gender, course and yoa classified 'sensitive' where every other element is 'pii'.",
+      "confidence": "medium"
+    },
+    {
+      "source": "inherited artifact — application catalog",
+      "locator": "artifacts/discovery-catalog/catalog.json",
+      "supports": "Application identity and name, the Admin business-domain placeholder, the absence of any CMDB or ownership input, and the independently-raised governing-profile scope mismatch.",
+      "confidence": "high"
+    },
+    {
+      "source": "absent input — business-logic-extraction and capability-extraction",
+      "locator": "artifacts/discovery-business-logic-extraction/ and artifacts/discovery-capability-extraction/ are both empty at the time of this dispatch",
+      "supports": "Nothing. Recorded because the skill's declared inputs name business-logic analysis and business-capability mapping, and neither existed. Capability attribution on each domain therefore derives from the interface-inventory capability hints in structural-analysis plus the first-hand source read, and should be re-checked once those two steps land.",
+      "confidence": "low"
+    }
+  ],
+  "method_notes": {
+    "fan_out_decision": "Deliberately NOT fanned out. The skill's fan-out rule requires more than six domain candidates, or a portfolio spanning more than four applications, or a combined catalog of more than one hundred entities. This analysis has three domain candidates, one application and ten physical columns across one table — below every threshold on every count. Sub-agent coordination overhead would exceed the whole analysis, and the synthesis work that matters here (cross-domain arbitration of Gender, FatherName and the code lists) is parent-only by contract anyway.",
+    "inherited_input_reconciliation": {
+      "note": "Three inherited artifacts disagree on load-bearing facts about the same table. Each conflict is resolved explicitly below rather than silently averaged, and the losing claim is named so a reviewer can audit the choice.",
+      "conflict_1_primary_key": "structural-analysis reported that no primary key or index was found and asked that this be read as 'not established' rather than 'absent'. db-archaeology subsequently parsed the index leaf page and reports a single-column index named PrimaryKey on RollNo. RESOLVED IN FAVOUR OF db-archaeology: it is the more specific read, it located the actual index structure, and structural-analysis explicitly left the question open rather than asserting absence. The residual defect stands either way — the key is TEXT(255) with AllowZeroLength=True, so it is a key that admits the empty string.",
+      "conflict_2_column_types": "structural-analysis reported all column data types as unknown and declined to guess. db-archaeology reports concrete declared types including MobNo and AltMobNo as LONG INTEGER and DOB as DATETIME. RESOLVED IN FAVOUR OF db-archaeology for declared types.",
+      "conflict_3_phone_number_type": "data-flow-trace describes mobno and altmobno as 'Access short text; bound as System.String', which contradicts db-archaeology's LONG INTEGER. NOT A TIE: the trace's own methodology note concedes that its type claims are derived from the call site rather than from DDL. Both are correct about different things, and the mismatch between them IS the defect — the application binds a textbox string into a four-byte signed integer column, so a valid ten-digit mobile number cannot be stored at all. Recorded against StudentContactPoint in D1.",
+      "conflict_4_row_count": "structural-analysis reported row count as not measured. db-archaeology reports two live rows plus six deleted rows still intact in page slack. RESOLVED IN FAVOUR OF db-archaeology, and the slack rows are carried as boundary violation BV-06."
+    },
+    "declared_inputs_not_staged": "The dispatch context for this step declares structural-analysis.json as a required input and database-schema-summary as a required non-file input, but the staged input-artifacts directory for this step contained only the dispatch context itself. Both inputs were located in the sibling step's output directory inside the same workspace and read from there, and the authoritative database-schema-summary SECTION of structural-analysis.json was used in preference to the db-schema.json mirror, as that artifact's own open_questions instruct. Flagged as a staging observation, not a blocker: no input was missing, only unstaged.",
+    "source_tree_contamination": "Four untracked directories inside the source checkout (assets/, references/, scripts/, fixtures/) hold Olympus skill scaffolding, including an output.schema.json and a validate_output.py belonging to the legacy-business-rule-extractor skill and a fixtures/default.json belonging to the compliance-citation-mapper. None of it is application source and none of it was treated as evidence about this application. Notably, fixtures/domain-boundary-ambiguous.json in that same directory is a QA fixture for THIS skill describing a fictitious three-domain fixture-app; it was used only to confirm the emitter convention for target binding on a pre-wave Discovery run, never as a source of facts. The catalog flagged one such file and structural-analysis found twenty-six across four directories; this step confirms the contamination independently.",
+    "one_entity_one_domain_compliance": "Satisfied and verified by a column-by-column walk, recorded in entity_assignment_summary.verification. The one access pattern that genuinely spans two domains — the dashboard reading Gender from D1 alongside Course and YOA from D2 — is modelled as the cross-domain data product XD-04 rather than resolved by assigning a column twice, per the methodology's own instruction that data needed by two domains is owned by one and consumed through an interface.",
+    "what_this_artifact_does_not_claim": "It does not claim a disposition, a target service, a business owner, a safety tier or a PII classification ruling. It does not claim the three domains are physically separable today — BV-07 says the opposite. It does not claim the dashboard's aggregate definitions are correct; two of them are demonstrably wrong and are referred to stakeholders as requirements questions."
+  },
+  "notes": [
+    "Scale check for the reader, because it changes how these boundaries should be read: the entire data surface is one table, ten columns, two live rows and 461 hand-written lines of logic. The three domains below are a target-state logical model that makes the governance gaps visible. They are not an argument that this application should be decomposed into three services, and nothing here argues for any particular disposition.",
+    "The single most consequential thing in this artifact is not a boundary. It is that reference data for three closed value domains has no system of record, and that two of the three lists already contradict the code that reads them — the gender list offers a third value the dashboard cannot count, and the intake-year list and the dashboard baseline both stopped at 2023.",
+    "No cross-target references exist in either direction. The application has zero HTTP endpoints, zero scheduled jobs, zero message queues and no second system; its only outbound call launches a browser at a public GitHub URL. cross_target_inbound_references is emitted as a measured empty array, not an unfilled field.",
+    "No absorbed_sources block is emitted because this is not a consolidate target: one source application, one target, relationship refactor.",
+    "The target binding fields target_service_id and relationship are PLACEHOLDERS, not findings. No architecture-target-plan.json exists at Discovery grain and no target_plan_entry was present in the dispatch envelope, so neither value was derivable. See review ask target-binding-unresolved; do not let a downstream consumer read them as decided."
+  ],
+  "open_questions": [
+    {
+      "question": "Is a student permitted to hold more than one enrolment?",
+      "why_it_matters": "It decides whether D2 Student Enrolment becomes a child collection of Student or stays a one-to-one extension. The legacy schema pins it to exactly one, but only because one table cannot express anything else — no business rule anywhere states the constraint.",
+      "owner": "stakeholder, then data-modeling",
+      "blocking": "shapes the target model; not blocking for G-DT"
+    },
+    {
+      "question": "Whose telephone number is AltMobNo — the student's, or the guardian's?",
+      "why_it_matters": "It decides whether the second contact point belongs to Student or to GuardianReference, and therefore how a data-subject access or erasure request is scoped. Nothing in the UI labels, the column name or the code distinguishes them.",
+      "owner": "stakeholder, then data-modeling",
+      "blocking": "no"
+    },
+    {
+      "question": "Are the dashboard's aggregate definitions intended as written?",
+      "why_it_matters": "Two are demonstrably wrong: gender tiles count only two of three admissible values, and intake-year tiles derive from a baseline hardcoded to 2023. Both must be adjudicated as requirements rather than ported, because there is no test and no specification to appeal to.",
+      "owner": "stakeholder",
+      "blocking": "no"
+    },
+    {
+      "question": "Does any retention, auditability or erasure obligation apply to this student data?",
+      "why_it_matters": "If one does, the current design cannot satisfy it and the history is already unrecoverable: no audit column has ever existed, deletion is physical, and deleted rows remain fully readable in page slack. The answer sets the retention boundary on every domain here.",
+      "owner": "data-protection reviewer",
+      "blocking": "no, but should not wait on modernization sequencing"
+    },
+    {
+      "question": "Should the application be in scope for this engagement at all?",
+      "why_it_matters": "The governing profile is faa and these domain boundaries will feed FAA-specific gating. Nothing in the application is aviation-related. Two earlier Discovery passes raised the same mismatch and it remains open; if the answer is no, every boundary here is moot.",
+      "owner": "engagement owner",
+      "blocking": "yes, for any FAA-specific gating that consumes these boundaries"
+    }
+  ],
+  "metadata": {
+    "target_app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+    "target_service_id": "unassigned",
+    "relationship": "refactor",
+    "governing_client_profile": "faa",
+    "governing_profile_note": "Declared authoritative for this task and NOT overridden here. The application's own content does not fit the profile; that discrepancy is recorded as a finding and as a review ask, and no alternative profile has been adopted or restated as fact.",
+    "grain": "single-application Discovery grain. The dispatch context declares the output at discovery/{app_id}/data-domains.json and carried no target_plan_entry, so target_app_id equals the source application id and source_app_ids holds that one id.",
+    "target_service_id_basis": "NOT DERIVABLE AND DELIBERATELY NOT INVENTED. No architecture-target-plan.json exists at Discovery grain, the target-services-catalog is not reachable from this workspace, and the catalog recorded that the active profile's technology mapping defines no modernization target for a VB.NET WinForms plus Microsoft Access stack. The literal 'unassigned' is emitted so the gap fails visibly rather than being mistaken for a real service identifier, which fabricating an S-number would have risked.",
+    "relationship_basis": "PLACEHOLDER for schema conformance, not a disposition decision. 'refactor' follows the convention this skill's own Discovery-grain fixture uses for a one-to-one pre-wave emission. Structural analysis records the disposition as an open question and notes that at 461 hand-written lines, one table and ten columns the evidence leans toward replace or retire; this artifact takes no position.",
+    "physical_tables_in_scope": "1 — studentDB.students",
+    "physical_columns_in_scope": "10",
+    "domains_emitted": "3",
+    "fan_out": "none — below every fan-out threshold on every count",
+    "inputs_read_first_hand": "all five hand-written VB source files, in full"
+  },
+  "review_asks": [
+    {
+      "ask_slug": "governing-profile-scope-mismatch",
+      "action": "decide",
+      "title": "Confirm whether this student-records application is in scope for the FAA engagement before its data domains feed FAA gating.",
+      "why": "These domain boundaries are about to be consumed by FAA-specific gating such as safety tiering and NAS impact assessment; if the application does not belong to the programme, every boundary below is effort spent on the wrong system and the gating result is meaningless either way.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The governing client profile for this task is declared as faa and this step has read policy only from that profile. Nothing in the application supports that scope: it is a single-developer VB.NET WinForms student-records desktop tool with a public GitHub origin, a one-commit history and an author-credited project report, and the data domains derived here are students, their guardians, their course enrolments and three academic code lists. There is no aviation, air-traffic, certification or NAS data anywhere in it. This step has not adopted any alternative profile and does not assert one.",
+      "reasoning": "The mismatch has now been raised independently by three passes — the catalog, structural analysis, and this step — and remains unresolved, so it is escalated as a decision rather than carried as another open question. The decision is a scope ruling by the engagement owner, not a reclassification this step may make: the profile declaration is authoritative and is being honoured, which is precisely why the mismatch has to be settled by a human rather than worked around.",
+      "evidence_refs": [
+        {
+          "name": "Derived domain content",
+          "detail": "All three domains concern students, guardians, course enrolments and academic code lists; zero aviation entities were found in ten columns across one table.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        },
+        {
+          "name": "Catalog open question",
+          "detail": "The Pass 0 catalog independently recorded the same profile mismatch and set business_domain to Admin only as the closest available match from the profile taxonomy, pending stakeholder confirmation.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        },
+        {
+          "name": "Structural analysis open question",
+          "detail": "Pass 1 recorded the discrepancy as a finding and declined to adopt any alternative governing profile.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.93,
+        "rationale": "The content of the application is unambiguous across the full source tree, the database, the README and the project report. The only uncertainty is the engagement's intent, which is not knowable from the artifacts."
+      },
+      "options": [
+        {
+          "key": "in-scope-proceed-under-faa",
+          "label": "Confirm in scope — proceed under the faa profile",
+          "description": "These domain boundaries proceed to G-DT and to FAA-specific gating as they stand. The business_domain placeholder of Admin and the absent safety tier still need stakeholder values before that gating can produce a meaningful result."
+        },
+        {
+          "key": "out-of-scope-withdraw",
+          "label": "Confirm out of scope — withdraw the application from the engagement",
+          "description": "Discovery stops here and these artifacts are retained as a record only. Nothing downstream consumes the boundaries, and the upstream intake that admitted the application should be corrected so it is not re-admitted."
+        },
+        {
+          "key": "in-scope-under-a-different-profile",
+          "label": "In scope, but governed by a different client profile",
+          "description": "The engagement owner names the correct profile and this step is re-run under it. This step will not select a profile itself; the faa declaration stands until it is formally replaced."
+        }
+      ]
+    },
+    {
+      "ask_slug": "target-binding-unresolved",
+      "action": "resolve",
+      "title": "Set the target service and the modernization disposition — this artifact had to emit placeholders for both.",
+      "why": "Target binding is what lets a reviewer trust that an artifact came from the right scope; with a placeholder service id and a placeholder relationship, any downstream consumer that routes on these fields will route on an invented value.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The schema requires target_service_id and relationship at the top level, but neither was derivable at this grain. No architecture-target-plan.json exists, the dispatch envelope carried no target_plan_entry, and the target-services-catalog is not reachable from this workspace. target_service_id is therefore emitted as the literal 'unassigned' and relationship as 'refactor'. Both are placeholders, chosen so the gap is visible: inventing an S-number would have produced a plausible-looking value that a downstream consumer would have trusted and routed on.",
+      "reasoning": "The catalog recorded that the active profile's technology mapping covers only ASP.NET, C# and WCF and defines no modernization target for a VB.NET WinForms plus Microsoft Access stack, so no profile-driven target applies. On disposition, structural analysis leaves it explicitly open and observes that at 461 hand-written lines, one table and ten columns the evidence leans toward replace or retire; this step declines to decide that for the disposition owner, and 'refactor' is the lowest-commitment one-to-one value, matching the convention this skill's own Discovery-grain fixture uses for a pre-wave emission.",
+      "evidence_refs": [
+        {
+          "name": "Dispatch context",
+          "detail": "Declares the output at discovery/{app_id}/data-domains.json and carries no target_plan_entry, confirming Discovery grain rather than wave grain.",
+          "artifact_path": "input-artifacts/discovery-data-domain-discovery/_dispatch-context-discovery-data-domain-discovery.json"
+        },
+        {
+          "name": "No profile modernization target",
+          "detail": "The catalog records that the profile's technology mapping defines no replatform or rehost target for this stack.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        },
+        {
+          "name": "Disposition left open upstream",
+          "detail": "Structural analysis records the disposition as an open question and notes that retire or replace deserves explicit consideration.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "That the values were not derivable is a verified fact about the inputs, not a judgment. What the values should be is a decision this step cannot make."
+      }
+    },
+    {
+      "ask_slug": "domain-boundary-ambiguous",
+      "action": "decide",
+      "title": "Should course and year of admission be their own enrolment domain, or just attributes of the student record?",
+      "why": "This single choice decides whether the target model can ever express a student holding more than one enrolment, and whether the dashboard reads from one published interface or two.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "Two domain boundaries are both genuinely defensible for the same two columns, course and year of admission. This artifact records them as a separate Student Enrolment domain, but the case for folding them back into the student record is close to equally strong and the reviewer should settle it rather than inherit it.",
+      "reasoning": "For the split: these two columns are the only ones the eight programme and intake-year dashboard aggregates read, they are never touched by the search path, and the inherited data-flow trace classified them 'sensitive' where it classified every other column in the same row 'pii' — the one classification line any inherited artifact drew inside this table. Conceptually they describe a relationship between a person and a programme, with a cardinality the single-table schema cannot express. Against the split: all ten columns are written by one INSERT and rewritten by one UPDATE, share one creation-and-hard-delete lifecycle, and have the same absent owner, so three of the five heuristics point to a single domain. The counter-argument is weakened by the fact that with exactly one table, changes-together cannot discriminate between any two columns and so should not outvote heuristics that can — but that reasoning is a judgment, not a measurement, which is why it is put to you.",
+      "evidence_refs": [
+        {
+          "name": "Aggregate read-set is isolated",
+          "detail": "Eight of the ten dashboard COUNT(*) statements read only course and yoa; the search predicate reads only rollno and fname.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "Differing inherited classification",
+          "detail": "Flow DF-SMS-005 classifies gender, course and yoa as 'sensitive'; flows DF-SMS-001 through DF-SMS-004 classify every other element as 'pii'.",
+          "artifact_path": "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json"
+        },
+        {
+          "name": "Single atomic write across all ten columns",
+          "detail": "One INSERT writes all ten columns and one UPDATE rewrites nine of them, so no transaction boundary separates course and yoa from the rest.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        }
+      ],
+      "confidence": {
+        "level": "medium",
+        "score": 0.58,
+        "rationale": "The underlying facts are certain and first-hand; the boundary they imply is not. Recorded as medium precisely because this is a judgment that could reasonably go the other way, which is what makes it a decision rather than a verification."
+      },
+      "options": [
+        {
+          "key": "separate-enrolment-domain",
+          "label": "Keep Student Enrolment as its own domain (as recorded)",
+          "description": "Three domains. The target model can later express multiple enrolments per student, course and year of admission get their own lifecycle and classification, and the dashboard consumes two published interfaces instead of one. Costs an extra boundary and an extra interface in a system with ten columns."
+        },
+        {
+          "key": "fold-into-student-record",
+          "label": "Fold course and year of admission back into the student record",
+          "description": "Two domains: a single student record plus academic reference data. Simpler and matches the single atomic write, but pins the target model to exactly one enrolment per student — the same limitation the legacy schema has, now by choice rather than by accident."
+        }
+      ]
+    },
+    {
+      "ask_slug": "domain-owner-unassigned",
+      "action": "context",
+      "title": "Name the business owner for the student data — no owner is documented anywhere, so all three domains are recorded as unassigned.",
+      "why": "Domain ownership is one of this step's declared outputs and the fifth boundary heuristic; without it the boundaries rest on four heuristics instead of five and no one can be asked to approve them.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "No business owner, sponsoring office, custodian or user population is documented for any of the three domains, so ownership is emitted as unassigned on all three rather than inferred. The same-business-owner heuristic contributed nothing to these boundaries.",
+      "reasoning": "There is no organisational signal to read. The application has no authentication, no user concept and no roles; the table carries no user-stamp or audit column; no CMDB export or ownership documentation was supplied at onboarding; and the repository, README and project report name only the original student author. Inferring an owner from an application that cannot distinguish one user from another would be a fabrication, so the field is left explicitly empty and the fact is asked for.",
+      "evidence_refs": [
+        {
+          "name": "No authentication or user concept",
+          "detail": "AuthenticationMode is 0 with no login form anywhere; every operator has unrestricted create, read, update and delete over all records including the PII fields.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "No ownership input at onboarding",
+          "detail": "The catalog records that no CMDB export or ownership and criticality documentation was provided, and that business owner and operational criticality are unconfirmed.",
+          "artifact_path": "artifacts/discovery-catalog/catalog.json"
+        },
+        {
+          "name": "No provenance columns",
+          "detail": "The table has no created, modified, user-stamp or row-version column, so not even an implicit custodian can be recovered from the data.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The absence is measured across the source tree, the database file and every inherited artifact, not assumed."
+      }
+    },
+    {
+      "ask_slug": "reference-data-has-no-system-of-record",
+      "action": "verify",
+      "title": "Confirm that the three academic code lists have no system of record and that two of them already contradict the code reading them.",
+      "why": "If this is confirmed, the target model needs reference tables and a code-list owner that no part of the legacy system provides, and two dashboard figures currently shown to users are wrong.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "The three closed value domains this application depends on — programme codes BCA, MCA and IIMCA; gender codes Male, Female and Other; admissible intake years 2019 to 2023 — exist only as duplicated literals in two Designer files and in the dashboard SQL. No reference table, lookup, saved query, validation rule or configuration entry holds any of them, and the database enforces none of them. Two of the three are already in active contradiction with the code that reads them: the gender list offers a third value the dashboard counts in no tile, so the gender tiles cannot sum to the population; and the intake-year list stops at 2023 while the dashboard derives its five buckets from a baseline hardcoded to 2023, so no intake after 2023 can be captured and every intake-year figure has been wrong since 1 January 2024.",
+      "reasoning": "Confirmed from both directions. First-hand reads of Flat Design/Form1.vb show the literal value sets inside the aggregate SQL at lines 24, 29, 38, 43, 48 and the hardcoded baseline at line 59. The parsed database independently confirms the other half: one user table, zero views, zero saved queries, zero validation rules, no lookup or row-source property on any of the ten columns, and deleted rows in page slack carrying course values of '2' and '3' and intake-year values of 'A' and 'B' — proving the gap has already been exercised with junk data rather than merely being theoretically open.",
+      "evidence_refs": [
+        {
+          "name": "Value sets hardcoded in aggregate SQL",
+          "detail": "Gender literals at Flat Design/Form1.vb:24 and :29; course literals at :38, :43 and :48; the 2023 baseline at :59 driving five year buckets at :62 through :82.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        },
+        {
+          "name": "No enforcement anywhere in the database",
+          "detail": "No ValidationRule, Format, InputMask, lookup or row-source property on any of the ten columns; AllowZeroLength true on every text column; only RollNo required.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        },
+        {
+          "name": "The gap has been exercised",
+          "detail": "Deleted rows recovered from page slack carry Course values of '2' and '3' and YOA values of 'A' and 'B', none of which is in either code list.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.91,
+        "rationale": "Every element is confirmed twice over, once from the source and once from the parsed database. The only soft part is whether the Male-and-Female-only dashboard is intent or defect, which is a stakeholder question and is raised separately as an open question rather than asserted here."
+      }
+    },
+    {
+      "ask_slug": "deleted-student-records-remain-recoverable",
+      "action": "investigate",
+      "title": "Deleting a student through the application does not erase their data — six deleted records are still fully readable in the database file.",
+      "why": "It sets the retention and erasure boundary for every domain here, and if any erasure obligation applies, the current design cannot satisfy it and the relevant history is already unrecoverable.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "No domain in this artifact has a usable retention or lineage boundary. The delete path issues a physical SQL DELETE with no tombstone, no soft-delete and no audit entry, and because nothing ever compacts the Access file the deleted rows stay intact in page slack: six deleted records parse cleanly under the current column layout with all ten field values readable, including names, both telephone numbers, gender and date of birth — exactly the personal data a deletion is meant to remove. The table also has no created, modified, user-stamp or row-version column, and the application has no authentication, so no change to any student record can be attributed or reconstructed.",
+      "reasoning": "Raised as an investigate rather than a resolve because the remediation depends on an obligation this step cannot establish. In this specific file the recoverable rows are keyboard-mash test data, so nothing is exposed today; the finding is the mechanism, which would apply unchanged to real records, and the same mechanism means any history that mattered is already gone. Routing it to the data-protection reviewer independently of modernization sequencing matters here, because remediating an erasure gap should not wait on a migration plan.",
+      "evidence_refs": [
+        {
+          "name": "Deleted rows recoverable from page slack",
+          "detail": "The single data page has 29 row slots for 2 live rows; 6 hold deleted-but-intact rows whose ten field values all parse, and the primary-key index leaf retains 2 stale pointers into them.",
+          "artifact_path": "artifacts/discovery-legacy-database-archaeologist/db-archaeology.json"
+        },
+        {
+          "name": "Physical delete with no trace",
+          "detail": "DELETE FROM students WHERE rollno=@rollno at Flat Design/ViewForm.vb:90, followed by a close of the shared global connection at :94. No soft-delete, no tombstone, no audit write.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        },
+        {
+          "name": "No retention or archival path in any flow",
+          "detail": "All five traced data flows record retention as indefinite with no archival or purge logic anywhere in the application.",
+          "artifact_path": "artifacts/discovery-legacy-data-flow-tracer/data-flow-trace.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.88,
+        "rationale": "The mechanism is confirmed from the parsed file and the delete path is confirmed first-hand from source. What is uncertain is only whether an erasure or retention obligation applies, which is the question being asked."
+      }
+    },
+    {
+      "ask_slug": "data-domains-recorded",
+      "action": "aware",
+      "title": "Three data domains recorded for the student management system, covering all ten columns of its single table.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "assessment": "Three domains were derived and recorded: Student Identity and Contact, which owns the person, their two contact numbers and the named guardian, holding eight of the ten columns and all of the directly identifying personal data; Student Enrolment, which owns the programme and intake year, holding the remaining two columns; and Academic Reference Data, which owns the three closed code lists and deliberately owns no column, because those lists have no system of record anywhere in the application. Every one of the ten physical columns is assigned to exactly one domain. Four cross-domain references were recorded, of which the dashboard's population statistics is the one genuine data product — it reads gender from the first domain and programme and intake year from the second, and so must become a published interface rather than a shared table. Seven boundary violations are carried forward to data-modeling, the most structural being that these three domains are logically separable but physically indivisible until the application's single shared database connection is replaced.",
+      "reasoning": "Derived first-hand rather than refined from an inherited domain model: no prior data-domains artifact existed for this application, so the five boundary heuristics were applied directly to the logical entities recovered from the SQL statements, the UI value domains and the dashboard aggregates, cross-checked against the parsed database. The analysis was deliberately not fanned out, being below every fan-out threshold on every count with three domain candidates, one application and ten columns.",
+      "evidence_refs": [
+        {
+          "name": "Data domain model",
+          "detail": "Three domains, eight logical entities, ten of ten columns assigned exactly once, four cross-domain references, five arbitration decisions and seven carried-forward boundary violations.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.json"
+        },
+        {
+          "name": "Reviewer narrative",
+          "detail": "Prose explanation of each boundary and the heuristic that drew it, including the three boundaries that were considered and rejected.",
+          "artifact_path": "artifacts/discovery-data-domain-discovery/data-domains.md"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.84,
+        "rationale": "Column-level assignments are confirmed from direct reads of the statements that write and read each column. The residual uncertainty is concentrated in one boundary, which is raised as its own decision ask rather than averaged into this one."
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "description": "A standalone Windows desktop (WinForms) application for managing student academic records. A dashboard form summarizes student counts by gender, course, and academic year, and three companion forms let a user insert, view/search, edit, and delete individual student records (name, course, year of admission, gender, mobile numbers, date of birth), all persisted to a local Microsoft Access database file bundled in the repository. The author's own README and project report describe it as a single-developer academic/portfolio project with no network, web, or batch component.",
+  "business_domain": "Admin",
+  "tech_stack": {
+    "languages": [
+      {
+        "name": "Visual Basic .NET",
+        "percent": 100
+      }
+    ],
+    "frameworks": [
+      "Windows Forms (WinForms)"
+    ],
+    "runtimes": [
+      ".NET Framework 4.8"
+    ],
+    "databases": [
+      "Microsoft Access (Jet/ACE OLEDB, .accdb file)"
+    ],
+    "build_tools": [
+      "MSBuild",
+      "Visual Studio Solution (.sln)"
+    ],
+    "ci_cd": []
+  },
+  "architecture": {
+    "archetype": "desktop",
+    "archetype_rationale": "Evidence: OutputType=WinExe and MyType=WindowsForms in the .vbproj; four Form classes (Form1 dashboard, InsertForm, EditForm, ViewForm) wired together via Windows Forms controls and panel-swapping, not HTTP routes; all data access is direct OleDb SQL (SELECT/INSERT/UPDATE/DELETE against a single 'students' table) against a local .accdb file opened via a hardcoded file-system path in Module1.vb — no listener, no scheduler entry point, no API surface. This does not cleanly map to any option in the suggested taxonomy (web-app, batch, hybrid, service, headless, cli, library, mainframe, embedded): it is not web-app (no HTTP server/templates), not headless (it has a GUI), not batch/scheduled (interactive, user-driven), not cli/library/mainframe/embedded. 'desktop' is used here as the closest accurate label for a standalone GUI thick-client bound to a local file database; flagged in open_questions as a taxonomy gap.",
+    "major_components_note": "Single WinForms project ('Flat Design') with one dashboard form (Form1) that hosts three child forms (InsertForm, EditForm, ViewForm) in a panel; a Module1.vb holds the single shared OleDbConnection; data layer is inline SQL in each form, no DAL/service layer, no ORM."
+  },
+  "size_metrics": {
+    "loc_total": 2787,
+    "loc_by_language": {
+      "Visual Basic .NET": 2787
+    },
+    "loc_excluded_vendor_note": "No files were excluded from the count. Of the 2,787 total .vb lines, approximately 2,326 lines (83%) are WinForms Designer-generated layout code (*.Designer.vb, Resources.Designer.vb, Settings.Designer.vb, Application.Designer.vb) and approximately 461 lines (17%) are hand-written form/business logic (Form1.vb, InsertForm.vb, EditForm.vb, ViewForm.vb, Module1.vb, AssemblyInfo.vb).",
+    "module_count": 1,
+    "module_count_basis": "Single .vbproj ('Student Management System Siddharth Jain.vbproj', WinForms desktop project) under the 'Flat Design' directory. The source tree has no further package/module decomposition (no sub-projects, no class library split).",
+    "endpoint_count": null,
+    "endpoint_count_basis": "Not applicable. This is a standalone WinForms desktop application with no HTTP listener, REST endpoint, or RPC surface; all interaction is local GUI event handlers against a local MS Access database.",
+    "file_count": 24,
+    "table_count": 1,
+    "table_count_note": "Only one table, 'students', is referenced by every SQL statement found across the four forms (SELECT/INSERT/UPDATE/DELETE on columns rollno, fname, lname, fathername, mobno, altmobno, gender, course, yoa, dob). The actual studentDB.accdb file is a binary MS Access database and could not be parsed directly with text tooling, so this count is inferred from embedded SQL text, not from DDL; Pass 1 (Structural Analysis) should confirm against the real .accdb schema.",
+    "table_ddl_files_in_source": 0
+  },
+  "complexity_tier": "simple",
+  "safety_tier": null,
+  "user_facing": true,
+  "open_questions": [
+    "Governing client profile for this task is 'faa' (FAA legacy modernization program, per profiles/faa/profile.yaml: NAS safety, air traffic, pilot certification, etc.), but this application's source, README, and project report describe a generic student-record-management desktop tool with no detectable aviation, NAS, or FAA business relevance. This is a likely scope/profile mismatch and should be confirmed by the engagement owner before this catalog entry is used for FAA-specific gating (safety tiering, NAS impact assessment, compliance mapping).",
+    "safety_tier could not be set: no authoritative safety classification input was provided at onboarding or by a prior Discovery run. Per methodology, safety tier must come from stakeholder/Safety Board input, not be inferred from code. For reference only: the FAA profile README's qualitative signal table (profiles/faa/README.md) would suggest a 'T3' lean for an 'Admin'-domain application with no external interfaces and a small user base, but this is not a substitute for authoritative classification.",
+    "business_domain was set to 'Admin' as the closest general match from the FAA profile's documented domain taxonomy (Air Traffic, Flight Safety, Aviation Safety, Certification, Workforce, Finance, Admin, Travel, Timesheet — profiles/faa/README.md), because neither the repository nor its docs state an actual business owner, sponsoring office, or domain, and the application itself does not resemble an FAA system. Needs stakeholder confirmation.",
+    "No CMDB export or ownership/criticality documentation was provided at onboarding; business owner and operational criticality are unconfirmed.",
+    "fixtures/default.json, found inside this application's own source tree, is a QA/test fixture for the catalog-application skill itself (its 'result' payload describes an unrelated fictitious 'Fixture Application' with a C#/ASP.NET WebForms/SQL Server stack). It was disregarded as a source of facts about this application. Its presence inside the real application's source tree (rather than in test infrastructure) may be worth investigating upstream, since it could indicate repository/fixture cross-contamination.",
+    "The active FAA profile's legacy-technology mapping (profiles/faa/technology.yaml, modernization_targets.dotnet) only covers ASP.NET/C#/WCF; it defines no modernization target for a VB.NET WinForms + MS Access desktop stack, so no profile-driven replatform/rehost target currently applies to this application.",
+    "Archetype taxonomy gap: the archetype enum suggested for this artifact (web-app, batch, hybrid, service, headless, cli, library, mainframe, embedded) has no category for a standalone GUI desktop/thick-client application; 'desktop' was used as the closest accurate label. Recommend the taxonomy owner add an explicit desktop/thick-client archetype."
+  ]
+}

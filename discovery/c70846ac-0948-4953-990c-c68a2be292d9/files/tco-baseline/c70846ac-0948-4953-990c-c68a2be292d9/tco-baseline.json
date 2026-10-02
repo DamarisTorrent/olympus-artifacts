@@ -1,0 +1,32 @@
+{
+  "$schema": "olympus:artifact:tco-baseline:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "cost_context": {
+    "mode": "baseline"
+  },
+  "baseline_period": "FY2026 (current-state annualized baseline)",
+  "annual_total": 0,
+  "breakdown": {
+    "cloud_infra_hosting": 0,
+    "operations_maintenance": 0,
+    "shared_hosting": 0
+  },
+  "formula_applied": "FAA profile formula (profiles/faa/config/tco-analyzer.yaml -> profiles/faa/skills/tco-analyzer/references/faa-tco-definition.md): Application cost = Cloud/Infra hosting + O&M + hosting, per the FAA Announcement Element 7 footnote. Operational costs only; one-time development/modernization costs and user-organization-side costs (workstation hardware, training) are excluded by definition.",
+  "confidence": "low",
+  "data_sources": [
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+    "profiles/faa/config/tco-analyzer.yaml",
+    "profiles/faa/skills/tco-analyzer/references/faa-tco-definition.md"
+  ],
+  "assumptions": [
+    "No CMDB export, billing/invoice extract, hosting bill, support contract, or license agreement was provided or found for this application at onboarding (catalog.json open_questions and structural-analysis.json both record this gap independently) — there is no cost ledger to collect line items from, so this baseline is derived entirely from the confirmed architecture rather than from financial records.",
+    "Cloud/Infra hosting is set to $0: structural-analysis.json confirms the application's only deployment surface is 'Student Management System.exe', a single Windows desktop executable manually installed per workstation against a local .accdb file opened via a hardcoded file path — there is no server, VM, container, or cloud resource for FAA to host. Per-workstation compute is excluded from the FAA TCO definition as a user-organization-side cost.",
+    "Shared hosting is set to $0: the structural analysis found zero use of shared middleware, shared databases, identity providers, or API gateways — the application has no network surface and no integration points, so there is no shared-infrastructure cost to apportion to it.",
+    "O&M is set to $0: no business owner, operational criticality rating, support staff, or SRE/DevOps allocation for this application could be identified in any Discovery artifact; it is documented as a single-developer, GPL-licensed academic/portfolio project with a one-commit git history and no CI/CD. Absent any evidence of ongoing FAA-funded operations or maintenance labor, no O&M figure is asserted.",
+    "No licensing cost is attributed: the database is Microsoft Access (Jet/ACE OLEDB) accessed via a bundled .accdb file, and the application itself is GPL-licensed with a public GitHub origin: no FAA-paid license was identified.",
+    "GOVERNING-PROFILE / SCOPE DISCREPANCY (carried forward, not newly adjudicated here): this task's governing profile is declared as 'faa', and this baseline applies the FAA profile's TCO formula as instructed. However, both catalog.json and structural-analysis.json independently flag that the application's source, README, and project report describe a generic student-record-management desktop tool with no detectable aviation, NAS, air-traffic, or FAA business relevance. This baseline does not adopt or assert any alternative governing profile; it applies the FAA formula as directed and flags the same scope mismatch for the engagement owner to resolve before this baseline is used in portfolio governance (P6.2) or cost-savings certification (P6.3) decisions.",
+    "Confidence is rated 'low' because every figure above is a reasoned absence of cost (no server/shared-infra/support-contract exists to price) rather than a measured figure drawn from a bill, invoice, or CMDB record; if a CMDB/billing extract or an authoritative business-owner statement surfaces later, this baseline should be revisited."
+  ]
+}

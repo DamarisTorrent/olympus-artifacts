@@ -1,0 +1,168 @@
+{
+  "$schema": "olympus:artifact:tiff-corpus-assessment:v1",
+  "corpus_id": "c70846ac-student-management-system-vbnet-no-image-corpus-2026-10",
+  "source_system": {
+    "system_name": "Student Management System (VB.NET) — WinForms desktop app over a local MS Access (.accdb) file; NO image-workflow or document-imaging system is present in this application",
+    "store_type": "filesystem",
+    "wrapper_format": "None. No TIFF of any kind exists in scope. The only raster assets are plain PNG/ICO files in the repository working tree plus base64-embedded PNG resources inside WinForms .resx files. Verified by byte-level magic-marker scan: zero TIFF (II*\\0 / MM\\0*), zero CCITT Group IV, zero JBIG2, zero JPEG2000, and zero vendor/proprietary container signatures. The 802,816-byte studentDB.accdb contains NO image magic bytes of any kind.",
+    "access_method": "file-share"
+  },
+  "scale_estimate": {
+    "image_count_estimate": 35,
+    "estimate_confidence": "exact",
+    "total_size_gb": 0.00045,
+    "avg_image_size_kb": 12.6,
+    "year_range": {
+      "earliest": 2023,
+      "latest": 2023
+    },
+    "growth_rate_per_year": 0
+  },
+  "sampling_strategy": {
+    "method": "stratified-random",
+    "sample_size": 100,
+    "strata_definition": "Three enumerable strata covering the complete raster population: (1) on-disk raster files in the working tree, n=4 (3 PNG UI screenshots + 1 .ico app icon); (2) base64 bytearray resources embedded in the five WinForms .resx files, n=31 PNG (plus 6 non-image icon/type stubs, excluded as non-raster); (3) raster payloads inside the 28-page Word-exported project-report PDF, n=0 scanned pages. Sampling fraction = 100% in every stratum.",
+    "confidence_level": 0.95,
+    "rationale": "READ THIS FIELD, NOT THE sample_size INTEGER. No sampling was performed because no sampling was possible or necessary: the entire raster population is 35 images, which is smaller than the schema's sample_size floor of 100. Instead of sampling, a 100% census was executed — every raster byte in the repository was enumerated and magic-byte classified (4 files on disk, 37 decoded .resx bytearray payloads, plus full binary scans of studentDB.accdb and the project-report PDF), and git history was checked across all refs (single commit 206eedb, 2023-09-15, zero deletions) to confirm nothing was removed. A census is the limiting case of stratified-random at a 100% sampling fraction, which is why that enum value is recorded; confidence_level 0.95 is the schema-required default and is formally meaningless for a census, where the margin of error is zero by construction. The integer 100 is recorded SOLELY because the schema forbids sample_size < 100; the true examined n is 35 of 35. Do not read 100 as a measurement."
+  },
+  "ocr_readiness": {
+    "overall_score": 1,
+    "factors": [
+      {
+        "factor": "scan-resolution",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT-APPLICABLE FLOOR, not a measurement. There are zero scanned document pages to measure DPI against. The 35 rasters are screen captures (~1600x790, truecolor) and UI button glyphs (238-335 bytes) — screen-resolution artifacts with no scan DPI. A Group IV page scan would be 1-bit at ~1700x2200; none exists."
+      },
+      {
+        "factor": "compression-artifacts",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT-APPLICABLE FLOOR. All 35 rasters are PNG/ICO (lossless, non-Group-IV). No Group IV block noise or speckle can exist because no CCITT Fax 4 payload exists anywhere in scope (verified by magic-byte scan)."
+      },
+      {
+        "factor": "color-depth",
+        "score": 1,
+        "weight": 0.05,
+        "notes": "NOT-APPLICABLE FLOOR. Rasters are 8-bit truecolor (PNG colortype 2) UI screenshots, not bitonal scans. Bit depth is irrelevant to a readiness score because there is no document text to threshold."
+      },
+      {
+        "factor": "skew-and-rotation",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT-APPLICABLE FLOOR. Screen captures and icons have no scan skew and no rotation tags; deskew is undefined for this population."
+      },
+      {
+        "factor": "handwriting-presence",
+        "score": 1,
+        "weight": 0.2,
+        "notes": "NOT-APPLICABLE FLOOR. No document pages exist, therefore no handwriting. This score must NOT be read as 'heavy handwriting' (the rubric's literal 1 = >40%); it is the floor assigned for absence of scoreable material. The handwriting rule that would force ABBYY or an ensemble is not triggered, because there is no stratum to trigger it."
+      },
+      {
+        "factor": "form-structure",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT-APPLICABLE FLOOR. No form templates, no field coordinates, no document templates of any kind. The application's 'forms' are WinForms GUI windows, not scanned form documents — a terminology collision that must not be mistaken for form-structure evidence."
+      },
+      {
+        "factor": "language-consistency",
+        "score": 1,
+        "weight": 0.1,
+        "notes": "NOT-APPLICABLE FLOOR. No document text corpus exists to assess dominant-language coverage. UI label strings are English but are not OCR input."
+      },
+      {
+        "factor": "text-density",
+        "score": 1,
+        "weight": 0.15,
+        "notes": "NOT-APPLICABLE FLOOR. Zero chars/page because there are zero pages. Rendered UI label text in screenshots is not document text and is already available as source code string literals — OCR would be strictly inferior to reading the .vb files."
+      }
+    ],
+    "recommended_engine": "tesseract",
+    "estimated_accuracy": {
+      "character_level": 0,
+      "field_level": 0
+    }
+  },
+  "metadata_inference_plan": {
+    "available_structured_metadata": [
+      "file_path",
+      "file_extension",
+      "byte_size",
+      "magic_byte_format",
+      "pixel_dimensions",
+      "png_color_type",
+      "resx_resource_name",
+      "containing_resx_file",
+      "git_commit_sha",
+      "git_commit_date"
+    ],
+    "inferable_from_content": [],
+    "inference_strategy": "rule-based"
+  },
+  "migration_sequencing": {
+    "waves": [
+      {
+        "wave": 1,
+        "image_count_estimate": 0,
+        "selection_criteria": "Empty by determination: zero scanned-document images are in migration scope. The 35 raster assets are application UI chrome (screenshots, app icon, button glyphs, dashboard decoration) that travel with the application binary and its .resx embedded resources during any replatform of the app itself — they are NOT a content corpus and must not be routed through an OCR or content-migration pipeline. No subsequent waves are defined because there is no corpus to sequence.",
+        "estimated_duration_weeks": 0,
+        "dependencies": []
+      }
+    ],
+    "prioritization_basis": "size-ascending",
+    "parallel_capacity_per_wave": 0
+  },
+  "cost_projection": {
+    "ocr_cost_usd": 0,
+    "storage_cost_monthly_usd": 0,
+    "total_migration_cost_usd": 0,
+    "basis": "$0.0000/page OCR (0 scanned pages in scope; no OCR engine procurement is warranted, so no vendor $/page rate is applied — explicitly NOT the FAA RMS blended $0.010-$0.040/page ensemble rate, which belongs to a different system); $0.023/GB-month S3 Standard list rate applied to the measured 0.00045 GB raster footprint = $0.0000104/month, which rounds to $0.00; census n=35 of 35 (100% of the enumerated raster population, not a sample — the schema's sample_size floor of 100 exceeds the total population). Total migration cost $0 because the only raster assets move as part of the application package, not as a content-migration workstream."
+  },
+  "risk_findings": [
+    {
+      "finding": "SKILL/APPLICATION MISMATCH — THIS IS A NEGATIVE DETERMINATION, NOT A FEASIBILITY PLAN. Application c70846ac is a 2,787-LOC single-developer VB.NET WinForms student-records desktop app with a 784 KiB MS Access database and ZERO scanned-document images. The tiff-corpus-assessor skill presupposes a legacy image corpus; no such corpus exists here. Every quantitative field in this artifact is either a measured zero or a schema-mandated floor. This artifact must not be cited as evidence that an OCR or image-migration workstream is justified for this application.",
+      "severity": "critical",
+      "mitigation": "Treat this assessment as a scope-exclusion record: mark the application 'no image corpus — out of scope for imaging modernization' in Rationalization and do not fund OCR, sampling, or content-migration activity against it. Have the engagement owner confirm why this skill was dispatched for this application and remove tiff-corpus-assessor from this application's Discovery plan so a future re-run does not re-manufacture the same empty assessment."
+    },
+    {
+      "finding": "FABRICATION HAZARD: THE PROFILE OVERLAY'S FAA RMS DEFAULTS WERE DELIBERATELY NOT APPLIED. The active faa profile supplies profiles/faa/skills/tiff-corpus-assessor/references/unisys-infoimage-extraction.md, which carries ready-made corpus defaults — ~146M TIFF pages, ~40-year span, medium confidence, store_type unisys-infoimage, multi-engine-ensemble engine with ABBYY for pre-1995 strata, regulatory-retention prioritization, bulk-export-via-Unisys-SDK access. Those values describe the FAA RMS/IMS system (per the reference's own 'applies-to: [rms, ims]' front matter), NOT this application. Adopting them would have satisfied every schema constraint and quality rule while being entirely fictional, and would have produced a 7-figure cost projection for a corpus that does not exist.",
+      "severity": "critical",
+      "mitigation": "Reject any revision of this artifact that imports RMS scale, engine, or access-method defaults without a byte-level inventory of THIS application's own images. The applicability test is the reference's 'applies-to' front matter plus a measured store_type of unisys-infoimage; both fail here. The quality rule requiring an extraction reference for the detected store_type is correctly inapplicable: detected store_type is 'filesystem', not 'unisys-infoimage', and access_method is 'file-share' (never 'unknown'), so no extraction reference is owed."
+    },
+    {
+      "finding": "SCHEMA FLOORS FORCED THREE NON-MEASUREMENT VALUES, each of which reads as a real finding to an automated consumer. (1) sampling_strategy.sample_size minimum is 100, but the entire population is 35, so 100 is recorded where the true examined n is 35. (2) ocr_readiness.recommended_engine is a closed enum with no 'none' / 'not-applicable' member, so 'tesseract' is recorded. (3) scale_estimate.image_count_estimate has minimum 1, so a genuinely empty document corpus cannot be expressed as 0 and is instead represented by the 35 non-document UI rasters. A downstream job that reads these integers without the adjacent rationale/notes/basis strings will draw false conclusions.",
+      "severity": "high",
+      "mitigation": "Read sampling_strategy.rationale, every ocr_readiness.factors[].notes, and cost_projection.basis before consuming any numeric field from this artifact. 'tesseract' here means 'no engine procurement warranted, $0 spend' (matrix row R5's ~$0 compute-only cost is the only honest cost line for 35 UI icons) and is explicitly NOT a recommendation to run Tesseract against anything. Schema owner action: add a 'not-applicable' enum member to recommended_engine and either relax the sample_size floor when population < floor or add an explicit census/population_size field, so negative determinations are representable without floor abuse."
+    },
+    {
+      "finding": "OCR-READINESS COMPOSITE OF 1 IS ARITHMETICALLY VALID BUT SEMANTICALLY DEGENERATE. All 8 documented factors are scored at the floor of 1 with their documented weights (0.15+0.10+0.05+0.10+0.20+0.15+0.10+0.15 = 1.00), giving a reproducible composite of round(1.0) = 1, which the rubric maps to 'reject'. 'Reject' is the correct substantive verdict, but it is reached by absence of scoreable material, not by measured degradation. In particular the handwriting-presence score of 1 literally means '>40% handwriting' in the rubric and would, if read literally, trigger the rule forcing ABBYY or a multi-engine ensemble.",
+      "severity": "high",
+      "mitigation": "Suppress the handwriting-forces-ABBYY/ensemble rule for this artifact: it is predicated on a handwriting-bearing stratum, and there are zero document strata. Do not re-score these factors without a real stratified sample of real scanned pages; if such a corpus is ever discovered in this application, discard this entire ocr_readiness block and re-run the rubric from a genuine sample rather than adjusting scores in place. The two-reviewer / Cohen's-kappa >= 0.75 observer protocol was not run and could not be, because there was nothing to score blind."
+    },
+    {
+      "finding": "SOURCE-TREE CONTAMINATION BY DISCOVERY-SKILL SCAFFOLDING IS THE LIKELY CAUSE OF THIS MIS-DISPATCH. The application's own source tree contains directories belonging to the Olympus Discovery tooling, not to the student app: references/ (15 markdown docs, including ocr-readiness-rubric.md, engine-selection-matrix.md, migration-sequencing-strategy.md), assets/ (7 blank templates, including corpus-assessment-template.yaml and sampling-plan-worksheet.md), scripts/classify_procs_template.sql, and fixtures/default.json. A keyword sweep for TIFF/OCR/Group IV/InfoImage hits 13 files, and EVERY hit is in this scaffolding — zero hits in executable code. Any keyword-based corpus detector pointed at this tree will keep concluding, falsely, that a TIFF corpus is present.",
+      "severity": "medium",
+      "mitigation": "Have the pipeline owner remove references/, assets/, scripts/, and fixtures/ from the staged application source tree (or stage them outside the scanned root), and change corpus detection from keyword matching to file-type evidence — magic-byte-confirmed TIFF/Group IV payload counts above a floor — so methodology documents can never again be mistaken for corpus evidence. Note that fixtures/default.json was already flagged as cross-contamination in the catalog's open_questions; this is the same defect with a wider blast radius."
+    },
+    {
+      "finding": "GOVERNING-PROFILE / APPLICATION-DOMAIN MISMATCH (independently corroborated). The governing profile is faa (FAA legacy modernization: NAS safety, air traffic, pilot certification), but this application is a generic student-record desktop tool with no aviation, NAS, or FAA relevance. The catalog raised this as its first open question and also notes the faa profile defines no modernization target for a VB.NET WinForms + MS Access stack. This assessment therefore applied faa as the authoritative profile for provenance purposes while treating none of its FAA-system-specific content as applicable facts.",
+      "severity": "high",
+      "mitigation": "Escalate to the engagement owner for a scope ruling before this application consumes further FAA-profile gating (safety tiering, NAS impact, compliance mapping). If the application is confirmed in scope, request an faa profile overlay covering the VB.NET WinForms + MS Access stack; if out of scope, remove it from the FAA portfolio wave rather than continuing to assess it against FAA references."
+    },
+    {
+      "finding": "RESIDUAL UNCERTAINTY ON THE ACCESS DATABASE: NO DDL PARSE WAS PERFORMED. studentDB.accdb (802,816 bytes) was examined only by byte-level magic-marker scan and UTF-16LE string extraction, not by an ACE/DAO schema read. The scan found zero TIFF/JPEG/PNG/BMP/GIF/PDF/OLE-compound signatures anywhere in the file, and the extracted column list for the single 'students' table is all scalar text/date fields (RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB, Sec, ClassN). Attachment-related strings (MSysComplexType_Attachment, FileData, Picture Property Storage Format) are present but are boilerplate Access system catalog entries found in every .accdb. A dangling comment at InsertForm.vb:52 references 'photo upload', though no photo column, picker, or upload control exists.",
+      "severity": "medium",
+      "mitigation": "Close the gap cheaply by dumping the real schema with an ACE/ODBC catalog query (or mdbtools) and confirming no OLE Object / Attachment column exists on the students table. The magic-byte result makes stored images very unlikely — image bytes cannot be stored in an .accdb without their signatures appearing — so this is confirmation rather than expected discovery. Treat the 'photo upload' comment as dead code and log it to the code-quality backlog, not the imaging backlog."
+    },
+    {
+      "finding": "YEAR RANGE AND GROWTH RATE REST ON A SINGLE GIT COMMIT, NOT ON CONTENT DATES. scale_estimate.year_range is recorded as 2023-2023 and growth_rate_per_year as 0 on the sole evidence of commit 206eedb dated 2023-09-15 (the only commit across all refs). The raster assets carry no reliable internal creation dates, and there is no ingestion pipeline, scanner feed, or scheduled job that could add images.",
+      "severity": "low",
+      "mitigation": "Read year_range as repository provenance, not content provenance, and do not use it for retention-boundary or decade-stratification reasoning — neither is meaningful for 35 UI assets. Growth rate 0 is safe to rely on: the application has no network, web, or batch component and no image-ingestion path, so the corpus cannot grow."
+    },
+    {
+      "finding": "DEVELOPER-MACHINE ARTIFACTS COMMITTED TO THE REPOSITORY. Module1.vb:7 hardcodes a dead absolute path (D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb) that does not match the database's actual location, and studentDB.laccdb (a 64-byte Access lock file carrying the owner string SGARDNER6) was committed alongside it. Neither affects the corpus determination, but both signal that the staged tree is a developer snapshot rather than a controlled release.",
+      "severity": "low",
+      "mitigation": "Route to the application-modernization backlog, not the imaging backlog: externalize the connection string to configuration and add *.laccdb to .gitignore. Flagged here only because it bears on how much confidence to place in the staged tree as an authoritative inventory source."
+    }
+  ]
+}

@@ -1,0 +1,433 @@
+{
+  "$schema": "olympus:artifact:data-flow-trace:v1",
+  "generated": "2026-10-02",
+  "methodology_notes": "Traced by reading all four WinForms code-behind files and the single shared data-access module in Flat Design/, then confirming the persistence target against the Flat Design/studentDB.accdb catalogue. The application has exactly one persistent store (the 'students' table in a local Microsoft Access file) and no network, batch, queue or API surface, so every flow is short: a GUI control to one table and back to a GUI control. There is no messaging, no file ingest, no outbound feed and no second system, which is why no flow crosses a system boundary. LIMITS OF THIS TRACE: the .accdb is a binary file read with text-only tooling, so column presence was confirmed from the catalogue name map but declared Access types were not readable — type claims below are derived from how each value is bound at the call site, not from DDL. No runtime observation was possible, so implicit transformations are identified by reading the binding and parsing code, not by watching values change.",
+  "application": {
+    "name": "Student Management System (VB.NET)",
+    "id": "c70846ac-0948-4953-990c-c68a2be292d9"
+  },
+  "flows": [
+    {
+      "flow_id": "DF-SMS-001",
+      "data_element": {
+        "name": "rollno",
+        "type": "Access short text; bound as System.String from TextBox.Text",
+        "description": "Student roll number. The de facto row identifier: it is the sole selector for the read-one, update and delete paths.",
+        "business_meaning": "Institution-assigned student enrolment number, treated by the application as uniquely identifying a student record.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Student Management System (InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:12"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "txtRollNo.Text is passed to OleDbParameter via AddWithValue, which infers the OleDb type from the runtime CLR type rather than from the column definition. No trimming, no format check, no uniqueness check and no length check is applied. An empty roll number is accepted.",
+          "location": {
+            "system": "Student Management System",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:12"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Student Management System",
+          "store_type": "relational-table",
+          "location": "studentDB.accdb :: students.rollno",
+          "source_of_truth": true,
+          "retention": "Indefinite — no archival, purge or retention logic exists anywhere in the application.",
+          "citation": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:39-44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (EditForm fields)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:21",
+          "external_consumer": false
+        }
+      ],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "rollno is used as the unique row selector by the update path (EditForm.vb:51) and the delete path (ViewForm.vb:90), but nothing enforces uniqueness: there is no application-side duplicate check before INSERT, and no primary key or unique index on students could be confirmed (the .accdb index metadata was not readable with available tooling). If two rows share a roll number, the UPDATE and DELETE statements both match multiple rows and will silently modify or destroy more than the record the user selected in the grid.",
+          "severity": "critical",
+          "category": "data-loss"
+        },
+        {
+          "finding": "No validation of any kind is applied to rollno on entry — an empty or whitespace-only value is accepted and persisted, producing a row that the grid displays but that the edit and delete paths cannot reliably target.",
+          "severity": "medium",
+          "category": "orphaned-data"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-002",
+      "data_element": {
+        "name": "student_name_and_parentage",
+        "type": "Access short text; bound as System.String from TextBox.Text (fname, lname, fathername)",
+        "description": "Student first name, last name, and father's name, captured as three free-text fields.",
+        "business_meaning": "Identifying personal details of the student and a named family member.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Student Management System (InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:13-15"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "All three names bound straight from TextBox.Text through AddWithValue with no normalisation, trimming, casing, length limit or character-set restriction. The OleDb type is inferred from the CLR string type rather than the column definition.",
+          "location": {
+            "system": "Student Management System",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:13-15"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Student Management System",
+          "store_type": "relational-table",
+          "location": "studentDB.accdb :: students.fname, students.lname, students.fathername",
+          "source_of_truth": true,
+          "retention": "Indefinite — no archival, purge or retention logic exists anywhere in the application.",
+          "citation": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid, all rows and columns)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:39-44",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (ViewForm search by partial first name)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:50",
+          "external_consumer": false
+        }
+      ],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "The first-name column is the target of an unparameterised LIKE filter built by string concatenation of raw user input (\" OR fname LIKE '%\" + searchQuery + \"%'\"). A search term containing a single quote changes the statement, so the PII store is reachable by SQL injection from the main search box. Mapped to type-coercion as the closest available category; the defect is unsanitised string interpolation into SQL, for which this enumeration has no exact member.",
+          "severity": "critical",
+          "category": "type-coercion"
+        },
+        {
+          "finding": "ViewForm displays every row and every column of the students table to any user who opens the application, with no filtering, masking or row-level restriction. Combined with the absence of authentication (see identity-landscape.json), the entire PII corpus is readable by anyone who can launch the executable.",
+          "severity": "high",
+          "category": "pii-leak"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-003",
+      "data_element": {
+        "name": "contact_mobile_numbers",
+        "type": "Access short text; bound as System.String from TextBox.Text (mobno, altmobno)",
+        "description": "Primary and alternate mobile telephone numbers for the student record.",
+        "business_meaning": "Direct contact channel for the student or their family.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Student Management System (InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:16-17"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "Both numbers bound from TextBox.Text as strings with no digit-only check, no length check, no country-code normalisation and no format mask. Any text whatsoever is accepted into a telephone field.",
+          "location": {
+            "system": "Student Management System",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:16-17"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Student Management System",
+          "store_type": "relational-table",
+          "location": "studentDB.accdb :: students.mobno, students.altmobno",
+          "source_of_truth": true,
+          "retention": "Indefinite — no archival, purge or retention logic exists anywhere in the application.",
+          "citation": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (ViewForm grid)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:39-44",
+          "external_consumer": false
+        }
+      ],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Telephone numbers are stored unvalidated and unnormalised as free text, so the same number may be persisted in multiple formats and no reliable lookup or de-duplication by phone number is possible. On migration to a typed column or a validated contact field, existing rows may fail the new constraint.",
+          "severity": "medium",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-004",
+      "data_element": {
+        "name": "date_of_birth",
+        "type": "Access DATE/TIME column; bound as a locale-formatted System.String from DateTimePicker.Text, and read back via DateTime.Parse",
+        "description": "Student date of birth, captured with a DateTimePicker control.",
+        "business_meaning": "Birth date, used as an identifying attribute of the student. Combined with name and roll number it is a strong personal identifier.",
+        "pii_classification": "pii"
+      },
+      "entry_point": {
+        "system": "Student Management System (InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:23"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "translate",
+          "description": "The write path binds dtpDOB.Text — the control's DISPLAY STRING — rather than dtpDOB.Value, the typed DateTime. The date is therefore rendered to text using the workstation's current culture and short-date format before it reaches the parameter, and the ACE provider must parse that text back into a date. The stored value depends on the regional settings of the machine that entered it.",
+          "location": {
+            "system": "Student Management System",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:23"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "translate",
+          "description": "The read path performs the inverse unsafe conversion: DateTime.Parse(stReader(\"dob\").ToString()) converts the column value to a string and parses it using current-culture rules, instead of reading the typed value from the reader. A value written on a machine with one short-date convention and read on a machine with another is silently reinterpreted (an ambiguous day/month pair) or throws FormatException (an unambiguous one).",
+          "location": {
+            "system": "Student Management System",
+            "component": "EditForm.LoadData",
+            "citation": "Flat Design/EditForm.vb:30"
+          },
+          "implicit": true
+        },
+        {
+          "step": 3,
+          "operation": "translate",
+          "description": "The update path re-binds the date from the picker for the UPDATE statement, repeating the step-1 string round-trip on every edit, so repeated edits across differently configured machines can compound the drift.",
+          "location": {
+            "system": "Student Management System",
+            "component": "EditForm.btnUpdate_Click",
+            "citation": "Flat Design/EditForm.vb:51-64"
+          },
+          "implicit": true
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Student Management System",
+          "store_type": "relational-table",
+          "location": "studentDB.accdb :: students.dob",
+          "source_of_truth": true,
+          "retention": "Indefinite — no archival, purge or retention logic exists anywhere in the application.",
+          "citation": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (EditForm date picker)",
+          "interface": "screen",
+          "citation": "Flat Design/EditForm.vb:30",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (ViewForm grid)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:39-44",
+          "external_consumer": false
+        }
+      ],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "Date of birth makes a full round trip through a culture-dependent string on both write (dtpDOB.Text) and read (DateTime.Parse of the column value) instead of being carried as a typed date. On a workstation whose short-date format differs from the one that wrote the row, an ambiguous date such as 03/04/2001 is silently reinterpreted as a different real date, and an unambiguous one such as 25/12/2001 throws FormatException inside the EditForm constructor — which runs before the form is shown, so the failure surfaces as the edit screen failing to open rather than as a data error.",
+          "severity": "high",
+          "category": "encoding-mismatch"
+        },
+        {
+          "finding": "DateTime.Parse at EditForm.vb:30 is executed from the constructor chain (New -> LoadData) with no try/catch around it, unlike the insert and update handlers which are wrapped. An unparseable or null dob therefore raises an unhandled exception on the path that opens the edit form.",
+          "severity": "medium",
+          "category": "type-coercion"
+        }
+      ]
+    },
+    {
+      "flow_id": "DF-SMS-005",
+      "data_element": {
+        "name": "enrolment_classification",
+        "type": "Access short text; bound as System.String from ComboBox.SelectedItem.ToString() (gender, course, yoa)",
+        "description": "Gender, course and year of admission — the three categorical attributes the dashboard aggregates over.",
+        "business_meaning": "Cohort classification of the student, used to produce the headline counts on the dashboard.",
+        "pii_classification": "sensitive"
+      },
+      "entry_point": {
+        "system": "Student Management System (InsertForm)",
+        "interface": "manual-entry",
+        "citation": "Flat Design/InsertForm.vb:18-20"
+      },
+      "transformations": [
+        {
+          "step": 1,
+          "operation": "encode",
+          "description": "Each value is taken as cmb*.SelectedItem.ToString() with no prior check that an item is selected. If the user leaves any of the three combo boxes unset, SelectedItem is Nothing and ToString() raises a NullReferenceException, which the surrounding Try/Catch converts into a generic 'Error: ...' message box rather than a field-level prompt.",
+          "location": {
+            "system": "Student Management System",
+            "component": "InsertForm.btnSave_Click",
+            "citation": "Flat Design/InsertForm.vb:18-20"
+          },
+          "implicit": true
+        },
+        {
+          "step": 2,
+          "operation": "aggregate",
+          "description": "The dashboard counts rows by category with nine separate COUNT(*) statements: two by gender ('Male', 'Female'), three by course ('BCA', 'MCA', 'IIMCA'), and four by year of admission computed as the current year minus 0 to 4. The permitted category values are hardcoded in the query literals, so a row whose stored value differs in spelling or casing is counted by no bucket and silently vanishes from the dashboard totals.",
+          "location": {
+            "system": "Student Management System",
+            "component": "Form1 dashboard aggregate queries",
+            "citation": "Flat Design/Form1.vb:24-83"
+          },
+          "implicit": false
+        },
+        {
+          "step": 3,
+          "operation": "calculate",
+          "description": "Year-of-admission buckets are derived at run time from the system clock (currentYear, currentYear-1 ... currentYear-4) and concatenated into the SQL text as strings, then compared against the text column yoa. The dashboard's year buckets therefore shift every January, and any cohort older than five years is not represented at all.",
+          "location": {
+            "system": "Student Management System",
+            "component": "Form1 year-of-admission aggregates",
+            "citation": "Flat Design/Form1.vb:62-83"
+          },
+          "implicit": false
+        }
+      ],
+      "persistence_points": [
+        {
+          "system": "Student Management System",
+          "store_type": "relational-table",
+          "location": "studentDB.accdb :: students.gender, students.course, students.yoa",
+          "source_of_truth": true,
+          "retention": "Indefinite — no archival, purge or retention logic exists anywhere in the application.",
+          "citation": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "exit_points": [
+        {
+          "system": "Student Management System (Form1 dashboard count labels)",
+          "interface": "screen",
+          "citation": "Flat Design/Form1.vb:24-83",
+          "external_consumer": false
+        },
+        {
+          "system": "Student Management System (ViewForm grid)",
+          "interface": "screen",
+          "citation": "Flat Design/ViewForm.vb:39-44",
+          "external_consumer": false
+        }
+      ],
+      "crosses_system_boundary": false,
+      "crosses_identity_boundary": false,
+      "has_implicit_transformations": true,
+      "risk_findings": [
+        {
+          "finding": "The dashboard's category totals are computed from hardcoded literal values rather than from the distinct values actually present in the column. A gender outside {'Male','Female'}, a course outside {'BCA','MCA','IIMCA'}, or an admission year more than four years old is counted nowhere, so the dashboard can under-report the true population without any indication that rows were omitted. There is no total-row count displayed against which the sum of the buckets could be reconciled.",
+          "severity": "high",
+          "category": "data-loss"
+        },
+        {
+          "finding": "The yoa column is text but is compared against an integer year rendered with ToString(), so a stored value with padding, a different width, or a non-numeric entry never matches a bucket. Gender is also recorded as a constrained two-value text field with no 'unspecified' option, which is a data-model limitation worth surfacing before the field is carried forward.",
+          "severity": "medium",
+          "category": "type-coercion"
+        }
+      ]
+    }
+  ],
+  "cross_flow_findings": [
+    {
+      "finding": "Every flow in this application shares one process-wide mutable OleDbConnection ('Public dbcon' in Module1.vb:4), opened lazily by connectDB() and never closed or disposed. All five flows read and write through that single connection with no transaction scope, so a multi-statement operation cannot be made atomic and a connection left in a bad state by one form affects every other. This is the single structural coupling that constrains how the data paths can be decomposed.",
+      "flows_involved": [
+        "DF-SMS-001",
+        "DF-SMS-002",
+        "DF-SMS-003",
+        "DF-SMS-004",
+        "DF-SMS-005"
+      ],
+      "severity": "high"
+    },
+    {
+      "finding": "All five flows persist to a single Microsoft Access file bundled in the repository and reached through a hardcoded absolute developer path (Flat Design/Module1.vb:7) that does not match the file's actual location in the tree. There is no backup, no replication, no transaction log and no retention policy: the complete PII corpus for every student is one unversioned 784 KB file on one workstation, and the committed .laccdb lock file shows it was copied while open. Loss or corruption of that file is unrecoverable total data loss.",
+      "flows_involved": [
+        "DF-SMS-001",
+        "DF-SMS-002",
+        "DF-SMS-003",
+        "DF-SMS-004",
+        "DF-SMS-005"
+      ],
+      "severity": "critical"
+    },
+    {
+      "finding": "Four of the five flows carry PII (roll number, names and parentage, mobile numbers, date of birth) and the fifth carries gender, yet the application has no authentication, no authorisation, no audit trail and no encryption at rest or in transit. Any person who can launch the executable can read, alter or delete every personal record, and no record of who did so exists anywhere. Insert, update and delete leave no trace beyond the mutated row.",
+      "flows_involved": [
+        "DF-SMS-001",
+        "DF-SMS-002",
+        "DF-SMS-003",
+        "DF-SMS-004",
+        "DF-SMS-005"
+      ],
+      "severity": "critical"
+    },
+    {
+      "finding": "No flow has a deletion, archival or retention path: records persist indefinitely and the only removal mechanism is an interactive hard DELETE from the grid (ViewForm.vb:90) with no soft-delete, no tombstone and no audit entry. A deleted student record is irrecoverable and leaves no evidence it ever existed, which forecloses both data-subject-request handling and any reconstruction after an erroneous delete.",
+      "flows_involved": [
+        "DF-SMS-001",
+        "DF-SMS-002",
+        "DF-SMS-003",
+        "DF-SMS-004",
+        "DF-SMS-005"
+      ],
+      "severity": "high"
+    },
+    {
+      "finding": "The insert path refreshes two other forms directly after a successful write (Form1.LoadData() and ViewForm.LoadData() at InsertForm.vb:27-28), calling into the default instances of sibling forms. The write flow is therefore coupled to the read flows through UI calls rather than through data, creating the circular form-to-form dependencies recorded in the structural map. Any decomposition must cut these calls, not just the SQL.",
+      "flows_involved": [
+        "DF-SMS-001",
+        "DF-SMS-005"
+      ],
+      "severity": "medium"
+    }
+  ]
+}
