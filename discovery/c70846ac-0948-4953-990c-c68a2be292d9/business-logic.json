@@ -1,0 +1,3623 @@
+{
+  "$schema": "olympus:artifact:business-logic:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "discovery_pass": "Pass 2 \u2014 business logic extraction (legacy-business-rule-extractor)",
+  "extraction_date": "2026-10-02T18:05:00Z",
+  "source_root": "Flat Design/ (VB.NET WinForms project 'Student Management System Siddharth Jain.vbproj'); paths in all source_traceability fields are relative to the repository root",
+  "totals": {
+    "rules": 60,
+    "by_category": {
+      "constraint": 16,
+      "workflow": 21,
+      "validation": 13,
+      "calculation": 9,
+      "authorization": 1
+    },
+    "by_severity": {
+      "critical": 40,
+      "standard": 18,
+      "advisory": 2
+    },
+    "by_complexity": {
+      "low": 31,
+      "medium": 24,
+      "high": 4,
+      "extreme": 1
+    },
+    "by_module": {
+      "module1-db-connection": 6,
+      "view-form": 15,
+      "insert-form": 14,
+      "edit-form": 9,
+      "form1-dashboard": 12,
+      "my-project-infrastructure": 4
+    },
+    "implicit_rules_in_catalog": 37,
+    "requires_sme_review": 23,
+    "state_machines": 4,
+    "implicit_logic_findings": 34,
+    "rules_missing_from_regulation": 0,
+    "regulatory_applicability": {
+      "determination": "NOT APPLICABLE \u2014 no regulatory cross-reference was performed, and this is a finding rather than an omission.",
+      "governing_profile": "faa (authoritative, per the dispatch declaration)",
+      "method": "The skill scopes regulatory mapping to applications whose business rules derive from a regulation, identified by matching the application against applicable_systems in profiles/faa/compliance.yaml -> regulatory_sources.",
+      "profile_regulatory_sources": "14 CFR Part 47 (aircraft registration), Part 61 (pilot certification), Part 63 (other flight crewmembers), Part 67 (medical standards), Part 183 (representatives of the Administrator)",
+      "profile_applicable_systems": "Civil Aviation Registry / Aircraft Registration Branch systems, N-number assignment and reservation systems, Dealer's Aircraft Registration Certificate workflows, IACRA, Airmen Certification databases, Designee Management System, Medical certification systems, Flight Standards systems, AMCS, MedXPress, Aviation Medical Examiner systems, Federal Air Surgeon systems, Aircraft Certification systems, Organization Designation Authorization management",
+      "match_result": "No match on any entry. This application is a standalone single-developer academic Windows desktop application managing student academic records for three computing degree programmes (BCA, MCA, IIMCA). It has no aviation domain concept whatsoever: no airman, certificate, rating, medical, endorsement, aircraft, registration, designee or examiner entity exists in its one 10-column table or anywhere in its 461 lines of hand-written code.",
+      "consequence": "Every rule in this catalog is a business convention, a defect or an implementation artifact, not a regulatory requirement. regulatory_traceability is therefore omitted from every rule rather than populated with a fabricated citation or a blanket not_applicable stub, and no BR-MISSING-NNN records were generated, because a regulation this application does not implement cannot have gaps in it.",
+      "discrepancy_finding": "The governing profile declared for this dispatch (faa) does not plausibly govern this application's domain. The Pass 0 catalog classifies its business_domain as 'Admin' and describes it as a single-developer academic or portfolio project; no input artifact asserts a different profile, so the declared profile stands as authoritative per the dispatch rules and was used as the sole source of policy. The mismatch is recorded here for the profile owner: either this application is mis-assigned to the faa profile, or faa's regulatory_sources need an entry covering non-aviation administrative systems. Note also that the Part 47 applicable_systems list in profiles/faa/compliance.yaml still carries an unresolved TODO(human) marker, so that list is self-described as unconfirmed.",
+      "sme_review_required": "true \u2014 profile assignment, not business logic"
+    }
+  },
+  "module_summary": {
+    "form1-dashboard": {
+      "path": "Flat Design/Form1.vb",
+      "rules": 12,
+      "role": "Startup shell, navigation host and statistics dashboard",
+      "dominant_category": "calculation",
+      "notes": "All twelve reported statistics are computed here from twelve independent COUNT queries with no GROUP BY. Five of them are invalidated by a hardcoded current year of 2023 (BR-072) and the gender and course breakdowns silently undercount (BR-070, BR-071). Also owns the panel-reparenting navigation that is the most complex single behaviour in the application (BR-078)."
+    },
+    "insert-form": {
+      "path": "Flat Design/InsertForm.vb",
+      "rules": 14,
+      "role": "Sole record-creation path",
+      "dominant_category": "validation",
+      "notes": "Parameterized insert of ten columns with no explicit validation whatsoever. The three categorical fields are mandatory only because an unselected dropdown throws (BR-011), and that accidental guard is then defeated from the second insert onward because the clear routine cannot clear a DropDownList combo (BR-020). Carries the mobile-number 32-bit ceiling (BR-017)."
+    },
+    "edit-form": {
+      "path": "Flat Design/EditForm.vb",
+      "rules": 9,
+      "role": "Sole record-update path",
+      "dominant_category": "workflow",
+      "notes": "Roll number is immutable here (BR-031) \u2014 the system's clearest invariant. The load path is entirely unguarded and runs in the constructor (BR-035), and records whose stored categorical values fall outside the hardcoded dropdown lists are permanently un-editable and can be silently overwritten (BR-033)."
+    },
+    "view-form": {
+      "path": "Flat Design/ViewForm.vb",
+      "rules": 15,
+      "role": "Read, search and delete path; launches the edit form",
+      "dominant_category": "workflow",
+      "notes": "Highest rule density. Contains the application's only unparameterized SQL (BR-052), its only confirmation dialog (BR-056), its only physical delete (BR-057), and the connection close that breaks the dashboard afterwards (BR-004). Search covers only two of ten fields (BR-054)."
+    },
+    "module1-db-connection": {
+      "path": "Flat Design/Module1.vb",
+      "rules": 6,
+      "role": "The entire data-access layer \u2014 13 lines",
+      "dominant_category": "constraint",
+      "notes": "One shared global connection reached by a hardcoded absolute developer path (BR-002), so the committed database is not the one the application opens. Also the anchor for the system-wide absences: no transactions (BR-093), no audit or provenance (BR-095), and schema-only field-length rules (BR-096)."
+    },
+    "my-project-infrastructure": {
+      "path": "Flat Design/My Project/",
+      "rules": 4,
+      "role": "Application framework configuration and compiler options",
+      "dominant_category": "constraint",
+      "notes": "Holds four rules that exist only as build and framework settings yet govern behaviour everywhere: no authentication or authorization at all (BR-090), Option Strict Off as the enabling precondition for five runtime-only failure modes (BR-091), case-sensitivity divergence from the database engine (BR-092), and concurrent instances with last-write-wins (BR-094)."
+    }
+  },
+  "rules": [
+    {
+      "id": "BR-001",
+      "name": "Lazy single global database connection",
+      "description": "The application opens exactly one shared OleDbConnection, held in a module-level Public variable, and opens it only when its State is Closed. Every form calls Module1.connectDB() defensively before issuing SQL, so the first caller opens the connection and all later callers no-op. This is the whole of the application's connection management: there is no pool, no per-operation connection, no using/dispose block and no close on exit.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Two branches (open/already-open) in a 5-line procedure, but the consequences are application-wide because every data operation depends on this one object.",
+      "module": "module1-db-connection",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A form needs database access and calls Module1.connectDB()",
+          "source": "Flat Design/Module1.vb:5"
+        },
+        {
+          "condition": "dbcon.State = ConnectionState.Closed",
+          "source": "Flat Design/Module1.vb:6"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Assign the hardcoded connection string and call dbcon.Open()",
+          "source": "Flat Design/Module1.vb:7-8"
+        },
+        {
+          "action": "If already open, return without action \u2014 the existing connection is reused",
+          "source": "Flat Design/Module1.vb:6-9"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Module1.vb",
+        "line_range": "3-12",
+        "secondary_sources": [
+          "Flat Design/Form1.vb:16",
+          "Flat Design/InsertForm.vb:7",
+          "Flat Design/EditForm.vb:15",
+          "Flat Design/EditForm.vb:52",
+          "Flat Design/ViewForm.vb:11",
+          "Flat Design/ViewForm.vb:89"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-002",
+          "BR-003",
+          "BR-004",
+          "BR-010",
+          "BR-030",
+          "BR-050",
+          "BR-076"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "First call to connectDB() opens the connection; a second call returns immediately and the same connection instance is reused.",
+        "error_paths": [
+          "Provider Microsoft.ACE.OLEDB.12.0 not installed \u2014 Open() throws and the exception escapes connectDB() to the caller",
+          "Database file absent at the hardcoded path \u2014 Open() throws",
+          "Process is 64-bit \u2014 the 32-bit-only ACE provider cannot be loaded"
+        ],
+        "boundary_conditions": [
+          "dbcon.State is Broken or Connecting rather than Closed or Open \u2014 neither branch reopens it, so the connection is left unusable",
+          "Connection opened then externally closed by BR-004 \u2014 next ExecuteScalar fails because connectDB was not re-called"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-002",
+      "name": "Database located by hardcoded absolute developer path",
+      "description": "The connection string embeds the original developer's absolute workstation path, 'D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb'. There is no configuration file entry, no App.config setting, no relative path and no environment override \u2014 App.config contains only a supportedRuntime element. The database file committed to the repository at 'Flat Design/studentDB.accdb' is therefore NOT the file the application opens: on any machine other than the author's, the application fails at startup. Persist Security Info=False is set but is inert because no credentials are supplied; the Access file has no database password.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "A single string literal, but it is an absolute deployment blocker and it decouples the committed data from the running application.",
+      "module": "module1-db-connection",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "connectDB() runs and the connection is closed",
+          "source": "Flat Design/Module1.vb:6"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Set ConnectionString to a literal absolute path on drive D: with provider Microsoft.ACE.OLEDB.12.0",
+          "source": "Flat Design/Module1.vb:7"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Module1.vb",
+        "line_range": "7",
+        "secondary_sources": [
+          "Flat Design/App.config:1-6",
+          "Flat Design/studentDB.accdb",
+          "Flat Design/studentDB.laccdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "On the original developer workstation with drive D: and that directory tree present, the connection opens.",
+        "error_paths": [
+          "Any other machine \u2014 OleDbException 'could not find file'",
+          "Drive D: absent or not writable",
+          "Access requires write access to create the .laccdb lock file even for read-only queries, so a read-only directory also fails"
+        ],
+        "boundary_conditions": [
+          "The repository-committed studentDB.accdb is never read by the running application \u2014 an orphan datastore",
+          "A stale studentDB.laccdb lock file is committed alongside it, evidence the database was open when the snapshot was taken"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-003",
+      "name": "One shared connection serves all forms concurrently",
+      "description": "dbcon is a Public module-level variable, so the dashboard, insert, edit and view forms all issue commands against the same physical connection object. Because child forms are hosted simultaneously inside Panel5 and are only hidden rather than disposed, two forms can hold live readers or adapters against this one connection. OleDb permits only one open DataReader per connection, so an unclosed reader blocks every other operation.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "No branching, but it creates implicit cross-module temporal coupling between four form modules that are otherwise independent.",
+      "module": "module1-db-connection",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Two or more forms are live and each issues SQL against the global dbcon",
+          "source": "Flat Design/Module1.vb:4"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Commands share connection state; an open OleDbDataReader on dbcon causes subsequent commands to throw 'There is already an open DataReader associated with this Command'",
+          "source": "Flat Design/EditForm.vb:18"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Module1.vb",
+        "line_range": "4",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:18",
+          "Flat Design/EditForm.vb:33",
+          "Flat Design/Form1.vb:25",
+          "Flat Design/ViewForm.vb:39"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-035",
+          "BR-094"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Operations are performed strictly one at a time and every reader is closed before the next command, so sharing is invisible.",
+        "error_paths": [
+          "EditForm.LoadData throws at DateTime.Parse before stReader.Close(), leaving the reader open and poisoning the connection for every later operation until the process restarts"
+        ],
+        "boundary_conditions": [
+          "View grid bound via DataAdapter.Fill while an EditForm reader is open",
+          "Dashboard ExecuteScalar issued while a reader is open"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-004",
+      "name": "Delete closes the shared connection, breaking later dashboard refresh",
+      "description": "The delete path is the only place in the application that calls dbcon.Close(). After a successful delete the shared connection is left closed. ViewForm's own reload survives this because OleDbDataAdapter.Fill opens and closes the connection implicitly, but Form1.LoadData issues ExecuteScalar directly and does NOT call connectDB() first, so navigating Home after a delete raises InvalidOperationException ('ExecuteScalar requires an open and available Connection') inside a method that has no exception handling at all.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "The defect spans three modules \u2014 the close happens in view-form, the recovery is implicit in ADO.NET's adapter behaviour, and the failure surfaces in form1-dashboard \u2014 and is invisible from any single file.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A record is deleted successfully",
+          "source": "Flat Design/ViewForm.vb:93"
+        },
+        {
+          "condition": "The user subsequently clicks Dashboard, or an insert or update completes",
+          "source": "Flat Design/Form1.vb:133"
+        }
+      ],
+      "actions": [
+        {
+          "action": "dbcon.Close() leaves the global connection closed",
+          "source": "Flat Design/ViewForm.vb:94"
+        },
+        {
+          "action": "ViewForm.LoadData still succeeds because DataAdapter.Fill auto-opens and auto-closes the connection",
+          "source": "Flat Design/ViewForm.vb:97"
+        },
+        {
+          "action": "Form1.LoadData calls ExecuteScalar on a closed connection without calling connectDB() and throws unhandled",
+          "source": "Flat Design/Form1.vb:25-26"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "83-102",
+        "secondary_sources": [
+          "Flat Design/Form1.vb:22-26",
+          "Flat Design/Form1.vb:133",
+          "Flat Design/InsertForm.vb:27",
+          "Flat Design/EditForm.vb:67"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001",
+          "BR-057"
+        ],
+        "downstream_rules": [
+          "BR-076",
+          "BR-077"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Delete a record, stay on the View form, confirm the grid reloads without the deleted row.",
+        "error_paths": [
+          "Delete a record then click Dashboard \u2014 unhandled InvalidOperationException crashes the application",
+          "Delete a record then insert a new one \u2014 InsertForm's Form1.LoadData() call throws, but InsertForm's Try/Catch converts it into a misleading 'Error: ...' message box after the row has already been inserted"
+        ],
+        "boundary_conditions": [
+          "Delete immediately followed by Dashboard is the shortest reproduction",
+          "Cancelling the confirmation dialog leaves the connection open, so the fault only appears after an actually-committed delete"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-010",
+      "name": "Create student record",
+      "description": "The create path inserts exactly one row into the students table with all ten columns supplied from the entry form: rollno, fname, lname, fathername, mobno, altmobno, gender, course, yoa and dob. The statement is parameterized. On success a modal confirmation is shown, the dashboard and grid refresh calls fire, and the entry fields are cleared. There is no uniqueness pre-check, no field-level validation, no transaction and no audit record.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Linear single-statement path, but it is the sole record-creation route in the system and ten parameter bindings carry implicit type and ordering obligations.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User clicks Save on the entry form",
+          "source": "Flat Design/InsertForm.vb:4"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Open connection, build parameterized INSERT across ten columns and ExecuteNonQuery",
+          "source": "Flat Design/InsertForm.vb:7-25"
+        },
+        {
+          "action": "Show 'Record inserted successfully' message box",
+          "source": "Flat Design/InsertForm.vb:26"
+        },
+        {
+          "action": "Trigger dashboard and grid refresh, then clear the entry fields",
+          "source": "Flat Design/InsertForm.vb:27-30"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "4-34",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:224-229",
+          "Flat Design/InsertForm.Designer.vb:286-290",
+          "Flat Design/studentDB.accdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001",
+          "BR-013",
+          "BR-014",
+          "BR-015"
+        ],
+        "downstream_rules": [
+          "BR-011",
+          "BR-016",
+          "BR-017",
+          "BR-018",
+          "BR-019",
+          "BR-020",
+          "BR-022",
+          "BR-023"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Enter a unique roll number, names, numeric mobile numbers below 2147483648, select gender, course and session, pick a date of birth, click Save \u2014 one row is added and the dashboard counts increase.",
+        "error_paths": [
+          "Duplicate roll number violates the PrimaryKey index \u2014 OleDbException surfaced as a message box",
+          "Mobile number above the 32-bit ceiling \u2014 type mismatch or overflow (see BR-017)",
+          "Any dropdown left unselected \u2014 NullReferenceException (see BR-011)"
+        ],
+        "boundary_conditions": [
+          "All text fields empty but all three dropdowns selected \u2014 a blank record is created successfully",
+          "Roll number longer than 255 characters exceeds the TEXT column width"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-011",
+      "name": "Gender, course and session are mandatory only by accident",
+      "description": "No explicit required-field validation exists anywhere in the create path. However the three dropdowns are read via SelectedItem.ToString(), and none of them has a default SelectedIndex, so they start unselected and SelectedItem is Nothing. With OptionStrict Off the call compiles and fails at runtime with NullReferenceException, caught by the method's blanket Catch and reported as 'Error: Object reference not set to an instance of an object.'. The three dropdowns are therefore de-facto mandatory, enforced by an exception rather than by validation, and the user is told nothing about which field is missing. The seven text fields remain genuinely optional.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "The rule is emergent from the interaction of three separate facts \u2014 no SelectedIndex default in the Designer, SelectedItem.ToString() in the handler, and a blanket Catch \u2014 none of which states a validation intent.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "cmbGender, cmbCourse or cmbyoa has no selection when Save is clicked",
+          "source": "Flat Design/InsertForm.vb:18-20"
+        },
+        {
+          "condition": "No SelectedIndex default is set on any of the three combos",
+          "source": "Flat Design/InsertForm.Designer.vb:87-103"
+        }
+      ],
+      "actions": [
+        {
+          "action": "SelectedItem.ToString() throws NullReferenceException before ExecuteNonQuery, so no row is inserted",
+          "source": "Flat Design/InsertForm.vb:18"
+        },
+        {
+          "action": "The blanket Catch reports the raw .NET message in a modal box with no indication of the offending field",
+          "source": "Flat Design/InsertForm.vb:31-33"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "18-33",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:88",
+          "Flat Design/InsertForm.Designer.vb:100",
+          "Flat Design/InsertForm.Designer.vb:173",
+          "Flat Design/Student Management System Siddharth Jain.vbproj:51"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010",
+          "BR-091"
+        ],
+        "downstream_rules": [
+          "BR-022"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "All three dropdowns selected \u2014 the insert proceeds and the implicit rule is never observed.",
+        "error_paths": [
+          "Leave gender unselected \u2014 'Error: Object reference not set to an instance of an object.'",
+          "Leave course unselected \u2014 identical, indistinguishable message",
+          "Leave session unselected \u2014 identical message"
+        ],
+        "boundary_conditions": [
+          "Because BR-020 leaves the combos populated after a successful save, the second and subsequent inserts in a session silently inherit the previous record's gender, course and session instead of failing"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-012",
+      "name": "No validation on any free-text field",
+      "description": "Roll number, first name, last name, father's name and both mobile numbers are passed straight from TextBox.Text into the INSERT with no trim, no emptiness check, no length check, no character-set check and no format check. The Designer sets no MaxLength on any of the six text boxes and no CharacterCasing. A record consisting entirely of empty strings is a valid, persistable record provided the three dropdowns are selected.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "The rule is the complete absence of branching; its significance is that it defines the real data-quality floor for the system of record.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Save is clicked with any combination of text field contents",
+          "source": "Flat Design/InsertForm.vb:12-17"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Raw TextBox.Text values are bound as parameters without inspection",
+          "source": "Flat Design/InsertForm.vb:12-17"
+        },
+        {
+          "action": "Empty strings are written to rollno, fname, lname, fathername",
+          "source": "Flat Design/InsertForm.vb:12-15"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "12-17",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:224-229",
+          "Flat Design/EditForm.vb:54-58"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010"
+        ],
+        "downstream_rules": [
+          "BR-096"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Normal names and a numeric roll number are accepted verbatim, including leading and trailing whitespace.",
+        "error_paths": [
+          "Non-numeric text in a mobile number field \u2014 rejected by the database column type, not by the application (see BR-017)"
+        ],
+        "boundary_conditions": [
+          "Entirely empty roll number creates a row whose key is the empty string, which then becomes un-editable in practice because the edit lookup matches it but the grid shows nothing to identify it",
+          "A second empty roll number violates the PrimaryKey index",
+          "A 300-character name exceeds the TEXT(255) column width"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-013",
+      "name": "Gender is a closed set of three values",
+      "description": "Permitted gender values are exactly 'Male', 'Female' and 'Other', declared as literals in the Designer-generated Items collection of cmbGender on both the insert and the edit form, with DropDownStyle = DropDownList so free text is impossible. This is an application-enforced enumeration only: the Gender column is plain TEXT with no database check constraint, so any value could be written by another client. The enumeration is duplicated across two files and disagrees with the dashboard, which counts only two of the three values (BR-070).",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "A literal list with UI-level enforcement; low branching, but duplicated in two places and inconsistent with its one consumer.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User selects a gender on the insert or edit form",
+          "source": "Flat Design/InsertForm.Designer.vb:176"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Only Male, Female or Other can be selected; DropDownList style blocks arbitrary input",
+          "source": "Flat Design/InsertForm.Designer.vb:173-176"
+        },
+        {
+          "action": "The selected literal is persisted verbatim to the Gender TEXT column",
+          "source": "Flat Design/InsertForm.vb:18"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.Designer.vb",
+        "line_range": "173-176",
+        "secondary_sources": [
+          "Flat Design/EditForm.Designer.vb:147-149",
+          "Flat Design/InsertForm.vb:18",
+          "Flat Design/EditForm.vb:59",
+          "Flat Design/studentDB.accdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-010",
+          "BR-033",
+          "BR-070"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select Female, save, confirm the stored value is exactly 'Female'.",
+        "error_paths": [
+          "No application path can produce an out-of-set value; only direct database editing can"
+        ],
+        "boundary_conditions": [
+          "'Other' is selectable and storable but is counted in no dashboard statistic",
+          "Adding a fourth gender requires editing two Designer files plus the dashboard SQL"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-014",
+      "name": "Course is a closed set of three programmes",
+      "description": "Permitted course values are exactly 'BCA', 'MCA' and 'IIMCA', declared as Designer literals on both data-entry forms with DropDownList enforcement, and independently restated as three literals in the dashboard's COUNT queries and three hardcoded tile captions. The taxonomy therefore lives in at least eight places: two Items collections, two dead AutoCompleteCustomSource collections, three SQL literals and the tile labels. There is no database constraint. Adding a programme requires coordinated edits in every one of those places.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Simple literal enumeration, but its eight-way duplication is the maintenance risk rather than any branching complexity.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User selects a course on the insert or edit form",
+          "source": "Flat Design/InsertForm.Designer.vb:103"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Only BCA, MCA or IIMCA can be selected",
+          "source": "Flat Design/InsertForm.Designer.vb:100-103"
+        },
+        {
+          "action": "The selected literal is persisted verbatim to the Course TEXT column",
+          "source": "Flat Design/InsertForm.vb:19"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.Designer.vb",
+        "line_range": "99-103",
+        "secondary_sources": [
+          "Flat Design/EditForm.Designer.vb:311-314",
+          "Flat Design/Form1.vb:38",
+          "Flat Design/Form1.vb:43",
+          "Flat Design/Form1.vb:48",
+          "Flat Design/Form1.Designer.vb:897",
+          "Flat Design/Form1.Designer.vb:848",
+          "Flat Design/Form1.Designer.vb:652"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-010",
+          "BR-033",
+          "BR-071"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select MCA, save, confirm the MCA dashboard tile increments.",
+        "error_paths": [
+          "No application path can produce an out-of-set value"
+        ],
+        "boundary_conditions": [
+          "A fourth programme would be countable nowhere on the dashboard and would make existing records un-editable per BR-033",
+          "The dashboard axis heading reads 'Degree Wise' while the column is named course \u2014 vocabulary mismatch"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-015",
+      "name": "Year of admission is a closed, expired set of five years",
+      "description": "Permitted years of admission are exactly the string literals '2019', '2020', '2021', '2022' and '2023', declared in the Designer on both data-entry forms with DropDownList enforcement. The list is static and has already expired: as of the extraction date no student admitted after 2023 can be recorded at all, and the field is labelled 'Session' in the UI while the column is named yoa and holds a single year rather than a session range. The dashboard independently derives its five buckets by subtracting from a hardcoded 2023 (BR-072), so the two halves of the year logic are coupled only by coincidence of literals.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "A literal list, but it is a hard functional ceiling \u2014 the application cannot record a current intake \u2014 and it is duplicated four times in the Designer plus five more times in dashboard arithmetic.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User selects a year of admission on the insert or edit form",
+          "source": "Flat Design/InsertForm.Designer.vb:91"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Only 2019 through 2023 can be selected; later intakes are unrecordable",
+          "source": "Flat Design/InsertForm.Designer.vb:88-91"
+        },
+        {
+          "action": "The selected value is persisted as a string to the YOA TEXT column",
+          "source": "Flat Design/InsertForm.vb:20"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.Designer.vb",
+        "line_range": "87-91",
+        "secondary_sources": [
+          "Flat Design/EditForm.Designer.vb:300-303",
+          "Flat Design/InsertForm.Designer.vb:118",
+          "Flat Design/EditForm.Designer.vb:329",
+          "Flat Design/Form1.vb:59"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-010",
+          "BR-033",
+          "BR-072",
+          "BR-074"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select 2022, save, confirm the record lands in the dashboard's second-year bucket.",
+        "error_paths": [
+          "A 2024 or later intake cannot be entered through any application path"
+        ],
+        "boundary_conditions": [
+          "A record carrying a yoa outside 2019-2023, however created, cannot be re-selected on the edit form and becomes un-editable (BR-033)",
+          "The list is stored as text, so ordering and arithmetic depend on string semantics (BR-074)"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-016",
+      "name": "Date of birth is persisted from a culture-formatted display string",
+      "description": "Both the create and the update path bind the date of birth as dtpDOB.Text \u2014 the DateTimePicker's locale-formatted display string \u2014 rather than dtpDOB.Value, its typed DateTime. The value is written into a DATE/TIME column, so the OLEDB provider must parse the display string back into a date using the current workstation's culture. On a machine whose short-date order differs from the one that wrote the row, 03/04/2005 is read as 3 April or 4 March depending only on regional settings, and the application has no way to tell which was meant.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A one-token difference (.Text instead of .Value) whose effect is a silent, locale-dependent data corruption spanning the insert path, the update path and the DATE/TIME column.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A record is saved on the insert or edit form",
+          "source": "Flat Design/InsertForm.vb:23"
+        },
+        {
+          "condition": "The workstation locale differs from the one that originally entered the data",
+          "source": "Flat Design/EditForm.vb:62"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Bind dtpDOB.Text, a culture-formatted string, to the @DOB parameter for a DATE/TIME column",
+          "source": "Flat Design/InsertForm.vb:23"
+        },
+        {
+          "action": "Same on the update path",
+          "source": "Flat Design/EditForm.vb:62"
+        },
+        {
+          "action": "The provider reinterprets the string under the ambient culture, so day and month can transpose",
+          "source": "Flat Design/studentDB.accdb"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "23",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:62",
+          "Flat Design/EditForm.vb:30",
+          "Flat Design/InsertForm.Designer.vb:286-290",
+          "Flat Design/EditForm.Designer.vb:258-264"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010"
+        ],
+        "downstream_rules": [
+          "BR-034",
+          "BR-091"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Insert and read back on a single machine with one locale \u2014 the date round-trips correctly and the defect is invisible.",
+        "error_paths": [
+          "The DateTimePicker's default Long format produces a string the provider cannot parse under a different culture, raising a data-type mismatch"
+        ],
+        "boundary_conditions": [
+          "Day values 1-12 transpose silently with no error; values 13-31 fail loudly \u2014 so the corruption is selective and hardest to detect exactly where it is most plausible",
+          "No Format, CustomFormat, MinDate or MaxDate is set on either DateTimePicker, so the string shape is entirely locale-determined"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-017",
+      "name": "Mobile numbers cannot exceed 2,147,483,647",
+      "description": "MobNo and AltMobNo are declared in the Access table definition as 32-bit Long Integer columns, four bytes each, confirmed by decoding the table-definition page of studentDB.accdb directly. The entry form collects them as unconstrained free text with no MaxLength and no numeric validation. Any mobile number at or above 2,147,483,648 therefore cannot be stored \u2014 which excludes every ten-digit Indian mobile number, all of which begin with 6, 7, 8 or 9. The failure appears as a raw provider message in a message box and no row is created. Storing phone numbers as integers also silently discards leading zeros, country prefixes, spaces and '+' signs.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "The constraint is invisible in the application source entirely \u2014 it exists only in the binary column definition \u2014 and it contradicts the form's own free-text input affordance.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A mobile number numerically at or above 2147483648 is entered",
+          "source": "Flat Design/InsertForm.vb:16"
+        },
+        {
+          "condition": "MobNo and AltMobNo are 4-byte Long Integer columns",
+          "source": "Flat Design/studentDB.accdb"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The provider rejects the value and ExecuteNonQuery throws; the blanket Catch shows the raw message and no row is inserted",
+          "source": "Flat Design/InsertForm.vb:25-33"
+        },
+        {
+          "action": "Values that do fit are coerced from string to integer, discarding leading zeros and any non-digit characters",
+          "source": "Flat Design/InsertForm.vb:16-17"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "16-17",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:57-58",
+          "Flat Design/studentDB.accdb",
+          "Flat Design/InsertForm.Designer.vb:224-229"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010",
+          "BR-012"
+        ],
+        "downstream_rules": [
+          "BR-022",
+          "BR-032"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A nine-digit number such as 123456789 stores and reads back correctly.",
+        "error_paths": [
+          "Ten-digit number 9876543210 \u2014 overflow or data-type mismatch, insert fails",
+          "Alphabetic or punctuated input such as '+91 98765 43210' \u2014 type mismatch, insert fails",
+          "Empty mobile number \u2014 stored as NULL or rejected depending on provider coercion of the empty string"
+        ],
+        "boundary_conditions": [
+          "2147483647 is the largest storable value; 2147483648 is the first failing value",
+          "A number with a leading zero such as 0123456789 is stored as 123456789, losing the zero",
+          "The same ceiling applies to the update path, so an existing record cannot be given a real mobile number"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-018",
+      "name": "Named parameters bind positionally, not by name",
+      "description": "The OLEDB provider does not support named parameters: the '@Name' tokens in the SQL text are treated as anonymous placeholders and parameters are bound strictly in the order they were added to the collection. The insert and update statements currently work only because the AddWithValue calls happen to appear in the same order as the placeholders. The names are decorative, so any future reordering of either the SQL column list or the AddWithValue block silently shifts every value one column sideways rather than raising an error.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A latent provider-level semantic that is contradicted by the source's own appearance of name-based binding; correctness depends on a textual ordering coincidence maintained in two separate statements.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A parameterized command is executed through Microsoft.ACE.OLEDB.12.0",
+          "source": "Flat Design/InsertForm.vb:11"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Parameters are consumed in collection order; placeholder names are ignored",
+          "source": "Flat Design/InsertForm.vb:12-23"
+        },
+        {
+          "action": "On the update path the WHERE-clause parameter must be added last, after all SET parameters, which it is",
+          "source": "Flat Design/EditForm.vb:54-63"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "9-25",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:51-64",
+          "Flat Design/EditForm.vb:14-17",
+          "Flat Design/ViewForm.vb:90-92"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010"
+        ],
+        "downstream_rules": [
+          "BR-032"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Current ordering matches in all four parameterized statements, so all values land in the intended columns.",
+        "error_paths": [
+          "Reorder the INSERT column list without reordering AddWithValue \u2014 names are written into mobile columns and the insert fails on type mismatch, or worse, succeeds with transposed same-typed columns such as fname and lname"
+        ],
+        "boundary_conditions": [
+          "fname/lname and mobno/altmobno are same-typed adjacent pairs, so a transposition between them would corrupt data silently with no exception at all"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-019",
+      "name": "Post-insert refresh targets VB default instances, not the visible forms",
+      "description": "After a successful insert the handler calls Form1.LoadData() and ViewForm.LoadData() using VB.NET's My.Forms default-instance feature, where a form type name resolves to an implicit per-thread singleton. Form1.LoadData() happens to work, because Form1 is the application's MainForm and so the default instance IS the visible dashboard. ViewForm.LoadData() does not: the visible grid was created explicitly with New ViewForm() and reparented into Panel5, so the default-instance call constructs or reuses a second, invisible ViewForm, runs its Load handler, and refreshes a grid nobody can see. The visible grid is left stale. The user's grid only catches up later, by the unrelated route of closing an edit form or re-clicking View.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "high",
+      "complexity_rationale": "Correctness depends on an invisible language feature that silently resolves two syntactically identical calls to two different objects, and the behaviour spans three modules \u2014 insert-form, form1-dashboard and view-form.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "An insert succeeds",
+          "source": "Flat Design/InsertForm.vb:25"
+        },
+        {
+          "condition": "The View form was instantiated explicitly with New ViewForm() and hosted in Panel5",
+          "source": "Flat Design/Form1.vb:141"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Form1.LoadData() refreshes the real dashboard because Form1's default instance is the MainForm",
+          "source": "Flat Design/InsertForm.vb:27"
+        },
+        {
+          "action": "ViewForm.LoadData() instantiates or reuses a hidden default instance and refreshes its grid instead of the visible one",
+          "source": "Flat Design/InsertForm.vb:28"
+        },
+        {
+          "action": "The visible DataGridView continues to show pre-insert data",
+          "source": "Flat Design/ViewForm.vb:37-45"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "27-28",
+        "secondary_sources": [
+          "Flat Design/Form1.vb:139-153",
+          "Flat Design/ViewForm.vb:34-45",
+          "Flat Design/My Project/Application.Designer.vb:35",
+          "Flat Design/EditForm.vb:67"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010"
+        ],
+        "downstream_rules": [
+          "BR-062",
+          "BR-077",
+          "BR-078"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Insert a record while the dashboard is the visible panel \u2014 the counts update correctly.",
+        "error_paths": [
+          "Open View, then Insert, save a record, return to View \u2014 the new row is absent until the grid is reloaded by another route",
+          "The hidden default ViewForm instance also opens a connection and binds a DataSet that is never disposed, so repeated inserts accumulate hidden work"
+        ],
+        "boundary_conditions": [
+          "If Form1 were ever not the MainForm, the dashboard refresh would break the same way the grid refresh already does",
+          "Because the hidden instance runs ViewForm_Load, it calls connectDB and RefreshData as a side effect of every insert"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-020",
+      "name": "Field reset fails to clear the three dropdowns",
+      "description": "ClearFields resets the six text boxes and the date picker, then attempts to clear the three dropdowns by assigning an empty string to their Text property. Because all three combos are DropDownStyle = DropDownList, the Text property only accepts values present in the Items collection, so assigning an empty string is ignored and the previous selection remains displayed and selected. The consequence is a real data-integrity rule: after the first successful insert of a session, every subsequent record silently inherits the previous record's gender, course and year of admission unless the user notices and changes them. Clearing would require SelectedIndex = -1.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "Emergent from a WinForms property semantic that contradicts the code's evident intent; it also masks BR-011, converting a loud failure into silent wrong data.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "ClearFields runs after a successful insert or on Cancel",
+          "source": "Flat Design/InsertForm.vb:30"
+        },
+        {
+          "condition": "The combos are DropDownList style",
+          "source": "Flat Design/InsertForm.Designer.vb:88"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Text boxes are emptied and the date picker resets to today",
+          "source": "Flat Design/InsertForm.vb:42-51"
+        },
+        {
+          "action": "cmbGender.Text, cmbCourse.Text and cmbyoa.Text assignments are silently ignored and the selections persist",
+          "source": "Flat Design/InsertForm.vb:48-50"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "41-53",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:88",
+          "Flat Design/InsertForm.Designer.vb:100",
+          "Flat Design/InsertForm.Designer.vb:173"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010",
+          "BR-011"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Insert one record, observe that name fields clear but gender, course and session remain selected.",
+        "error_paths": [
+          "Enter a second student of a different course without re-selecting \u2014 the record is created under the previous student's course with no warning"
+        ],
+        "boundary_conditions": [
+          "On the very first insert of a session the combos are genuinely empty, so BR-011's exception fires; from the second insert onward it never fires again"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-021",
+      "name": "Default date of birth is today",
+      "description": "The DateTimePicker has no Value, MinDate, MaxDate or Format set in the Designer, so it initialises to the current date and accepts the control's full default range of 1753-01-01 to 9998-12-31. ClearFields explicitly re-sets it to Date.Now. A user who does not touch the control therefore submits today's date as the student's date of birth \u2014 a plausible-looking value that is always wrong. No plausibility check exists: future birth dates and eighteenth-century birth dates are both accepted.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Single assignment plus the absence of range properties; low logic, but it guarantees silently incorrect data for any skipped field.",
+      "module": "insert-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "The user does not modify the date of birth control before saving",
+          "source": "Flat Design/InsertForm.Designer.vb:286-290"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Today's date is submitted as the date of birth",
+          "source": "Flat Design/InsertForm.vb:23"
+        },
+        {
+          "action": "ClearFields resets the control to Date.Now rather than to a null or sentinel value",
+          "source": "Flat Design/InsertForm.vb:51"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.Designer.vb",
+        "line_range": "286-290",
+        "secondary_sources": [
+          "Flat Design/InsertForm.vb:51",
+          "Flat Design/EditForm.Designer.vb:258-264"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010"
+        ],
+        "downstream_rules": [
+          "BR-016"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "User picks a real date of birth and it is stored.",
+        "error_paths": [
+          "No error path \u2014 the wrong value is accepted silently"
+        ],
+        "boundary_conditions": [
+          "A date of birth equal to the insert date is indistinguishable from a genuine newborn record",
+          "The existing two live rows carry a 2009 date of birth against a 2019 year of admission, implying a nine-year-old admitted student \u2014 evidence that no plausibility rule has ever existed",
+          "1753-01-01 and 9998-12-31 are both selectable and storable"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-022",
+      "name": "All create failures are reported as raw exception text and lost",
+      "description": "The entire create path is wrapped in a single Try/Catch that catches Exception and displays 'Error: ' concatenated with the raw .NET message. There is no logging, no telemetry, no error code, no field attribution, no retry and no transaction to roll back. Duplicate-key violations, mobile-number overflows, provider failures, missing-dropdown null references and connection faults are all presented identically, so the user cannot distinguish a data-entry mistake from an infrastructure outage, and no record of the failure survives the dismissal of the message box.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "One catch block, but it is the sole error-handling mechanism on the create path and it erases the diagnostic distinction between every failure mode in the system.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Any exception is raised anywhere in btnSave_Click",
+          "source": "Flat Design/InsertForm.vb:31"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Display a modal message box containing the raw exception message",
+          "source": "Flat Design/InsertForm.vb:32"
+        },
+        {
+          "action": "Swallow the exception; the form stays open with its data intact and no record of the failure is kept",
+          "source": "Flat Design/InsertForm.vb:31-33"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "31-33",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:70-72"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010",
+          "BR-011",
+          "BR-017",
+          "BR-023"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "No exception \u2014 the catch block never runs.",
+        "error_paths": [
+          "Duplicate roll number, mobile overflow and unselected dropdown all produce visually similar untriaged message boxes"
+        ],
+        "boundary_conditions": [
+          "An exception raised after ExecuteNonQuery succeeds \u2014 for example in the BR-019 refresh cascade or BR-004's closed connection \u2014 reports an error even though the row was committed, so the user is told the save failed when it did not"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-023",
+      "name": "Roll number is the user-supplied record key, unique by database index only",
+      "description": "Roll number is the system's sole record identifier: every single-row read, update and delete matches on it, and the grid reads it back by column name to drive those operations. It is typed freely by the user on the insert form with no format mask, no length limit, no check-digit and no generation scheme. Uniqueness is enforced solely by the PrimaryKey index present in the Access table definition, confirmed by direct decode of studentDB.accdb; the application performs no duplicate pre-check, so a collision surfaces only as an untriaged provider error from BR-022. Note that the two Pass-1 inputs disagreed on whether this index exists, and the disagreement was resolved against the binary in favour of its existence.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Conceptually simple but load-bearing for four separate code paths, and its one enforcement mechanism lives outside the application source entirely.",
+      "module": "insert-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A roll number is entered on the create form",
+          "source": "Flat Design/InsertForm.vb:12"
+        },
+        {
+          "condition": "The value already exists in the students table",
+          "source": "Flat Design/studentDB.accdb"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The PrimaryKey index rejects the insert and the provider raises a duplicate-value error",
+          "source": "Flat Design/InsertForm.vb:25"
+        },
+        {
+          "action": "On success the value becomes the immutable key used by edit, update and delete",
+          "source": "Flat Design/EditForm.vb:14"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/InsertForm.vb",
+        "line_range": "12",
+        "secondary_sources": [
+          "Flat Design/studentDB.accdb",
+          "Flat Design/EditForm.vb:14",
+          "Flat Design/EditForm.vb:51",
+          "Flat Design/ViewForm.vb:90",
+          "Flat Design/ViewForm.vb:62",
+          "Flat Design/EditForm.Designer.vb:201"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-010",
+          "BR-012"
+        ],
+        "downstream_rules": [
+          "BR-022",
+          "BR-031",
+          "BR-037",
+          "BR-051"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A fresh unique roll number is accepted and becomes the record's permanent identity.",
+        "error_paths": [
+          "Re-entering an existing roll number produces a raw duplicate-key message with no indication that the roll number is the problem"
+        ],
+        "boundary_conditions": [
+          "An empty-string roll number is accepted once and then blocks all further empty-string inserts",
+          "Roll number is compared as TEXT, so leading zeros and case are significant to the index but not to Access's case-insensitive matching on read",
+          "Values longer than 255 characters exceed the column width"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-030",
+      "name": "Load one student for editing by roll number",
+      "description": "The edit form is constructed with a roll number, runs a parameterized SELECT * for that key, and if a row is returned populates the ten controls from it. The read happens in the constructor, before the form is shown. The reader is closed unconditionally after the single Read attempt; only the first matching row is ever consumed.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Single parameterized read with one conditional populate; the complexity lives in its failure modes rather than its logic.",
+      "module": "edit-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "An EditForm is constructed with a roll number, or UpdateRollNo is called on an existing instance",
+          "source": "Flat Design/EditForm.vb:7"
+        },
+        {
+          "condition": "A row with that roll number exists",
+          "source": "Flat Design/EditForm.vb:20"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Populate the six text boxes, three dropdowns and the date picker from the row",
+          "source": "Flat Design/EditForm.vb:21-30"
+        },
+        {
+          "action": "Close the reader",
+          "source": "Flat Design/EditForm.vb:33"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "13-35",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:7-11",
+          "Flat Design/EditForm.vb:37-40",
+          "Flat Design/ViewForm.vb:65-67"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001",
+          "BR-023",
+          "BR-063"
+        ],
+        "downstream_rules": [
+          "BR-032",
+          "BR-033",
+          "BR-034",
+          "BR-035",
+          "BR-036"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select a row in the grid, click Update, confirm all ten fields are pre-filled from the database.",
+        "error_paths": [
+          "DateTime.Parse of an empty or unparseable date of birth throws inside the constructor (BR-034, BR-035)",
+          "A value outside the hardcoded dropdown lists leaves that control blank (BR-033)"
+        ],
+        "boundary_conditions": [
+          "No matching row leaves every control at its designer default with no message (BR-036)",
+          "If duplicate roll numbers somehow exist, only the first is loaded while the update writes to all of them (BR-037)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-031",
+      "name": "Roll number is immutable after creation",
+      "description": "On the edit form the roll-number text box is set ReadOnly in the Designer, and the UPDATE statement lists only the nine other columns in its SET clause while using rollno exclusively in the WHERE clause. Re-keying a student is therefore impossible through the application: the only route is delete-and-recreate, which loses the record entirely in between because there is no transaction and no audit trail. The control is ReadOnly rather than disabled, so it remains tab-reachable and its value still posts.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Enforced by one Designer property plus the shape of one SQL statement; simple, but it is the system's strongest and clearest invariant.",
+      "module": "edit-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "The edit form is displayed for an existing record",
+          "source": "Flat Design/EditForm.Designer.vb:201"
+        }
+      ],
+      "actions": [
+        {
+          "action": "txtRollNo is ReadOnly so the key cannot be retyped",
+          "source": "Flat Design/EditForm.Designer.vb:201"
+        },
+        {
+          "action": "The UPDATE SET clause omits rollno and the WHERE clause binds the original key",
+          "source": "Flat Design/EditForm.vb:51"
+        },
+        {
+          "action": "The in-memory rollno field, not the text box, supplies the WHERE value",
+          "source": "Flat Design/EditForm.vb:63"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.Designer.vb",
+        "line_range": "201",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:51",
+          "Flat Design/EditForm.vb:63",
+          "Flat Design/InsertForm.Designer.vb:224-229"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-023"
+        ],
+        "downstream_rules": [
+          "BR-032"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Open a record for editing and confirm the roll number is displayed but cannot be typed into.",
+        "error_paths": [
+          "No application path can change a roll number"
+        ],
+        "boundary_conditions": [
+          "Contrast the insert form, where the same control is freely editable \u2014 the field's mutability is context-dependent and defined in two different Designer files",
+          "Correcting a mistyped roll number requires delete plus re-entry with no atomicity"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-032",
+      "name": "Update rewrites all nine mutable fields unconditionally",
+      "description": "Saving an edit issues a single UPDATE that writes all nine non-key columns from the current control values, regardless of whether the user changed any of them. There is no dirty-field tracking, no optimistic concurrency token, no row-version check and no comparison against the loaded values. Any value that failed to populate correctly on load \u2014 most importantly a dropdown left blank because its stored value is outside the hardcoded list \u2014 is therefore written back as the new truth, so merely opening and saving a record can destroy data the user never touched.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Linear statement, but combined with BR-033's silent load failure it converts a read-only glance into a destructive write, and it is the system's only concurrency semantic.",
+      "module": "edit-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User clicks Update on the edit form",
+          "source": "Flat Design/EditForm.vb:49"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Write all nine mutable columns from current control state, keyed on the original roll number",
+          "source": "Flat Design/EditForm.vb:51-64"
+        },
+        {
+          "action": "Show 'Record updated successfully', refresh the dashboard and close the form",
+          "source": "Flat Design/EditForm.vb:66-69"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "49-73",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:21-30",
+          "Flat Design/EditForm.Designer.vb:79"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-030",
+          "BR-031",
+          "BR-018"
+        ],
+        "downstream_rules": [
+          "BR-033",
+          "BR-038",
+          "BR-094"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Change a last name, save, confirm only the intended visible change is observable.",
+        "error_paths": [
+          "Any dropdown left blank by BR-033 raises NullReferenceException at SelectedItem.ToString() and the update is abandoned",
+          "Mobile number above the 32-bit ceiling fails the same way as on insert (BR-017)"
+        ],
+        "boundary_conditions": [
+          "Two concurrent application instances editing the same record \u2014 the second save wins with no detection (BR-094)",
+          "Opening and immediately saving a record rewrites every field, updating nothing visibly but defeating any external change made in between"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-033",
+      "name": "Records holding out-of-list values cannot be edited",
+      "description": "Load populates the three dropdowns by assigning the stored string to SelectedItem. For a DropDownList combo this performs an exact, case-sensitive lookup in the hardcoded Items collection; a value not found is silently ignored and the control is left with no selection. Save then reads SelectedItem.ToString(), which throws NullReferenceException. The practical rule is that any record whose gender, course or year of admission lies outside the hardcoded lists \u2014 a 2024 intake, a decommissioned programme, or a value differing only in letter case \u2014 is permanently un-editable through the application, and the failure is reported only as a generic object-reference error.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "high",
+      "complexity_rationale": "Emergent from four independent facts \u2014 DropDownList lookup semantics, case-sensitive matching, the hardcoded Designer lists, and the unconditional SelectedItem.ToString() on save \u2014 none of which is visible from the others, and it spans the edit module, both Designer files and the data itself.",
+      "module": "edit-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A stored gender, course or yoa value is absent from the Designer Items list, including by case difference",
+          "source": "Flat Design/EditForm.vb:27-29"
+        },
+        {
+          "condition": "The user then clicks Update",
+          "source": "Flat Design/EditForm.vb:59"
+        }
+      ],
+      "actions": [
+        {
+          "action": "SelectedItem assignment silently fails and the combo shows no selection",
+          "source": "Flat Design/EditForm.vb:27-29"
+        },
+        {
+          "action": "SelectedItem.ToString() throws NullReferenceException and the update is abandoned",
+          "source": "Flat Design/EditForm.vb:59"
+        },
+        {
+          "action": "The blanket Catch reports a generic object-reference error",
+          "source": "Flat Design/EditForm.vb:70-72"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "27-29",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:59-61",
+          "Flat Design/EditForm.Designer.vb:147-149",
+          "Flat Design/EditForm.Designer.vb:300-314",
+          "Flat Design/EditForm.vb:70-72"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-013",
+          "BR-014",
+          "BR-015",
+          "BR-030"
+        ],
+        "downstream_rules": [
+          "BR-032"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A record whose three categorical values are all in the hardcoded lists loads and saves normally.",
+        "error_paths": [
+          "A record with yoa '2024' cannot be saved \u2014 generic NullReferenceException",
+          "A record with gender 'male' in lower case fails the same way despite being semantically valid",
+          "A record with a retired course code is locked out of all editing"
+        ],
+        "boundary_conditions": [
+          "Because the expired year list (BR-015) already excludes current intakes, this rule will capture every future record created by any other means",
+          "If the user manually selects a valid value in the blanked combo, BR-032 overwrites the original stored value with it, silently destroying the out-of-list datum"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-034",
+      "name": "Date of birth is re-parsed from text with no culture specified",
+      "description": "Load reads the stored date of birth, converts it to a string with ToString(), and parses it back with DateTime.Parse \u2014 both using the ambient culture \u2014 before assigning it to the date picker, whose Value setter also enforces the control's MinDate/MaxDate range. Combined with BR-016's culture-formatted write, a date of birth makes two unanchored culture round-trips per edit cycle. An unparseable or empty stored value throws FormatException, and a value outside the picker's range throws ArgumentOutOfRangeException, in both cases from inside the constructor.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "high",
+      "complexity_rationale": "A two-stage culture-sensitive conversion with three distinct exception modes, executed in a constructor with no handling, and coupled to the matching defect on the write side in a different module.",
+      "module": "edit-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A record is loaded for editing",
+          "source": "Flat Design/EditForm.vb:30"
+        },
+        {
+          "condition": "The stored date of birth is empty, null, unparseable under the current culture, or outside the picker range",
+          "source": "Flat Design/EditForm.vb:30"
+        }
+      ],
+      "actions": [
+        {
+          "action": "DateTime.Parse under the ambient culture converts the string back to a date, with day/month ambiguity unresolved",
+          "source": "Flat Design/EditForm.vb:30"
+        },
+        {
+          "action": "FormatException or ArgumentOutOfRangeException is raised inside the constructor and escapes to the caller",
+          "source": "Flat Design/EditForm.vb:8-10"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "30",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:62",
+          "Flat Design/InsertForm.vb:23",
+          "Flat Design/EditForm.Designer.vb:258-264",
+          "Flat Design/ViewForm.vb:65"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-016",
+          "BR-030"
+        ],
+        "downstream_rules": [
+          "BR-035",
+          "BR-091"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A date written and read on the same machine under one locale round-trips intact.",
+        "error_paths": [
+          "NULL or empty date of birth \u2014 FormatException escapes the constructor and crashes from ViewForm.btnUpdate_Click, which has no handler",
+          "Date written under a day-first locale and read under a month-first locale \u2014 silently transposed for day values 1-12"
+        ],
+        "boundary_conditions": [
+          "The exception occurs after the reader is opened but before stReader.Close(), so it also leaks the reader and poisons the shared connection (BR-003, BR-035)",
+          "Dates before 1753-01-01 are storable in Access but outside the picker's range"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-035",
+      "name": "Unguarded database I/O in the edit form constructor",
+      "description": "The edit form performs its database read from inside its constructor, with no Try/Catch, and the constructor is invoked from ViewForm's Update handler, which also has no Try/Catch. Every failure mode of the load path \u2014 provider error, closed connection, parse failure, picker range violation \u2014 therefore propagates as an unhandled exception and terminates the application, in contrast to the save path which is fully wrapped. The failure also occurs between opening the reader and closing it, leaving the shared connection with an open reader.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "The asymmetry between a fully guarded save path and a completely unguarded load path spans two modules and is only visible by reading both together.",
+      "module": "edit-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "EditForm is constructed and LoadData raises any exception",
+          "source": "Flat Design/EditForm.vb:8-10"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The exception escapes the constructor into ViewForm.btnUpdate_Click, which does not handle it, and the application terminates",
+          "source": "Flat Design/ViewForm.vb:65"
+        },
+        {
+          "action": "stReader.Close() is skipped, leaving an open reader on the shared global connection",
+          "source": "Flat Design/EditForm.vb:33"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "7-35",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:60-81",
+          "Flat Design/EditForm.vb:50",
+          "Flat Design/Module1.vb:4"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-003",
+          "BR-030",
+          "BR-034"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "A well-formed record loads without incident.",
+        "error_paths": [
+          "Record with a null date of birth \u2014 unhandled crash rather than a message box",
+          "Connection left closed by a prior delete (BR-004) \u2014 unhandled crash on opening any record for edit"
+        ],
+        "boundary_conditions": [
+          "The reuse path UpdateRollNo calls the same unguarded LoadData from a normal method, where the exception escapes into btnUpdate_Click identically",
+          "No Using block or Finally exists anywhere in the file, so reader cleanup depends entirely on the happy path"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-036",
+      "name": "A missing record silently yields a blank edit form",
+      "description": "The load path guards its populate block with If stReader.Read(), but supplies no Else branch. When no row matches the roll number the method closes the reader and returns, leaving every control at its Designer default: empty text boxes, unselected dropdowns and today's date. The user is shown what looks like an edit form for the selected student with no indication that nothing was loaded. Clicking Update then raises NullReferenceException from the unselected dropdowns, so the condition is reported only as a generic error.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A missing Else branch whose consequence is a misleading UI state rather than an error, and whose eventual symptom appears in a different method and is indistinguishable from BR-011 and BR-033.",
+      "module": "edit-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "No row matches the roll number passed to the edit form",
+          "source": "Flat Design/EditForm.vb:20"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Skip the populate block, close the reader, return with no message",
+          "source": "Flat Design/EditForm.vb:20-33"
+        },
+        {
+          "action": "Present a blank form that appears to be editing the selected record",
+          "source": "Flat Design/EditForm.vb:31"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "20-33",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:59",
+          "Flat Design/ViewForm.vb:62"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-030"
+        ],
+        "downstream_rules": [
+          "BR-032"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A matching row exists and the form is populated.",
+        "error_paths": [
+          "Record deleted by a concurrent instance between grid load and edit click \u2014 blank form, then a generic object-reference error on save"
+        ],
+        "boundary_conditions": [
+          "Selecting the grid's phantom new-row placeholder yields a Nothing roll number (BR-060), which reaches here as a non-matching key",
+          "If the user fills the blank form in and saves, the UPDATE matches no rows and still reports 'Record updated successfully' because ExecuteNonQuery's zero row count is never checked"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-037",
+      "name": "Update and delete affect every row sharing the roll number",
+      "description": "Both the UPDATE and the DELETE are keyed on rollno with no row limit. The PrimaryKey index normally guarantees one match, so the rule is latent rather than active today, but it is the system's only statement about cardinality: if the index were ever absent \u2014 as one Pass-1 input incorrectly reported \u2014 or if data were loaded by another tool, a single Update or Delete action would silently modify or remove every matching record while reporting success.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Simple unbounded WHERE clause; low logic, but it is the point where the integrity of the whole key assumption is cashed in.",
+      "module": "edit-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "More than one row shares a roll number",
+          "source": "Flat Design/EditForm.vb:51"
+        }
+      ],
+      "actions": [
+        {
+          "action": "UPDATE rewrites all matching rows",
+          "source": "Flat Design/EditForm.vb:51"
+        },
+        {
+          "action": "DELETE removes all matching rows",
+          "source": "Flat Design/ViewForm.vb:90"
+        },
+        {
+          "action": "The returned row count is discarded, so success is reported regardless of how many rows were affected",
+          "source": "Flat Design/EditForm.vb:64"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "51",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:90",
+          "Flat Design/EditForm.vb:64",
+          "Flat Design/studentDB.accdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-023"
+        ],
+        "downstream_rules": [
+          "BR-057"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Exactly one row matches and exactly one row is affected.",
+        "error_paths": [
+          "Zero rows match \u2014 ExecuteNonQuery returns 0 and success is still reported (see BR-036)"
+        ],
+        "boundary_conditions": [
+          "Access text matching is case-insensitive on read, so roll numbers differing only in case would both match a single WHERE while the case-sensitive index treats them as distinct keys \u2014 the one configuration in which this rule becomes active"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-038",
+      "name": "Post-update refresh is indirect and partial",
+      "description": "A successful update refreshes the dashboard via the Form1 default instance and then closes the edit form. The grid is not refreshed directly; it updates only because ViewForm attached a FormClosed handler when it launched the edit form, and that handler reloads the grid. The refresh of the user's primary view therefore depends on an event subscription made in a different module, which is why the update path happens to work where the insert path (BR-019) does not.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Two statements, but the cascade's correctness rests on an event handler registered elsewhere, making the dependency invisible from this file.",
+      "module": "edit-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "An update succeeds",
+          "source": "Flat Design/EditForm.vb:64"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Refresh dashboard statistics through the Form1 default instance",
+          "source": "Flat Design/EditForm.vb:67"
+        },
+        {
+          "action": "Close the edit form, firing ViewForm's FormClosed handler which reloads the grid",
+          "source": "Flat Design/EditForm.vb:69"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/EditForm.vb",
+        "line_range": "66-69",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:75",
+          "Flat Design/ViewForm.vb:111-113",
+          "Flat Design/Form1.vb:22"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-032"
+        ],
+        "downstream_rules": [
+          "BR-062",
+          "BR-077"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Edit a record, save, and observe both the grid row and the dashboard counts updated.",
+        "error_paths": [
+          "If the connection was closed by a prior delete (BR-004), Form1.LoadData throws and the blanket Catch reports a save error even though the update committed"
+        ],
+        "boundary_conditions": [
+          "Closing the edit form via Cancel also triggers the grid reload, so a cancelled edit still causes a database round trip",
+          "Repeated launches re-register the handler (BR-062), so the grid reloads once per launch accumulated so far"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-050",
+      "name": "List every student, unordered and unpaged",
+      "description": "The default grid population binds the entire students table via SELECT * with no WHERE, no ORDER BY, no TOP and no paging. Display order is therefore whatever physical order the Access engine returns, which is not guaranteed stable across inserts and deletes, and the grid grows without bound as the table grows. This is the application's only record-listing mechanism.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "One statement and one data binding, but it is the sole read surface and carries the system's entire display-ordering semantics by omission.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "The view form loads, or a refresh is triggered after an insert, update or delete",
+          "source": "Flat Design/ViewForm.vb:13"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Fill a fresh DataSet from SELECT * FROM students and bind it to the grid",
+          "source": "Flat Design/ViewForm.vb:39-44"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "37-45",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:10-30",
+          "Flat Design/ViewForm.vb:34-36",
+          "Flat Design/ViewForm.vb:97",
+          "Flat Design/ViewForm.vb:112"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-051",
+          "BR-061",
+          "BR-063"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Open the View panel and see all student rows in the grid.",
+        "error_paths": [
+          "Provider or file error during Fill raises an unhandled exception \u2014 neither LoadData nor ViewForm_Load has a Try/Catch"
+        ],
+        "boundary_conditions": [
+          "Empty table yields an empty grid plus the phantom new-row placeholder (BR-060)",
+          "Every refresh creates a new DataSet and discards the old one without disposing it",
+          "Row order can change between refreshes, so a user's visual position is not stable"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-051",
+      "name": "Search matches exact roll number or partial first name",
+      "description": "The search applies a single OR predicate: rollno equal to the search term, or fname containing the term as a substring. Roll number matching is exact and whole-value while first-name matching is a leading-and-trailing wildcard LIKE, so the two halves of one input box behave under different rules. Access text comparison is case-insensitive, so both halves ignore letter case regardless of the application's own case-sensitive string settings.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A two-branch predicate with asymmetric matching semantics across a single user input, plus an engine-level case-sensitivity behaviour that differs from the host language's.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User clicks Search with a non-blank term",
+          "source": "Flat Design/ViewForm.vb:104-108"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Append WHERE rollno = '<term>' OR fname LIKE '%<term>%' and rebind the grid",
+          "source": "Flat Design/ViewForm.vb:49-57"
+        },
+        {
+          "action": "Trim leading and trailing whitespace from the term before use",
+          "source": "Flat Design/ViewForm.vb:105"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "47-58",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:104-109",
+          "Flat Design/ViewForm.Designer.vb:72-79"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-023",
+          "BR-050"
+        ],
+        "downstream_rules": [
+          "BR-052",
+          "BR-053",
+          "BR-054"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Search a known roll number and get exactly that student; search a name fragment and get all students whose first name contains it.",
+        "error_paths": [
+          "A term containing a single quote breaks the SQL and raises an unhandled syntax error (BR-052)"
+        ],
+        "boundary_conditions": [
+          "A numeric term can match both a roll number and a first-name substring, returning a union",
+          "Whitespace-only input is trimmed to empty and returns everything (BR-053)",
+          "Access treats both the equality and the LIKE as case-insensitive, unlike the application's Binary comparison setting (BR-092)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-052",
+      "name": "Search term is concatenated directly into SQL",
+      "description": "The search predicate is built by string concatenation of the raw user input into the SQL text, with no parameterization and no quote escaping \u2014 the only place in the application where this happens, since the insert, update, delete and single-row read paths are all parameterized. The input box has no MaxLength. Any apostrophe terminates the literal and alters the statement, so an operator can read or modify arbitrary table content, and because the grid displays whatever the altered statement returns, the injection has a direct output channel. Access's ACE engine does not support stacked statements, which limits but does not eliminate the exposure.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A single concatenation, but it is the application's one unparameterized data path and it both reads and displays attacker-controlled query results.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A search term containing SQL metacharacters is submitted",
+          "source": "Flat Design/ViewForm.vb:50"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Concatenate the raw term into the WHERE clause without escaping or parameterization",
+          "source": "Flat Design/ViewForm.vb:50"
+        },
+        {
+          "action": "Execute the resulting statement and display its result set in the grid",
+          "source": "Flat Design/ViewForm.vb:53-57"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "48-57",
+        "secondary_sources": [
+          "Flat Design/ViewForm.Designer.vb:72-79",
+          "Flat Design/InsertForm.vb:9-23",
+          "Flat Design/Form1.vb:62"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-051"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "An ordinary alphanumeric term produces well-formed SQL.",
+        "error_paths": [
+          "Term containing one apostrophe, for example O'Brien \u2014 unhandled syntax error crashes the application, so legitimate names are also affected",
+          "Term crafted as a closing quote plus OR 1=1 returns the entire table irrespective of the intended filter"
+        ],
+        "boundary_conditions": [
+          "A legitimate Irish or Italian surname in the first-name field is indistinguishable from an injection attempt",
+          "LIKE wildcards % _ and the Access-specific * ? in user input silently change the match semantics",
+          "No handler wraps LoadSData, so every malformed statement terminates the process"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-053",
+      "name": "Blank search returns the entire table",
+      "description": "If the trimmed search term is null, empty or whitespace, the WHERE clause is omitted entirely and the query degenerates to SELECT * FROM students. Clearing the box and pressing Search is therefore the application's only explicit way to clear an active filter and return to the full list; there is no separate reset control.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "One guard clause with one branch.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "The trimmed search term is empty or whitespace",
+          "source": "Flat Design/ViewForm.vb:49"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Skip the WHERE clause and bind all rows",
+          "source": "Flat Design/ViewForm.vb:48-57"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "48-51",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:105"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-051"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Clear the search box, click Search, and the full list returns.",
+        "error_paths": [
+          "No failure mode \u2014 the guard clause always succeeds; the risk is the silent filter reset described under boundary conditions"
+        ],
+        "boundary_conditions": [
+          "A term of only spaces is trimmed to empty and returns everything rather than matching nothing",
+          "An active filter also silently resets whenever any refresh path calls LoadData instead of LoadSData \u2014 after a delete, after closing an edit form, or on reload \u2014 so the user's filter is discarded without notice"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-054",
+      "name": "Search ignores seven of the ten stored fields",
+      "description": "Only roll number and first name participate in search. Last name, father's name, both mobile numbers, gender, course, year of admission and date of birth are all unsearchable, so a user who knows only a student's surname or phone number cannot locate the record except by scrolling the unordered full list. There is no filter-by-course or filter-by-year capability anywhere in the application despite those being the dashboard's primary reporting axes.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Defined by what the predicate omits rather than by any branching.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A user searches by any attribute other than roll number or first name",
+          "source": "Flat Design/ViewForm.vb:50"
+        }
+      ],
+      "actions": [
+        {
+          "action": "No rows match and the grid appears empty, with no message explaining that the field is not searchable",
+          "source": "Flat Design/ViewForm.vb:50-57"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "50",
+        "secondary_sources": [
+          "Flat Design/ViewForm.Designer.vb:57-79",
+          "Flat Design/Form1.Designer.vb:371",
+          "Flat Design/Form1.Designer.vb:337"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-051"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Search by first name or roll number succeeds.",
+        "error_paths": [
+          "Search by surname returns an empty grid that is indistinguishable from 'no such student'"
+        ],
+        "boundary_conditions": [
+          "A surname that also happens to be someone's first name returns a confusing partial result",
+          "The dashboard breaks students down by gender, course and year, none of which can be used as a filter in the only list view"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-055",
+      "name": "Mutation requires an explicit grid row selection",
+      "description": "Both Update and Delete begin by testing SelectedRows.Count > 0 and refuse to proceed with a message box if nothing is selected. Combined with the grid's FullRowSelect mode, the unit of operation is always a whole student record, and the roll number is read back out of the selected row's rollno cell to key the operation. This selection test is the closest thing the application has to an authorization check.",
+      "category": "validation",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "A single guard duplicated across two handlers; simple, but it is the only gate in front of a destructive operation.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User clicks Update or Delete",
+          "source": "Flat Design/ViewForm.vb:61"
+        },
+        {
+          "condition": "No grid row is selected",
+          "source": "Flat Design/ViewForm.vb:84"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Show 'Please select a row to edit' or 'Please select a row to delete' and abandon the operation",
+          "source": "Flat Design/ViewForm.vb:79"
+        },
+        {
+          "action": "Otherwise read the roll number from the selected row's rollno cell",
+          "source": "Flat Design/ViewForm.vb:62"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "60-102",
+        "secondary_sources": [
+          "Flat Design/ViewForm.Designer.vb:128",
+          "Flat Design/ViewForm.Designer.vb:110"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-050"
+        ],
+        "downstream_rules": [
+          "BR-056",
+          "BR-060",
+          "BR-063"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select a row, click Delete, confirm, and the record is removed.",
+        "error_paths": [
+          "Click Delete with nothing selected \u2014 advisory message, no action"
+        ],
+        "boundary_conditions": [
+          "Clicking any single cell selects the whole row, so partial selection cannot occur",
+          "Selecting the phantom new-row placeholder passes the count test but yields a Nothing roll number and crashes (BR-060)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-056",
+      "name": "Deletion requires explicit Yes/No confirmation",
+      "description": "Deletion is the only operation in the application guarded by a confirmation dialog: a Yes/No message box asking 'Are you sure you want to delete this record?'. Only an affirmative answer proceeds. No other destructive or semi-destructive action \u2014 update, which rewrites all nine fields, or application exit, which discards unsaved entry data \u2014 asks for confirmation.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "One conditional on a dialog result; the significance is that it is the system's only confirmation gate.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A row is selected and Delete is clicked",
+          "source": "Flat Design/ViewForm.vb:84"
+        },
+        {
+          "condition": "The user answers Yes",
+          "source": "Flat Design/ViewForm.vb:88"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Execute the parameterized DELETE for that roll number",
+          "source": "Flat Design/ViewForm.vb:90-93"
+        },
+        {
+          "action": "On No, abandon silently with the record intact",
+          "source": "Flat Design/ViewForm.vb:88-98"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "88-98",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:49",
+          "Flat Design/Form1.vb:96-99"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-055"
+        ],
+        "downstream_rules": [
+          "BR-057",
+          "BR-058",
+          "BR-004"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Answer Yes and the record is deleted; answer No and nothing changes.",
+        "error_paths": [
+          "Provider failure during the delete raises an unhandled exception \u2014 the delete handler has no Try/Catch, unlike insert and update"
+        ],
+        "boundary_conditions": [
+          "The dialog names no student, so it cannot be used to verify that the correct record is about to be destroyed",
+          "Answering Yes is irreversible \u2014 there is no undo, no soft delete and no audit record (BR-057)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-057",
+      "name": "Deletion is physical and unrecoverable",
+      "description": "Deletion issues a hard DELETE against the sole table. There is no status or is_deleted column, no archive table, no soft-delete flag, no retention period and no audit record of who deleted what or when; the schema has no created, modified or deleted timestamp columns at all. Once confirmed, the student record and every attribute of it \u2014 including the personal data of the student and of the named parent \u2014 is irrecoverable from the application. Pass-1 forensics recovered six previously deleted rows from page slack in the database file, which is a data-remanence consideration rather than an application-level recovery route.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "One statement, but it defines the record lifecycle's terminal state and the complete absence of auditability.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A delete is confirmed",
+          "source": "Flat Design/ViewForm.vb:88"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Physically remove the row with DELETE FROM students WHERE rollno = ?",
+          "source": "Flat Design/ViewForm.vb:90-93"
+        },
+        {
+          "action": "Report success and reload the grid; no audit record is written anywhere",
+          "source": "Flat Design/ViewForm.vb:95-97"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "90-97",
+        "secondary_sources": [
+          "Flat Design/studentDB.accdb",
+          "Flat Design/InsertForm.vb:9"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-056",
+          "BR-037"
+        ],
+        "downstream_rules": [
+          "BR-095",
+          "BR-004"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Confirmed delete removes exactly one row.",
+        "error_paths": [
+          "Zero rows matched still reports 'Record deleted successfully' because the ExecuteNonQuery row count is discarded"
+        ],
+        "boundary_conditions": [
+          "No transaction wraps the delete, so there is nothing to roll back",
+          "Deleted personal data remains recoverable from the Access file's free pages, which is a disposal concern rather than a feature"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-058",
+      "name": "Deletion does not refresh the dashboard",
+      "description": "The delete path reloads the grid but never calls the dashboard refresh, unlike the insert and update paths which both do. After deleting a student the dashboard's gender, course and year counts remain at their pre-delete values until the user navigates Home \u2014 and because the delete also closed the shared connection (BR-004), that navigation raises an unhandled exception instead. The three mutation paths therefore have three different and mutually inconsistent refresh behaviours.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Defined by a missing call; its significance is the inconsistency across the three mutation paths and its interaction with the connection-close defect.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A delete completes successfully",
+          "source": "Flat Design/ViewForm.vb:93"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Reload the grid only; no dashboard refresh is invoked",
+          "source": "Flat Design/ViewForm.vb:97"
+        },
+        {
+          "action": "Dashboard statistics remain stale and overstate the student population",
+          "source": "Flat Design/Form1.vb:22"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "93-97",
+        "secondary_sources": [
+          "Flat Design/InsertForm.vb:27",
+          "Flat Design/EditForm.vb:67",
+          "Flat Design/Form1.vb:133"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-057"
+        ],
+        "downstream_rules": [
+          "BR-004",
+          "BR-077"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Delete a record, then navigate Home on a run where no delete-induced connection close interferes, and the counts correct themselves.",
+        "error_paths": [
+          "Delete then click Dashboard \u2014 unhandled InvalidOperationException from the closed connection (BR-004)"
+        ],
+        "boundary_conditions": [
+          "A user who deletes several records and then reads the dashboard without navigating sees counts that are silently too high",
+          "Insert refreshes the dashboard but not the visible grid; delete refreshes the visible grid but not the dashboard; update refreshes both \u2014 no two paths agree"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-059",
+      "name": "Only one record may be acted on at a time",
+      "description": "The grid sets MultiSelect = False and SelectionMode = FullRowSelect, so exactly one complete student record can be selected. Bulk update and bulk delete are structurally impossible, and there is no select-all, no checkbox column and no batch operation anywhere in the application. Every mutation is a single-record, single-statement, interactive action.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Two Designer properties that together fix the cardinality of every mutation in the system.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A user interacts with the grid selection",
+          "source": "Flat Design/ViewForm.Designer.vb:110"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Selecting a row clears any previous selection; at most one row is ever selected",
+          "source": "Flat Design/ViewForm.Designer.vb:110"
+        },
+        {
+          "action": "Clicking any cell selects the entire row",
+          "source": "Flat Design/ViewForm.Designer.vb:128"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.Designer.vb",
+        "line_range": "110-128",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:61",
+          "Flat Design/ViewForm.vb:84-86"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-055"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Click a row; the whole row highlights and the previous selection clears.",
+        "error_paths": [
+          "No failure mode \u2014 the constraint is enforced by the framework and cannot be violated from the UI"
+        ],
+        "boundary_conditions": [
+          "Ctrl-click and Shift-click cannot extend the selection",
+          "Code that reads SelectedRows(0) is therefore always safe with respect to index bounds once the count test passes"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-060",
+      "name": "Grid is read-only yet exposes a phantom addable row",
+      "description": "The grid is explicitly ReadOnly, so in-place cell editing is impossible and all mutation must route through the Update and Delete buttons. However AllowUserToAddRows and AllowUserToDeleteRows are never set and so retain their permissive True defaults: a phantom new-row placeholder is rendered at the bottom of the grid, and the Delete key can remove rows from the bound DataTable without touching the database. ReadOnly does not suppress either behaviour. Selecting the placeholder passes the selection test in BR-055 and then yields a Nothing roll-number cell, so Cells(\"rollno\").Value.ToString() raises NullReferenceException in both the Update and the Delete handler, neither of which has any exception handling.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "Three interacting grid properties, two of them unset and therefore invisible in source, producing a reachable crash path and a false visual row count.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "The grid is displayed with AllowUserToAddRows at its default True",
+          "source": "Flat Design/ViewForm.Designer.vb:112"
+        },
+        {
+          "condition": "The user selects the trailing placeholder row and clicks Update or Delete",
+          "source": "Flat Design/ViewForm.vb:62"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Cells('rollno').Value is Nothing and ToString() raises NullReferenceException, terminating the application",
+          "source": "Flat Design/ViewForm.vb:62"
+        },
+        {
+          "action": "Pressing Delete on a real row removes it from the bound DataTable only, so the grid and the database silently disagree until the next reload",
+          "source": "Flat Design/ViewForm.Designer.vb:112"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.Designer.vb",
+        "line_range": "110-128",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:62",
+          "Flat Design/ViewForm.vb:86",
+          "Flat Design/ViewForm.vb:44"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-050",
+          "BR-055"
+        ],
+        "downstream_rules": [
+          "BR-036"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Operate only on real data rows and the placeholder is merely cosmetic.",
+        "error_paths": [
+          "Select the trailing empty row and click Delete \u2014 unhandled NullReferenceException",
+          "Select the trailing empty row and click Update \u2014 same crash, from the EditForm construction path"
+        ],
+        "boundary_conditions": [
+          "An empty students table still shows one row, so the grid never looks genuinely empty",
+          "Any row-count logic over the grid is off by one",
+          "Pressing the Delete key appears to delete a record but does not persist, and the row returns on the next refresh"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-061",
+      "name": "Grid shape is dictated entirely by SELECT *",
+      "description": "No columns are defined in the Designer: AutoGenerateColumns is enabled at runtime and AutoSizeColumnsMode is set to Fill, so the grid's column count, order and header text all come from the result set of SELECT *. Users therefore see raw database column names \u2014 rollno, fathername, altmobno, yoa \u2014 as headings, with no display labels, no formatting, no column hiding and no reordering. Any schema change immediately and silently changes the user-facing report, and the code's one use of a column name, Cells(\"rollno\"), couples the mutation paths to that physical name.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Driven by what the Designer omits plus two runtime property assignments; the coupling it creates matters more than its logic.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "The grid is bound to a DataTable",
+          "source": "Flat Design/ViewForm.vb:44"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Generate one column per result-set field, in result-set order, titled with the raw column name",
+          "source": "Flat Design/ViewForm.vb:14"
+        },
+        {
+          "action": "Distribute column widths to fill the available area",
+          "source": "Flat Design/ViewForm.vb:15"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "14-15",
+        "secondary_sources": [
+          "Flat Design/ViewForm.Designer.vb:100-130",
+          "Flat Design/ViewForm.vb:39",
+          "Flat Design/ViewForm.vb:62"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-050"
+        ],
+        "downstream_rules": [
+          "BR-096"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Ten columns appear with their database names as headers and widths filling the grid.",
+        "error_paths": [
+          "Renaming or dropping the rollno column breaks Cells('rollno') at runtime with a column-not-found exception"
+        ],
+        "boundary_conditions": [
+          "Date of birth and mobile numbers are rendered with default type formatting, so dates display in workstation locale format and mobile numbers display as plain integers without leading zeros",
+          "Adding a column to the table silently adds it to the user-visible report, including any column holding sensitive data"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-062",
+      "name": "Reused edit form accumulates duplicate close handlers",
+      "description": "The Update handler attaches a FormClosed handler to the edit form on every click, but only constructs a new edit form when none exists or the previous one was disposed; otherwise it reuses the instance via UpdateRollNo. Because AddHandler is unconditional while construction is not, each reuse adds another subscription to the same event on the same instance. The grid reload therefore runs once on the first edit, twice on the second, three times on the third, and so on, producing N redundant full-table queries and rebinds per close.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "An asymmetry between a conditional construction and an unconditional subscription, whose effect accumulates across the session and is invisible at any single call site.",
+      "module": "view-form",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "An existing non-disposed edit form instance is reused for another record",
+          "source": "Flat Design/ViewForm.vb:64-68"
+        },
+        {
+          "condition": "AddHandler runs again on the same instance",
+          "source": "Flat Design/ViewForm.vb:75"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Register an additional FormClosed subscription without removing the previous one",
+          "source": "Flat Design/ViewForm.vb:75"
+        },
+        {
+          "action": "On close, run the grid reload once per accumulated subscription",
+          "source": "Flat Design/ViewForm.vb:111-113"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "60-81",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:111-113",
+          "Flat Design/EditForm.vb:37-40",
+          "Flat Design/EditForm.vb:69"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-038"
+        ],
+        "downstream_rules": [
+          "BR-050"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Edit one record and close it \u2014 the grid reloads exactly once.",
+        "error_paths": [
+          "No visible error; the symptom is escalating redundant database work and grid flicker across a long session"
+        ],
+        "boundary_conditions": [
+          "Because EditForm.btnSave_Click calls Me.Close(), the form is disposed after each save and the next click constructs a fresh instance \u2014 so the accumulation only occurs along the Cancel path, where Close also disposes it. The reuse branch via UpdateRollNo is therefore rarely reached in practice, making this a latent rather than an everyday defect, and the dead reuse branch is itself a maintenance hazard."
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-063",
+      "name": "Editing is launched from the grid into the dashboard's host panel",
+      "description": "The Update handler does not open a dialog: it constructs the edit form, sets TopLevel to False and adds it to Form1's Panel5 through the Form1 default instance, reaching across module boundaries into the dashboard's control tree. The edit form is therefore a sibling of the view form inside the same host panel rather than a child of it, and the view form remains live and bound underneath.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "A child module mutates the parent shell's control collection via a default instance, inverting the expected ownership direction and coupling view-form to form1-dashboard's internal layout.",
+      "module": "view-form",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "A row is selected and Update is clicked",
+          "source": "Flat Design/ViewForm.vb:61"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Construct the edit form for the selected roll number",
+          "source": "Flat Design/ViewForm.vb:65"
+        },
+        {
+          "action": "Reparent it into Form1.Panel5 via the Form1 default instance and bring it to front",
+          "source": "Flat Design/ViewForm.vb:70-74"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/ViewForm.vb",
+        "line_range": "60-81",
+        "secondary_sources": [
+          "Flat Design/Form1.vb:109-112",
+          "Flat Design/Form1.Designer.vb:309-312",
+          "Flat Design/EditForm.vb:7"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-055"
+        ],
+        "downstream_rules": [
+          "BR-030",
+          "BR-078"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Select a row, click Update, and the edit form appears over the dashboard's content panel.",
+        "error_paths": [
+          "Any load failure crashes unhandled because this handler has no Try/Catch (BR-035)"
+        ],
+        "boundary_conditions": [
+          "The view form stays visible behind the edit form and its stale grid is still interactable",
+          "Panel5 accumulates child form controls that are hidden rather than removed (BR-078)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-070",
+      "name": "Gender census counts only Male and Female",
+      "description": "The dashboard's gender breakdown runs exactly two COUNT queries, for gender = 'Male' and gender = 'Female'. The data-entry forms, however, offer three permitted values including 'Other' (BR-013). A student recorded as Other is storable, listable and editable but is counted in no gender statistic and in no total, so the two gender tiles do not sum to the student population and there is no tile, label or total anywhere on the dashboard that would reveal the shortfall. The enumeration is enforced in two files and contradicted by the single place that aggregates it.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Two independent queries whose correctness depends on a value set defined in two other files; the defect is a silent undercount with no reconciling total.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Dashboard statistics are loaded",
+          "source": "Flat Design/Form1.vb:22"
+        },
+        {
+          "condition": "One or more students are recorded with gender 'Other'",
+          "source": "Flat Design/InsertForm.Designer.vb:176"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Count rows where gender = 'Male' and display in the Male tile",
+          "source": "Flat Design/Form1.vb:24-26"
+        },
+        {
+          "action": "Count rows where gender = 'Female' and display in the Female tile",
+          "source": "Flat Design/Form1.vb:29-31"
+        },
+        {
+          "action": "Students recorded as Other are counted nowhere",
+          "source": "Flat Design/Form1.vb:34-35"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "23-35",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:176",
+          "Flat Design/EditForm.Designer.vb:149",
+          "Flat Design/Form1.Designer.vb:995",
+          "Flat Design/Form1.Designer.vb:946"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-013",
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-075",
+          "BR-076"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "With only Male and Female students recorded, the two tiles sum to the full population.",
+        "error_paths": [
+          "Provider failure on either query raises an unhandled exception inside Form_Load (BR-076)"
+        ],
+        "boundary_conditions": [
+          "A single student recorded as Other makes the gender tiles under-report the population with no visible indication",
+          "Access text comparison is case-insensitive, so 'MALE' and 'male' are both counted as Male even though the combo can only produce 'Male'",
+          "An empty or null gender is counted nowhere either"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-071",
+      "name": "Course census is three hardcoded COUNT queries",
+      "description": "Programme distribution is computed by three separate COUNT queries whose course values 'BCA', 'MCA' and 'IIMCA' are literals in the dashboard source, matching three literal tile captions in the Designer and the three-value combo lists on the data-entry forms. There is no GROUP BY and no data-driven enumeration, so adding a programme requires a new query, a new tile, a new label and edits to both Designer combo lists. A record carrying any other course value is counted nowhere and, as with gender, no total exists that would expose the omission.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Three structurally identical queries; the cost is the eight-way duplication of the taxonomy rather than any logical complexity.",
+      "module": "form1-dashboard",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "Dashboard statistics are loaded",
+          "source": "Flat Design/Form1.vb:22"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Count rows for each of the three literal course values",
+          "source": "Flat Design/Form1.vb:38-50"
+        },
+        {
+          "action": "Write the three counts into the three course tiles",
+          "source": "Flat Design/Form1.vb:53-55"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "37-55",
+        "secondary_sources": [
+          "Flat Design/Form1.Designer.vb:897",
+          "Flat Design/Form1.Designer.vb:848",
+          "Flat Design/Form1.Designer.vb:652",
+          "Flat Design/InsertForm.Designer.vb:103",
+          "Flat Design/EditForm.Designer.vb:314"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-014",
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-075",
+          "BR-076"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Students across all three programmes are counted into their respective tiles.",
+        "error_paths": [
+          "Any of the three queries failing crashes Form_Load unhandled"
+        ],
+        "boundary_conditions": [
+          "A fourth programme would be invisible on the dashboard entirely",
+          "The dashboard axis heading reads 'Degree Wise' while the column and combo are named course \u2014 the same concept under two names",
+          "Two further course tiles exist but are orphaned and permanently read zero (BR-081)"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-072",
+      "name": "Academic year is derived from a hardcoded current year of 2023",
+      "description": "The year-wise breakdown is computed by assigning a local variable currentYear the literal value 2023 and then counting students whose year of admission equals 2023, 2022, 2021, 2020 and 2019 respectively \u2014 that is, currentYear minus zero through four. The system clock is never read. The dashboard is therefore frozen in the 2023-24 academic year: as of the extraction date it mislabels every cohort by three years, reporting students admitted in 2023 as first-years when they are fourth-years. Correcting the dashboard requires a source change and a rebuild, and because the year dropdown (BR-015) is also frozen at 2023, the two halves of the year logic remain superficially consistent while both are wrong.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "high",
+      "complexity_rationale": "A single magic constant that silently invalidates five of the dashboard's twelve statistics, is coupled to an independently hardcoded list in two other files, and whose wrongness grows by one cohort per year with no failure signal.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Dashboard statistics are loaded in any calendar year other than 2023",
+          "source": "Flat Design/Form1.vb:59"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Set currentYear to the literal 2023 with no reference to the system date",
+          "source": "Flat Design/Form1.vb:59"
+        },
+        {
+          "action": "Count the five year buckets as currentYear minus 0 through 4",
+          "source": "Flat Design/Form1.vb:62-84"
+        },
+        {
+          "action": "Present the counts as current first through fifth year cohorts",
+          "source": "Flat Design/Form1.vb:87-91"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "58-91",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:91",
+          "Flat Design/EditForm.Designer.vb:303",
+          "Flat Design/Form1.Designer.vb:337"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-015",
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-073",
+          "BR-074",
+          "BR-075"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Run the application in calendar 2023 and the five cohort tiles are correct.",
+        "error_paths": [
+          "No error is raised; the statistics are simply and silently wrong in every year after 2023"
+        ],
+        "boundary_conditions": [
+          "Changing the workstation clock has no effect, so the staleness cannot be worked around operationally",
+          "Students admitted before 2019 fall outside all five buckets and are counted nowhere",
+          "If the admission-year dropdown were extended to 2024 without changing this constant, new students would appear in no cohort tile at all"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-073",
+      "name": "Exactly five academic-year cohorts are recognised",
+      "description": "The dashboard hardcodes five year buckets \u2014 five queries, five local counters, five tiles, five Designer labels. Five is not derived from the programme catalogue: the three recognised programmes are three-year and two-year degrees, so a fifth-year bucket has no clear referent, and students admitted more than five years ago are silently excluded from every year statistic. There is no 'other' or 'earlier' bucket and no total against which the omission could be detected.",
+      "category": "calculation",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Five structurally duplicated query-and-assign blocks whose cardinality is asserted in four separate places and justified nowhere.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A student's year of admission is more than four years before the hardcoded current year",
+          "source": "Flat Design/Form1.vb:82"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Compute exactly five counts for admission years currentYear down to currentYear minus 4",
+          "source": "Flat Design/Form1.vb:62-84"
+        },
+        {
+          "action": "Exclude older admissions from every year statistic with no residual bucket",
+          "source": "Flat Design/Form1.vb:87-91"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "61-91",
+        "secondary_sources": [
+          "Flat Design/Form1.Designer.vb:799",
+          "Flat Design/Form1.Designer.vb:454",
+          "Flat Design/Form1.Designer.vb:503",
+          "Flat Design/Form1.Designer.vb:750",
+          "Flat Design/Form1.Designer.vb:701"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-072"
+        ],
+        "downstream_rules": [
+          "BR-075"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "All recorded admission years fall within the five-year window and every student is counted exactly once.",
+        "error_paths": [
+          "None \u2014 exclusion is silent"
+        ],
+        "boundary_conditions": [
+          "The five year tiles all carry the identical caption 'Year Students' with no ordinal, so the five statistics are visually indistinguishable except by icon (BR-081)",
+          "A two-year MCA programme has no fifth-year students, so one tile is structurally always zero for part of the population"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-074",
+      "name": "Year of admission is matched as a concatenated string literal",
+      "description": "The five cohort queries build their predicates by converting an Integer year to a string and concatenating it into a quoted SQL literal, matching the YOA column which is TEXT rather than numeric. Comparison is therefore lexical, not arithmetic: a stored value of '2023 ' with trailing whitespace, or any non-canonical representation, fails to match while being indistinguishable in the grid. This is the only remaining place in the application where SQL is assembled by concatenation outside the search path, though it is not injectable because the concatenated value is an Integer.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Mechanical string building, but it fixes the comparison semantics for the dashboard's five largest statistics and silently depends on exact textual storage.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A cohort count query is built",
+          "source": "Flat Design/Form1.vb:62"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Concatenate the integer year as a quoted string into the WHERE clause",
+          "source": "Flat Design/Form1.vb:62-82"
+        },
+        {
+          "action": "Match the TEXT column lexically rather than numerically",
+          "source": "Flat Design/studentDB.accdb"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "62-83",
+        "secondary_sources": [
+          "Flat Design/studentDB.accdb",
+          "Flat Design/InsertForm.vb:20",
+          "Flat Design/ViewForm.vb:50"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-015",
+          "BR-072"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Canonical four-digit year strings written by the combo match the generated literals exactly.",
+        "error_paths": [
+          "None at runtime \u2014 a mismatch simply undercounts"
+        ],
+        "boundary_conditions": [
+          "Whitespace-padded or differently formatted stored years are counted nowhere",
+          "Because the column is TEXT, no range query such as yoa >= 2019 would behave arithmetically either, which is likely why five equality queries were written instead of one grouped query",
+          "Not injectable despite being concatenated, because the interpolated value is an Integer"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-075",
+      "name": "All dashboard statistics are whole-table and all-time",
+      "description": "Every one of the twelve dashboard counts queries the entire students table with no scoping predicate other than the single attribute it breaks down by. There is no academic-year scope, no active-versus-graduated status, no enrolment state and no date filter \u2014 the schema has no status column to filter on. Because deletion is physical (BR-057), a student who leaves is removed rather than marked inactive, so 'all-time' and 'currently enrolled' are the same number by construction and the dashboard cannot distinguish them.",
+      "category": "calculation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Defined by uniform absence of scoping across twelve queries; it fixes the meaning of every statistic the application reports.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any dashboard statistic is computed",
+          "source": "Flat Design/Form1.vb:22"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Count across the whole table with a single-attribute predicate and no status or period scope",
+          "source": "Flat Design/Form1.vb:24-84"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "22-93",
+        "secondary_sources": [
+          "Flat Design/studentDB.accdb",
+          "Flat Design/ViewForm.vb:90",
+          "Flat Design/Form1.Designer.vb:337"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-070",
+          "BR-071",
+          "BR-072",
+          "BR-073"
+        ],
+        "downstream_rules": [
+          "BR-095"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Counts match a manual count of the full table along each axis.",
+        "error_paths": [
+          "No failure mode \u2014 the absence of scoping produces a wrong definition of the statistic, not an error"
+        ],
+        "boundary_conditions": [
+          "Graduated and withdrawn students are indistinguishable from current students unless they were deleted, which destroys the record",
+          "No dashboard statistic reports a grand total, so no cross-check between the three axes is possible and the undercounts in BR-070, BR-071 and BR-073 cannot be detected from the UI"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-076",
+      "name": "Statistics default to zero and the load path is unguarded",
+      "description": "All ten count controls are Labels \u2014 despite txt-prefixed names that imply TextBoxes \u2014 with the Designer-baked default text '0'. The statistics loader has no Try/Catch anywhere, and it runs from Form_Load. A provider failure, a missing database file or a connection closed by a prior delete therefore produces an unhandled exception that terminates the application at startup, while any partial failure path that did survive would leave tiles reading a plausible '0' rather than blank or an error. Zero and 'not computed' are indistinguishable on screen.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Twelve sequential unguarded database calls in a startup path, combined with a default display value that disguises failure as data.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "The dashboard loads or is refreshed",
+          "source": "Flat Design/Form1.vb:15-19"
+        },
+        {
+          "condition": "Any of the twelve queries fails",
+          "source": "Flat Design/Form1.vb:26"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The exception propagates out of Form_Load unhandled and the application terminates",
+          "source": "Flat Design/Form1.vb:22-26"
+        },
+        {
+          "action": "Tiles not yet written retain their Designer default of '0'",
+          "source": "Flat Design/Form1.Designer.vb:981"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "15-93",
+        "secondary_sources": [
+          "Flat Design/Form1.Designer.vb:981",
+          "Flat Design/Form1.Designer.vb:932",
+          "Flat Design/Form1.Designer.vb:883",
+          "Flat Design/InsertForm.vb:31",
+          "Flat Design/ViewForm.vb:94"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001",
+          "BR-002",
+          "BR-004"
+        ],
+        "downstream_rules": [
+          "BR-077"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "All twelve queries succeed and every tile shows a real count.",
+        "error_paths": [
+          "Database absent at the hardcoded path \u2014 the application crashes on launch before any window is usable (BR-002)",
+          "Connection closed by a prior delete then Dashboard clicked \u2014 unhandled InvalidOperationException (BR-004)",
+          "ACE provider not installed \u2014 crash at startup"
+        ],
+        "boundary_conditions": [
+          "A genuinely empty table and a total failure both display twelve zeros",
+          "The txt-prefixed Label naming means any future code treating these as TextBoxes, or setting ReadOnly on them, will fail"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-077",
+      "name": "Dashboard refresh fires on four of five triggers",
+      "description": "Statistics are recomputed on form load, on Dashboard navigation, after a successful insert and after a successful update \u2014 but not after a delete (BR-058). There is no timer, no auto-refresh and no change notification, so with two application instances running neither sees the other's changes until it navigates. The refresh set is therefore incomplete in one direction and stale in another.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "Four trigger sites across three modules, one missing trigger, and one of the four reaching the dashboard only by the default-instance coincidence described in BR-019.",
+      "module": "form1-dashboard",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "The form loads, Dashboard is clicked, or an insert or update succeeds",
+          "source": "Flat Design/Form1.vb:133"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Hide any hosted child forms, recompute all twelve statistics and show the host panel",
+          "source": "Flat Design/Form1.vb:121-137"
+        },
+        {
+          "action": "Insert and update call the loader through the Form1 default instance",
+          "source": "Flat Design/InsertForm.vb:27"
+        },
+        {
+          "action": "No refresh occurs after a delete",
+          "source": "Flat Design/ViewForm.vb:97"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "121-137",
+        "secondary_sources": [
+          "Flat Design/Form1.vb:15-20",
+          "Flat Design/InsertForm.vb:27",
+          "Flat Design/EditForm.vb:67",
+          "Flat Design/ViewForm.vb:93-97"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-019",
+          "BR-038",
+          "BR-058",
+          "BR-076"
+        ],
+        "downstream_rules": [
+          "BR-078",
+          "BR-094"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Insert a student and watch the relevant tiles increment immediately.",
+        "error_paths": [
+          "Refresh after a delete-induced connection close throws (BR-004)"
+        ],
+        "boundary_conditions": [
+          "Delete leaves the dashboard overstating the population until the next navigation",
+          "A second concurrent instance's changes are never reflected until navigation (BR-094)",
+          "No timer exists, so an idle dashboard is indefinitely stale"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-078",
+      "name": "Navigation reparents child forms into one host panel and only hides them",
+      "description": "The shell has no form navigation: each child form is instantiated once, has TopLevel set to False, and is added as a control to the dashboard's Panel5 and brought to front. Dashboard navigation hides the three children rather than removing or disposing them, so Panel5 permanently accumulates child form controls stacked over the still-present statistics tiles, and nothing in the Designer hides those tiles. Instances are reused across navigations unless disposed, which is what makes the edit form reuse path and the default-instance confusion in BR-019 reachable. View and Edit are reparented from two different modules \u2014 the dashboard adds the view form, while the view form adds the edit form by reaching into Panel5 through the Form1 default instance.",
+      "category": "workflow",
+      "severity": "critical",
+      "complexity": "extreme",
+      "complexity_rationale": "Touches four modules \u2014 form1-dashboard, insert-form, view-form and edit-form \u2014 and combines manual control reparenting, conditional instance reuse keyed on IsDisposed, z-order management, cross-module mutation of another form's control collection, and VB default-instance resolution. It is the substrate on which BR-019, BR-062 and BR-063 all depend and no single file describes it.",
+      "module": "form1-dashboard",
+      "implicit": false,
+      "conditions": [
+        {
+          "condition": "User clicks Insert, View or Dashboard",
+          "source": "Flat Design/Form1.vb:102"
+        },
+        {
+          "condition": "The target child form is Nothing or disposed",
+          "source": "Flat Design/Form1.vb:103"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Construct the child form only if absent or disposed, otherwise reuse the existing instance",
+          "source": "Flat Design/Form1.vb:103-105"
+        },
+        {
+          "action": "Set TopLevel False, add to Panel5, bring to front and show",
+          "source": "Flat Design/Form1.vb:109-112"
+        },
+        {
+          "action": "On Dashboard, hide all three children without removing or disposing them, then refresh and show the host panel",
+          "source": "Flat Design/Form1.vb:121-136"
+        },
+        {
+          "action": "On View, additionally force a grid reload on the hosted instance",
+          "source": "Flat Design/Form1.vb:149-151"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "102-153",
+        "secondary_sources": [
+          "Flat Design/ViewForm.vb:70-74",
+          "Flat Design/Form1.Designer.vb:295-312",
+          "Flat Design/InsertForm.vb:57",
+          "Flat Design/EditForm.vb:69",
+          "Flat Design/My Project/Application.Designer.vb:35"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-077"
+        ],
+        "downstream_rules": [
+          "BR-019",
+          "BR-062",
+          "BR-063",
+          "BR-079"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Navigate Insert, View and Dashboard in turn and each panel appears in the host area.",
+        "error_paths": [
+          "Cancel on the insert form calls Close, which disposes it, so the IsDisposed guard correctly rebuilds it on the next Insert click",
+          "An edit form left hosted when the user navigates Dashboard is hidden rather than closed, so its unsaved edits persist invisibly and reappear on return"
+        ],
+        "boundary_conditions": [
+          "The View handler calls RefreshData on the hosted instance via a DirectCast guarded by a Contains check, which is the one place the code correctly addresses the hosted instance rather than the default instance \u2014 the contrast with BR-019 is the clearest evidence the default-instance calls are unintentional",
+          "Statistics tiles remain present underneath every child form",
+          "Panel5.Controls.Add is called on every click even when the control is already a child, which repositions rather than duplicates it"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-079",
+      "name": "The Exit button is the only way to close the application",
+      "description": "The dashboard sets ControlBox to False, removing the window's close, minimise and maximise chrome, and the form is a non-resizable fixed-size window. The single Exit button is therefore the only supported way to terminate the application: it calls Close on the dashboard and then Application.Exit. Shutdown mode is AfterMainFormCloses, so closing the dashboard would end the process anyway. Neither path prompts about unsaved data in a hosted entry form, and neither closes the shared database connection.",
+      "category": "workflow",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "Two statements plus one Designer property; simple, but it makes a single control load-bearing for process termination.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "User clicks Exit",
+          "source": "Flat Design/Form1.vb:96"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Close the dashboard and then call Application.Exit",
+          "source": "Flat Design/Form1.vb:97-98"
+        },
+        {
+          "action": "No confirmation is requested and the shared connection is never closed",
+          "source": "Flat Design/Module1.vb:4"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "96-99",
+        "secondary_sources": [
+          "Flat Design/Form1.Designer.vb:1073",
+          "Flat Design/Form1.Designer.vb:1078",
+          "Flat Design/My Project/Application.Designer.vb:30",
+          "Flat Design/Form1.Designer.vb:233"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-078"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "Click Exit and the process terminates.",
+        "error_paths": [
+          "Alt+F4 still closes the form despite the absent close button, bypassing the handler but reaching the same outcome via shutdown mode"
+        ],
+        "boundary_conditions": [
+          "Half-completed data entry in a hosted insert form is discarded with no prompt",
+          "The connection and the Access lock file are released only by process termination, not by an orderly close",
+          "If the Exit handler were removed, the application would have no closure affordance at all"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-080",
+      "name": "Project Report opens a hardcoded external GitHub URL",
+      "description": "The Project Report navigation button does not open the project report PDF that is committed in the repository root. It launches the default browser against a hardcoded absolute GitHub URL pointing at that same file in the author's public repository. The feature therefore requires internet access, depends on a third-party repository remaining public at a fixed path, and leaks the fact of use to an external host. Process.Start is unguarded, so a machine with no registered URL handler crashes the application.",
+      "category": "workflow",
+      "severity": "advisory",
+      "complexity": "low",
+      "complexity_rationale": "Two statements; the significance is an external runtime dependency where a local file would serve, not logical complexity.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "User clicks Project Report",
+          "source": "Flat Design/Form1.vb:155"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Launch the default browser against a hardcoded github.com URL",
+          "source": "Flat Design/Form1.vb:156-157"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.vb",
+        "line_range": "155-158",
+        "secondary_sources": [
+          "Siddharth Jain Project Report.pdf",
+          "Flat Design/Form1.Designer.vb:168"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "On a connected machine the browser opens the report on GitHub.",
+        "error_paths": [
+          "Offline or firewalled host \u2014 browser opens to an error page",
+          "No registered handler for http URLs \u2014 Process.Start throws unhandled and the application terminates"
+        ],
+        "boundary_conditions": [
+          "The identical PDF exists locally in the repository root and is never used",
+          "A trailing source comment still reads 'Replace with your desired web link', indicating the URL was never intended to be final"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-081",
+      "name": "Two orphaned statistic tiles are permanently zero and one taxonomy is unlabelled",
+      "description": "The dashboard contains two duplicate statistic tiles \u2014 a second 'BCA Students' and a second 'IIMCA Students', each with its own count label \u2014 that the statistics loader never writes to, so they display their Designer default of '0' forever. They are nested in the wrong parent panel and pushed outside its bounds by negative and overflowing coordinates rather than being hidden or deleted, so any change to the parent's size or a move to a layout container would make two permanently-wrong tiles visible. Separately, all five cohort tiles carry the identical caption 'Year Students' with no ordinal: the first-through-fifth-year distinction exists only in control names and icon images, so the five statistics are not distinguishable from their text, not localizable and not greppable.",
+      "category": "calculation",
+      "severity": "advisory",
+      "complexity": "low",
+      "complexity_rationale": "Designer-level residue with no logic, but it produces user-visible statistics that are structurally incapable of being correct.",
+      "module": "form1-dashboard",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "The dashboard renders",
+          "source": "Flat Design/Form1.Designer.vb:551"
+        },
+        {
+          "condition": "The parent panel's bounds change or layout is reflowed",
+          "source": "Flat Design/Form1.Designer.vb:583"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Two orphan count labels display '0' and are never updated by the loader",
+          "source": "Flat Design/Form1.Designer.vb:551"
+        },
+        {
+          "action": "Their host panels are positioned outside the parent's bounds at x=-373 and x=373 within a 343-pixel-wide parent",
+          "source": "Flat Design/Form1.Designer.vb:534"
+        },
+        {
+          "action": "All five cohort captions render the identical string 'Year Students'",
+          "source": "Flat Design/Form1.Designer.vb:799"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Form1.Designer.vb",
+        "line_range": "518-614",
+        "secondary_sources": [
+          "Flat Design/Form1.Designer.vb:551",
+          "Flat Design/Form1.Designer.vb:600",
+          "Flat Design/Form1.Designer.vb:454",
+          "Flat Design/Form1.Designer.vb:503",
+          "Flat Design/Form1.vb:87-91"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-071",
+          "BR-073"
+        ],
+        "downstream_rules": []
+      },
+      "test_hints": {
+        "happy_path": "At the fixed 1604x798 client size the orphan tiles are off-screen and invisible.",
+        "error_paths": [
+          "None at runtime"
+        ],
+        "boundary_conditions": [
+          "Resizing the parent panel or adopting a layout container exposes two tiles that always read zero",
+          "A user cannot tell which cohort tile is which without recognising the icons",
+          "The dashboard title label is misspelled 'Sudent Management System' and a second label hardcodes the original author's name and cohort, both of which are user-visible branding residue"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-090",
+      "name": "No authentication or authorization of any kind",
+      "description": "The application has no login, no user identity, no roles, no permissions and no audit of actor. Authentication mode is set to Windows in the application framework configuration, but that only governs the My.User object, which the code never reads: no code path anywhere tests identity, group membership or privilege. Anyone able to launch the executable and reach the Access file has unrestricted create, read, update and delete authority over every student record, including the personal data of students and of named parents. The Access database itself has no database password and Jet workgroup security is unused. The only gate in front of a destructive operation is the row-selection test and the delete confirmation dialog.",
+      "category": "authorization",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "The rule is a complete absence of logic, which is precisely why it must be recorded explicitly: a modernization target that assumes authorization exists somewhere in this code will find nothing to port.",
+      "module": "my-project-infrastructure",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any user launches the executable",
+          "source": "Flat Design/My Project/Application.Designer.vb:26"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The dashboard opens directly with full privilege; no credential is requested and no identity is recorded",
+          "source": "Flat Design/Form1.vb:15"
+        },
+        {
+          "action": "Every create, read, update and delete path executes without any privilege test",
+          "source": "Flat Design/ViewForm.vb:83"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/My Project/Application.Designer.vb",
+        "line_range": "26",
+        "secondary_sources": [
+          "Flat Design/My Project/Application.myapp",
+          "Flat Design/Form1.vb:15-20",
+          "Flat Design/ViewForm.vb:83-102",
+          "Flat Design/Module1.vb:7",
+          "Flat Design/studentDB.accdb",
+          "Flat Design/My Project/app.manifest:19"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-055",
+          "BR-056",
+          "BR-095"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Launching the executable grants immediate full access \u2014 this is the designed behaviour.",
+        "error_paths": [
+          "None \u2014 there is no path that denies access"
+        ],
+        "boundary_conditions": [
+          "Any user with file-system read/write access to the .accdb has equivalent authority outside the application entirely, since the file is unencrypted and unprotected",
+          "The executable requests asInvoker elevation, so it inherits the launching user's rights with no additional check",
+          "Record-level ownership and data-subject access rights cannot be implemented on this schema, which has no actor columns"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-091",
+      "name": "Option Strict is off, enabling late binding and implicit narrowing",
+      "description": "The project compiles with Option Strict Off, Option Infer On, Option Explicit On. Late binding and implicit narrowing conversions are therefore permitted throughout, which is what allows SelectedItem.ToString() on a Nothing reference to compile and fail only at runtime (BR-011, BR-033), allows untyped parameter values to be coerced by the provider rather than checked by the compiler (BR-017), and allows the date-of-birth string/date confusion to pass unflagged (BR-016, BR-034). Several of the application's most significant data-integrity rules exist only because this switch is off.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "A single build setting that is the enabling precondition for at least five separate runtime-only failure modes spread across four modules.",
+      "module": "my-project-infrastructure",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any code performs a narrowing conversion or a late-bound member access",
+          "source": "Flat Design/Student Management System Siddharth Jain.vbproj:51"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The compiler accepts the construct and defers all type checking to runtime",
+          "source": "Flat Design/Student Management System Siddharth Jain.vbproj:51"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "line_range": "45-54",
+        "secondary_sources": [
+          "Flat Design/InsertForm.vb:18",
+          "Flat Design/EditForm.vb:30",
+          "Flat Design/EditForm.vb:59",
+          "Flat Design/InsertForm.vb:23"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [],
+        "downstream_rules": [
+          "BR-011",
+          "BR-016",
+          "BR-017",
+          "BR-033",
+          "BR-034"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Well-formed input exercises no implicit conversion that fails.",
+        "error_paths": [
+          "Every NullReferenceException and type-mismatch path in this catalog is reachable only because this setting is off"
+        ],
+        "boundary_conditions": [
+          "Turning Option Strict On would surface these defects as compile errors, which is the recommended first step of any port",
+          "The Designer-generated files set Option Strict On locally, so the weak setting applies only to hand-written code"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-092",
+      "name": "Host language compares strings case-sensitively while the database does not",
+      "description": "The project sets Option Compare Binary, so all VB string comparison in application code is case-sensitive and ordinal. The Access engine, by contrast, compares text case-insensitively. The same conceptual equality therefore has two different answers depending on which side evaluates it: the dropdown repopulation on the edit form matches stored values case-sensitively in .NET and silently fails on a case difference (BR-033), while the dashboard's gender and course counts and the search's roll-number equality all match case-insensitively in SQL. Any logic moved between the two layers during modernization changes behaviour.",
+      "category": "constraint",
+      "severity": "standard",
+      "complexity": "medium",
+      "complexity_rationale": "A build setting whose divergence from the data engine's semantics is invisible in source and changes the meaning of equality depending on evaluation site.",
+      "module": "my-project-infrastructure",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A string equality is evaluated in VB code rather than in SQL, or vice versa",
+          "source": "Flat Design/Student Management System Siddharth Jain.vbproj:48"
+        }
+      ],
+      "actions": [
+        {
+          "action": "VB-side comparisons are case-sensitive and ordinal",
+          "source": "Flat Design/Student Management System Siddharth Jain.vbproj:48"
+        },
+        {
+          "action": "Access-side comparisons in COUNT, equality and LIKE predicates are case-insensitive",
+          "source": "Flat Design/Form1.vb:24"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Student Management System Siddharth Jain.vbproj",
+        "line_range": "48",
+        "secondary_sources": [
+          "Flat Design/EditForm.vb:27-29",
+          "Flat Design/Form1.vb:24",
+          "Flat Design/ViewForm.vb:50",
+          "Flat Design/studentDB.accdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-091"
+        ],
+        "downstream_rules": [
+          "BR-033",
+          "BR-051",
+          "BR-070"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "All stored values use the exact casing the dropdowns produce, so the divergence never manifests.",
+        "error_paths": [
+          "A gender stored as 'male' is counted by the dashboard but cannot be reloaded into the edit dropdown"
+        ],
+        "boundary_conditions": [
+          "Roll numbers differing only in case are distinct to the case-sensitive PrimaryKey index but equal to the case-insensitive WHERE clause, the one configuration where BR-037's multi-row update becomes reachable",
+          "Porting the dropdown match to a case-insensitive comparison would change which records are editable"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-093",
+      "name": "No transactions anywhere",
+      "description": "No code path begins, commits or rolls back a transaction. Every mutation is a single autocommitted statement, which is sufficient for the current single-statement operations but means there is no atomicity between a mutation and its dependent side effects: the insert path commits a row and then performs refresh work that can itself fail and report an error for an operation that actually succeeded, and a delete-and-recreate re-key loses the record irrecoverably if interrupted in between.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Defined by uniform absence; it fixes the atomicity guarantee of the whole system at single-statement granularity.",
+      "module": "module1-db-connection",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any mutation is performed",
+          "source": "Flat Design/InsertForm.vb:25"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The statement autocommits with no enclosing transaction and no rollback path",
+          "source": "Flat Design/InsertForm.vb:25"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/Module1.vb",
+        "line_range": "3-12",
+        "secondary_sources": [
+          "Flat Design/InsertForm.vb:25",
+          "Flat Design/EditForm.vb:64",
+          "Flat Design/ViewForm.vb:93"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-001"
+        ],
+        "downstream_rules": [
+          "BR-022",
+          "BR-031"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Each single-statement mutation commits independently and successfully.",
+        "error_paths": [
+          "Insert succeeds, then the refresh cascade throws, and the user is told the save failed while the row exists (BR-004, BR-022)"
+        ],
+        "boundary_conditions": [
+          "Re-keying a student requires a delete plus an insert with no atomicity between them",
+          "Any future multi-table operation would have no consistency mechanism to build on"
+        ]
+      },
+      "requires_sme_review": false
+    },
+    {
+      "id": "BR-094",
+      "name": "Concurrent instances are permitted with last-write-wins",
+      "description": "Single-instance mode is explicitly disabled, so any number of copies can run against the same Access file, each with its own shared connection. There is no optimistic concurrency token, no row version, no timestamp and no change detection: the update writes all nine fields unconditionally, so the last save wins silently and the loser's edits are destroyed with no warning to either user. Refresh is navigation-driven only, so each instance shows data that may be arbitrarily stale. File-level locking is handled by the Access engine through the lock file, which serialises writes but provides no application-level conflict detection.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "medium",
+      "complexity_rationale": "An application-framework setting combined with the absence of any concurrency control, producing silent data loss across two modules and the data layer.",
+      "module": "my-project-infrastructure",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Two instances load the same record and both save",
+          "source": "Flat Design/My Project/Application.Designer.vb:27"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Both updates succeed in sequence; the second overwrites the first across all nine fields",
+          "source": "Flat Design/EditForm.vb:51-64"
+        },
+        {
+          "action": "Neither user is notified and no conflict is recorded",
+          "source": "Flat Design/EditForm.vb:66"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/My Project/Application.Designer.vb",
+        "line_range": "27",
+        "secondary_sources": [
+          "Flat Design/My Project/Application.myapp",
+          "Flat Design/EditForm.vb:51",
+          "Flat Design/Module1.vb:4",
+          "Flat Design/studentDB.laccdb"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-003",
+          "BR-032",
+          "BR-077"
+        ],
+        "downstream_rules": [
+          "BR-095"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "A single instance is used at a time and concurrency never arises.",
+        "error_paths": [
+          "Record deleted by one instance while open for edit in another \u2014 the update matches zero rows and still reports success (BR-036, BR-037)"
+        ],
+        "boundary_conditions": [
+          "A committed lock file in the repository is evidence the database was open when the snapshot was taken",
+          "Because the database is reached by a hardcoded local path (BR-002), genuine multi-user concurrency is unlikely in practice, which is why this defect has probably never been observed",
+          "Access on a network share adds corruption risk that no application logic mitigates"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-095",
+      "name": "No record provenance, audit trail or lifecycle state",
+      "description": "The students table has exactly ten business columns and no created-at, created-by, modified-at, modified-by, version or status column, and the application writes no audit record for any operation. It is therefore impossible to establish when a student record was created or last changed, who changed it, what the previous values were, or whether a student is current, graduated or withdrawn. Combined with physical deletion and the absence of any actor identity, no create, update or delete in this system is attributable or reconstructible after the fact \u2014 a material constraint on any modernization that must demonstrate data lineage or support data-subject requests over this personal data.",
+      "category": "constraint",
+      "severity": "critical",
+      "complexity": "low",
+      "complexity_rationale": "Defined by schema and code omission across every module; no logic, but it bounds what any downstream compliance or reporting requirement can possibly be satisfied from.",
+      "module": "module1-db-connection",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "Any record is created, modified or deleted",
+          "source": "Flat Design/InsertForm.vb:9"
+        }
+      ],
+      "actions": [
+        {
+          "action": "Only the ten business columns are written; no provenance, actor or version data is recorded anywhere",
+          "source": "Flat Design/studentDB.accdb"
+        },
+        {
+          "action": "No log file, event record or history table is produced",
+          "source": "Flat Design/InsertForm.vb:26"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/studentDB.accdb",
+        "line_range": "students table definition",
+        "secondary_sources": [
+          "Flat Design/InsertForm.vb:9",
+          "Flat Design/EditForm.vb:51",
+          "Flat Design/ViewForm.vb:90",
+          "Flat Design/Form1.vb:22"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-057",
+          "BR-090",
+          "BR-094"
+        ],
+        "downstream_rules": [
+          "BR-075"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Not exercisable \u2014 the rule is an absence; verify instead that no provenance column and no log output exist anywhere",
+        "error_paths": [
+          "No failure mode \u2014 the rule is an absence of recorded data, so there is nothing to fail"
+        ],
+        "boundary_conditions": [
+          "The Access object-level design dates record when the table definition changed, not when any row changed, so they cannot substitute for row provenance",
+          "Because status cannot be represented, 'all students' and 'current students' are necessarily the same set (BR-075)"
+        ]
+      },
+      "requires_sme_review": true
+    },
+    {
+      "id": "BR-096",
+      "name": "Text fields are capped at 255 characters by the schema alone",
+      "description": "Roll number, first name, last name, gender, course and year of admission are TEXT columns 255 characters wide, while father's name is a MEMO column with no practical limit. No MaxLength is set on any of the thirteen text boxes in the application and no length validation exists in code, so the only field-length rule in the system lives in the binary table definition. Input exceeding 255 characters is rejected by the provider and surfaces as an untriaged error message on the create and update paths, with no indication that length was the problem.",
+      "category": "validation",
+      "severity": "standard",
+      "complexity": "low",
+      "complexity_rationale": "A schema-level constraint with no application-level counterpart; simple, but it is the only length rule that exists and it is invisible in source.",
+      "module": "module1-db-connection",
+      "implicit": true,
+      "conditions": [
+        {
+          "condition": "A text value longer than 255 characters is submitted for a TEXT column",
+          "source": "Flat Design/InsertForm.vb:12"
+        }
+      ],
+      "actions": [
+        {
+          "action": "The provider rejects the value and the blanket Catch reports a generic error",
+          "source": "Flat Design/InsertForm.vb:31-33"
+        },
+        {
+          "action": "Father's name is exempt because it is a MEMO column",
+          "source": "Flat Design/studentDB.accdb"
+        }
+      ],
+      "source_traceability": {
+        "primary_file": "Flat Design/studentDB.accdb",
+        "line_range": "students table definition",
+        "secondary_sources": [
+          "Flat Design/InsertForm.Designer.vb:224-229",
+          "Flat Design/EditForm.Designer.vb:201",
+          "Flat Design/ViewForm.Designer.vb:72-79",
+          "Flat Design/InsertForm.vb:12-17"
+        ]
+      },
+      "dependencies": {
+        "upstream_rules": [
+          "BR-012"
+        ],
+        "downstream_rules": [
+          "BR-022",
+          "BR-061"
+        ]
+      },
+      "test_hints": {
+        "happy_path": "Realistic names and roll numbers are far below the limit and the rule is never reached.",
+        "error_paths": [
+          "A 300-character name produces an untriaged provider error on save"
+        ],
+        "boundary_conditions": [
+          "255 characters is accepted and 256 is rejected",
+          "Father's name alone accepts unbounded input because its column type differs from the other name fields, an inconsistency with no stated rationale",
+          "The search box is also unbounded, which matters for BR-052 rather than for storage"
+        ]
+      },
+      "requires_sme_review": false
+    }
+  ]
+}

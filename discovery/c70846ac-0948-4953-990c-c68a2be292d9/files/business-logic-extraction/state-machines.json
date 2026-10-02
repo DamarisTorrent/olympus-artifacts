@@ -1,0 +1,100 @@
+{
+  "$schema": "olympus:artifact:state-machines:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "Four state machines were recovered from the Student Management System. None of them is declared as a state machine in the source: the application has no status column, no state enum, no workflow table and no transition guard table. Each machine below was reverse-engineered from control flow, form lifecycle calls and connection-state tests. The most important consequence is that the student record lifecycle has no persisted state at all — a record's state is its existence — so 'enrolled', 'graduated' and 'withdrawn' are indistinguishable and the only terminal transition is physical destruction.",
+  "state_machines": [
+    {
+      "name": "student-record-lifecycle",
+      "description": "The lifecycle of a student record. States are NOT persisted: the students table has ten business columns and no status, is_deleted, version or timestamp column, so the only observable states are 'absent from the table' and 'present in the table'. Every state below other than Persisted is therefore inferred from code paths rather than readable from data. Because deletion is physical and unaudited, the Deleted state leaves no trace and the transition is irreversible from the application.",
+      "modules": ["insert-form", "edit-form", "view-form", "module1-db-connection"],
+      "states": [
+        "NonExistent — no row with this roll number; indistinguishable from never-created, graduated, withdrawn or deleted",
+        "Draft — field values held in the entry form's controls only; not persisted and lost on cancel or exit with no prompt",
+        "Persisted — one row exists in the students table; the only state with a durable representation",
+        "LoadedForEdit — the row's values are populated into the edit form's controls, which may be a lossy copy (see transition guards)",
+        "PartiallyLoaded — a reachable sub-state of LoadedForEdit in which one or more categorical dropdowns failed to bind because the stored value is outside the hardcoded list; visually similar to LoadedForEdit but saving from here destroys data (BR-033)",
+        "BlankEdit — a reachable sub-state in which no row matched and every control holds its designer default while appearing to edit the selected record (BR-036)",
+        "Deleted — the row is physically removed; no audit record, no archive, no recovery path through the application (BR-057)"
+      ],
+      "transitions": [
+        {"from": "NonExistent", "to": "Draft", "trigger": "User clicks Insert in the navigation panel", "guard": "none", "rule": "BR-078", "source": "Flat Design/Form1.vb:102-113"},
+        {"from": "Draft", "to": "Persisted", "trigger": "Save on the entry form", "guard": "All three categorical dropdowns must have a selection, enforced only by a NullReferenceException rather than by validation; roll number must not collide with the PrimaryKey index; both mobile numbers must be below 2147483648", "rule": "BR-010, BR-011, BR-017, BR-023", "source": "Flat Design/InsertForm.vb:4-34"},
+        {"from": "Draft", "to": "NonExistent", "trigger": "Cancel on the entry form, or application exit", "guard": "none — no confirmation is requested and the draft is discarded silently", "rule": "BR-079", "source": "Flat Design/InsertForm.vb:55-58"},
+        {"from": "Persisted", "to": "LoadedForEdit", "trigger": "Row selected in the grid and Update clicked", "guard": "A row must be selected; the stored date of birth must be parseable under the current workstation culture and within the date picker's range, otherwise the transition throws out of the constructor and terminates the application", "rule": "BR-030, BR-034, BR-035, BR-055, BR-063", "source": "Flat Design/ViewForm.vb:60-81"},
+        {"from": "Persisted", "to": "PartiallyLoaded", "trigger": "Same as LoadedForEdit, when a stored gender, course or year of admission is absent from the hardcoded Designer list, including by letter-case difference", "guard": "none — the failed binding is silent and indistinguishable on screen", "rule": "BR-033", "source": "Flat Design/EditForm.vb:27-29"},
+        {"from": "NonExistent", "to": "BlankEdit", "trigger": "Update clicked for a roll number with no matching row, including the grid's phantom placeholder row", "guard": "none — the missing-row case has no Else branch and produces no message", "rule": "BR-036, BR-060", "source": "Flat Design/EditForm.vb:20-33"},
+        {"from": "LoadedForEdit", "to": "Persisted", "trigger": "Update on the edit form", "guard": "All three dropdowns must hold a selection; all nine mutable columns are rewritten unconditionally with no dirty-field tracking and no concurrency check", "rule": "BR-032, BR-038", "source": "Flat Design/EditForm.vb:49-73"},
+        {"from": "PartiallyLoaded", "to": "Persisted", "trigger": "User selects a replacement value in a blanked dropdown and clicks Update", "guard": "none — this transition silently overwrites the original out-of-list stored value and is the application's main data-destruction path short of deletion", "rule": "BR-032, BR-033", "source": "Flat Design/EditForm.vb:51-64"},
+        {"from": "BlankEdit", "to": "BlankEdit", "trigger": "Update clicked from a blank edit form", "guard": "The UPDATE matches zero rows; the row count is discarded so 'Record updated successfully' is reported anyway and no state actually changes", "rule": "BR-036, BR-037", "source": "Flat Design/EditForm.vb:64-66"},
+        {"from": "LoadedForEdit", "to": "Persisted", "trigger": "Cancel on the edit form", "guard": "none — edits are abandoned with no confirmation; the close still triggers a grid reload", "rule": "BR-038", "source": "Flat Design/EditForm.vb:45-47"},
+        {"from": "Persisted", "to": "Deleted", "trigger": "Row selected in the grid and Delete clicked", "guard": "A row must be selected AND the user must answer Yes to a confirmation dialog that does not name the student — the only confirmation gate in the application", "rule": "BR-055, BR-056, BR-057", "source": "Flat Design/ViewForm.vb:83-102"},
+        {"from": "Persisted", "to": "Persisted", "trigger": "Delete confirmed with No", "guard": "none — abandons silently", "rule": "BR-056", "source": "Flat Design/ViewForm.vb:88-98"}
+      ]
+    },
+    {
+      "name": "navigation-shell",
+      "description": "The UI shell's panel-swapping state machine. There is no form navigation, no MDI container and no tab control: the three child forms are reparented as controls into the dashboard's host panel Panel5 and are shown, hidden and occasionally disposed. States are the identity of the front-most control in Panel5. Child forms are hidden rather than removed, so Panel5 accumulates them and the dashboard's statistics tiles remain present underneath every child. This machine is the substrate for the application's three most subtle defects: the default-instance refresh confusion, the duplicate close-handler accumulation, and the cross-module reparenting of the edit form.",
+      "modules": ["form1-dashboard", "insert-form", "view-form", "edit-form"],
+      "states": [
+        "DashboardVisible — Panel5 shows its own statistics tiles; the initial state after load",
+        "InsertHosted — the entry form is front-most inside Panel5, tiles still present beneath it",
+        "ViewHosted — the grid form is front-most inside Panel5",
+        "EditHosted — the edit form is front-most inside Panel5, added there by the view form reaching through the Form1 default instance; the view form remains live and interactable beneath it",
+        "Terminated — the process has exited"
+      ],
+      "transitions": [
+        {"from": "DashboardVisible", "to": "InsertHosted", "trigger": "Insert clicked", "guard": "Construct a new entry form only if none exists or the previous one was disposed; otherwise reuse the existing instance", "rule": "BR-078", "source": "Flat Design/Form1.vb:102-113"},
+        {"from": "DashboardVisible", "to": "ViewHosted", "trigger": "View clicked", "guard": "Same construct-or-reuse guard; additionally the hosted instance's grid is explicitly reloaded via a DirectCast guarded by a Contains check — the one place in the application that correctly addresses the hosted instance rather than the VB default instance", "rule": "BR-078", "source": "Flat Design/Form1.vb:139-153"},
+        {"from": "ViewHosted", "to": "EditHosted", "trigger": "Update clicked with a row selected", "guard": "A row must be selected; the edit form is reparented into Panel5 by the view form, not by the shell, and a FormClosed handler is attached on every click regardless of whether the instance was newly constructed", "rule": "BR-062, BR-063", "source": "Flat Design/ViewForm.vb:60-81"},
+        {"from": "EditHosted", "to": "ViewHosted", "trigger": "Save or Cancel on the edit form calls Close, which disposes it and fires FormClosed", "guard": "The FormClosed handler reloads the grid once per accumulated subscription", "rule": "BR-038, BR-062", "source": "Flat Design/ViewForm.vb:111-113"},
+        {"from": "InsertHosted", "to": "ViewHosted", "trigger": "Insert succeeds and calls the view form's loader through the VB default instance", "guard": "This transition does NOT actually occur — the default-instance call refreshes a second, invisible view form, so the visible grid is left stale and the user remains in InsertHosted with no indication", "rule": "BR-019", "source": "Flat Design/InsertForm.vb:28"},
+        {"from": "InsertHosted", "to": "DashboardVisible", "trigger": "Dashboard clicked", "guard": "Hide all three children without removing or disposing them, recompute all twelve statistics, then show Panel5", "rule": "BR-077, BR-078", "source": "Flat Design/Form1.vb:121-137"},
+        {"from": "ViewHosted", "to": "DashboardVisible", "trigger": "Dashboard clicked", "guard": "Same; but if a delete occurred earlier in the session the shared connection is closed and the statistics refresh throws an unhandled exception, transitioning to Terminated instead", "rule": "BR-004, BR-077", "source": "Flat Design/Form1.vb:133"},
+        {"from": "EditHosted", "to": "DashboardVisible", "trigger": "Dashboard clicked while an edit form is hosted", "guard": "The edit form is hidden rather than closed, so unsaved edits persist invisibly and reappear on return to the view", "rule": "BR-078", "source": "Flat Design/Form1.vb:126-128"},
+        {"from": "DashboardVisible", "to": "Terminated", "trigger": "Exit clicked", "guard": "none — no confirmation, no check for unsaved entry data, no orderly close of the shared connection; the window has no close chrome so this button is the only supported exit", "rule": "BR-079", "source": "Flat Design/Form1.vb:96-99"},
+        {"from": "ViewHosted", "to": "Terminated", "trigger": "Any unhandled exception in the view, search, delete or edit-launch path", "guard": "None of those four handlers has a Try/Catch, unlike the insert and update paths", "rule": "BR-035, BR-052, BR-060", "source": "Flat Design/ViewForm.vb:60-109"}
+      ]
+    },
+    {
+      "name": "shared-database-connection",
+      "description": "The lifecycle of the application's single global OleDbConnection, which is the whole of its data-access layer. Opening is lazy and idempotent; closing happens in exactly one place, on the delete path, which is what makes the subsequent dashboard refresh fail. The machine has one state the code does not handle at all — Broken — and one state, Busy, that is created implicitly by an open reader and that blocks every other operation on the shared object.",
+      "modules": ["module1-db-connection", "form1-dashboard", "insert-form", "edit-form", "view-form"],
+      "states": [
+        "Closed — the initial state and the state left behind by the delete path",
+        "Open — established lazily by the first caller and reused by all later callers",
+        "Busy — Open with an unclosed OleDbDataReader attached; any further command on the shared connection fails because OleDb permits only one open reader per connection",
+        "Broken — a state the ADO.NET connection can enter and that connectDB tests for neither, so it is never recovered from"
+      ],
+      "transitions": [
+        {"from": "Closed", "to": "Open", "trigger": "Any form calls Module1.connectDB()", "guard": "State must equal Closed; the hardcoded absolute database path must resolve on the host, which it does not on any machine but the original developer's", "rule": "BR-001, BR-002", "source": "Flat Design/Module1.vb:5-10"},
+        {"from": "Open", "to": "Open", "trigger": "Any later call to connectDB()", "guard": "No-op because State is not Closed — this is what makes the single shared connection reachable from four modules", "rule": "BR-001, BR-003", "source": "Flat Design/Module1.vb:6"},
+        {"from": "Open", "to": "Busy", "trigger": "The edit form opens a reader to load one student", "guard": "none", "rule": "BR-003, BR-030", "source": "Flat Design/EditForm.vb:18"},
+        {"from": "Busy", "to": "Open", "trigger": "The reader is closed after the single Read attempt", "guard": "Reached only on the happy path — the close is not in a Using block or Finally, so a date-parse failure at the preceding line leaves the connection Busy for the remaining life of the process", "rule": "BR-034, BR-035", "source": "Flat Design/EditForm.vb:33"},
+        {"from": "Open", "to": "Closed", "trigger": "A delete completes successfully", "guard": "none — this is the only close in the application and it is not paired with any reopen", "rule": "BR-004, BR-057", "source": "Flat Design/ViewForm.vb:94"},
+        {"from": "Closed", "to": "Closed", "trigger": "The view form reloads its grid after a delete", "guard": "Survives only because OleDbDataAdapter.Fill opens and closes the connection implicitly, masking the defect at the one call site that would have revealed it", "rule": "BR-004", "source": "Flat Design/ViewForm.vb:97"},
+        {"from": "Closed", "to": "Broken", "trigger": "The dashboard refreshes after a delete", "guard": "The statistics loader issues ExecuteScalar without calling connectDB first, raising an unhandled InvalidOperationException that terminates the application", "rule": "BR-004, BR-076", "source": "Flat Design/Form1.vb:25-26"}
+      ]
+    },
+    {
+      "name": "child-form-instance-lifecycle",
+      "description": "The lifecycle of each hosted child form object, which the shell manages manually by testing IsDisposed rather than by using a dialog or a navigation framework. This machine explains why the application's three refresh paths behave inconsistently: a form reached through a stored reference is the one the user sees, whereas a form reached through its VB type name is a separate, invisible default instance. It also explains why the edit form's reuse branch is effectively dead code, since both of its exit paths dispose the instance.",
+      "modules": ["form1-dashboard", "view-form", "insert-form", "edit-form"],
+      "states": [
+        "Nothing — no instance held; the initial state of each of the shell's three reference fields",
+        "Live — instantiated, reparented into Panel5 and visible",
+        "Hidden — instantiated and still a child of Panel5 but not visible; retains all control state including unsaved edits",
+        "Disposed — Close has been called; the reference is non-Nothing but IsDisposed is true, which is the condition the shell tests to decide whether to reconstruct",
+        "DefaultInstance — a parallel, invisible instance materialised by VB's My.Forms feature when a form is addressed by type name rather than through a stored reference"
+      ],
+      "transitions": [
+        {"from": "Nothing", "to": "Live", "trigger": "First navigation to that form", "guard": "Reference is Nothing OrElse IsDisposed", "rule": "BR-078", "source": "Flat Design/Form1.vb:103-105"},
+        {"from": "Live", "to": "Hidden", "trigger": "Dashboard navigation", "guard": "Reference is non-Nothing AndAlso Not IsDisposed — hidden, never removed from Panel5.Controls and never disposed", "rule": "BR-078", "source": "Flat Design/Form1.vb:122-132"},
+        {"from": "Hidden", "to": "Live", "trigger": "Navigation back to that form", "guard": "The construct-or-reuse guard takes the reuse branch, so prior control state including unsaved entry data is restored silently", "rule": "BR-078", "source": "Flat Design/Form1.vb:103-112"},
+        {"from": "Live", "to": "Disposed", "trigger": "Cancel on the entry form, or Save or Cancel on the edit form — all three call Me.Close() on a non-top-level form", "guard": "none", "rule": "BR-062, BR-079", "source": "Flat Design/InsertForm.vb:57"},
+        {"from": "Disposed", "to": "Live", "trigger": "Next navigation to that form", "guard": "The IsDisposed test fires and a fresh instance is constructed, which is why the edit form's UpdateRollNo reuse branch is almost never reached and its duplicate-handler accumulation stays latent", "rule": "BR-062, BR-078", "source": "Flat Design/ViewForm.vb:64-68"},
+        {"from": "Nothing", "to": "DefaultInstance", "trigger": "A form is addressed by its type name — Form1.LoadData() or ViewForm.LoadData()", "guard": "For Form1 the default instance IS the visible MainForm, so the call works; for ViewForm it is a second invisible instance, so the call silently refreshes a grid nobody sees", "rule": "BR-019, BR-038", "source": "Flat Design/InsertForm.vb:27-28"},
+        {"from": "DefaultInstance", "to": "DefaultInstance", "trigger": "Every subsequent insert", "guard": "The hidden instance's Load handler runs on first materialisation, opening the connection and binding a DataSet that is never disposed; later calls accumulate redundant query work", "rule": "BR-019", "source": "Flat Design/ViewForm.vb:10-30"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "step": "business-logic-extraction",
+  "artifacts": [
+    "Done. Four declared outputs, all schema-valid, scratch removed.\n\n## What was extracted\n\n**60 business rules** from a VB.NET WinForms student-records app (461 lines hand-written, 1 Access table, 10 columns). Plus 34 implicit behaviours and 4 state machines.\n\nThe dominant structural finding: **62% of the rules are implicit** \u2014 they live in Designer-generated UI properties, the binary `.accdb` table definition, VB/WinForms language semantics, and three `.vbproj` compiler switches. Reading only the hand-written code recovers about a third of actual behaviour.\n\n## Two things worth your attention\n\n**1. Regulatory mapping is NOT APPLICABLE \u2014 recorded as a finding, not skipped.** The governing profile is `faa`, whose five regulatory sources (14 CFR Parts 47/61/63/67/183) list `applicable_systems` like IACRA, AMCS and the Aircraft Registry. This app manages BCA/MCA/IIMCA student records \u2014 no aviation concept anywhere in it. I used `faa` as the sole policy source per the dispatch rule, omitted `regulatory_traceability` from all 60 rules rather than stubbing fabricated citations, and generated no `BR-MISSING` records. **Escalated for profile-assignment review.** I also noted that Part 47's `applicable_systems` still carries a `TODO(human)` marker \u2014 though that didn't change the determination.\n\n**2. I resolved a conflict between two Pass-1 inputs by decoding the database binary.** `db-archaeology.json` and `db-schema.json` disagreed on whether a primary key exists. Rather than pick one, I decoded the table-definition page: the `PrimaryKey` index **is** present, so `db-schema.json` is wrong. This changes the severity of two rules \u2014 had I accepted it, roll-number uniqueness would have been reported as entirely unenforced. Worth feeding back to Pass 1.\n\nThat same decode produced the sharpest defect found: **`MobNo`/`AltMobNo` are 32-bit integers**, max 2,147,483,647. Every ten-digit Indian mobile number starts with 6\u20139 and so **cannot be stored at all**. That constraint appears in no source file. Four other critical escalations are in \u00a75 of the report \u2014 including cohort statistics permanently frozen at 2023, and records that get silently corrupted by merely opening and saving them.\n\nOne caveat on confidence: the configured database path is a hardcoded `D:\\` developer path, so the committed `.accdb` is *not* the file the app opens. If this system never held real data, the mobile-number finding is a design defect with no data impact. That's open question #2."
+  ],
+  "file_artifacts": [
+    "business-logic.json",
+    "business-logic.md",
+    "implicit-logic.json",
+    "state-machines.json"
+  ],
+  "model_used": "claude-opus-5",
+  "duration_ms": 2089095,
+  "token_usage": {
+    "input": 1100,
+    "output": 185068
+  },
+  "cost_estimate_usd": 8.7948295,
+  "timestamp": "2026-10-02T18:00:08.540147+00:00",
+  "pass": "business-logic-extraction",
+  "skill_id": "legacy-business-rule-extractor"
+}

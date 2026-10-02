@@ -1,0 +1,314 @@
+{
+  "$schema": "olympus:artifact:implicit-logic:v1",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "description": "Thirty-four implicit behaviours recovered from the Student Management System: magic numbers, hardcoded domain taxonomies, schema-only constraints invisible in source, VB.NET and WinForms language semantics that act as business rules, and build settings that govern runtime behaviour. The application has 461 lines of hand-written code and no documentation of any of these. Three sources of implicit logic dominate: the Designer-generated files, which are the only place the domain value sets exist; the binary Access table definition, which holds the only field-length and numeric-range constraints in the system; and the .vbproj compiler options, which are the enabling precondition for most of the application's runtime failure modes. Several entries were confirmed by decoding studentDB.accdb directly rather than by reading code.",
+  "count": 34,
+  "implicit_rules": [
+    {
+      "id": "IM-001",
+      "name": "Hardcoded current year 2023 drives all cohort statistics",
+      "module": "form1-dashboard",
+      "category": "magic-number",
+      "description": "A local variable is assigned the literal 2023 and the five academic-year buckets are computed as that value minus zero through four. The system clock is never consulted, so the dashboard is permanently frozen in the 2023-24 academic year and, as of extraction, mislabels every cohort by three years. Correcting it requires a source change and a rebuild; changing the workstation clock has no effect.",
+      "source": "Flat Design/Form1.vb:59",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-002",
+      "name": "Five academic-year cohorts asserted in four places, justified nowhere",
+      "module": "form1-dashboard",
+      "category": "magic-number",
+      "description": "Five is hardcoded as the number of year buckets: five COUNT queries, five local counters, five tile labels and five Designer panels. The three recognised programmes are two-year and three-year degrees, so a fifth-year bucket has no clear referent, and students admitted more than five years before the hardcoded current year are counted in no year statistic with no residual bucket to reveal the omission.",
+      "source": "Flat Design/Form1.vb:61-91",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-003",
+      "name": "Admission-year value set 2019-2023, duplicated four times and expired",
+      "module": "insert-form",
+      "category": "hardcoded-taxonomy",
+      "description": "The permitted years of admission are the string literals 2019 through 2023, declared in four separate Designer locations: the Items collection and the AutoCompleteCustomSource of the combo on both the insert and the edit form. The list is static and has already expired — no student admitted after 2023 can be recorded through any application path. The two autocomplete copies are dead configuration because the combos are DropDownList style.",
+      "source": "Flat Design/InsertForm.Designer.vb:87-91; Flat Design/EditForm.Designer.vb:300-303",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-004",
+      "name": "Course taxonomy BCA/MCA/IIMCA restated in eight places",
+      "module": "insert-form",
+      "category": "hardcoded-taxonomy",
+      "description": "The three permitted programmes appear as literals in two Designer Items collections, two dead AutoCompleteCustomSource collections, three separate dashboard COUNT queries and three dashboard tile captions — plus two further orphaned captions. There is no database constraint, no lookup table and no GROUP BY, so adding a programme requires coordinated edits across at least eight locations and a record carrying any other value is counted nowhere.",
+      "source": "Flat Design/InsertForm.Designer.vb:99-103; Flat Design/Form1.vb:38-48",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-005",
+      "name": "Gender value set offers three values but only two are ever counted",
+      "module": "form1-dashboard",
+      "category": "taxonomy-inconsistency",
+      "description": "The entry and edit combos permit Male, Female and Other, but the dashboard runs COUNT queries for only Male and Female. A student recorded as Other is storable, listable and editable yet appears in no gender statistic, and because no tile reports a grand total the shortfall is undetectable from the UI. The enumeration is enforced in two files and contradicted by the single place that aggregates it.",
+      "source": "Flat Design/InsertForm.Designer.vb:176; Flat Design/Form1.vb:24-31",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-006",
+      "name": "Mobile numbers are 32-bit integers, excluding every real ten-digit number",
+      "module": "module1-db-connection",
+      "category": "schema-only-constraint",
+      "description": "MobNo and AltMobNo are four-byte Long Integer columns, confirmed by decoding the table-definition page of studentDB.accdb directly rather than from any source file. The maximum storable value is 2,147,483,647, so every ten-digit Indian mobile number — all of which begin with 6, 7, 8 or 9 — is unstorable. The entry form collects them as unconstrained free text with no MaxLength and no numeric validation, so the failure appears only as a raw provider message. Integer storage also silently discards leading zeros, country prefixes, spaces and plus signs.",
+      "source": "Flat Design/studentDB.accdb (students table definition, MobNo and AltMobNo = type 4, length 4); Flat Design/InsertForm.vb:16-17",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-007",
+      "name": "Text fields capped at 255 characters by the schema alone",
+      "module": "module1-db-connection",
+      "category": "schema-only-constraint",
+      "description": "RollNo, FName, LName, Gender, Course and YOA are TEXT columns 255 characters wide. No MaxLength is set on any of the thirteen text boxes in the application and no length check exists in code, so the only field-length rule in the system lives in the binary table definition and surfaces only as an untriaged error on save.",
+      "source": "Flat Design/studentDB.accdb (students table definition, length 510 bytes = 255 characters)",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-008",
+      "name": "Father's name is a MEMO column while every other name is TEXT(255)",
+      "module": "module1-db-connection",
+      "category": "schema-inconsistency",
+      "description": "FatherName is declared MEMO and so accepts effectively unbounded input, while FName and LName are capped at 255 characters. No rationale is recorded. The inconsistency means the one field holding a third party's personal data is also the one field with no length ceiling.",
+      "source": "Flat Design/studentDB.accdb (students table definition, FatherName = type 12)",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-009",
+      "name": "Year of admission stored as text, not as a number",
+      "module": "module1-db-connection",
+      "category": "type-coercion",
+      "description": "YOA is a TEXT column. The dashboard converts an integer year to a string and concatenates it into a quoted SQL literal, so cohort matching is lexical rather than arithmetic. A whitespace-padded or non-canonical stored year is counted nowhere while being indistinguishable in the grid, and no range predicate over years would behave arithmetically — which is likely why five equality queries were written instead of one grouped query.",
+      "source": "Flat Design/studentDB.accdb; Flat Design/Form1.vb:62-82",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-010",
+      "name": "Date of birth written as a culture-formatted display string",
+      "module": "insert-form",
+      "category": "type-coercion",
+      "description": "Both the create and the update path bind dtpDOB.Text — the picker's locale-formatted display string — rather than dtpDOB.Value, into a DATE/TIME column. The provider must reparse it under the ambient culture, so a date entered on a day-first workstation is reinterpreted on a month-first one. Day values 1 through 12 transpose silently with no error while 13 through 31 fail loudly, so the corruption is selective and hardest to detect exactly where it is most plausible.",
+      "source": "Flat Design/InsertForm.vb:23; Flat Design/EditForm.vb:62",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-011",
+      "name": "Date of birth reparsed with DateTime.Parse and no culture",
+      "module": "edit-form",
+      "category": "type-coercion",
+      "description": "Loading a record for editing converts the stored date to a string and parses it back with a culture-free DateTime.Parse before assigning it to the picker, whose Value setter additionally enforces the control's own date range. A date of birth therefore makes two unanchored culture round-trips per edit cycle, and an empty, null, unparseable or out-of-range value throws from inside a constructor that has no exception handling.",
+      "source": "Flat Design/EditForm.vb:30",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-012",
+      "name": "Dropdowns are mandatory only because an unselected combo throws",
+      "module": "insert-form",
+      "category": "accidental-validation",
+      "description": "No required-field validation exists anywhere. The three categorical fields are nonetheless de-facto mandatory because they have no default SelectedIndex and are read via SelectedItem.ToString(), which raises NullReferenceException on a Nothing reference. The blanket Catch reports a generic object-reference message that names no field, so the application's only mandatory-field enforcement is an exception with an unhelpful message.",
+      "source": "Flat Design/InsertForm.vb:18-20; Flat Design/InsertForm.Designer.vb:87-103",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-013",
+      "name": "Clearing a DropDownList combo by assigning Text is silently ignored",
+      "module": "insert-form",
+      "category": "framework-semantic",
+      "description": "The field-reset routine clears the three combos by assigning an empty string to their Text property, but a DropDownList combo accepts only values present in its Items collection, so the assignment is discarded and the previous selection persists. From the second insert of a session onward, every record silently inherits the previous student's gender, course and year of admission unless the user notices — and the accidental mandatory-field guard in IM-012 never fires again. Clearing would require SelectedIndex = -1.",
+      "source": "Flat Design/InsertForm.vb:48-50; Flat Design/InsertForm.Designer.vb:88",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-014",
+      "name": "Assigning SelectedItem to an unlisted value fails silently and locks the record",
+      "module": "edit-form",
+      "category": "framework-semantic",
+      "description": "Populating the edit form assigns the stored string to SelectedItem, which performs an exact, case-sensitive lookup in the hardcoded Items collection. A value not found leaves the combo unselected with no error. Saving then throws on SelectedItem.ToString(), so any record whose gender, course or admission year lies outside the hardcoded lists — a 2024 intake, a retired programme, or a value differing only in letter case — is permanently un-editable, and if the user picks a replacement value the original datum is silently overwritten.",
+      "source": "Flat Design/EditForm.vb:27-29; Flat Design/EditForm.vb:59-61",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-015",
+      "name": "OLEDB named parameters bind positionally, not by name",
+      "module": "insert-form",
+      "category": "provider-semantic",
+      "description": "The ACE provider does not support named parameters: the @Name tokens are anonymous placeholders and values are consumed strictly in the order added. The four parameterized statements work only because their AddWithValue order happens to match their placeholder order. Any future reordering shifts values sideways rather than erroring — and because fname/lname and mobno/altmobno are same-typed adjacent pairs, a transposition between them would corrupt data with no exception at all.",
+      "source": "Flat Design/InsertForm.vb:9-25; Flat Design/EditForm.vb:51-64",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-016",
+      "name": "Option Strict Off defers all type checking to runtime",
+      "module": "my-project-infrastructure",
+      "category": "build-setting",
+      "description": "The project compiles with Option Strict Off, permitting late binding and implicit narrowing conversions throughout the hand-written code. This is the enabling precondition for at least five distinct runtime-only failure modes — the two SelectedItem null references, the untyped parameter coercion behind the mobile-number ceiling, and both halves of the date-of-birth string confusion. The Designer-generated files set Option Strict On locally, so the weak setting applies only to code a human wrote.",
+      "source": "Flat Design/Student Management System Siddharth Jain.vbproj:51",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-017",
+      "name": "Option Compare Binary diverges from the database engine's case-insensitivity",
+      "module": "my-project-infrastructure",
+      "category": "build-setting",
+      "description": "VB string comparison is configured as case-sensitive and ordinal while the Access engine compares text case-insensitively. The same conceptual equality therefore has two different answers depending on which layer evaluates it: the edit form's dropdown rebinding fails on a case difference, while the dashboard counts and the search's roll-number equality ignore case. Any logic moved between the layers during modernization changes behaviour.",
+      "source": "Flat Design/Student Management System Siddharth Jain.vbproj:48",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-018",
+      "name": "VB default instances silently resolve to a different object than the visible form",
+      "module": "insert-form",
+      "category": "framework-semantic",
+      "description": "After a successful insert the handler calls Form1.LoadData() and ViewForm.LoadData() by type name, invoking VB's My.Forms per-thread default instances. The Form1 call happens to work because Form1 is the application's MainForm and its default instance is the visible dashboard. The ViewForm call does not: the visible grid was created with New ViewForm() and reparented, so a second invisible instance is materialised, runs its Load handler, opens the connection and refreshes a grid nobody can see, leaving the real grid stale. The View navigation handler uses a guarded DirectCast against the hosted instance instead — the contrast is the clearest evidence these calls are unintentional.",
+      "source": "Flat Design/InsertForm.vb:27-28; Flat Design/Form1.vb:149-151",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-019",
+      "name": "Delete closes the shared connection and no reopen is paired with it",
+      "module": "view-form",
+      "category": "undocumented-side-effect",
+      "description": "The delete path contains the application's only dbcon.Close(). The view form's own reload survives because DataAdapter.Fill opens and closes implicitly, which masks the defect at the one call site that would have revealed it. The dashboard's statistics loader issues ExecuteScalar without calling connectDB first, so navigating Home after a delete raises an unhandled InvalidOperationException and terminates the application.",
+      "source": "Flat Design/ViewForm.vb:94; Flat Design/Form1.vb:25-26",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-020",
+      "name": "Three mutation paths have three mutually inconsistent refresh behaviours",
+      "module": "form1-dashboard",
+      "category": "undocumented-side-effect",
+      "description": "Insert refreshes the dashboard but not the visible grid; delete refreshes the visible grid but not the dashboard; update refreshes both, and only because the view form attached a FormClosed handler when it launched the edit form. No two of the three agree, and nothing in any single file describes the intended contract.",
+      "source": "Flat Design/InsertForm.vb:27-28; Flat Design/ViewForm.vb:97; Flat Design/EditForm.vb:67-69",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-021",
+      "name": "Default date of birth is today, with an unbounded selectable range",
+      "module": "insert-form",
+      "category": "default-value",
+      "description": "The date picker has no Value, Format, CustomFormat, MinDate or MaxDate set, so it initialises to the current date and accepts the control default range of 1753-01-01 to 9998-12-31; the field-reset routine explicitly re-sets it to Date.Now. A user who does not touch the control submits today as the student's date of birth — a plausible-looking value that is always wrong — and no plausibility check rejects future or eighteenth-century birth dates.",
+      "source": "Flat Design/InsertForm.Designer.vb:286-290; Flat Design/InsertForm.vb:51",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-022",
+      "name": "Statistics tiles default to a plausible zero and are Labels, not TextBoxes",
+      "module": "form1-dashboard",
+      "category": "default-value",
+      "description": "All ten count controls carry the Designer default text 0, so a failed or skipped query is displayed as a credible statistic rather than as blank or an error: a genuinely empty table and a total failure look identical. The controls are also Labels despite txt-prefixed names implying TextBoxes, so any future code that casts them or sets ReadOnly on them will fail.",
+      "source": "Flat Design/Form1.Designer.vb:981; Flat Design/Form1.Designer.vb:932; Flat Design/Form1.Designer.vb:883",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-023",
+      "name": "Grid read-only yet AllowUserToAddRows and AllowUserToDeleteRows default to True",
+      "module": "view-form",
+      "category": "framework-semantic",
+      "description": "The grid is explicitly ReadOnly, but the two permissive row properties are never set and so retain their True defaults, which ReadOnly does not suppress. A phantom new-row placeholder is always rendered — so an empty table never looks empty and any row count is off by one — and selecting it passes the selection guard before yielding a Nothing roll-number cell, crashing both the Update and the Delete handler. The Delete key can also remove rows from the bound DataTable without touching the database, so the grid and the data silently disagree until the next reload.",
+      "source": "Flat Design/ViewForm.Designer.vb:110-128; Flat Design/ViewForm.vb:62",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-024",
+      "name": "Grid columns, order and headers come entirely from SELECT *",
+      "module": "view-form",
+      "category": "undocumented-coupling",
+      "description": "No columns are defined in the Designer and AutoGenerateColumns is enabled at runtime, so users see raw database column names as headings — rollno, fathername, altmobno, yoa — with no display labels or formatting. Any schema change silently alters the user-facing report, including exposing a newly added column, and the code's one use of a physical column name couples the mutation paths to it.",
+      "source": "Flat Design/ViewForm.vb:14-15; Flat Design/ViewForm.vb:62",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-025",
+      "name": "Search is the only unparameterized SQL and the only injection point",
+      "module": "view-form",
+      "category": "undocumented-behaviour",
+      "description": "Every other data path is parameterized, but the search concatenates raw user input into the WHERE clause with no escaping, and the input box has no MaxLength. A legitimate apostrophe in a name such as O'Brien crashes the application with an unhandled syntax error, and a crafted term reads arbitrary table content straight into the visible grid. ACE does not support stacked statements, which limits but does not eliminate the exposure.",
+      "source": "Flat Design/ViewForm.vb:48-57",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-026",
+      "name": "An active search filter is discarded silently by every refresh path",
+      "module": "view-form",
+      "category": "undocumented-behaviour",
+      "description": "Filtering calls one loader while every refresh path — after a delete, on closing an edit form, on navigating to the view — calls a different loader that rebinds the whole table. A user's filter therefore vanishes without notice whenever anything else happens, and there is no reset control, so clearing the box and pressing Search is the only explicit way to return to the full list.",
+      "source": "Flat Design/ViewForm.vb:47-58; Flat Design/ViewForm.vb:97; Flat Design/ViewForm.vb:112",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-027",
+      "name": "ExecuteNonQuery row counts are discarded, so zero-row operations report success",
+      "module": "edit-form",
+      "category": "undocumented-behaviour",
+      "description": "Neither the update nor the delete path inspects the row count returned by ExecuteNonQuery. An update that matches no rows — because the record was deleted concurrently, or because the edit form was blank per the missing-row path — still reports 'Record updated successfully', and a delete that matches nothing reports success too. The application cannot distinguish a completed change from a no-op.",
+      "source": "Flat Design/EditForm.vb:64-66; Flat Design/ViewForm.vb:93-95",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-028",
+      "name": "A missing record produces a blank edit form rather than a message",
+      "module": "edit-form",
+      "category": "missing-branch",
+      "description": "The populate block is guarded by If reader.Read() with no Else. When no row matches, the method closes the reader and returns, leaving a form that appears to be editing the selected student but holds only designer defaults. The condition surfaces later as a generic object-reference error from the unselected dropdowns, indistinguishable from two other failure modes.",
+      "source": "Flat Design/EditForm.vb:20-33",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-029",
+      "name": "Reader cleanup and exception guarding are asymmetric across paths",
+      "module": "edit-form",
+      "category": "undocumented-behaviour",
+      "description": "The insert and update handlers are wrapped in blanket Try/Catch blocks, while the record load, the grid load, the search, the delete, the edit launch and the dashboard statistics loader have no exception handling at all — so comparable failures either show a message box or terminate the process depending only on which path they occur in. There is no Using block or Finally anywhere, so the edit form's reader close depends entirely on the happy path and a date-parse failure leaves an open reader on the shared connection for the life of the process.",
+      "source": "Flat Design/EditForm.vb:13-35; Flat Design/ViewForm.vb:37-109; Flat Design/Form1.vb:22-93",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-030",
+      "name": "Unconditional AddHandler against a conditionally constructed form",
+      "module": "view-form",
+      "category": "undocumented-side-effect",
+      "description": "The edit-launch path attaches a FormClosed handler on every click but constructs a new form only when none exists or the previous was disposed, so each reuse adds another subscription to the same instance and the grid reload runs once per accumulated subscription. In practice both exit paths of the edit form call Close and dispose it, so the reuse branch is nearly unreachable and the defect stays latent — which makes the dead reuse branch itself the more durable hazard.",
+      "source": "Flat Design/ViewForm.vb:64-75",
+      "requires_sme_review": true
+    },
+    {
+      "id": "IM-031",
+      "name": "Child forms are hidden, never removed, and stack over the statistics tiles",
+      "module": "form1-dashboard",
+      "category": "undocumented-behaviour",
+      "description": "Navigation reparents child forms into the dashboard's host panel and hides rather than removes them, and nothing in the Designer hides the panel's own statistics tiles. Child forms therefore accumulate as controls layered over still-present tiles, an edit form left hosted retains unsaved edits invisibly and restores them on return, and the panel's control collection grows across the session.",
+      "source": "Flat Design/Form1.vb:109-136; Flat Design/Form1.Designer.vb:295-312",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-032",
+      "name": "Two orphaned statistics tiles are hidden by geometry rather than by Visible",
+      "module": "form1-dashboard",
+      "category": "dead-code",
+      "description": "A duplicate BCA tile and a duplicate IIMCA tile, each with its own count label, are never written to by the statistics loader and so display 0 forever. They are nested in the wrong parent panel and pushed outside its bounds by coordinates of -373 and +373 within a 343-pixel-wide parent, rather than being hidden or deleted — so any change to the parent's size, or a move to a layout container, would expose two tiles that are structurally incapable of being correct.",
+      "source": "Flat Design/Form1.Designer.vb:534; Flat Design/Form1.Designer.vb:583; Flat Design/Form1.Designer.vb:551; Flat Design/Form1.Designer.vb:600",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-033",
+      "name": "Cohort tiles carry no ordinal label; the distinction lives only in icons",
+      "module": "form1-dashboard",
+      "category": "hardcoded-taxonomy",
+      "description": "All five year tiles render the identical caption 'Year Students'. No string literal for 1st, 2nd, 3rd, 4th or 5th year exists anywhere in the file: the ordinal that distinguishes the five statistics is carried solely by picture-box image resources and by control names, so the tiles are not distinguishable from their text, not localizable and not greppable. The dashboard's axis headings also read 'Degree Wise' for the course column and label the admission-year field 'Session' on both entry forms, so three vocabularies describe two columns.",
+      "source": "Flat Design/Form1.Designer.vb:799; Flat Design/Form1.Designer.vb:454; Flat Design/Form1.Designer.vb:503; Flat Design/Form1.Designer.vb:750; Flat Design/Form1.Designer.vb:701; Flat Design/InsertForm.Designer.vb:118",
+      "requires_sme_review": false
+    },
+    {
+      "id": "IM-034",
+      "name": "Deployment and runtime assumptions hardcoded outside any configuration",
+      "module": "my-project-infrastructure",
+      "category": "hardcoded-value",
+      "description": "Several environmental facts are embedded in source or Designer code with no configuration surface: the absolute database path on drive D: (App.config contains only a runtime declaration); a GitHub URL used to open the project report even though the identical PDF sits in the repository, with a source comment still reading 'Replace with your desired web link'; a fixed non-resizable 1604x798 client area with absolutely positioned tiles; ControlBox disabled so the single Exit button is the only supported way to close the application; single-instance mode disabled, permitting concurrent instances against one Access file with last-write-wins and no conflict detection; a Release platform target of x86 matching the 32-bit-only ACE provider; and the dashboard's own title misspelled 'Sudent Management System' alongside a hardcoded author-and-cohort label, both user-visible.",
+      "source": "Flat Design/Module1.vb:7; Flat Design/Form1.vb:156; Flat Design/Form1.Designer.vb:1072-1078; Flat Design/My Project/Application.Designer.vb:27; Flat Design/Student Management System Siddharth Jain.vbproj:35; Flat Design/Form1.Designer.vb:1066",
+      "requires_sme_review": false
+    }
+  ]
+}
