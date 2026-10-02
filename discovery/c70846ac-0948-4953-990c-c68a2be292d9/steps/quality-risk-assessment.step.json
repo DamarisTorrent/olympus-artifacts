@@ -1,0 +1,21 @@
+{
+  "step": "quality-risk-assessment",
+  "artifacts": [
+    "The `quality-risk-assessor` skill has been executed for application `c70846ac-0948-4953-990c-c68a2be292d9` (Student Management System, VB.NET). All three outputs are written to `artifacts/discovery-quality-risk-assessment/` and both JSON artifacts validate cleanly against their binding schemas.\n\n**Key findings:**\n\n- **Overall risk tier: HIGH** \u2014 driven by security/governance, not complexity. The app itself is small and simple (461 hand-written LOC, max cyclomatic complexity \u22484, max coupling 4) but:\n  - Live, unredacted student PII (names, mobile numbers, DOB) sits in a committed Access DB in what appears to be a public repo, with **zero authentication** anywhere in the app.\n  - A confirmed, exploitable **SQL-injection vector** at `ViewForm.vb:50`.\n  - **Zero test coverage, zero CI/CD** \u2014 reported as `measurement.method=\"unavailable\"`, never fabricated as 0%.\n  - No dependency manifest exists at all (GAC-only refs), so `vulnerabilities: []` is correctly empty rather than inventing a CVE.\n\n- **Technical debt score: 74/100 (HIGH band)**, computed transparently from the default rubric (40% smell density + 30% coverage gap + 20% vuln count + 10% churn), with every input shown so it's reproducible.\n\n- **21 code smells** recorded with file:line anchoring (god-class, long-method, duplication, SQL-injection construction, resource leaks, hardcoded config, the default-instance-aliasing correctness defect, etc.), all module-attributed per the Pass 1 structural map.\n\n- **Escalation ESC-1 (severity: critical, type: stakeholder_required)** was raised because the \"regulatory surface area \u2014 PII\" threshold fires unconditionally, independent of the (otherwise unremarkable) complexity/coupling scores. It carries the two allowed `review_asks` (`stakeholder-escalation-open` / resolve, `escalation-recorded` / aware). Mermaid diagrams in the `.md` show the blast radius through the shared-connection coupling and the insert flow's stale-UI defect.\n\n- **Governing-profile discrepancy recorded, not adopted**: this app has no discernible FAA/NAS relevance despite the `faa` profile governing the task \u2014 flagged explicitly in `quality-risk.md` per instructions, consistent with Pass 0's own open question, without restating the mismatch as settled fact."
+  ],
+  "file_artifacts": [
+    "escalation-record.json",
+    "quality-risk.json",
+    "quality-risk.md"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 453074,
+  "token_usage": {
+    "input": 1059,
+    "output": 40849
+  },
+  "cost_estimate_usd": 1.2783457999999999,
+  "timestamp": "2026-10-02T18:00:23.109246+00:00",
+  "pass": "quality-risk-assessment",
+  "skill_id": "quality-risk-assessor"
+}

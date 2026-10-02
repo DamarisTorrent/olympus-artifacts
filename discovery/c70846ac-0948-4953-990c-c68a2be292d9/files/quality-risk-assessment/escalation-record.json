@@ -1,0 +1,76 @@
+{
+  "$schema": "olympus:artifact:escalation-record:v1",
+  "id": "ESC-1",
+  "type": "stakeholder_required",
+  "severity": "critical",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "assembly_line": "Discovery",
+  "step": "Discovery Pass 3 — Quality & Risk Assessment",
+  "skill": "quality-risk-assessor",
+  "trigger": {
+    "trigger_type": "regulatory_surface_area_pii",
+    "details": "Complexity Escalation threshold 'Regulatory surface area' (profiles/faa quality-risk-assessor methodology) triggers unconditionally — independent of cyclomatic complexity, coupling, or churn scores — whenever a module touches PII, financial calculations, or safety-critical paths. Direct source read plus Pass 1's independent decode of the committed studentDB.accdb confirm: (1) the 'students' table stores first/last name, father's name, two mobile numbers, and date of birth for named individuals; (2) the decode recovered real column values from data pages, confirming this is a live dataset, not an empty/seed schema; (3) zero authentication, authorization, or encryption exists anywhere in the application (AuthenticationMode=0, no login form across all 4 forms — Flat Design/My Project/Application.myapp:8); (4) a confirmed, exploitable SQL-injection vector (Flat Design/ViewForm.vb:50 — txtSearch.Text concatenated into both an equality clause and a LIKE clause) provides a live path to exfiltrate the entire dataset; (5) the repository is a public GitHub project per README.md and the hardcoded report URL at Flat Design/Form1.vb:156. Severity is set to 'critical' rather than the baseline 'standard/high' because this is an active, ongoing public exposure of real PII (not a latent or hypothetical risk) layered with a working injection vector and no access control of any kind — five of the application's six modules (module1-db-connection, form1-dashboard, insert-form, edit-form, view-form) read, write, or aggregate the affected table."
+  },
+  "created_at": "2026-10-02T00:00:00Z",
+  "status": "open",
+  "review_asks": [
+    {
+      "ask_slug": "stakeholder-escalation-open",
+      "action": "resolve",
+      "title": "Decide who owns remediation of the live student-PII exposure before this application proceeds past Discovery",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "why": "A stakeholder_required escalation that is approved past without a named resolver (or a documented reason to defer) makes the escalation type a label rather than a control, and leaves a real, exploitable PII exposure unaddressed.",
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "Based on direct evidence: Pass 1's binary decode of studentDB.accdb recovered real column values (not schema alone), a full source read confirms zero authentication across all 4 forms, and the SQL-injection path at ViewForm.vb:50 was independently re-verified against the source in this pass."
+      },
+      "assessment": "studentDB.accdb (784 KB), committed to what README.md and the embedded report URL identify as a public GitHub repository, contains live PII for named students — first/last name, father's name, two mobile numbers, and date of birth. The application that owns this data has no authentication, no authorization, and no encryption anywhere in its 461 hand-written lines, and ViewForm.vb:50 contains a confirmed, unparameterized SQL-injection path built from free-text search input that can read the entire table. This is an active data-governance incident rather than a design-time risk, and needs a named data-protection/privacy stakeholder (not an automated gate) to rule on remediation — e.g., purge the file from git history, restrict repository visibility, or confirm an accepted-risk disposition — before further modernization investment in this application.",
+      "reasoning": "Evidence is drawn from two independent passes: Pass 1 (legacy-architecture-mapper) decoded the Access ACE table-definition and data-page records directly from the binary .accdb and recovered real stored values, which rules out this being an empty template or seed-data fixture. This pass (quality-risk-assessor) independently re-read all 5 hand-written .vb files and confirmed no login form, no AuthenticationMode usage, and the exact unparameterized concatenation at ViewForm.vb:50. The two passes used different techniques (binary decode vs. source read) and reached the same conclusion, which is why confidence is high.",
+      "evidence_refs": [
+        {
+          "name": "PII recovered from binary decode",
+          "detail": "ACE table-definition and data-page decode of studentDB.accdb recovered real surname/gender values, confirming a live (not seed) PII dataset.",
+          "artifact_path": "artifacts/discovery-structural-analysis/structural-analysis.json"
+        },
+        {
+          "name": "No authentication anywhere in the application",
+          "detail": "AuthenticationMode=0 (Windows, unused), no login form in any of the 4 forms; every operator has unrestricted CRUD over all PII fields.",
+          "artifact_path": "source/Flat Design/My Project/Application.myapp"
+        },
+        {
+          "name": "Confirmed SQL-injection vector",
+          "detail": "txtSearch.Text concatenated directly into a SQL equality clause and a LIKE clause with no parameter binding; the only unsafe-input construction in the app that is exploitable today.",
+          "artifact_path": "source/Flat Design/ViewForm.vb"
+        },
+        {
+          "name": "Public repository context",
+          "detail": "README.md and a hardcoded Process.Start URL in Form1.vb:156 both point to a public github.com project page.",
+          "artifact_path": "source/README.md"
+        }
+      ]
+    },
+    {
+      "ask_slug": "escalation-recorded",
+      "action": "aware",
+      "title": "For the record: this Discovery pass escalated one regulatory-surface finding (student PII exposure) for Student Management System (VB.NET)",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "why": "Documents that the quality-risk-assessor pass ran its mandatory escalation check and surfaced exactly one trigger, so the review record is explicit about what was checked rather than silent.",
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "Derived directly from the methodology's unconditional 'regulatory surface area' rule applied against directly-observed source and data evidence; no inference beyond what both Discovery passes independently confirmed."
+      },
+      "assessment": "One escalation (ESC-1) was recorded: five of six modules (module1-db-connection, form1-dashboard, insert-form, edit-form, view-form) touch the PII-bearing 'students' table, which mandates human review under the profile's complexity-escalation rubric regardless of this application's otherwise low cyclomatic complexity (max ≈4) and low afferent coupling (max fan-in 4, below the >8 threshold). No complexity- or coupling-threshold escalation was independently warranted; only the regulatory-surface rule fired."
+    }
+  ]
+}
