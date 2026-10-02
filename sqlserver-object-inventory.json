@@ -1,0 +1,85 @@
+{
+  "$schema": "olympus:artifact:sqlserver-object-inventory:v1",
+  "application": {
+    "name": "Student Management System (VB.NET)",
+    "discovery_date": "2026-10-02",
+    "server_version": "NOT APPLICABLE — no Microsoft SQL Server instance, connection or artifact exists in this application. The only database is a file-based Microsoft Access database (Flat Design/studentDB.accdb, header 'Standard ACE DB', ACE format version byte 0x02 = Access 2007/ACE 12), reached through the Microsoft.ACE.OLEDB.12.0 provider. This inventory is emitted because the Discovery line declared the discovery-patterns-sqlserver variant unconditionally; every object collection below is empty as a measured finding, not as an unfinished walk. See db-archaeology.json for the actual engine inventory.",
+    "databases": []
+  },
+  "object_inventory": {
+    "stored_procedures": [],
+    "functions": [],
+    "triggers": [],
+    "views": [],
+    "clr_objects": []
+  },
+  "bi_etl_inventory": {
+    "ssis_packages": [],
+    "ssrs_reports": [],
+    "ssas_cubes": []
+  },
+  "ops_inventory": {
+    "agent_jobs": [],
+    "service_broker_queues": [],
+    "linked_servers": []
+  },
+  "type_risks": [
+    {
+      "source_type": "MS Access TEXT / SHORT TEXT (students.rollno, fname, lname, fathername, mobno, altmobno, gender, course, yoa)",
+      "occurrences": 9,
+      "migration_risk": "medium",
+      "target_type": "nvarchar(n)",
+      "notes": "Access short-text columns are untyped at the call site: every value is bound as a string by the forms, including yoa (year of admission) which is compared against a .NET integer rendered with ToString() at Flat Design/Form1.vb:62-83. A move to a typed engine must decide per column whether the value is genuinely text or a number/enum stored as text. Column names and presence confirmed from the .accdb catalog (UTF-16 object/column name map in Flat Design/studentDB.accdb); exact Access column types and lengths could NOT be read with the text-only tooling available, so the source_type here is inferred from binding usage, not read from DDL."
+    },
+    {
+      "source_type": "MS Access DATE/TIME (students.dob)",
+      "occurrences": 1,
+      "migration_risk": "medium",
+      "target_type": "date",
+      "notes": "Access DATE/TIME is a double-precision serial with no timezone and a 1899-12-30 epoch; it also permits a time component on what is semantically a date-only field (date of birth). Mapping to date rather than datetime2 drops any spurious time component, which is the desired behaviour but is a silent data change. Presence of the DOB column confirmed in the .accdb catalog; the declared Access type was not readable with available tooling."
+    },
+    {
+      "source_type": "MS Access AutoNumber / primary key on students",
+      "occurrences": 1,
+      "migration_risk": "high",
+      "target_type": "unverified",
+      "notes": "UNVERIFIED, flagged rather than asserted. rollno is used as the unique row selector by EditForm (Flat Design/EditForm.vb:14, :51) and ViewForm (Flat Design/ViewForm.vb:90), so the application behaves as though rollno were a primary key, but no DDL exists in the source tree and the .accdb index metadata could not be parsed with text-only tooling. Whether students has a declared primary key, a unique index, or no constraint at all must be confirmed against the live .accdb before any migration relies on rollno uniqueness."
+    }
+  ],
+  "driver_signatures": [
+    {
+      "connection_type": "oledb",
+      "provider": "Microsoft.ACE.OLEDB.12.0",
+      "pattern": "\"Provider=Microsoft.ACE.OLEDB.12.0; data source=D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb;Persist Security Info=False;\" — a hardcoded absolute Windows path assigned to a module-level shared OleDbConnection. Not a SQL Server driver: recorded here because this is the application's only data-access driver signature and the SQL Server inventory would otherwise report no connectivity at all. The ACE OLEDB provider is an out-of-band redistributable, is bitness-coupled to the host process, and has no SQL Server equivalent.",
+      "files": [
+        "Flat Design/Module1.vb:7"
+      ]
+    },
+    {
+      "connection_type": "oledb",
+      "provider": "System.Data.OleDb (ADO.NET managed wrapper)",
+      "pattern": "OleDbConnection / OleDbCommand / OleDbDataAdapter / OleDbDataReader used directly in form event handlers, with no DAL, repository or ORM layer between the UI and the database. 16 inline SQL statements across 4 forms.",
+      "files": [
+        "Flat Design/Module1.vb:1",
+        "Flat Design/Module1.vb:4",
+        "Flat Design/Form1.vb:5",
+        "Flat Design/Form1.vb:6",
+        "Flat Design/InsertForm.vb:11",
+        "Flat Design/EditForm.vb:16",
+        "Flat Design/EditForm.vb:53",
+        "Flat Design/ViewForm.vb:9",
+        "Flat Design/ViewForm.vb:39",
+        "Flat Design/ViewForm.vb:53",
+        "Flat Design/ViewForm.vb:91"
+      ]
+    },
+    {
+      "connection_type": "file-lock",
+      "provider": "Microsoft Access ACE lock file",
+      "pattern": "studentDB.laccdb committed to version control alongside the database. Its 64-byte payload is 'SIDDHARTH-WINDO' + 'Admin', i.e. the developer workstation hostname and the built-in Access 'Admin' account, evidencing that the database was copied into the repository while still open and that no Access workgroup security is in use.",
+      "files": [
+        "Flat Design/studentDB.laccdb:1"
+      ]
+    }
+  ]
+}

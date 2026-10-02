@@ -1,0 +1,156 @@
+{
+  "$schema": "olympus:artifact:identity-landscape:v1",
+  "portfolio_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "analyzed_date": "2026-10-02",
+  "scope_note": "SINGLE-APPLICATION SCOPE, NOT A PORTFOLIO. This artifact's root identifier is a portfolio id, but this Discovery dispatch covered one application and no portfolio identifier was supplied in _dispatch-context-discovery-structural-analysis.json. The application_id is therefore carried here verbatim rather than inventing a portfolio id, and every apps_using / affected_apps entry below is that same application_id. Portfolio-wide identity proliferation CANNOT be assessed from a single-application walk: the proliferation findings below concern this application's relationship to any shared identity estate, not a comparison across peers. Re-run at portfolio scope to get the cross-application picture this schema is designed for.",
+  "methodology_note": "Determined by exhaustive search of all 13 VB.NET source files and every configuration file in the tree for any authentication, authorisation, session, credential, principal, token or directory construct (case-insensitive search for login, password, passwd, credential, auth, identity, principal, WindowsIdentity, SAML, OAuth, LDAP, token, session, user). The search returned ZERO matches in non-designer application code. The absence of authentication is therefore a measured finding across the whole tree, not an unexamined dimension.",
+  "identity_models": [
+    {
+      "model_name": "None — unauthenticated local desktop access",
+      "provider": "No identity provider. The application performs no authentication of any kind: there is no login form, no credential prompt, no session concept, no principal check and no authorisation gate. Launching the executable grants immediate, complete read/write/delete access to every student record. The startup form is the dashboard itself, with no gate in front of it.",
+      "assurance_level": {
+        "nist_ial": "unknown",
+        "nist_aal": "below-AAL1",
+        "nist_fal": "not-applicable",
+        "phishing_resistant": false,
+        "mfa_type": "none"
+      },
+      "apps_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "user_classes": [
+        "local-desktop-operator"
+      ],
+      "evidence_citations": [
+        "Flat Design/Form1.vb — dashboard form is the application entry point and performs no identity check before loading data",
+        "Flat Design/My Project/Application.Designer.vb — startup object is the main form directly, with no authentication form preceding it",
+        "Flat Design/App.config:1-6 — contains only a supportedRuntime element; no authentication, membership, role or connectionStrings configuration",
+        "Flat Design/Student Management System Siddharth Jain.vbproj:76-85 — assembly references are System, System.Data, System.Deployment, System.Drawing, System.Windows.Forms, System.Xml, System.Core, System.Xml.Linq, System.Data.DataSetExtensions, System.Net.Http; no System.DirectoryServices, no System.IdentityModel, no System.Security principal library, no authentication package",
+        "Exhaustive case-insensitive search across all *.vb and config files for login/password/credential/auth/identity/principal/SAML/OAuth/LDAP/token/session returned zero matches in application code"
+      ]
+    },
+    {
+      "model_name": "Microsoft Access built-in Admin account (database-tier, default, no password)",
+      "model_type": "custom-app-specific",
+      "provider": "Microsoft Access ACE / Jet built-in security. The database is opened under the default 'Admin' account with no workgroup information file and no database password — the historical Access default, in which the Admin account has an empty password and full permissions. This is a database-tier identity surface distinct from the application's (absent) user authentication, and it is why the connection string needs no credentials.",
+      "assurance_level": {
+        "nist_ial": "unknown",
+        "nist_aal": "below-AAL1",
+        "nist_fal": "not-applicable",
+        "phishing_resistant": false,
+        "mfa_type": "none"
+      },
+      "apps_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "user_classes": [
+        "database-file-holder"
+      ],
+      "evidence_citations": [
+        "Flat Design/studentDB.laccdb:1 — the committed 64-byte lock file payload is 'SIDDHARTH-WINDO' followed by 'Admin', naming the developer workstation and the built-in Access Admin account",
+        "Flat Design/Module1.vb:7 — connection string 'Provider=Microsoft.ACE.OLEDB.12.0; data source=...studentDB.accdb;Persist Security Info=False;' supplies no user id and no password, confirming default Admin access with no database password",
+        "Flat Design/studentDB.accdb:catalogue — MSysACEs present with default permissions; no workgroup security objects detected"
+      ]
+    }
+  ],
+  "assurance_gaps": [
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-identity-proofing",
+      "severity": "critical",
+      "description": "The application performs no identity proofing, no authentication and no authorisation whatsoever. There is no concept of a user: no login, no credential store, no session, no principal, no role. Anyone with access to the workstation or to a copy of the executable and the .accdb file has unrestricted authority to read, create, modify and permanently delete every student record, including names, parentage, dates of birth and mobile numbers. Because there is no user identity, there is also no audit trail — no action can be attributed to anyone.",
+      "remediation_recommendation": "Authentication must be introduced as part of any modernisation, not retrofitted onto the desktop form flow. Front the replacement application with the organisation's standard identity provider, enforce AAL2 at minimum for a PII-bearing record system, and add per-action audit logging keyed to the authenticated principal. Until then, treat the host workstation's own OS logon and physical security as the only control, and document that as an accepted risk with the business owner.",
+      "citation": "Whole-tree search of all 13 *.vb files and all configuration files for any authentication construct returned zero matches; entry point Flat Design/Form1.vb loads student data with no preceding gate"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-mfa",
+      "severity": "critical",
+      "description": "No multi-factor authentication exists because no first factor exists. Recorded separately from the identity-proofing gap because MFA posture is tracked independently in downstream gating: the correct value for this application is not 'MFA absent from an otherwise authenticated system' but 'no authentication layer of any kind in which a second factor could sit'.",
+      "remediation_recommendation": "Deliver MFA together with the initial authentication layer rather than as a later phase; there is no existing credential flow to augment, so phishing-resistant authentication can be adopted from the outset at no migration cost.",
+      "citation": "Flat Design/Student Management System Siddharth Jain.vbproj:76-85 — no identity, directory or authentication assembly is referenced by the project"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "shared-credentials",
+      "severity": "high",
+      "description": "At the database tier the application connects as the Microsoft Access built-in 'Admin' account with no password and no workgroup security file, which the committed lock file confirms. Every instance of the application, and every person who opens the .accdb directly in Microsoft Access, acts as the same unauthenticated all-powerful database principal. There is no separation between the application's access and a human's direct file access, and no database-tier permission can restrict either.",
+      "remediation_recommendation": "On migration to a managed engine, give the application a dedicated least-privilege service principal scoped to the single table with no DDL rights, and remove any path by which a human can open the data store directly.",
+      "citation": "Flat Design/studentDB.laccdb:1 ('Admin') and Flat Design/Module1.vb:7 (credential-free connection string)"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-session-timeout",
+      "severity": "medium",
+      "description": "There is no session, therefore no timeout, no idle lock and no re-authentication. The application holds its single database connection open for the entire lifetime of the process (connectDB() opens it and nothing ever closes it), so an unattended running instance remains a fully privileged open window onto the complete PII store for as long as the process lives.",
+      "remediation_recommendation": "Introduce an authenticated session with an idle timeout and a re-authentication prompt for destructive actions (update, delete) in the replacement application.",
+      "citation": "Flat Design/Module1.vb:4-10 — module-level shared OleDbConnection opened on demand and never closed or disposed"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "weak-password-policy",
+      "severity": "medium",
+      "description": "No password policy exists because no passwords exist, at either tier: the application has no credential store, and the Access database has no database password and no workgroup security. Recorded so that a downstream policy check reads this as 'no policy possible' rather than silently passing for want of a password field to inspect.",
+      "remediation_recommendation": "Inherit password and authenticator policy from the organisation's identity provider rather than implementing any local credential handling in the replacement.",
+      "citation": "Flat Design/Module1.vb:7 — 'Persist Security Info=False' with no User Id or Password token in the connection string"
+    }
+  ],
+  "proliferation_findings": [
+    {
+      "finding_type": "identity-model-per-app",
+      "description": "This application sits entirely outside any shared identity estate: it federates with nothing, authenticates against nothing, and contributes no accounts to any directory. Its effective identity model is 'whoever holds the workstation', which cannot be inventoried, reconciled or revoked centrally. In a portfolio-consolidation view this is the extreme case of per-application identity — not a divergent model to be migrated onto a common one, but the absence of any model to migrate.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Organisation standard enterprise identity provider (specific target cannot be named from a single-application walk; no portfolio identity inventory was supplied to this dispatch)"
+    },
+    {
+      "finding_type": "no-broker-federation",
+      "description": "There is no federation of any kind and no broker in the path. The application has no HTTP surface, no redirect capability and no token handling, so it cannot participate in a federated flow in its current form — a WinForms thick client bound to a local file database has nowhere to put an assertion. Federation is reachable only through the rewrite, not through configuration of the existing application.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Federated authentication introduced as part of the target-state rebuild"
+    },
+    {
+      "finding_type": "same-app-multiple-models",
+      "description": "Two distinct identity surfaces coexist in one small application, both unauthenticated: the application tier has no user identity at all, and the data tier runs as the Access built-in Admin principal with no password. They are unrelated — the application never learns who the user is, and the database never learns which application is connecting — so there is no path by which a user action could be attributed end to end even if one tier were secured in isolation.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Single authenticated user identity at the application tier plus a distinct least-privilege service principal at the data tier"
+    }
+  ],
+  "retire_recommendations": [
+    {
+      "model_name": "None — unauthenticated local desktop access",
+      "reason": "A PII-bearing student record system with no authentication, no authorisation and no audit trail cannot be brought to any acceptable assurance level in place. The model is not weak, it is absent: there is nothing to harden, so it must be replaced rather than improved.",
+      "replacement_model": "Organisation standard enterprise identity provider with phishing-resistant MFA, targeting AAL2 or above, plus per-action audit logging keyed to the authenticated principal",
+      "migration_complexity": "low",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    },
+    {
+      "model_name": "Microsoft Access built-in Admin account (database-tier, default, no password)",
+      "reason": "Retires together with the Microsoft Access engine itself. The passwordless built-in Admin principal is an artefact of the ACE/Jet file-database model and has no equivalent, and no safe configuration, on a managed engine.",
+      "replacement_model": "Dedicated least-privilege database service principal scoped to the single table, with no direct human access path to the data store",
+      "migration_complexity": "low",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    }
+  ],
+  "broker_recommendation": {
+    "recommended_pattern": "broker-staff-only",
+    "broker_technology": "Not specified — no portfolio identity inventory or target identity platform was supplied to this single-application dispatch, so naming a broker product here would be an invention rather than a recommendation.",
+    "fronted_idps": [],
+    "rationale": "The user population is internal administrative staff maintaining student records; there is no public or external user class in evidence anywhere in the application (one user class only, the local desktop operator, and no self-service or applicant-facing surface). A staff-only brokered pattern therefore matches the actual population. This recommendation is LOW CONFIDENCE on one point: because the application has no authentication at all, the user population is inferred from the application's function and its single-operator desktop design rather than read from any account list, role table or directory group — none exist. Confirm the real user classes with the business owner before committing to a brokering pattern, and note that the complexity here is in the application rewrite, not in the identity integration: with no existing credential flow, no account migration or coexistence period is required."
+  }
+}
