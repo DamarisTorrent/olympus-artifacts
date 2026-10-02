@@ -1,0 +1,211 @@
+{
+  "portfolio_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "analyzed_date": "2026-10-02",
+  "scope_note": "PER-APPLICATION scope (LD-10). This skill was dispatched as a structural-analysis augmentation for ONE application (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)'), so it observed exactly one application's identity model. No portfolio_id was supplied in the dispatch context; the application_id is used verbatim as portfolio_id so the artifact binds to something real rather than to an invented portfolio label. Every count, ratio and threshold below is scoped to what this single invocation could see, and proliferation findings whose heuristics require portfolio-wide counts are marked as un-evaluable at this scope rather than asserted.",
+  "profile_note": "Governing client profile is 'faa' per the authoritative task declaration. profiles/faa/ is NOT readable from this sandbox (it lies outside the two permitted working directories), so the profile's IDP inventory (technology.yaml), user-class taxonomy, and risk-tier-to-AAL floors could not be sourced from the profile itself. Concrete FAA IDP names and user-class labels are therefore deliberately NOT asserted anywhere in this artifact. Risk tier is unestablished (catalog safety_tier is null), so gap severities are pinned to the catalog's explicitly non-authoritative 'T3 lean' and each carries a re-rate instruction.",
+  "identity_models": [
+    {
+      "model_name": "Ambient Windows interactive-logon identity (VB.NET Application Framework AuthenticationMode.Windows)",
+      "model_type": "on-prem-directory",
+      "provider": "Windows interactive logon on the host workstation; whether the principal is a local SAM account or an AD domain account is NOT determinable from source (no System.DirectoryServices reference, no domain name, no LDAP/Kerberos configuration anywhere in the tree)",
+      "assurance_level": {
+        "nist_ial": "unknown",
+        "nist_aal": "below-AAL1",
+        "nist_fal": "not-applicable",
+        "phishing_resistant": false,
+        "mfa_type": "none"
+      },
+      "apps_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "user_classes": [
+        "local-workstation-operator"
+      ],
+      "evidence_citations": [
+        "student-management-system:Flat Design/My Project/Application.Designer.vb:26 — MyBase.New(AuthenticationMode.Windows): the VB Application Framework binds My.User to the Windows interactive-logon principal",
+        "student-management-system:Flat Design/My Project/Application.myapp:8 — <AuthenticationMode>0</AuthenticationMode> confirms the Windows setting is the designer-persisted intent, not an accident of code generation",
+        "student-management-system:Flat Design/Form1.vb:15 — Form1_Load calls Module1.connectDB() then LoadData() with no authentication or authorization gate preceding it; My.User is never read anywhere in the tree",
+        "student-management-system:Flat Design/Student Management System Siddharth Jain.vbproj:76 — assembly reference list contains no System.DirectoryServices, System.Security, or System.IdentityModel; there is no authentication library in the project at all",
+        "nist_ial=unknown evidence: proofing strength is wholly inherited from the issuance policy of the Windows account, which is a host/domain administration artifact and is not observable in this application's source. Per references/nist-800-63-mapping.md 'Unknown' section, emitted as unknown rather than guessed.",
+        "nist_aal=below-AAL1 evidence: the application performs no authentication event of its own. AuthenticationMode.Windows populates My.User but no code path reads or verifies it, so any interactive desktop session on the host — including a shared or kiosk account — reaches full CRUD. The strength of the upstream Windows authenticator is separately unknown; the below-AAL1 rating is the assurance the APPLICATION boundary enforces, which is none."
+      ]
+    },
+    {
+      "model_name": "Credential-less ACE OLEDB data-tier access to bundled studentDB.accdb",
+      "model_type": "custom-app-specific",
+      "provider": "Microsoft ACE OLEDB 12.0 provider opening a local .accdb file by absolute path; no database-level authentication of any kind",
+      "assurance_level": {
+        "nist_ial": "IAL1",
+        "nist_aal": "below-AAL1",
+        "nist_fal": "not-applicable",
+        "phishing_resistant": false,
+        "mfa_type": "none"
+      },
+      "apps_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "user_classes": [
+        "local-workstation-operator"
+      ],
+      "evidence_citations": [
+        "student-management-system:Flat Design/Module1.vb:7 — connection string is \"Provider=Microsoft.ACE.OLEDB.12.0; data source=D:\\PROGRAMING\\Visual Basic\\Flat Design\\Flat Design\\Flat Design\\studentDB.accdb;Persist Security Info=False;\" — no User ID, no Password, and no 'Jet OLEDB:Database Password' token",
+        "Negative-evidence inference from the same line: ACE OLEDB cannot open a password-protected .accdb without a 'Jet OLEDB:Database Password' token, so the absence of that token establishes the database file itself carries no database password. Access control over the student PII reduces entirely to NTFS permissions on the file.",
+        "student-management-system:Flat Design/studentDB.accdb — the database file is committed into the repository (802,816 bytes), so the data is distributed to every clone of the source tree with no credential barrier whatsoever",
+        "student-management-system:Flat Design/studentDB.laccdb — an Access lock file is also committed, evidencing that the file was opened under multi-user record locking rather than exclusively by one owner",
+        "nist_ial=IAL1 evidence: no subject identity is asserted to the data tier at all, which is weaker than self-asserted. The IAL enum has no below-IAL1 member, so IAL1 ('self-asserted, no proofing', per references/nist-800-63-mapping.md) is recorded as the enum floor with this caveat rather than emitting a misleading 'unknown' for something that was in fact fully observed.",
+        "nist_fal=not-applicable evidence: no federation of any kind — no SAML, no OIDC, no assertion, no token. Per references/nist-800-63-mapping.md, local-only access maps to not-applicable."
+      ]
+    }
+  ],
+  "assurance_gaps": [
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-mfa",
+      "severity": "high",
+      "description": "The application performs no authentication of any kind — there is no login form, no credential store, and no users table (every SQL statement in the tree targets the single 'students' table). Form1_Load opens the database and renders the dashboard immediately, and all four forms expose unrestricted insert / view / search / edit / delete over records containing date of birth, father's name, and two mobile numbers. There is not merely no second factor; there is no first factor at the application boundary. Severity is pinned to the catalog's explicitly NON-AUTHORITATIVE 'T3 lean' (catalog safety_tier is null and the catalog states tier must come from stakeholder/Safety Board input): the app is below-AAL1 and so fails even the Tier 3 AAL1 floor, which makes this high at any tier. RE-RATE TO critical if stakeholder classification returns Tier 1 or Tier 2.",
+      "remediation_recommendation": "Introduce a real authentication boundary rather than hardening the ambient one. Front the application with the broker-fronted federated staff IDP described in broker_recommendation, requiring per-user authentication at AAL2 minimum before any form loads, and gate the destructive edit/delete paths behind an authorization check. Because there is no existing account store, there is no credential migration to perform — the work is net-new authentication code in the WinForms client, not a swap.",
+      "citation": "student-management-system:Flat Design/Form1.vb:15"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "below-aal2",
+      "severity": "high",
+      "description": "Measured against the AAL floor rather than the authenticator inventory: the application boundary enforces below-AAL1, which is beneath the AAL2 floor that references/retire-recommendations.md sets for Tier 2 and beneath the AAL1 floor it sets for Tier 3. The app therefore fails its assurance floor under every tier the catalog's provisional lean admits, so the finding does not depend on the unresolved tier question. Tracked separately from the no-mfa gap because downstream consumers key the floor comparison and the authenticator absence off different gap_type values. Severity pinned to the provisional T3 lean; RE-RATE TO critical on a Tier 1 or Tier 2 classification.",
+      "remediation_recommendation": "Establish AAL2 as the hard minimum via the federated IDP (per-user authentication plus a non-email second factor). Note that email-code MFA would NOT satisfy this floor: NIST 800-63B 5.1.3.3 excludes the email channel from out-of-band authenticators, so an emailed 6-digit code remains AAL1 however it is marketed. Specify TOTP or better, and FIDO2/PIV if a Tier 1 classification comes back.",
+      "citation": "student-management-system:Flat Design/My Project/Application.Designer.vb:26"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "shared-credentials",
+      "severity": "high",
+      "description": "The data tier is reached with no credential at all. The ACE OLEDB connection string carries no User ID, no Password, and no 'Jet OLEDB:Database Password', so every operator of the host shares one identical, credential-less, undifferentiated path to the student PII, and no per-user attribution of reads or writes is possible. Critically, this path is reachable WITHOUT the application: any OLEDB client, or Microsoft Access itself, pointed at the same .accdb obtains the same full read/write access, so any authentication added to the WinForms client alone would be a bypassable control. The committed .accdb and .laccdb files put the data and its multi-user lock state into every clone of the repository. Severity pinned to the provisional T3 lean; RE-RATE TO critical on a Tier 1 or Tier 2 classification.",
+      "remediation_recommendation": "Migrate the data tier off the file-based .accdb onto a server-hosted RDBMS that authenticates each caller as an individual principal, so that the authentication boundary is enforced at the data tier and not only in the GUI. Until that migration completes, treat NTFS permissions on the .accdb as the sole compensating control and document it as such. Purge studentDB.accdb and studentDB.laccdb from the repository and from git history, since the committed binary distributes live PII with no credential barrier.",
+      "citation": "student-management-system:Flat Design/Module1.vb:7"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-identity-proofing",
+      "severity": "medium",
+      "description": "There is no registration, enrolment, or identity-proofing flow in the application, and no account lifecycle to attach one to. Proofing strength is wholly inherited from whatever issuance policy governs the Windows account on the host, which is a host or domain administration artifact that this application's source does not reveal — hence nist_ial is recorded as unknown for the ambient Windows model rather than guessed. The practical consequence is that the assurance of the operator's identity cannot be evidenced at audit from anything this application controls. Severity pinned to the provisional T3 lean.",
+      "remediation_recommendation": "Inherit proofing from the broker-fronted staff IDP and record the resulting IAL explicitly in the application's control documentation, so the level is established rather than assumed. Confirm the concrete IAL binding against profiles/faa/ once that profile is readable — it could not be consulted from this sandbox.",
+      "citation": "student-management-system:Flat Design/My Project/Application.Designer.vb:26"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-session-timeout",
+      "severity": "medium",
+      "description": "A single module-level OleDbConnection (Public dbcon in Module1) is opened on dashboard load and held for the lifetime of the process; connectDB() is a no-op whenever the connection is already open. There is no application session concept at all, therefore no idle timeout, no maximum session lifetime, no re-authentication interval, and no short-lived token to expire. An unattended workstation leaves the full PII CRUD surface live indefinitely. Severity pinned to the provisional T3 lean.",
+      "remediation_recommendation": "Introduce an explicit application session with an idle timeout and an absolute lifetime, backed by short-lived tokens issued by the broker, rather than relying on the host screen-lock policy. Do not set the timeout at the connection layer — scope it to the authenticated session.",
+      "citation": "student-management-system:Flat Design/Module1.vb:4"
+    },
+    {
+      "app": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "gap_type": "no-step-up",
+      "severity": "medium",
+      "description": "Destructive and PII-mutating operations require no elevated assurance. Record deletion is gated only by a Yes/No MessageBox, and record edit by no confirmation at all; neither re-authenticates, and since there is no authentication to begin with there is nothing to step up from. Severity pinned to the provisional T3 lean.",
+      "remediation_recommendation": "Once the federated authentication boundary exists, require step-up authentication (or at minimum re-authentication) for delete and for edits to PII fields, and emit a per-user audit record for each such operation.",
+      "citation": "student-management-system:Flat Design/ViewForm.vb:83"
+    }
+  ],
+  "proliferation_findings": [
+    {
+      "finding_type": "legacy-directory-without-sso",
+      "description": "Heuristic applied: references/proliferation-patterns.md 'legacy-directory-without-sso' — 'App authenticates directly against a legacy directory with no SSO layer. Scan for direct ldap:// binds, NTLM/Kerberos IWA, local users table.' This application matches on the IWA limb: AuthenticationMode.Windows binds it to the Windows interactive-logon principal with no SSO, no federation, and no broker in between, and it reaches its data tier by direct credential-less OLEDB file bind with no token-lifetime control. This is the one heuristic in the reference that is fully evaluable from a single application's evidence, and it is confirmed. Per the reference, always a consolidation candidate.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Broker-fronted federated staff IDP (OIDC) performing per-user authentication at AAL2 or better, replacing both the ambient Windows trust and the credential-less data-tier path"
+    },
+    {
+      "finding_type": "no-broker-federation",
+      "description": "SCOPE CAVEAT — the heuristic's threshold is NOT evaluable at this scope and is deliberately not asserted. references/proliferation-patterns.md requires 'Portfolio has 3+ distinct IDPs and no broker fronting them', counted across portfolio-wide identity_models[]. This invocation saw one application (LD-10 per-application dispatch), so the portfolio IDP count is unknown and no claim is made about whether the 3-IDP threshold is crossed. What IS established from this application's own evidence: it participates in no broker federation and contributes zero federated IDPs and zero brokered models to the portfolio — nist_fal is not-applicable for both of its identity models because no SAML, OIDC, assertion, or token exists anywhere in the tree. It is therefore a broker-onboarding candidate on its own merits. Confirming or refuting the portfolio-level finding requires the portfolio-level rollup, which the skill declaration notes remains a legitimate future step.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Broker (see broker_recommendation); this application onboards as a relying party rather than retaining a direct IDP integration"
+    },
+    {
+      "finding_type": "identity-model-per-app",
+      "description": "SCOPE CAVEAT — the heuristic's ratio is NOT computable at this scope and the portfolio figure is deliberately not asserted. references/proliferation-patterns.md flags 'ratio of distinct models to apps > 0.6'; with a denominator of one application that ratio is arithmetically 2.0 but statistically meaningless, so it is not offered as a portfolio measurement. What IS established: both of this application's identity models are app-local inventions that consume no shared identity service — the ambient Windows binding is a project-designer setting, and the data-tier access is a hardcoded absolute file path to a database bundled inside the application's own repository. The application contributes two app-local models and zero shared or brokered models, which is exactly the contribution pattern the anti-pattern is built out of. Treat as one data point toward a portfolio ratio, not as the ratio.",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ],
+      "affected_users_estimate": null,
+      "consolidation_candidate": true,
+      "target_model": "Shared broker-fronted federated staff IDP, replacing both app-local models"
+    }
+  ],
+  "retire_recommendations": [
+    {
+      "model_name": "Ambient Windows interactive-logon identity (VB.NET Application Framework AuthenticationMode.Windows)",
+      "reason": "CRITERION 2 — Blocks zero-trust (references/retire-recommendations.md). The trust boundary is implicit and perimeter-based: possession of an interactive desktop session on the host is the whole of the access decision, which is the network-membership trust model the criterion names, and the model cannot issue short-lived tokens because it has no token concept at all. A retire recommendation here is mandatory, not optional, under the skill's IWA/zero-trust rule. CRITERION 1 — Below required AAL applies in corroboration: at below-AAL1 the model fails even the Tier 3 AAL1 floor, so it is below the floor under every tier the catalog's provisional lean admits. REPLACEMENT AND ACCOUNT LINKAGE: replace with the broker-fronted federated staff IDP named in replacement_model. There is no application-side account store to migrate and no credential corpus to re-hash — the only linkage work is mapping each host Windows principal (SID / UPN) to a broker subject and provisioning that subject in the IDP, so staff re-provisioning is a one-time enrolment rather than a directory merge. The ambient binding must be removed in the same change that introduces the authentication gate, otherwise the old path remains as an unauthenticated fallback.",
+      "replacement_model": "Broker-fronted federated staff IDP (OIDC authorization-code flow with PKCE for the desktop client) at AAL2 minimum, with per-user authentication enforced before any form loads",
+      "migration_complexity": "medium",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    },
+    {
+      "model_name": "Credential-less ACE OLEDB data-tier access to bundled studentDB.accdb",
+      "reason": "CRITERION 2 — Blocks zero-trust (references/retire-recommendations.md), on the criterion's 'shared service accounts with static credentials' and 'no token lifetime control' limbs, in their most extreme form: the access is not merely shared and static but entirely credential-less, and it is reachable outside the application by any OLEDB client or by Microsoft Access pointed at the same file. That bypass is what makes retirement of this model a precondition for the other retirement rather than an independent improvement — authentication added to the WinForms client while this path survives is a control that can be walked around. CRITERION 1 — Below required AAL applies in corroboration: below-AAL1 against a Tier 3 AAL1 floor. REPLACEMENT AND ACCOUNT LINKAGE: move the single 'students' table to a server-hosted RDBMS that authenticates each caller as an individual principal, with data access authorized by the broker-issued token. There are no data-tier accounts to link because none exist today; the work is schema migration plus replacement of the inline OleDb data layer. Sequence this BEFORE or WITH the ambient-Windows retirement, never after.",
+      "replacement_model": "Server-hosted RDBMS with per-user principal authentication and token-scoped data access via the broker; inline OleDb calls replaced by a data-access layer that propagates the authenticated identity",
+      "migration_complexity": "medium",
+      "affected_apps": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    }
+  ],
+  "broker_recommendation": {
+    "recommended_pattern": "broker-staff-only",
+    "broker_technology": "Keycloak (current supported release), deployed as the federation broker — RECOMMENDED SUBJECT TO PROFILE CONFIRMATION, see rationale",
+    "fronted_idps": [
+      "The Windows directory this application currently consumes ambiently (local SAM or AD domain — not determinable from source; confirm the concrete binding before the broker is configured), fronted as the staff IDP via SAML 2.0 or OIDC",
+      "NOTE: no further upstream IDP is named here on purpose. profiles/faa/technology.yaml and profiles/faa/config/identity-landscape-analyzer.yaml were not readable from this sandbox, so the profile's actual IDP inventory is unknown; naming concrete FAA IDPs would be fabrication. This list MUST be completed from the faa profile before the broker design is acted on."
+    ],
+    "rationale": "PATTERN. broker-staff-only is selected because this application has exactly one user class — the local workstation operator, an internal staff-equivalent class — and no public-facing surface whatever: the catalog records archetype 'desktop' with no HTTP listener, no API, and no network component, confirmed in source by the absence of any listener or federation code. There is no public user class for a broker to front, which rules out broker-all and broker-public-only on this application's evidence. keep-separate is rejected because the status quo IS keep-separate, and it is precisely what the two retire recommendations exist to dismantle: ambient Windows trust plus a credential-less data path, neither of which can be fixed in place. Per LD-10 this is the per-application contribution to the pattern decision; the portfolio-wide pattern must be set by the portfolio rollup, which may well land on broker-all once public-facing applications are in view. BROKER TECHNOLOGY. Keycloak is recommended for protocol coverage (OIDC for the desktop client, SAML 2.0 and X.509 for the existing directory), open-source licensing, and consistency with keycloak-realm-designer, which declares a dependency on this skill's output. This recommendation is explicitly provisional: the faa profile was unreadable from this sandbox, and the catalog records that profiles/faa/technology.yaml modernization_targets.dotnet covers only ASP.NET/C#/WCF and defines NO target for a VB.NET WinForms plus MS Access stack — so no profile-sanctioned platform target currently applies to this application and the broker choice must be ratified against the profile and the engagement's standing identity platform before build. MIGRATION COMPLEXITY. Overall medium, consistent with both retire recommendations. Scored medium rather than low because, although the rubric's volume and linkage drivers all point low — a single application, well under 1k users, one table, and no existing account store or credential corpus to link — the rubric's legacy-auth-library driver points high: this WinForms client contains no authentication library at all (no System.DirectoryServices, System.Security, or System.IdentityModel reference in the .vbproj), so an OIDC flow is net-new code in a thick client rather than a protocol swap, and the data tier must move off a file-based .accdb in the same effort. Scored medium rather than high because neither migration is a directory retirement or a cross-class merge. SEQUENCING. Retire the credential-less data-tier model before or with the ambient-Windows model, never after: while the .accdb remains reachable by any OLEDB client at a known path, any authentication added to the GUI is bypassable, so client-side authentication delivers no assurance until the data tier enforces identity. Wave 1 is therefore the data-tier migration plus broker onboarding as a single cutover; there is no wave 2 at this scope. CAVEATS CARRIED FORWARD. (1) Risk tier is unestablished — catalog safety_tier is null and the catalog states tier must come from stakeholder/Safety Board input — so every gap severity above is pinned to the catalog's explicitly non-authoritative T3 lean and carries a re-rate instruction; a Tier 1 return would additionally demand a phishing-resistant AAL3 authenticator (FIDO2 or on-card PIN-unlocked PIV), not the AAL2 floor recommended here. (2) The catalog's own open_questions flag that this application shows no detectable aviation, NAS, or FAA business relevance despite 'faa' governing; that scope question is the engagement owner's to resolve and is recorded in discrepancies_and_findings below. (3) fixtures/default.json, found inside this application's source tree, is a QA fixture for THIS skill containing a complete synthetic identity-landscape.json for a fictitious three-application portfolio; it was disregarded entirely as a source of fact and is recorded as a contamination hazard below."
+  },
+  "discrepancies_and_findings": [
+    {
+      "finding": "Governing profile 'faa' is authoritative but its directory is unreadable from this sandbox",
+      "detail": "The task declaration names 'faa' as the governing client profile and that declaration is treated as authoritative throughout this artifact. However profiles/faa/ lies outside the two permitted working directories for this session and could not be read, so three declared inputs were unavailable: the IDP inventory (technology.yaml and/or config/identity-landscape-analyzer.yaml), the user-class taxonomy, and the risk-tier-to-AAL floor mapping. Consequences, all handled by omission rather than by guessing: fronted_idps names no concrete FAA IDP; user_classes uses the observed 'local-workstation-operator' rather than a profile taxonomy label; and the AAL floors cited come from the skill's own references/retire-recommendations.md rather than from the profile. Re-run or review this artifact once the profile is readable.",
+      "severity": "medium",
+      "action": "Engagement owner to make profiles/faa/ available to this skill's sandbox, then ratify fronted_idps, user_classes, and the tier floors."
+    },
+    {
+      "finding": "Application shows no FAA business relevance under the governing faa profile",
+      "detail": "Corroborating the catalog's first open question: this application's source, README, and project report describe a single-developer academic student-records desktop tool, with no aviation, NAS, air-traffic, or certification content anywhere in the tree. The catalog does not assert a different governing profile, so there is no conflict with the 'faa' declaration itself — the discrepancy is one of scope fit, not of profile identity. Flagged rather than resolved here, because an application that does not belong in the portfolio should not be remediated into it.",
+      "severity": "medium",
+      "action": "Engagement owner to confirm this application belongs in the FAA portfolio before any identity remediation is funded.",
+      "citation": "application-catalog-entry:open_questions"
+    },
+    {
+      "finding": "Risk tier unestablished, so gap severities are provisional",
+      "detail": "The catalog sets safety_tier to null and states explicitly that safety tier must come from stakeholder or Safety Board input and must not be inferred from code. The skill's quality rule requires each assurance_gap severity to be pinned to the affected application's risk tier. With no tier available, severities are pinned to the catalog's own explicitly non-authoritative 'T3 lean' and each gap carries a re-rate instruction; no gap is rated 'critical', because critical is reserved for a confirmed Tier 1 and asserting one here would manufacture a classification the engagement does not have. Note that the two 'high' AAL findings do not depend on the tier question: at below-AAL1 the application fails the Tier 3 AAL1 floor, the weakest floor in the rubric.",
+      "severity": "medium",
+      "action": "Obtain authoritative safety/risk classification, then re-rate the six assurance_gaps; a Tier 1 or Tier 2 return escalates the three 'high' gaps to 'critical' and raises the authenticator target from AAL2 to phishing-resistant AAL3."
+    },
+    {
+      "finding": "QA fixture for THIS skill is present inside the application's source tree — active contamination hazard",
+      "detail": "fixtures/default.json carries skill_id 'identity-landscape-analyzer' and contains a complete, ready-to-emit synthetic identity-landscape.json for a fictitious three-application portfolio (portfolio_id 'fixture-portfolio', 12,500 affected users, PIV/AAL3 staff model, email+password public model). Because it is a fixture for this very skill rather than an unrelated artifact, the contamination risk is sharper than the catalog's more general note: an agent could emit the fixture's portfolio wholesale and produce a plausible-looking artifact describing applications that do not exist. It was disregarded entirely as a source of fact about this application; none of its IDPs, user classes, assurance levels, or user counts appear anywhere above. Its presence in a real application's source tree rather than in test infrastructure should be investigated upstream.",
+      "severity": "high",
+      "action": "Remove the fixture from the application source tree and investigate how skill test fixtures came to be committed there; verify no prior Discovery artifact for this application absorbed fixture content.",
+      "citation": "student-management-system:fixtures/default.json:1"
+    },
+    {
+      "finding": "affected_users_estimate is null for all three proliferation findings, by design",
+      "detail": "Per schema note LD-17, null is the schema-sanctioned expression of 'I could not measure this'. No usage, telemetry, or user-population signal exists for this application: the catalog records that no CMDB export and no ownership or criticality documentation was provided at onboarding, and a user count is not derivable from a WinForms source tree. A fabricated integer would be read downstream as measured fact, so null is emitted deliberately rather than as a fallback.",
+      "severity": "low",
+      "action": "Populate from stakeholder input or CMDB if a user population figure is required for wave sequencing."
+    },
+    {
+      "finding": "Database file could not be parsed; the users-table negative is established from source, not from DDL",
+      "detail": "studentDB.accdb is a binary MS Access file and no Access or ODBC tooling was available in this sandbox to enumerate its schema, so the claim that no credential or users table exists rests on exhaustive source evidence rather than on DDL inspection: every SQL statement across all four forms targets the single 'students' table, and the project references no authentication library. The conclusion is well supported but should be confirmed against the real .accdb schema, as the catalog also recommends for its table count.",
+      "severity": "low",
+      "action": "Enumerate the .accdb schema with Access tooling to confirm no credential or users table is present."
+    }
+  ]
+}
