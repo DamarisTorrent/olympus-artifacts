@@ -1,0 +1,97 @@
+{
+  "$schema": "olympus:artifact:ux-overlap-matrix:v1",
+  "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+  "generated_at": "2026-10-02T20:03:14Z",
+  "methodology_version": "1.0.0",
+  "personas": [],
+  "persona_task_matrix": [],
+  "swivel_chair_patterns": [],
+  "fragmented_journeys": [],
+  "pair_scores": [],
+  "coverage_exclusions": [
+    {
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "reason": "Single-application wave: no peer application to compare against. UX overlap is a pairwise cross-app measure (shared personas, shared tasks, swivel-chair traversal, fragmented journeys); with one in-scope application the wave yields zero application pairs, so there is no overlap to compute for this app rather than an unexamined one. Its Discovery UX artifact (discovery/c70846ac-0948-4953-990c-c68a2be292d9/ux-accessibility.json) was read in full and is the sole basis for this determination.",
+      "rationale": "Methodology Step 0 (minimum-input guard) requires at least 2 wave applications with an accessible discovery/{app_id}/ux-accessibility.json before a cross-app matrix can be built. The wave dispatch context (_dispatch-context-wave-compare-ux-overlap.json app_ids[]) names exactly one application id, and exactly one ux-accessibility.json is present in the input bundle, so the eligible-app count is 1 against a threshold of 2. Per Step 0 this is a finding, not an error: the artifact is emitted with every analysis array empty and this exclusion declared, rather than fabricating a second application, re-scoping the unit of comparison to the app's four internal WinForms screens (that would make 'application' mean 'screen' and is the intra-app-redundancy skill's subject, not this one), or silently omitting the app. A secondary, independent reason this app would be out of scope even in a multi-app wave: its catalog archetype is 'desktop' (catalog.json architecture.archetype), a standalone WinForms thick client, whereas UX overlap scopes to web-app / hybrid archetypes."
+    }
+  ],
+  "summary": {
+    "total_personas": 0,
+    "total_journeys": 0,
+    "fragmented_journey_count": 0,
+    "swivel_chair_pattern_count": 0,
+    "wave_applications_count": 1,
+    "eligible_apps_with_ux_artifact": 1,
+    "minimum_input_threshold": 2,
+    "minimum_input_guard_tripped": true,
+    "app_pairs_evaluated": 0,
+    "archetype_out_of_scope_count": 1,
+    "headless_archetype_excluded_count": 0,
+    "coverage_exclusions_count": 1,
+    "avg_ux_overlap_pct_note": "Deliberately omitted rather than reported as 0. With zero application pairs the mean of ux_overlap_pct has no defined value, and emitting 0 would assert a measured finding of no overlap where in fact no comparison was possible. Absence of a pair is not a pair scoring zero.",
+    "total_personas_note": "0 normalized CROSS-APP personas were emitted, which is the count this field measures and it matches personas[] exactly. The one in-scope application does document exactly 1 source persona of its own — 'Student-Records Operator (sole user class — no role differentiation observed)', persona_id local-workstation-operator (ux-accessibility.json personas[0]) — but persona normalization (Methodology Step 1) is the act of clustering persona names across two or more apps, and a single app's persona catalog passes through it unchanged. Listing it here as a normalized persona would imply a cross-app clustering judgment that was never made.",
+    "total_journeys_note": "0 cross-app journeys were analyzed. The source Discovery artifact carries no journey inventory to draw on: it documents 4 human-facing WinForms surfaces (form1-dashboard, insert-form, edit-form, view-form) in ui_inventory and a single narrative personas[0].typical_workflow, but no enumerated, step-identified journey map. Even had one existed, every step of it resolves inside one executable, so it could not contribute a cross-app journey.",
+    "intra_app_note": "The application does exhibit internal navigation churn — Form1 is simultaneously startup form, navigation shell, child-form host and the only statistics view ('god-form' coupling indicator), and ViewForm reaches directly into Form1.Panel5.Controls to host EditForm. This is single-executable navigation with no re-authentication, no re-keying across systems and no audit discontinuity between applications, so it is not a swivel-chair pattern under this skill's definition (which requires >= 2 distinct application_ids in apps_traversed). It is in scope for intra-app-redundancy, not for this artifact.",
+    "structural_cross_reference_note": "pair_scores[].structurally_redundant / structural_overlap_pct could not be cross-referenced: no rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/redundancy-matrix.json was present in the input bundle (cross-app-redundancy runs at the same wave sequence, 1, and only its Discovery inputs were staged). This is moot here, since there are no pairs to annotate.",
+    "governing_profile_note": "The governing client profile for this task is 'faa', per the authoritative dispatch declaration. Every upstream artifact in this bundle (catalog.json open_questions, structural-analysis.json open_questions, ux-accessibility.json scope_caveat, and the identity-landscape-analyzer) independently flags that this application's content — a single-developer VB.NET student-records desktop tool — has no aviation, NAS, air-traffic or FAA-adjacent relevance. This artifact records that discrepancy as a finding and does NOT adopt an alternative governing profile or restate one as fact. It is recorded only; it is not an input to any determination above, both because the minimum-input guard decides this run on app count alone and because an application with no authentication, no roles and one undifferentiated persona has no FAA user-segment taxonomy to normalize onto. Resolution is the engagement owner's, upstream of this wave.",
+    "run_log": [
+      "2026-10-02T20:03:14Z | step-0-guard | Read _dispatch-context-wave-compare-ux-overlap.json: app_ids[] = ['c70846ac-0948-4953-990c-c68a2be292d9'] (1 application in wave).",
+      "2026-10-02T20:03:14Z | step-0-guard | Counted wave applications with an accessible discovery/{app_id}/ux-accessibility.json: 1 of 1. Threshold is 2. GUARD TRIPPED.",
+      "2026-10-02T20:03:14Z | step-0-guard | Read both available Discovery inputs for the one app (catalog.json, ux-accessibility.json) in full to confirm the shape before declaring the exclusion; no second ux-accessibility.json exists anywhere in the input bundle.",
+      "2026-10-02T20:03:14Z | step-0-guard | Emitting ux-overlap-matrix.json with personas[], persona_task_matrix[], swivel_chair_patterns[], fragmented_journeys[] and pair_scores[] all empty, and the single wave application named in coverage_exclusions[] with a reason, per Methodology Step 0. No inputs fabricated; unit of comparison left as 'application'.",
+      "2026-10-02T20:03:14Z | steps-1-to-6 | Skipped as not computable on a single-application wave: persona normalization (1), persona-task matrix (2), swivel-chair detection (3), fragmented-journey detection (4), pair scoring (5). Step 6 summary composed from the guard outcome.",
+      "2026-10-02T20:03:14Z | parallelization | No per-persona fan-out dispatched. Per the skill's 'When NOT to fan out' rule, a wave where the minimum-input guard fires exits early; thresholds (>4 in-scope apps or >6 normalized personas) are not met at 1 app / 0 normalized personas.",
+      "2026-10-02T20:03:14Z | capability-grain | source_system_ids / source_capability_ids / target_capability_seed left unset: these are additive and optional, no ratified capability or system roster was supplied in the dispatch context, and there are no entries to attach them to.",
+      "2026-10-02T20:03:14Z | review-asks | Emitted 1 ask: ux-overlap-inventory (aware, wave-subjected, unconditional). swivel-chair-pattern-tolerated and journey-fragmentation-assessment not emitted — both are contingent on findings this run did not produce.",
+      "2026-10-02T20:03:14Z | outputs | Emitted ux-overlap-matrix.json and the ux-overlap-matrix.md sidecar together in the same run folder."
+    ]
+  },
+  "review_asks": [
+    {
+      "ask_slug": "ux-overlap-inventory",
+      "action": "aware",
+      "title": "This wave holds one application, so there is no cross-application UX overlap to report — recorded for the wave review record",
+      "why": "A reviewer seeing an empty UX overlap matrix needs to know it reflects a wave with no application pairs rather than analysis that was skipped or failed, because the gate's coverage check and any later Consolidate decision both read this artifact as evidence.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Rationalization wave — Student Management System (VB.NET), single application"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The determination rests on a count, not a judgment: the wave dispatch context names one application id and exactly one ux-accessibility.json is present, so the eligible-app count of 1 against a threshold of 2 is directly verifiable and not open to interpretation. The residual 0.05 covers the possibility that the wave was INTENDED to carry peer applications whose Discovery passes had not completed when this bundle was staged — that would change the answer, but it is a question about wave composition upstream of this skill, not about this reading of the inputs."
+      },
+      "assessment": "We compared the user experience of every application in this wave against every other one, looking for personas doing the same task in more than one system, workflows that force someone to switch between systems to finish one job ('swivel chair'), and business journeys split across systems. The wave contains exactly one application — the Student Management System, a standalone Windows desktop tool — so there was nothing to compare it against and we found no cross-application overlap. That is a result, not a gap in our work: overlap of this kind only exists between two or more applications, and a wave with one application produces zero pairs by definition. The application is named explicitly as a declared exclusion with that reason, so the gate's coverage check can see it was accounted for rather than overlooked. Two things a reviewer should carry forward. First, this artifact therefore offers NO evidence either for or against consolidating this application; a Consolidate decision for it would need to come from structural or operational analysis, or from a later wave that places it alongside peers. Second, this application is a standalone desktop thick client, an application type outside this analysis's normal scope (which covers web and hybrid applications), so even in a larger wave it would likely not have contributed to the UX overlap picture. Separately, and for the record only: the governing profile for this engagement is the FAA legacy-modernization program, and every upstream Discovery pass has independently flagged that this student-records tool has no apparent aviation or FAA business relevance. We have not adopted any other profile and this had no bearing on the finding above, but it remains unresolved and belongs with the engagement owner.",
+      "reasoning": "Three signals, all pointing the same way and none in conflict. (1) The wave dispatch context's app_ids[] lists a single application id. (2) The input bundle contains exactly one discovery/{app_id}/ux-accessibility.json, so the eligible-app count is 1 against the methodology's threshold of 2 and the minimum-input guard fires. (3) The one application's own Discovery UX artifact independently corroborates that nothing cross-app could be found in it: it documents a single persona ('Student-Records Operator', sole user class, no role differentiation observed), four human-facing WinForms screens inside one executable, and no journey inventory at all. I considered and rejected one alternative reading: the application does show real internal navigation friction — Form1 doubles as dashboard, navigation shell and child-form host, and ViewForm manipulates Form1's control collection directly to host EditForm — which could superficially be written up as a swivel-chair pattern to avoid an empty matrix. It is not one. A swivel-chair requires traversal of at least two distinct applications with the friction that implies (re-authentication, re-keying the same identifier into another system, audit trail discontinuity between systems); all of this happens inside one process with one open database connection. Reporting it here would mean redefining 'application' to mean 'screen' in order to clear a threshold, which would corrupt the field for every downstream consumer and is the intra-app-redundancy skill's subject in any case. The honest empty matrix plus a declared exclusion is the correct output. I also note that no redundancy-matrix.json was staged for this wave, so no structural overlap cross-reference was available — immaterial here, as there are no pairs to annotate.",
+      "evidence_refs": [
+        {
+          "name": "Wave dispatch context — app_ids[]",
+          "detail": "Lists exactly one application id for the wave: c70846ac-0948-4953-990c-c68a2be292d9. This is the authoritative wave roster and the direct basis for the eligible-app count of 1 against a threshold of 2.",
+          "artifact_path": "input-artifacts/wave-compare-ux-overlap/_dispatch-context-wave-compare-ux-overlap.json"
+        },
+        {
+          "name": "Discovery UX artifact — personas[] and ui_inventory[]",
+          "detail": "One persona (local-workstation-operator, 'sole user class — no role differentiation observed', headcount unknown, no telemetry) and four human-facing surfaces (form1-dashboard, insert-form, edit-form, view-form), all inside a single WinForms executable. No journey inventory is present, only a single narrative typical_workflow.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/ux-accessibility.json"
+        },
+        {
+          "name": "Catalog entry — architecture.archetype",
+          "detail": "archetype 'desktop', a standalone WinForms thick client over a local MS Access file, with endpoint_count null and no HTTP, web or API surface. UX overlap scopes to web-app / hybrid archetypes, an independent secondary reason this application would be out of scope even in a multi-application wave.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "Declared coverage exclusion for the wave's only application",
+          "detail": "coverage_exclusions[0] names c70846ac-0948-4953-990c-c68a2be292d9 with the single-application-wave reason, which is what lets the gate's coverage check excuse the app rather than read the empty matrix as an unexplained gap.",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/ux-overlap-matrix.json"
+        },
+        {
+          "name": "Governing-profile discrepancy, corroborated by four independent upstream passes",
+          "detail": "Declared governing profile is 'faa'. catalog.json open_questions, structural-analysis.json open_questions, ux-accessibility.json scope_caveat and identity-landscape.json discrepancies_and_findings each independently record that this application has no aviation, NAS, air-traffic or FAA-adjacent content. Recorded here as a finding; no alternative profile adopted, and it had no bearing on the overlap determination.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/ux-accessibility.json"
+        }
+      ]
+    }
+  ]
+}
