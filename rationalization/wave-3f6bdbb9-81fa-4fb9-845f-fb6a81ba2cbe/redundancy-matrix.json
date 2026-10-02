@@ -1,0 +1,64 @@
+{
+  "$schema": "olympus:artifact:redundancy-matrix:v1",
+  "metadata": {
+    "generated_date": "2026-10-02",
+    "applications_analyzed": 1,
+    "analyst": "redundancy-analyzer (wave 3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe, governing profile faa). Exactly ONE application carried accessible Discovery artifacts in this dispatch bundle: c70846ac-0948-4953-990c-c68a2be292d9 (Student Management System, VB.NET WinForms over a single Microsoft Access table), evidenced by discovery/c70846ac-0948-4953-990c-c68a2be292d9/{business-logic,structural-analysis,quality-risk}.json. A single-application scope yields ZERO application pairs, so entity_overlap[], operation_overlap[], high_overlap_pairs[], data_sot_conflicts[] and consolidation_candidates[] are empty by arithmetic rather than by omission, and the uncovered application is named in coverage_exclusions[] with its reason so G-RR's coverage check can excuse it (Methodology Step 0 minimum-input guard). applications_analyzed is 1 and not 6: the six internal logical modules of this application (form1-dashboard, insert-form, edit-form, view-form, module1-db-connection, my-project-infrastructure) are NOT applications, and counting them here to clear a pair threshold would be the D-7 unit-redefinition failure the schema warns against, because every downstream consumer resolves app_1/app_2/applications[] against the wave roster where an internal module name resolves to nothing. The module-grain analysis that DOES belong at that unit was performed and is published separately at rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json (scope=intra-app, sequence 1b, consumed by Modernization): it reports one internal duplication cluster, c70846ac-student-record-crud, covering student-record CRUD replicated across three sibling forms with no shared data-access or field-mapping component. Nothing in that intra-app finding is restated as a cross-application overlap here, because no second application exists to overlap with. No regulatory variance report accompanies this matrix for the same reason: regulatory implementation variance is a comparison ACROSS regulated applications, and with one application in scope there is no second implementation of any regulation section to compare against."
+  },
+  "entity_overlap": [],
+  "operation_overlap": [],
+  "high_overlap_pairs": [],
+  "data_sot_conflicts": [],
+  "consolidation_candidates": [],
+  "coverage_exclusions": [
+    {
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "reason": "Single-application scope: this is the only application in the dispatch bundle with accessible Discovery artifacts, so it has no peer to compare against and no pairwise cross-application overlap is computable for it. Its absence from entity_overlap[] and operation_overlap[] is a stated finding, not an analysis gap.",
+      "rationale": "Cross-application overlap is defined only over unordered application PAIRS. With N=1 the pair count is N*(N-1)/2 = 0, so every pairwise array is necessarily empty and the application cannot appear in any of them. The only redundancy question answerable at N=1 is the INTRA-application one, and that question was in fact answered: see rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json, which scores the six internal modules against one another and reports cluster c70846ac-student-record-crud (student-record CRUD duplicated across insert-form, edit-form and view-form).",
+      "justification": "Reporting applications_analyzed = 1 with empty overlap arrays and this declared exclusion is the honest shape. The alternative paths were both rejected: fabricating a second application to create a pair, and redefining the unit of comparison so that the six internal modules count as six applications. The second is specifically the D-7 failure (2026-08-13) recorded in the schema's applications_analyzed description, and it would make the real application read as uncovered while six non-existent ones read as covered."
+    }
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "redundancy-scan-inventory",
+      "action": "aware",
+      "title": "Cross-application redundancy scan found no overlap to report: only one application was in scope, so there were no application pairs to compare",
+      "why": "A reviewer must be able to tell an empty redundancy matrix caused by a genuinely single-application scope apart from one caused by a scan that silently failed or skipped applications, because the two call for opposite responses.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System"
+      },
+      "assessment": "The Student Management System (c70846ac-0948-4953-990c-c68a2be292d9) is the only application in this wave dispatch with accessible Discovery artifacts. Cross-application redundancy is measured over pairs of applications, and one application forms zero pairs, so there is no entity overlap, operation overlap, persona overlap, source-of-truth conflict or consolidation cluster to report at the portfolio grain. This is a clean result with a stated cause, not a failed or partial scan. Redundancy WAS found inside the application: student-record create, read, update, search and delete logic is implemented three separate times across the insert, edit and view forms with no shared data-access or field-mapping component. That finding is recorded at the module grain in intra-app-redundancy.json, where the unit of comparison is a module rather than an application, and it is deliberately not restated here as a cross-application overlap. No regulatory implementation variance is reported either, for the same structural reason: variance is divergence between two or more applications implementing the same regulation section, and there is only one implementation in scope.",
+      "reasoning": "Three Discovery artifacts were supplied (business-logic.json, structural-analysis.json, quality-risk.json) and all three describe the same single application id, which is also the application id this step was dispatched against. The dispatch context declares one expected input path per artifact, all under discovery/c70846ac-0948-4953-990c-c68a2be292d9/, and no second application's artifacts are present anywhere in the input bundle. Two signals pulled the other way and were resolved rather than followed. First, the application decomposes into six internal modules that do overlap heavily with one another, which would have produced fifteen populated pair rows had modules been admitted as applications; they were refused because applications_analyzed counts applications and downstream consumers resolve the pair endpoints against the wave roster, where a module name resolves to nothing. Second, the shared output schema sets no floor that would have blocked an honest count of 1, so the true number is reported and the reason is stated. The module-grain comparison was still performed and published at its own address under the intra-app scope, so the signal was preserved rather than discarded.",
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The scope is directly observable from the input bundle rather than inferred: one application id across all supplied Discovery artifacts, and the pair count at N=1 is arithmetic, not judgment. The residual uncertainty is only whether the wave was intended to contain additional applications whose Discovery artifacts were not staged for this dispatch, which this step cannot see from inside its own input bundle."
+      },
+      "evidence_refs": [
+        {
+          "name": "Supplied Discovery artifacts, all for one application",
+          "detail": "business-logic.json, structural-analysis.json and quality-risk.json are all staged under discovery/c70846ac-0948-4953-990c-c68a2be292d9/; no second application directory exists in the input bundle, giving N=1 and therefore 0 application pairs.",
+          "artifact_path": "input-artifacts/wave-intra-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Dispatch context declares a single application's inputs",
+          "detail": "All three declared_inputs entries carry exactly one expected_paths value, each naming application c70846ac-0948-4953-990c-c68a2be292d9, confirming the single-application scope was the dispatch intent and not a staging shortfall this step introduced.",
+          "artifact_path": "input-artifacts/wave-intra-app-redundancy/_dispatch-context-wave-intra-app-redundancy.json"
+        },
+        {
+          "name": "Module-grain redundancy was found and is published separately",
+          "detail": "Cluster c70846ac-student-record-crud records student-record CRUD duplicated across three sibling forms over the single students table, with no shared data-access or field-mapping component; it is emitted at the module grain so it cannot be mistaken for cross-application overlap.",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        },
+        {
+          "name": "Declared coverage exclusion for the uncovered application",
+          "detail": "coverage_exclusions[] names c70846ac-0948-4953-990c-c68a2be292d9 with the reason that no peer exists to compare against, which is what lets G-RR's coverage check excuse the application rather than report it as a silent gap.",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/redundancy-matrix.json"
+        }
+      ]
+    }
+  ]
+}
