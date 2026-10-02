@@ -1,0 +1,20 @@
+{
+  "step": "compliance-citation-mapping",
+  "artifacts": [
+    "## Summary\n\nExecuted the `compliance-citation-mapper` skill for application `c70846ac-0948-4953-990c-c68a2be292d9`.\n\n**What the application actually is:** a single-developer VB.NET WinForms \"Student Management System\" (local MS Access CRUD app) \u2014 not an FAA/aviation system of any kind. The catalog entry and the prior structural-analysis pass had already flagged this profile/scope mismatch independently.\n\n**Detection run:**\n- Ran `scripts/scan_citations.py` against the full staged `source/` tree.\n- Got 26 raw hits \u2014 but traced every single one to `references/citation-patterns.md` and `scripts/scan_citations.py` themselves (the skill's own bundled reference doc and detection script, containing worked citation examples like `49 USC \u00a744107`). `git status`/`git ls-files` confirmed these, plus `assets/`, `fixtures/`, `schemas/`, are **untracked skill-scaffolding files that leaked into the staging directory** \u2014 not part of the application's actual one-commit GitHub checkout.\n- Excluded that contamination (consistent with how the catalog pass disregarded `fixtures/default.json`, and how structural-analysis excluded the same five directories) and rescoped the scan to the real app root (`Flat Design/` VB.NET project + `README.md`).\n- Result: **zero genuine citations** \u2014 correct, since this app has no regulatory content and its `business_domain` is `Admin`, not one of the regulatory domains that would make a zero result a red flag.\n\n**Outputs written** to `artifacts/discovery-compliance-citation-mapping/`:\n- `compliance-citations.json` \u2014 schema-valid (verified with the draft-2020-12 validator), `citations: []`, `summary.total_citations: 0`.\n- `compliance-citations.md` \u2014 companion narrative recording two findings: (1) the governing-profile discrepancy (task's authoritative profile is `faa`; the artifact itself implies no such scope \u2014 `faa` was still used for Pass 2 catalog selection per instruction, without restating the mismatch as resolved) and (2) the source-tree contamination exclusion rationale.\n- `work_log.json` updated with completed checklist, decisions, and outcomes."
+  ],
+  "file_artifacts": [
+    "compliance-citations.json",
+    "compliance-citations.md"
+  ],
+  "model_used": "claude-sonnet-5",
+  "duration_ms": 196489,
+  "token_usage": {
+    "input": 1066,
+    "output": 14949
+  },
+  "cost_estimate_usd": 0.6769106,
+  "timestamp": "2026-10-02T18:01:24.783389+00:00",
+  "pass": "compliance-citation-mapping",
+  "skill_id": "compliance-citation-mapper"
+}
