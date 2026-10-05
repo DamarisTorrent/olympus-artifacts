@@ -1,0 +1,141 @@
+{
+  "$schema": "olympus:artifact:business-rule-redundancy:v1",
+  "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+  "analyzed_at": "2026-10-05T13:06:00Z",
+  "methodology_version": "1.0.0",
+  "summary": "Zero cross-app business rule clusters were emitted for this wave, because the wave contains exactly one application. The dispatch context's app_ids array lists a single entry (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)'), and every staged artifact across all four sibling rationalization dispatches resolves to that same application id — no second application exists anywhere in the wave to cluster against. Cross-app rule equivalence is a relation between two or more applications, so with one application the cluster count is zero by construction rather than zero by analysis: it is a finding about wave scope, not a gap in the clustering pass. All 60 extracted rules were loaded and pre-filtered by category (workflow 21, constraint 16, validation 13, calculation 9, authorization 1); all 60 are therefore reported as unclustered, and each of the five categories is recorded in single_app_rule_categories[] as having no consolidation counterpart. The sole wave application is declared in coverage_exclusions[] with a reason so that G-RR's coverage check reads this as a stated omission rather than a silent gap. Two further observations are carried in the review asks for the record. First, the upstream business-logic.json reports a substantial volume of INTRA-application duplication that this skill is not scoped to cluster — the course taxonomy restated across roughly eight locations (BR-014), the gender enumeration duplicated across two Designer files and disagreeing with its only dashboard consumer (BR-013, BR-070), and the year-of-admission list duplicated four times in Designer code plus five more times in dashboard arithmetic (BR-015, BR-072); that duplication is redundancy-analyzer's intra-app scope and is flagged here only so the reviewer does not read a zero cluster count as a claim that this application carries no rule duplication. Second, both the upstream business-logic.json and the Pass 0 catalog independently record that the governing profile declared for this dispatch (faa) does not plausibly govern this application's domain — a single-developer academic student-records desktop tool with no aviation entity of any kind. Per the dispatch rules the faa declaration stands as authoritative and was used as the sole source of policy; the mismatch is recorded as a finding for the profile owner and is not restated here as fact.",
+  "clusters": [],
+  "unclustered_rules_count": 60,
+  "single_app_rule_categories": [
+    {
+      "category": "workflow",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_name": "Student Management System (VB.NET)",
+      "rule_count": 21,
+      "note": "Largest category. Covers the four CRUD paths (BR-010 create, BR-030/BR-031 update, BR-050-BR-057 read/search/delete) plus the panel-reparenting navigation shell (BR-078). No peer application exists in the wave, so none of these can be matched against an equivalent policy elsewhere."
+    },
+    {
+      "category": "constraint",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_name": "Student Management System (VB.NET)",
+      "rule_count": 16,
+      "note": "Data-access and infrastructure invariants: the single shared global connection (BR-001/BR-003), the hardcoded absolute developer path to the Access file (BR-002), positional parameter binding under OLEDB (BR-018), and the system-wide absences of transactions (BR-093) and audit/provenance (BR-095). No cross-app counterpart available."
+    },
+    {
+      "category": "validation",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_name": "Student Management System (VB.NET)",
+      "rule_count": 13,
+      "note": "The category with the most cross-app consolidation potential in a multi-app wave: three closed-set enumerations (gender BR-013, course BR-014, year-of-admission BR-015), the accidental mandatory-field behaviour enforced by NullReferenceException rather than validation (BR-011), the total absence of free-text validation (BR-012), and the 32-bit mobile-number ceiling (BR-017). Unclusterable here for lack of a second application."
+    },
+    {
+      "category": "calculation",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_name": "Student Management System (VB.NET)",
+      "rule_count": 9,
+      "note": "Dashboard statistics computed from twelve independent COUNT queries, five of which are invalidated by a hardcoded current year of 2023 (BR-072), plus the locale-dependent date-of-birth round-trip (BR-016). No peer application to compare derivation logic against."
+    },
+    {
+      "category": "authorization",
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "app_name": "Student Management System (VB.NET)",
+      "rule_count": 1,
+      "note": "A single rule (BR-090) recording that the application has no authentication or authorization whatsoever — it exists only as a framework/build setting. A one-rule category cannot cluster even in principle, independently of the single-application constraint."
+    }
+  ],
+  "coverage_exclusions": [
+    {
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "reason": "Single-application wave: no peer application to cluster rules against, so this application appears in no cross-app cluster.",
+      "rationale": "The application's business-logic.json was fully loaded and all 60 of its rules were normalized and pre-filtered by category, so the omission is not a failure to analyze the application. Cross-app rule equivalence requires at least two applications; the dispatch context declares app_ids = [c70846ac-0948-4953-990c-c68a2be292d9] and no other application id appears in any staged artifact for this wave. Every one of the 60 rules is consequently counted in unclustered_rules_count and its category recorded in single_app_rule_categories[]."
+    }
+  ],
+  "analysis_pass_citations": [
+    "input-artifacts/wave-cross-app-business-rule-analysis/_dispatch-context-wave-cross-app-business-rule-analysis.json:2-4 — app_ids contains exactly one application id, establishing this as a single-application wave",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json:7-20 — totals.rules = 60 with by_category workflow 21 / constraint 16 / validation 13 / calculation 9 / authorization 1; independently verified by counting category occurrences in the rules[] array (16+21+13+9+1 = 60)",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json:96-3623 — the rules[] array, 60 entries BR-001 through BR-096, all loaded and pre-filtered by category per methodology steps 1-2",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json:40-50 — regulatory_applicability: no regulatory cross-reference performed and no match against the faa profile's applicable_systems, so no regulation anchor was available to raise any cluster's confidence",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json:48 — upstream discrepancy_finding recording that the declared faa profile does not plausibly govern this application's domain",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json:2-5 — application_name 'Student Management System (VB.NET)', business_domain 'Admin', described by its author as a single-developer academic/portfolio project",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json:52 — catalog open_question independently flagging the same faa profile/scope mismatch",
+    "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json:583 (BR-014), :527 (BR-013), :642 (BR-015) — intra-application taxonomy duplication (course restated ~8 places, gender in 2 Designer files, year-of-admission 4+5 places), noted as redundancy-analyzer's intra-app scope and deliberately not clustered here"
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "unclustered-rules-remain",
+      "action": "investigate",
+      "title": "All 60 extracted business rules are unclustered because this wave holds only one application — confirm the wave scope is correct",
+      "why": "If this application was meant to be rationalized against peer systems, the wave is mis-scoped and the zero-duplication result is an artifact of that scoping rather than a real finding about the portfolio.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.97,
+        "rationale": "The single-application fact is read directly from the dispatch context's app_ids array and corroborated by every staged artifact in the wave resolving to the same application id; the 60-rule total and its category split were verified against the rules[] array rather than taken from the summary block. The only residual uncertainty is programmatic intent — whether the wave was deliberately scoped to one application — which is not knowable from the artifacts."
+      },
+      "assessment": "Cross-app rule clustering produced zero clusters, and all 60 extracted rules fall into unclustered_rules_count. This is not a clustering miss: the wave contains exactly one application, and cross-app equivalence is undefined for a single application. The practical consequence is that this wave yields no cross-application consolidation candidates at all, so the duplication figure is a floor of zero that cannot be improved without adding a peer application to the wave. Separately, the reviewer should not read the zero as 'this application has no rule duplication' — the upstream extraction documents significant duplication WITHIN the application (the course taxonomy restated in roughly eight locations, the gender enumeration duplicated across two files and disagreeing with its only consumer, the year-of-admission list duplicated nine times across Designer code and dashboard arithmetic), which belongs to redundancy-analyzer's intra-application scope and not to this skill's.",
+      "reasoning": "Methodology step 1 loaded the one available business-logic.json and normalized all 60 rules; step 2 pre-filtered them into the five canonical categories. Step 3 then had nothing to do: every candidate pair within a category would have both instances drawn from the same application, which the skill's constraints forbid (a cluster requires >= 2 instances from >= 2 distinct apps, and same-app rules must not co-occur in a cluster). I did not fan out per-category sub-agents, because the skill's 'when NOT to fan out' guidance excludes small waves and, with one application, five sub-agents would each have confirmed the same structural impossibility at five times the cost. Signals that conflicted: the application does contain genuinely cluster-shaped rules — three closed-set enumerations and a hardcoded-threshold family are exactly the drift-prone patterns this skill is built to catch — so the categories are not empty of consolidation potential, only of a second application to realize it against. I resisted the temptation to emit these as low-confidence clusters: a single-application cluster is explicitly not a cluster, and over-clustering costs reviewer trust in the whole report.",
+      "evidence_refs": [
+        {
+          "name": "Dispatch context app_ids",
+          "detail": "Exactly one entry: c70846ac-0948-4953-990c-c68a2be292d9. No second application id appears in any of the four staged dispatch contexts or their discovery subtrees.",
+          "artifact_path": "input-artifacts/wave-cross-app-business-rule-analysis/_dispatch-context-wave-cross-app-business-rule-analysis.json"
+        },
+        {
+          "name": "Rule totals and category split",
+          "detail": "60 rules: workflow 21, constraint 16, validation 13, calculation 9, authorization 1. Verified by counting category occurrences in rules[] (16+21+13+9+1 = 60), matching the declared totals block.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Intra-app duplication the cross-app lens does not cover",
+          "detail": "BR-014 course taxonomy duplicated across ~8 locations; BR-013 gender enumeration across 2 Designer files and inconsistent with its one dashboard consumer (BR-070); BR-015 year-of-admission list duplicated 4 times in Designer plus 5 times in dashboard arithmetic (BR-072).",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "rule-cluster-inventory",
+      "action": "aware",
+      "title": "For the record: 60 business rules across 5 categories from 1 application were analyzed; 0 cross-app clusters emitted",
+      "why": "This is the denominator behind every other ask on this artifact — without it a reviewer cannot tell whether a zero cluster count reflects a clean portfolio or an unanalyzed one.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.98,
+        "rationale": "Every figure is a direct count from the staged artifacts, independently re-verified against the rules[] array rather than read from the upstream summary block."
+      },
+      "assessment": "The analysis covered 1 of 1 wave applications and 60 of 60 extracted business rules, pre-filtered into five categories (workflow 21, constraint 16, validation 13, calculation 9, authorization 1). It emitted 0 clusters, 0 high-confidence (>= 0.8) clusters, 0 medium-confidence (0.6-0.8) clusters and 0 contradictory clusters, and placed all 60 rules in unclustered_rules_count. No cluster was dropped for falling below the 0.6 confidence floor, because no candidate cluster was ever formed. The single wave application is declared in coverage_exclusions[] with a reason, so its absence from the cluster set is a stated omission rather than a silent coverage gap. No capability or system grounding fields were emitted: the upstream business-logic.json carries no capability grounding, so source_system_id, source_capability_id and target_capability_seed are omitted entirely rather than written as null. Two context notes for the record. No regulation anchor was available to raise any confidence score — the upstream extraction performed no regulatory cross-reference and matched none of the faa profile's applicable_systems, so regulatory_traceability is absent from all 60 rules. And both the upstream business-logic.json and the Pass 0 catalog independently flag that the profile declared as governing for this dispatch (faa) does not plausibly cover this application's domain; that declaration was nonetheless treated as authoritative here, and the discrepancy is passed through as a finding for the profile owner rather than adopted or silently resolved.",
+      "reasoning": "Reported so the zero cluster count is auditable. A reviewer seeing 'clusters: []' cannot otherwise distinguish three very different situations: an analysis that ran and found no duplication, an analysis that could not run, and an analysis that silently skipped applications. This ask fixes which one occurred — the pass ran to completion over the full rule set, and the zero is a consequence of the wave holding a single application. I chose 'aware' over 'verify' because there is no judgment being requested: the counts are arithmetic over the staged inputs, and the one genuinely open question (whether the wave scope is right) is carried by the separate investigate ask rather than bundled in here.",
+      "evidence_refs": [
+        {
+          "name": "This artifact's own cluster and unclustered counts",
+          "detail": "clusters[] length 0; unclustered_rules_count 60; single_app_rule_categories[] length 5 summing to 60; coverage_exclusions[] length 1 covering the sole wave application.",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/business-rule-redundancy.json"
+        },
+        {
+          "name": "Upstream rule inventory",
+          "detail": "60 rules BR-001 through BR-096 across 6 modules; 37 implicit rules and 23 rules flagged requires_sme_review by the upstream extractor.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "No regulation anchor available",
+          "detail": "regulatory_applicability.determination = 'NOT APPLICABLE'; match_result records no match against any faa applicable_systems entry, so no cluster confidence could be raised by a shared regulation section.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Governing-profile discrepancy, reported not adopted",
+          "detail": "business-logic.json totals.regulatory_applicability.discrepancy_finding and catalog.json open_questions[0] both record that the declared faa profile does not match this application's Admin/student-records domain. The faa declaration was treated as authoritative per dispatch rules.",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        }
+      ]
+    }
+  ]
+}
