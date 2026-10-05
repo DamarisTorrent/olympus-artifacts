@@ -1,0 +1,74 @@
+{
+  "$schema": "olympus:artifact:redundancy-matrix:v1",
+  "metadata": {
+    "generated_date": "2026-10-05",
+    "applications_analyzed": 1,
+    "analyst": "redundancy-analyzer skill (scope=cross-app), wave 3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe. SCOPE OF ONE: the wave roster declared in _dispatch-context-wave-cross-app-redundancy.json contains exactly one application id (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)'), and its four required Discovery artifacts (catalog.json, business-logic.json, structural-analysis.json, ux-accessibility.json) were all read in full. Cross-app redundancy is a pairwise measure over APPLICATIONS, and a one-application roster yields n*(n-1)/2 = 0 pairs, so entity_overlap[] and operation_overlap[] are empty because there is no second application to compare against — not because comparison was skipped, deferred, or found nothing. applications_analyzed is therefore the true value 1. It was NOT raised to 2+ by recounting this application's internal units: its six logical modules (form1-dashboard, insert-form, edit-form, view-form, module1-db-connection, my-project-infrastructure), its four WinForms surfaces, its one 'students' table or its capability slices are INTERNAL UNITS OF ONE APPLICATION, and reporting any of them as 'applications' would resolve to nothing against the wave roster downstream while making the one real application read as uncovered. Intra-application duplication in this app IS real and material (notably the InsertForm/EditForm field-mapping and 24-control Designer duplication, the three duplicate grid-load paths in ViewForm, and the eight-way duplication of the course taxonomy) but it is out of scope here by dispatch: it belongs to the scope=intra-app dispatch that writes intra-app-redundancy.json, and it is recorded in this run's review ask for the reviewer's visibility rather than smuggled into these pairwise arrays. No capability-catalog.json was staged for this wave, so capability comparison rested on business-logic.json and structural-analysis.json; this did not affect the result, since the blocking fact is the absence of a peer application, not the absence of a lens. No system/capability UUID roster was supplied, so the optional source_system_ids / source_capability_ids / target_capability_seed grounding fields are omitted rather than populated with invented ids."
+  },
+  "entity_overlap": [],
+  "operation_overlap": [],
+  "high_overlap_pairs": [],
+  "data_sot_conflicts": [],
+  "consolidation_candidates": [],
+  "coverage_exclusions": [
+    {
+      "app_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "reason": "Single-application wave: this is the only application on the wave roster, so there is no peer to compare it against and no pairwise overlap is computable. The application's Discovery artifacts were read in full and it was fully assessed for cross-app redundancy; the assessment's outcome is that the measure is undefined at n=1, which is why it appears in no overlap row and in no consolidation cluster.",
+      "rationale": "Cross-app entity, operation and persona overlap are all pairwise measures over applications. With one application the pair set is empty, so an absent overlap row here carries no information about this application's consolidation potential either way — it must not be read as 'no redundancy found'. If a later wave adds a second application managing a student/person-record entity or offering a CRUD-over-one-roster capability, this application becomes a candidate pair and must be rescored; nothing in this run forecloses that.",
+      "justification": "Declared so G-RR's coverage check (temporal/olympus_workflows/utils/wave_coverage.py read_declared_exclusions) can excuse this application from pairwise-matrix coverage with the reason stated on the record, rather than reading the empty matrix as a silent analytical gap."
+    }
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "redundancy-scan-inventory",
+      "action": "aware",
+      "title": "We checked this application for overlap with other systems and found there are no other systems in this wave to compare it against — nothing is being recommended for consolidation",
+      "why": "A reviewer seeing an empty consolidation list needs to know it means 'there was nobody to compare against', not 'we compared and found no duplication' — the two lead to opposite decisions if a second system is added to the programme later.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.95,
+        "rationale": "The conclusion rests on a roster fact, not on judgement: the dispatch context names exactly one application, and all four of its required Discovery artifacts were present and read in full. The only residual uncertainty is whether the wave roster itself is complete — if the programme intended more applications in this wave and they were never onboarded, the pairwise finding would change. That is a question about the roster, not about this analysis."
+      },
+      "assessment": "SCANNED: one application, 'Student Management System (VB.NET)' — a standalone Windows desktop (VB.NET WinForms) tool managing student academic records in a single 10-column Microsoft Access table, across all four of its screens (dashboard, add, view/search, edit) and all six of its internal modules, using its catalog, business-logic (60 extracted rules), structural-analysis and UX/accessibility Discovery artifacts. FOUND: no cross-application redundancy, because this wave contains no other application. There are zero application pairs to score, so there are no entity-overlap, operation-overlap or persona-overlap rows and no consolidation clusters, and no application is being proposed for merge, retirement or absorption into a shared service on the strength of this analysis. Three things a reviewer should carry forward. (1) An empty result here is a statement about the wave, not a clean bill of health for the application: if any other system in the portfolio also maintains person or student records, or also offers create/read/update/delete over a single roster, this application is a live consolidation candidate that this run simply could not see. (2) Substantial DUPLICATION DOES EXIST INSIDE this application — its add-record and edit-record screens carry near-identical 24-control layouts and near-identical ten-field database mappings, its record grid is loaded by three separate code paths with one behaviour, and its list of degree programmes is restated in roughly eight places — so field-level changes must be made in several places at once. That is genuine rework risk, but it is internal duplication, which a separate intra-application pass covers and which deliberately does not appear in this cross-application matrix. (3) Regulatory consolidation analysis also returned nothing to compare: the upstream business-logic pass determined that none of this application's 60 rules derives from any regulation in the governing FAA profile, so there is no regulation implemented by two or more systems here and no implementation variance to reconcile.",
+      "reasoning": "Branching on the dispatched scope first (cross-app, not intra-app) fixed the unit of comparison as the APPLICATION and the output as the wave redundancy matrix. The roster was then counted from the authoritative dispatch context rather than inferred from directory contents: app_ids holds a single id, and the staged discovery/ tree corroborates it with exactly one application directory. One application gives zero unordered pairs, which makes every pairwise lens — entity, operation, persona, technology — undefined rather than zero, so no fan-out was dispatched (the fan-out unit is the pair, and there are none) and the three overlap arrays are empty by construction. The one genuinely tempting error was available and rejected: this application decomposes cleanly into six logical modules and four UI surfaces, and scoring those against each other would have produced a populated, schema-valid matrix with a comfortable-looking applications_analyzed of 4 or 6. It would also have been false — downstream consumers resolve app ids against the wave roster, so module names like 'view-form' would bind to nothing and the one real application would read as uncovered — so the honest count of 1 was emitted and the internal duplication was reported in prose here instead. Two input observations are passed through without being adopted as findings of this skill. The governing profile declared for this dispatch is 'faa', and every input artifact agrees that faa is authoritative, so there is no profile conflict to report; what the artifacts do flag, independently and consistently across the catalog, structural-analysis, business-logic and UX passes, is that an academic student-records desktop tool has no plausible aviation or NAS business content, which is a profile-ASSIGNMENT question for the engagement owner and not a redundancy question. And the business-logic pass's regulatory determination of NOT APPLICABLE was taken at face value for the regulatory-variance report rather than re-derived, since variance analysis needs two or more implementations of one regulation and this wave can supply neither.",
+      "evidence_refs": [
+        {
+          "name": "Wave roster — dispatch context app_ids",
+          "detail": "app_ids contains exactly one entry, c70846ac-0948-4953-990c-c68a2be292d9, giving 1*(1-1)/2 = 0 application pairs available to score. This is the authoritative roster and the direct cause of the empty overlap arrays.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/_dispatch-context-wave-cross-app-redundancy.json"
+        },
+        {
+          "name": "Staged Discovery inputs — one application directory",
+          "detail": "The staged discovery/ tree holds a single application directory with all four required artifacts (catalog.json, business-logic.json, structural-analysis.json, ux-accessibility.json) present and readable, corroborating the roster count of 1. No required input was missing, so the empty matrix is not an input-availability failure.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/"
+        },
+        {
+          "name": "catalog.json — application scope and shape",
+          "detail": "Standalone WinForms desktop application, 2,787 LOC total of which only 461 are hand-written, 1 build module, 1 database table, 0 HTTP endpoints and 0 outbound app-to-app integrations. A system with no integration surface offers no app-to-app edges from which cross-app overlap could be inferred even indirectly.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "structural-analysis.json — internal duplication (intra-app scope, reported for visibility only)",
+          "detail": "insert-form coupling signal 'duplicated-field-mapping': the ten-field parameter block is near-identical to EditForm's UPDATE block and the two Designer files declare identical 24-control sets (373 vs 371 lines). view-form signal 'duplicate-load-paths': LoadData(), LoadSData() and RefreshData() are three entry points with one behaviour. These are internal units of one application and are correctly absent from the pairwise arrays.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "business-logic.json — course taxonomy duplicated roughly eight ways (BR-014)",
+          "detail": "The BCA/MCA/IIMCA programme list is restated across two combo Items collections, two dead AutoCompleteCustomSource collections, three dashboard SQL literals and the tile captions, so adding a programme requires coordinated edits in every one of those places. Again internal, not cross-app.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "business-logic.json — regulatory applicability NOT APPLICABLE",
+          "detail": "totals.regulatory_applicability records match_result 'No match on any entry' against the faa profile's regulatory_sources (14 CFR Parts 47, 61, 63, 67, 183) and rules_missing_from_regulation 0, across all 60 extracted rules. With no regulation implemented by this application and no peer application in the wave, regulatory implementation variance has nothing to compare and the companion regulatory-variance.json is a nil report.",
+          "artifact_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        }
+      ]
+    }
+  ]
+}
