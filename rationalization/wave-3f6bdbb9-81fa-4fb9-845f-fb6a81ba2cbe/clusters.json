@@ -1,0 +1,83 @@
+{
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+  "clusters": [
+    {
+      "name": "Student Personnel Records Management",
+      "external_id": "RATCAP-STUDENT-RECORDS-CRUD",
+      "description": "Create, read, update, and delete of individual student academic records (identity, contact, demographics, course, admission year, DOB) in the single system of record. This is the disposition unit for the application's one genuine CRUD outcome.",
+      "rationale": "Within-app cohesion signal from intra-app-redundancy.json: the three screens realizing this capability (insert-form, edit-form, view-form) cluster together as a 3-member clique at module grain, with every pairwise composite score (74-85) clearing the 60 cluster threshold on shared entity/operation/persona overlap, and a reviewer-facing recommendation of 'shared_service'. The fine capability 'personnel-records-management' already sits at this grain (one app, no peer in the wave to consolidate across), so it rolls into exactly one rat-cap unchanged.",
+      "confidence": 0.75,
+      "member_capability_ids": [
+        "eabaec15-7f79-48fb-96f2-2f54c8ade035"
+      ]
+    },
+    {
+      "name": "Student Population Reporting & Analytics",
+      "external_id": "RATCAP-STUDENT-REPORTING-ANALYTICS",
+      "description": "Read-only aggregate dashboard reporting on the student population (counts by gender, course, and admission-year bucket), the application's sole analytics surface, distinct from the CRUD outcome it reads from.",
+      "rationale": "Within-app evidence shows this is NOT the same outcome as the CRUD cluster: intra-app-redundancy.json explicitly rejects form1-dashboard from the insert/edit/view clique, scoring its pairwise composites at 46-51, below the 60 cluster threshold, specifically because it is 'a separate reporting concern.' The fine capability 'reporting-and-analytics' is therefore kept as its own disposition unit rather than merged into the records-management rat-cap.",
+      "confidence": 0.8,
+      "member_capability_ids": [
+        "0f159e42-7118-4ebb-9a1e-972e4e2df352"
+      ]
+    }
+  ],
+  "splits": [],
+  "open_questions": [
+    "Governed capability vocabulary has no student-records-specific entry; 'personnel-records-management' (and this rat-cap's name/external_id) are being used as the closest available proxy for person-record CRUD. A strategy-of-record owner should confirm this binding, or supply the correct catalog entry, on review.",
+    "Governing-profile discrepancy flagged upstream, not asserted here as fact: this task's governing client profile is declared as 'faa', but the staged business-logic.json, redundancy-matrix.json, and integration-graph.json each independently report that the in-scope application (Student Management System, VB.NET) has no aviation/NAS/airman/certification content and is a generic single-developer academic admin tool. This clustering pass does not adopt an alternative profile and did not find any FAA strategy-of-record catalog to bind external_id against; the mismatch remains open for the engagement/profile owner to resolve."
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "open-questions-outstanding",
+      "action": "investigate",
+      "title": "Confirm 'Student Personnel Records Management' is an acceptable proxy name/external_id, since no governed capability-vocabulary entry exists for student records.",
+      "why": "If a reviewer later supplies the correct catalog entry, this rat-cap's external_id and name should be rebound to it rather than left as a self-authored slug, which affects how disposition recommendations downstream describe and group this outcome.",
+      "subject": {
+        "kind": "rationalization_capability",
+        "id": "RATCAP-STUDENT-RECORDS-CRUD",
+        "label": "Student Personnel Records Management"
+      },
+      "confidence": {
+        "level": "medium",
+        "score": 0.6,
+        "rationale": "The clustering decision itself (one CRUD outcome, one rat-cap) is well evidenced by the intra-app module clustering; the uncertainty is purely about the external vocabulary binding, which Discovery already flagged as unresolved."
+      },
+      "assessment": "The rat-cap boundary is sound (CRUD across insert/edit/view screens), but its name and external_id are an authored proxy, not a bound strategy-of-record entry.",
+      "reasoning": "Discovery's wave_capability_grain description for the source fine capability states the governed capability vocabulary has no student-records-specific entry and names this as an open question; no strategy-of-record catalog or context prior was staged for this profile/wave to resolve it.",
+      "evidence_refs": [
+        {
+          "name": "Fine capability description",
+          "detail": "wave_capability_grain capability_id eabaec15-7f79-48fb-96f2-2f54c8ade035 description: \"...the governed capability vocabulary has no student-records-specific entry, so 'personnel-records-management' is used as the closest available proxy...\"",
+          "artifact_path": "_dispatch-context-wave-analyze-portfolio-redundancy.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "capability-clustering-recorded",
+      "action": "aware",
+      "title": "Clustering recorded: 2 fine capabilities (1 application) rolled into 2 rat-caps — Student Personnel Records Management and Student Population Reporting & Analytics. No merges, no splits.",
+      "why": "States the clustering outcome for the record so the reviewer sees the full denominator — every fine capability's disposition — behind the other asks in this artifact.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Student Management System (VB.NET)"
+      },
+      "assessment": "2 fine capabilities in, 2 rat-caps out, 1 application contributing, 0 bound to a strategy-of-record catalog (none staged), 0 splits. The two rat-caps were kept separate rather than merged because within-app evidence (intra-app-redundancy.json module clustering) positively shows the reporting/dashboard module failing the same consolidation threshold that the three CRUD screens clear.",
+      "reasoning": "This is a single-application wave (app_ids has exactly one entry), so there is no cross-app consolidation signal to apply — only within-app cohesion/separation, which the staged intra-app-redundancy.json evidences directly at module grain (CRUD clique score 74-85 vs dashboard pairwise scores 46-51, 60-point threshold).",
+      "evidence_refs": [
+        {
+          "name": "Wave capability grain",
+          "detail": "2 capability_id rows, both application_id c70846ac-0948-4953-990c-c68a2be292d9",
+          "artifact_path": "_dispatch-context-wave-analyze-portfolio-redundancy.json"
+        },
+        {
+          "name": "Intra-app module clustering",
+          "detail": "15/15 module pairs scored; 1 cluster (insert-form/edit-form/view-form, 74-85 composite, >=60 threshold); form1-dashboard rejected at 46-51",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        }
+      ]
+    }
+  ]
+}
