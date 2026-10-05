@@ -1,0 +1,960 @@
+{
+  "$schema": "olympus:artifact:redundancy-matrix:v1",
+  "metadata": {
+    "generated_date": "2026-10-05",
+    "applications_analyzed": 1,
+    "analyst": "redundancy-analyzer (scope=intra-app, wave 3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe, governing profile: faa). UNIT OF COMPARISON: applications_analyzed is 1 and that is the honest value - exactly ONE application was analysed (c70846ac-0948-4953-990c-c68a2be292d9, 'Student Management System (VB.NET)'), and this intra-app dispatch decomposed it into its 6 internal modules as the compared units. The 6 modules are NOT counted as applications; they are internal units of one application, and every app_1/app_2/applications[] value below is deliberately written as '<application_id>/<module_id>' so an internal unit can never be mistaken for a wave application id. The application itself is fully covered by this artifact at module grain, so coverage_exclusions is empty and omitted. COMPARED UNITS (6): form1-dashboard, insert-form, edit-form, view-form, module1-db-connection, my-project-infrastructure - taken verbatim from discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json modules[].id. METHOD: all 15 unordered module pairs were scored sequentially (no fan-out: 6 units / 15 pairs is below the skill's fan-out threshold, and the 3 staged Discovery artifacts are the dominant input), using the three prescribed lenses. entity_overlap = Jaccard over the set of students-table columns each module actually references. operation_overlap = Jaccard over the set of named operations each module implements. persona_overlap = 100 where two modules serve the same human persona, 0 where they do not (the application has exactly one undifferentiated unauthenticated operator persona covering all four forms; module1-db-connection and my-project-infrastructure have zero human-facing surface and serve only the developer/maintainer persona). technology_overlap = 100 for every pair, because all 6 modules are Visual Basic .NET / WinForms / .NET Framework 4.8 inside a single assembly - it is a real property of a single-assembly monolith and it is weighted low precisely so it cannot manufacture a cluster on its own. COMPOSITE = 0.35*entity + 0.35*operation + 0.20*persona + 0.10*technology; cluster threshold 60. COMPOSITE MATRIX (15 pairs): insert-form<->edit-form 85; edit-form<->view-form 78; insert-form<->view-form 74; form1-dashboard<->view-form 51; form1-dashboard<->insert-form 46; form1-dashboard<->edit-form 46; module1-db-connection<->my-project-infrastructure 30; form1-dashboard<->module1-db-connection 18; insert-form<->module1-db-connection 18; edit-form<->module1-db-connection 18; view-form<->module1-db-connection 18; form1-dashboard<->my-project-infrastructure 10; insert-form<->my-project-infrastructure 10; edit-form<->my-project-infrastructure 10; view-form<->my-project-infrastructure 10. One cluster cleared the threshold as a 3-member clique (insert-form, edit-form, view-form); per the no-double-counting rule its three internal pairs are NOT restated as separate consolidation_candidates entries. REGULATORY VARIANCE: not computable and not fabricated - business-logic.json traces zero of its 60 business rules to any regulation and explicitly determines the faa profile's regulatory_sources (14 CFR Parts 47, 61, 63, 67, 183) NOT APPLICABLE to a student-records desktop tool. That null result and the profile/domain mismatch already recorded upstream are documented in the sibling regulatory-variance.json rather than left silent. PROFILE NOTE: the governing profile for this run is faa per the authoritative dispatch declaration, and the staged business-logic.json names the same profile, so there is no profile discrepancy to report here; the separate observation that an aviation-regulator profile does not plausibly govern an academic student-records application was already raised as a finding by the upstream Discovery pass and is restated here only as context, not as a new claim. NOT MEASURED: no repository was read by this pass - every number is derived from the three staged Discovery artifacts, so all measurement.method values are 'supplied-artifact', never 'tool-run' or 'repository-scan'. Row counts, Access column data types and any uniqueness index on rollno remain unknown upstream, so no overlap figure here depends on them."
+  },
+  "entity_overlap": [
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "overlap_percentage": 100,
+      "shared_entities": [
+        "students (all ten columns: RollNo, FName, LName, FatherName, MobNo, AltMobNo, Gender, Course, YOA, DOB)",
+        "Gender value domain (Male, Female, Other) - declared identically in both Designer files",
+        "Course value domain (BCA, MCA, IIMCA)",
+        "Year-of-admission value domain (2019-2023)",
+        "Date-of-birth (DateTimePicker-sourced display string)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "business_rules BR-010 (ten-column INSERT mapping) and BR-030/BR-032 (ten-column read, nine-column UPDATE mapping)",
+            "finding_id": "BR-010"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over referenced students columns: insert-form references all 10, edit-form references all 10 (reads 10, writes 9, keys on the 10th) -> 10/10 = 100%. Corroborated structurally: structural-analysis.json coupling_indicators['insert-edit-near-duplication'] records byte-for-byte identical 24-control Designer layouts (373 vs 371 lines)."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 100,
+      "shared_entities": [
+        "students (all ten columns - insert-form writes all ten, view-form exposes all ten via SELECT * with AutoGenerateColumns)",
+        "RollNo as de-facto record key"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[insert-form].db_access and modules[view-form].db_access"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over referenced students columns: 10/10 = 100%. view-form's SELECT * plus AutoGenerateColumns=True means its column set is the whole table by construction, so it necessarily subsumes insert-form's write set."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 100,
+      "shared_entities": [
+        "students (all ten columns)",
+        "RollNo as the key for single-row addressing (edit-form SELECT/UPDATE, view-form DELETE and grid Cells(\"rollno\"))"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "business_rules BR-037 (unbounded WHERE rollno cardinality asserted by both the UPDATE and the DELETE path)",
+            "finding_id": "BR-037"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over referenced students columns: 10/10 = 100%. Both modules address single rows through the same unenforced rollno key and both discard ExecuteNonQuery's affected-row count."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "overlap_percentage": 30,
+      "shared_entities": [
+        "students.Gender - but the two declarations DISAGREE: insert-form offers Male/Female/Other, the dashboard counts Male/Female only",
+        "students.Course (BCA, MCA, IIMCA) - literals agree in both modules",
+        "students.YOA - insert-form offers the fixed list 2019-2023, the dashboard derives five buckets from a hardcoded currentYear = 2023"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "business_rules BR-013/BR-014/BR-015 (entry-form value domains) against BR-070/BR-071/BR-072 (dashboard census domains)",
+            "finding_id": "BR-070"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over referenced students columns: form1-dashboard references only {Gender, Course, YOA} in its ten COUNT(*) queries; insert-form references all 10 -> 3/10 = 30%. Confidence medium rather than high because the shared columns are referenced at different grain (row-level write versus aggregate predicate), so the figure reports domain co-declaration rather than interchangeable record handling."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "overlap_percentage": 30,
+      "shared_entities": [
+        "students.Gender - the same Male/Female/Other versus Male/Female disagreement, worsened by Option Compare Binary making edit-form's re-selection case-sensitive while the dashboard's SQL comparison is case-insensitive",
+        "students.Course (BCA, MCA, IIMCA)",
+        "students.YOA (fixed 2019-2023 list versus hardcoded-2023 arithmetic)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "business_rules BR-033 (edit-form domain re-selection) against BR-070/BR-071/BR-072 (dashboard census domains)",
+            "finding_id": "BR-033"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over referenced students columns: 3/10 = 30%. Same grain caveat as the form1-dashboard/insert-form row."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 30,
+      "shared_entities": [
+        "students.Gender, students.Course, students.YOA - the dashboard's three aggregate predicates are all columns view-form exposes verbatim in its grid"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[form1-dashboard].db_access and modules[view-form].db_access"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over referenced students columns: 3/10 = 30%. The dashboard's tiles and the grid are two presentations of the same rows, which is why the pair scores above the other dashboard pairs on operations even though the entity figure is identical."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 10,
+      "shared_entities": [
+        "students (table binding only - module1-db-connection declares the datastore and holds zero column references and zero SQL)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[module1-db-connection].db_access ('owns the single shared connection; contains no SQL of its own', tables: [])"
+          }
+        },
+        "confidence": "high",
+        "notes": "Column-set Jaccard is 0: module1-db-connection references no students column. Scored 10 rather than 0 to record the one thing the pair genuinely shares - the studentDB.accdb binding and table ownership. The 13-line module duplicates no business entity with any other module, which is why it is rejected from the consolidation cluster below rather than absorbed into it."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 10,
+      "shared_entities": [
+        "students (table binding only)",
+        "dbcon (the shared global OleDbConnection) - shared infrastructure, not a business entity"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "coupling_indicators['shared-global-connection']"
+          }
+        },
+        "confidence": "high",
+        "notes": "Column-set Jaccard 0; scored 10 for the shared datastore binding only. See the form1-dashboard/module1-db-connection row for the same reasoning."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 10,
+      "shared_entities": [
+        "students (table binding only)",
+        "dbcon (the shared global OleDbConnection)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "coupling_indicators['shared-global-connection']"
+          }
+        },
+        "confidence": "high",
+        "notes": "Column-set Jaccard 0; scored 10 for the shared datastore binding only."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 10,
+      "shared_entities": [
+        "students (table binding only)",
+        "dbcon (the shared global OleDbConnection) - view-form is the only module that mutates its lifecycle, calling dbcon.Close() on state module1-db-connection nominally owns"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "coupling_indicators['shared-global-connection'] and modules[view-form].coupling_signals['closes-shared-global-connection']"
+          }
+        },
+        "confidence": "high",
+        "notes": "Column-set Jaccard 0; scored 10 for the shared datastore binding only. Note this is shared OWNERSHIP of mutable state, which is coupling to be cut, not redundancy to be consolidated."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_entities": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].db_access ('none')"
+          }
+        },
+        "confidence": "high",
+        "notes": "Neither module references a business entity: module1-db-connection holds a connection and no SQL, my-project-infrastructure has db_access 'none'. A true zero, reported rather than rounded up."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_entities": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].db_access ('none')"
+          }
+        },
+        "confidence": "high",
+        "notes": "my-project-infrastructure is entirely Designer-generated application plumbing with no data access and no business entity; true zero entity overlap against every other module."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_entities": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].db_access ('none')"
+          }
+        },
+        "confidence": "high",
+        "notes": "True zero. my-project-infrastructure's only relationship to insert-form is that its generated My.Forms collection makes insert-form's default-instance calls compile - a mechanism dependency, not a shared entity."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_entities": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].db_access ('none')"
+          }
+        },
+        "confidence": "high",
+        "notes": "True zero entity overlap."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_entities": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].db_access ('none')"
+          }
+        },
+        "confidence": "high",
+        "notes": "True zero entity overlap."
+      }
+    }
+  ],
+  "operation_overlap": [
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "overlap_percentage": 56,
+      "shared_operations": [
+        "ensure-connection (defensive Module1.connectDB() call before every statement)",
+        "map-ten-field-student-record from the same 24-control layout to positional OleDb parameters",
+        "persist-student-record (INSERT versus UPDATE - same mapping, different verb)",
+        "format date-of-birth by binding dtpDOB.Text, the locale-formatted display string, with no IFormatProvider",
+        "refresh-dashboard via the Form1.LoadData() default instance",
+        "blanket Catch Exception that surfaces raw provider text in a MsgBox"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-010/BR-012/BR-018/BR-030/BR-032 (ten-field mapping written twice), BR-016/BR-034 (date rules), BR-022 (blanket catch)",
+            "finding_id": "BR-012"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: 5 shared of a 9-operation union (insert-form adds clear-fields and a second sibling refresh; edit-form adds read-student-by-rollno and the DateTime.Parse re-hydration) -> 5/9 = 56%. The two modules are parallel implementations of one ten-field record editor; the difference is the verb, not the capability."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 36,
+      "shared_operations": [
+        "ensure-connection (Module1.connectDB() restated defensively in both)",
+        "read-student-rows from the students table (edit-form parameterized SELECT by rollno, view-form SELECT *)",
+        "mutate-by-rollno with unbounded cardinality and the ExecuteNonQuery row count discarded (edit-form UPDATE, view-form DELETE)",
+        "host/launch the edit surface inside Form1.Panel5 (edit-form is the hosted form, view-form performs the reparenting)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-037/BR-032/BR-057 (identical unbounded-rollno defect and false success reporting on the update and delete paths)",
+            "finding_id": "BR-057"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: 4 shared of an 11-operation union -> 36%. Lower than the insert/edit pair because view-form additionally owns search, grid binding, row-selection guards and connection teardown, none of which edit-form implements."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 25,
+      "shared_operations": [
+        "ensure-connection (Module1.connectDB() restated defensively in both)",
+        "write-to-students via a parameterized statement on the shared global connection (INSERT versus DELETE)",
+        "refresh-the-student-grid (insert-form calls ViewForm.LoadData() on a hidden default instance; view-form calls its own LoadData() directly)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-050/BR-052/BR-053/BR-019 (three grid-population routines invoked from three modules by three addressing mechanisms)",
+            "finding_id": "BR-019"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over named operations: 3 shared of a 12-operation union -> 25%. Confidence medium because one of the three shared operations is shared only nominally: insert-form's ViewForm.LoadData() call resolves to a VB default instance that is not the grid on screen, so the operation is co-declared but not co-effective."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "overlap_percentage": 30,
+      "shared_operations": [
+        "host-child-form (TopLevel=False, add to Form1.Panel5, BringToFront, Show) - implemented independently in BOTH modules",
+        "assemble SQL by string concatenation (view-form concatenates user keystrokes, form1-dashboard concatenates the derived year)",
+        "trigger-grid-refresh (form1-dashboard calls RefreshData() via DirectCast; view-form owns LoadData/LoadSData/RefreshData)",
+        "present the same students rows to the same operator (tiles versus grid)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-078/BR-063 (child-form hosting implemented twice in two modules) and BR-074/BR-052 (two coexisting SQL-construction conventions)",
+            "finding_id": "BR-078"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over named operations: 4 shared of a 13-operation union -> 30%. This is the highest operation overlap any form1-dashboard pair reaches, and it is the reason the pair's composite (51) sits just under the 60 cluster threshold - see the pair-overlap-below-cluster-threshold review ask."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "overlap_percentage": 15,
+      "shared_operations": [
+        "declare the Gender/Course/YOA value domains (form1-dashboard as SQL literals and tile captions, insert-form as Designer Items collections) - co-declared and, for Gender and YOA, mutually inconsistent",
+        "refresh-dashboard-statistics (declared in form1-dashboard as LoadData, invoked from insert-form through the default instance)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-013/BR-070 (Gender domain declared in three places with two different answers) and BR-019/BR-077 (post-mutation refresh contract)",
+            "finding_id": "BR-013"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over named operations: 2 shared of a 13-operation union -> 15%. form1-dashboard implements aggregate counting, navigation and hosting; insert-form implements record creation. The relationship is mostly invocation and co-declaration, not duplicated capability - which is why form1-dashboard is rejected from the consolidation cluster."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "overlap_percentage": 15,
+      "shared_operations": [
+        "declare the Gender/Course/YOA value domains - with the added divergence that edit-form's membership test is case-sensitive (Option Compare Binary) while the dashboard's SQL comparison is case-insensitive",
+        "refresh-dashboard-statistics (declared in form1-dashboard, invoked from edit-form through the default instance)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-033/BR-092 (case-sensitivity divergence in the same domain-membership rule) and BR-038/BR-077 (post-update refresh)",
+            "finding_id": "BR-092"
+          }
+        },
+        "confidence": "medium",
+        "notes": "Jaccard over named operations: 2 shared of a 13-operation union -> 15%. Same reasoning as the form1-dashboard/insert-form row."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 14,
+      "shared_operations": [
+        "open-the-shared-connection (module1-db-connection implements connectDB(); insert-form restates the 'ensure it is open' rule at its own call site)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-001/BR-004 (the 'ensure the connection is open' rule restated at six call sites across four modules instead of owned by the data-access layer)",
+            "finding_id": "BR-001"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: module1-db-connection implements exactly 1 operation; 1 shared of a 7-operation union -> 14%. module1-db-connection holds no SQL at all, so it duplicates no data operation with any module."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 14,
+      "shared_operations": [
+        "open-the-shared-connection (edit-form restates the rule at two call sites: LoadData and btnSave_Click)"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-001/BR-004",
+            "finding_id": "BR-004"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: 1 shared of a 7-operation union -> 14%."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 13,
+      "shared_operations": [
+        "open-the-shared-connection (view-form restates the rule at two call sites). view-form additionally CLOSES the shared connection, an operation module1-db-connection does not implement and does not guard against."
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[view-form].coupling_signals['closes-shared-global-connection']"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: 1 shared of an 8-operation union -> 13%. The pair's defining relationship is unowned shared mutable state, not duplicated function."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "overlap_percentage": 12,
+      "shared_operations": [
+        "open-the-shared-connection - shared only partially: Form1_Load calls connectDB(), but LoadData issues its ten ExecuteScalar aggregates WITHOUT calling it, so once view-form closes the connection the dashboard refresh throws unhandled"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json",
+            "section": "duplicated_rules - BR-001/BR-004, where the incomplete duplication is load-bearing: form1-dashboard omits the defensive connectDB() that the other three forms restate",
+            "finding_id": "BR-001"
+          }
+        },
+        "confidence": "high",
+        "notes": "Jaccard over named operations: 1 shared of an 8-operation union -> 12%. Worth reading alongside the other module1-db-connection rows: this is the one pair where the duplicated rule is NOT duplicated consistently, and the gap is a live crash path."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_operations": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].role (Designer-generated startup/single-instance plumbing, assembly metadata, settings accessors)"
+          }
+        },
+        "confidence": "low",
+        "notes": "True zero: my-project-infrastructure implements only generated application plumbing (MainForm wiring, authentication-mode configuration that is never read, compiler options) and duplicates no operation of any other module. Confidence low because the comparison is close to vacuous - there is almost no hand-written operation in this module to compare against - not because a non-zero value was suspected."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_operations": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].coupling_signals['default-instance-provider']"
+          }
+        },
+        "confidence": "low",
+        "notes": "True zero. The generated My.Forms collection is what makes insert-form's bare Form1.LoadData()/ViewForm.LoadData() calls compile, but providing a language mechanism is not implementing the same operation. Confidence low for the same vacuousness reason as the other my-project-infrastructure rows."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_operations": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].role"
+          }
+        },
+        "confidence": "low",
+        "notes": "True zero; same reasoning as the other my-project-infrastructure rows."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_operations": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[my-project-infrastructure].role"
+          }
+        },
+        "confidence": "low",
+        "notes": "True zero; same reasoning as the other my-project-infrastructure rows."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+      "overlap_percentage": 0,
+      "shared_operations": [],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[module1-db-connection] and modules[my-project-infrastructure]"
+          }
+        },
+        "confidence": "medium",
+        "notes": "True zero on operations. The pair's composite of 30 comes entirely from the persona and technology lenses (both modules are developer-facing only, both are VB.NET in the same assembly) and carries no redundancy signal - a worked example of why the technology lens is weighted at only 0.10."
+      }
+    }
+  ],
+  "high_overlap_pairs": [
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "entity_overlap": 100,
+      "operation_overlap": 56,
+      "shared_entities": [
+        "students (all ten columns)",
+        "Gender / Course / Year-of-admission value domains",
+        "Date-of-birth handling"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "coupling_indicators['insert-edit-near-duplication'] (identical 24-control Designer layouts, 373 vs 371 lines; same field-to-parameter mapping written twice)"
+          }
+        },
+        "confidence": "high",
+        "notes": "Composite 85, the strongest pair in the application and the seed of the consolidation cluster. Restated here from the entity_overlap and operation_overlap rows above; no independent measurement."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "entity_overlap": 100,
+      "operation_overlap": 36,
+      "shared_entities": [
+        "students (all ten columns)",
+        "RollNo as the unenforced single-row key for both the UPDATE and the DELETE"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "coupling_indicators['unenforced-identity']"
+          }
+        },
+        "confidence": "high",
+        "notes": "Composite 78. Restated from the rows above; no independent measurement."
+      }
+    },
+    {
+      "app_1": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_2": "c70846ac-0948-4953-990c-c68a2be292d9/view-form",
+      "entity_overlap": 100,
+      "operation_overlap": 25,
+      "shared_entities": [
+        "students (all ten columns)",
+        "RollNo as de-facto record key"
+      ],
+      "measurement": {
+        "method": "supplied-artifact",
+        "source": {
+          "citation": {
+            "type": "artifact",
+            "artifact": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+            "section": "modules[insert-form].db_access and modules[view-form].db_access"
+          }
+        },
+        "confidence": "high",
+        "notes": "Composite 74 - the weakest pair inside the consolidation cluster and therefore the cluster's weakest_pairwise_score. Restated from the rows above; no independent measurement."
+      }
+    }
+  ],
+  "data_sot_conflicts": [
+    {
+      "entity": "students.Gender",
+      "app_a": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_a_definition": "A closed three-value domain - Male, Female, Other - declared as Designer Items literals and written to the column verbatim. edit-form declares the identical three-value domain.",
+      "app_b": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_b_definition": "A two-value domain - Male, Female - restated independently as SQL literals in two COUNT(*) queries, with no 'Other' bucket and no grand total anywhere on the dashboard.",
+      "conflict_type": "semantic_mismatch",
+      "recommended_sot": "Neither. Promote the domain out of both modules into one enumeration owned by the student-record service (and ideally a database check constraint), then derive both the entry-form dropdowns and the dashboard census from it. A student stored as 'Other' is currently storable, listable and editable but counted in no statistic, and because no total is displayed the shortfall is invisible - so picking either existing module as source of truth preserves the defect in one direction or the other."
+    },
+    {
+      "entity": "students.YOA (year of admission / cohort)",
+      "app_a": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_a_definition": "A closed, already-expired list of five string literals 2019-2023 declared in the Designer Items collection (duplicated identically in edit-form).",
+      "app_b": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+      "app_b_definition": "Five buckets derived arithmetically by subtracting 0-4 from a local variable hardcoded to the literal 2023, with no reference to the system clock, then concatenated back into a quoted string to match the TEXT column lexically.",
+      "conflict_type": "semantic_mismatch",
+      "recommended_sot": "Neither. The two halves agree only by coincidence of literals and both are already wrong: every academic-year tile has been incorrect since 1 January 2024, and extending the dropdown to 2024 without editing the constant would place new students in no cohort tile at all. The cohort definition must be restated as a requirement with stakeholders and then owned in one place - the current SQL and the current dropdown are both evidence of intent, not a specification."
+    },
+    {
+      "entity": "students.RollNo (mutability of the de-facto primary key)",
+      "app_a": "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+      "app_a_definition": "Freely user-typed: no mask, no length limit, no format or check-digit rule, no generation scheme, and no duplicate pre-check before the INSERT.",
+      "app_b": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "app_b_definition": "Immutable: the same logical field is ReadOnly in the Designer and rollno appears only in the UPDATE WHERE clause, never in the SET list.",
+      "conflict_type": "semantic_mismatch",
+      "recommended_sot": "edit-form's immutability answer, made explicit. Treat RollNo as an immutable key enforced by a declared unique index (no primary key or unique index was found in the decoded .accdb, so uniqueness is currently assumed by the code and enforced nowhere), and add the duplicate pre-check insert-form lacks. Re-keying a student is today possible only by delete-and-recreate, which is non-atomic and unaudited. Confirm against a live Access engine before migrating - the upstream decode could not resolve index definitions."
+    }
+  ],
+  "consolidation_candidates": [
+    {
+      "group_name": "Student record CRUD - three screens, one capability",
+      "cluster_id": "smsvb-student-record-crud",
+      "applications": [
+        "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+        "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+        "c70846ac-0948-4953-990c-c68a2be292d9/view-form"
+      ],
+      "anchor_app_id": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "canonical_target_candidate": "c70846ac-0948-4953-990c-c68a2be292d9/edit-form",
+      "peer_app_ids": [
+        "c70846ac-0948-4953-990c-c68a2be292d9/insert-form",
+        "c70846ac-0948-4953-990c-c68a2be292d9/view-form"
+      ],
+      "shared_capability": "Create, read, search, update and delete the student record (the single ten-column students table) - the one genuine business capability in the application",
+      "weakest_pairwise_score": 74,
+      "cohesion_score": 79,
+      "rationale": "Seeded by the above-threshold pair insert-form <-> edit-form (composite 85) and grown by the clique rule: every internal pair clears the 60 threshold (insert/edit 85, edit/view 78, insert/view 74), all three modules reference all ten columns of the same students table, all three address single rows through the same rollno key, and all three serve the same single unauthenticated operator persona. The duplication is not incidental - insert-form and edit-form are parallel implementations of one ten-field record editor with byte-for-byte identical 24-control Designer layouts (373 vs 371 lines) and the field-to-parameter mapping written twice, and view-form independently triplicates its own grid-population logic across LoadData, LoadSData and RefreshData. ANCHOR CHOICE (contested - see the canonical-target-contested review ask): edit-form is proposed because it is the only module that already implements both the read and the write of the complete ten-field record, it is the only one with a real constructor contract, both its statements are parameterized, and it carries the lowest technical-debt band of the three (medium, versus insert-form medium-high and view-form high). view-form is explicitly NOT the anchor despite having the strongest incoming call edges, because it holds the application's only confirmed SQL-injection vector and is the module that unilaterally closes the shared global connection. PREREQUISITES, not side effects: this cluster cannot be collapsed before the shared global OleDbConnection is replaced with connection-per-operation plus real transactions, rollno is declared as an enforced unique key, the search predicate is reparameterized, and field validation is written for the first time (the create path has none at all). Those are new work, not ported work. RECOMMENDATION RATIONALE: shared_service rather than merge, because the right target is one student-record service owning all data access (all 16 SQL statements currently live in UI event handlers; the nominal data-access module holds 13 lines and zero queries) with the two editor layouts collapsed into a single record-editor component behind it. Structural analysis independently proposes the same boundary under the name student-record-crud-service.",
+      "rejected_from_cluster": [
+        {
+          "app_id": "c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard",
+          "reason": "Failed the clique rule against all three members (composites 46, 46, 51 - every one below the 60 threshold) and does not share the cluster's primary capability: it implements read-only aggregate statistics, navigation and child-form hosting, referencing only 3 of the 10 students columns and never a single row. The shared-identifier growth rule does not rescue it either: form1-dashboard never references rollno, the cluster's primary key, and its overlap with the cluster on the Gender and YOA value domains is a CONFLICT (two-value versus three-value Gender domain; hardcoded-2023 arithmetic versus a fixed 2019-2023 list) rather than a delta, which that rule explicitly excludes. Recorded instead as a separate read-model concern and as three data_sot_conflicts entries. Note that structural analysis assigns form1-dashboard its own boundary, student-statistics-read-model, which agrees with this rejection.",
+          "failing_pair_score": 46
+        },
+        {
+          "app_id": "c70846ac-0948-4953-990c-c68a2be292d9/module1-db-connection",
+          "reason": "Failed the clique rule against all three members (composite 18 against each). It duplicates nothing: 13 lines, zero SQL statements, zero students column references, and a single operation (open the shared connection). Its relationship to the cluster is shared mutable state to be CUT, not redundant function to be consolidated - which is the opposite of a consolidation signal and must not be read as one. The shared-identifier rule does not apply because module1-db-connection never references rollno. It is excluded here even though structural analysis lists it inside the student-record-crud-service boundary, because that listing is a statement about where the future data-access layer belongs, not evidence that this module duplicates a capability today. Replacing it remains a hard prerequisite for collapsing the cluster.",
+          "failing_pair_score": 18
+        },
+        {
+          "app_id": "c70846ac-0948-4953-990c-c68a2be292d9/my-project-infrastructure",
+          "reason": "Failed the clique rule against all three members (composite 10 against each) on every lens that carries redundancy signal: zero entity overlap (db_access 'none'), zero operation overlap, zero shared human persona. It is entirely Designer-generated application plumbing. It is named here only because its generated My.Forms default-instance collection is the mechanism that makes the cluster's cross-module refresh calls compile - a dependency to re-specify during consolidation, not a member to absorb.",
+          "failing_pair_score": 10
+        }
+      ],
+      "recommendation": "shared_service",
+      "target_capability_seed": "Student Record Management Service (create / read / search / update / delete over the student record, with one record-editor component and one owned data-access layer)"
+    }
+  ],
+  "review_asks": [
+    {
+      "ask_slug": "canonical-target-contested",
+      "action": "decide",
+      "title": "Which part of the Student Management System should become the single student-record component the others fold into?",
+      "why": "Consolidation sequencing, effort estimates and every downstream disposition hang on which component survives, and the two candidates fail in opposite directions - so picking wrongly either preserves a defect or silently expands the scope of work.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET) - cluster smsvb-student-record-crud (cluster address module: c70846ac-0948-4953-990c-c68a2be292d9/edit-form)"
+      },
+      "confidence": {
+        "level": "medium",
+        "score": 0.55,
+        "rationale": "The cluster itself is high-confidence - every internal pair clears the threshold on strong evidence. The anchor choice is not: edit-form wins on debt and completeness, insert-form wins on being the only component that can write the record key, and neither covers list, search or delete. That is a genuine trade-off, not a measurement."
+      },
+      "assessment": "SUBJECT NOTE FIRST: this ask is about the three-module cluster smsvb-student-record-crud, not about any one module. It is addressed at the application id because that is the only durable identifier in scope that does not move when the proposed anchor changes - the skill's rule is to address a cluster through a member that cannot shift, and in an intra-app artifact the internal unit ids are not application ids and would not resolve downstream. Naming edit-form in the label above is an address, not an endorsement. THE ASSESSMENT: three of the six modules - insert-form, edit-form and view-form - implement one capability, create/read/search/update/delete of the single ten-column student record. Their duplication is measured, not inferred: all three reference all ten columns, all three key on the same roll number, and insert-form and edit-form are two builds of the same data-entry screen with identical 24-control layouts and the ten-field mapping written twice. We propose edit-form as the component to keep and fold the other two into, but we are flagging the choice rather than making it, because the strongest objection is substantive: edit-form is the only one of the three that CANNOT write the roll number at all (the field is deliberately read-only there), so anchoring on it means adding a capability insert-form already has.",
+      "reasoning": "Scored all 15 module pairs on entity overlap, operation overlap, persona and technology. Signals favouring edit-form: lowest technical-debt band of the three (medium, versus insert-form medium-high and view-form high); the only module implementing BOTH the read and the write of the complete ten-field record; both its statements parameterized; the only module with a real constructor contract rather than a VB default instance. Signals favouring insert-form: it owns the complete ten-column write including the roll number, which edit-form cannot write; and it is the only module whose every statement is a single clean parameterized INSERT. Signals that conflicted and ruled view-form out despite it having the strongest incoming call edges: it holds the application's only confirmed SQL-injection vector and it is the module that unilaterally closes the application-wide database connection. A third reading is defensible and is offered as an option: upstream structural analysis recommends a NEW student-record-crud-service boundary rather than promoting any existing form, on the grounds that all 16 SQL statements currently sit in UI event handlers and the nominal data-access module holds 13 lines and no queries - so on that view there is no existing component clean enough to anchor, and the real work is creating the layer rather than choosing among the three screens. Whichever option is chosen, the same prerequisites apply first: replace the shared global connection, declare the roll number as an enforced unique key, reparameterize the search, and write field validation that does not exist today.",
+      "evidence_refs": [
+        {
+          "name": "Cluster pair scores",
+          "detail": "insert-form/edit-form composite 85, edit-form/view-form 78, insert-form/view-form 74 - every internal pair above the 60 threshold; weakest 74, cohesion 79",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        },
+        {
+          "name": "Identical editor layouts",
+          "detail": "InsertForm.Designer.vb (373 lines) and EditForm.Designer.vb (371 lines) declare byte-for-byte identical 24-control sets; the ten-field parameter mapping is written twice (InsertForm.vb:12 and EditForm.vb:54)",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Per-module technical debt",
+          "detail": "view-form high, insert-form medium-high, edit-form medium; view-form carries the only confirmed SQL injection (ViewForm.vb:50) and closes the shared connection (ViewForm.vb:94)",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/quality-risk.json"
+        },
+        {
+          "name": "Roll-number mutability contradiction",
+          "detail": "The same field is freely typed on the insert screen (InsertForm.Designer.vb:224) and read-only on the edit screen (EditForm.Designer.vb:201), so the two anchor candidates define the record key differently",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Upstream boundary recommendation",
+          "detail": "structural-analysis recommends a new student-record-crud-service boundary covering insert-form, edit-form, view-form and module1-db-connection, noting all 16 SQL statements must be lifted out of form event handlers",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ],
+      "options": [
+        {
+          "key": "anchor-edit-form",
+          "label": "Keep the edit screen as the single student-record component and fold the add and list screens into it",
+          "description": "Our proposal. Lowest-debt starting point and the only component that already reads and writes the whole ten-field record. Cost: you must add roll-number entry, which this component deliberately cannot do today, plus the list, search and delete behaviour it has never had."
+        },
+        {
+          "key": "anchor-insert-form",
+          "label": "Keep the add screen as the single student-record component and fold the edit and list screens into it",
+          "description": "Starts from the only component that writes all ten fields including the record key, and from the application's single cleanest database statement. Cost: this component has no field validation of any kind, and it carries the defect where saving a record refreshes screens the user is not looking at - both must be fixed rather than inherited."
+        },
+        {
+          "key": "new-shared-component",
+          "label": "Keep none of the three; build one new student-record service and rebuild all three screens against it",
+          "description": "The upstream architectural recommendation. Treats the fact that every database statement lives inside screen code as disqualifying for all three candidates. Highest up-front cost and the only option that does not carry an existing defect forward, and the only one that resolves the add-versus-edit roll-number contradiction by decision rather than by inheritance."
+        }
+      ]
+    },
+    {
+      "ask_slug": "internal-duplication-cluster",
+      "action": "investigate",
+      "title": "Three of the six parts of the Student Management System do the same job on the same student record - and they disagree with each other about the rules.",
+      "why": "This duplication is invisible in the portfolio-wide comparison, it changes the refactor estimate for this application, and three of the disagreements are producing wrong output or data loss today rather than merely costing maintenance effort.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "Every claim rests on named file-and-line evidence from two independent upstream passes that corroborate each other: identical control counts in the two editor layouts, the ten-field mapping written twice, and three value-domain declarations that do not agree."
+      },
+      "assessment": "The add, edit and list screens are three implementations of one job - creating, finding, changing and deleting the student record - over one ten-column table. The add and edit screens are effectively the same screen built twice: identical 24-control layouts and the same ten-field mapping written out twice, so any change to a field rule has to be made in two places. Separately, the list screen contains three different routines that all fill the same grid, and only one of them is exposed to the injection flaw. Three disagreements between the duplicated copies are worth investigating as business questions, not just code cleanup. (1) The add and edit screens offer three gender values but the dashboard counts only two, so any student recorded as 'Other' appears in no statistic and the tiles do not add up to the student population - and no total is shown anywhere that would reveal the gap. (2) The admission-year list on the entry screens stops at 2023 and the dashboard's year tiles are computed from a hardcoded 2023, so every year tile has been wrong since January 2024 and the error grows by one year annually with no warning. (3) The roll number can be freely typed when adding a student but cannot be changed when editing one, so correcting a mistyped roll number requires deleting and re-creating the record, with no audit trail and no safety net.",
+      "reasoning": "Compared all 6 internal modules pairwise on three lenses - which business entities each one handles, which operations each one performs, and which human role uses it. Three modules clustered: all three handle all ten columns of the same table, all three address single records by the same roll number, and all three are used by the same single operator (the application has no login, no roles and no separate read-only mode). The two remaining non-UI modules did not cluster and should not: the connection module duplicates nothing at all (13 lines, no queries), and the generated plumbing module has no data or user surface. The dashboard module also did not cluster - it reads only 3 of the 10 columns and never a single record - but it is where the three disagreements surface, because it restates the gender, course and year value lists independently instead of sharing them. One signal conflicted and is worth stating: the course list (BCA, MCA, IIMCA) is repeated in at least eight places across three modules and happens to agree everywhere, so the agreement is maintained by coincidence; adding a fourth course would make its students countable nowhere and, because of a case-sensitivity difference between the screens and the database, potentially un-editable.",
+      "evidence_refs": [
+        {
+          "name": "Duplicated editor",
+          "detail": "The two entry screens declare byte-for-byte identical 24-control layouts (373 vs 371 lines) and the ten-field mapping is written twice",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Gender values disagree",
+          "detail": "Three values offered on the entry screens (Male/Female/Other) against two counted on the dashboard (Male/Female); no grand total is displayed anywhere that would expose the shortfall",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Year tiles frozen at 2023",
+          "detail": "All five academic-year tiles derive from a hardcoded currentYear = 2023 (Form1.vb:59) while the entry screens offer the fixed list 2019-2023 - wrong since 1 January 2024",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "Triplicated list logic",
+          "detail": "The list screen fills the same grid from three routines (LoadData, LoadSData, RefreshData); only LoadSData builds its query from raw user text, and it is the application's only injection vector",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/quality-risk.json"
+        },
+        {
+          "name": "Modules that did not cluster",
+          "detail": "Connection module composite 18 against each cluster member (13 lines, zero queries); generated plumbing module composite 10; dashboard module 46-51 - all recorded with their failing scores",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "pair-overlap-below-cluster-threshold",
+      "action": "verify",
+      "title": "Please confirm the dashboard screen should be treated as a separate concern rather than consolidated with the student list screen.",
+      "why": "This pair scored just under the consolidation threshold, so if the judgement is wrong the dashboard gets planned and funded as a separate component when it should have been absorbed - or vice versa.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET) - pair form1-dashboard / view-form (pair address module: c70846ac-0948-4953-990c-c68a2be292d9/form1-dashboard)"
+      },
+      "confidence": {
+        "level": "medium",
+        "score": 0.65,
+        "rationale": "The score sits at 51 against a 60 threshold - close enough that a different weighting of the duplicated child-form hosting code would move it across. The capability argument for keeping them separate is stronger than the score margin, but it rests on a judgement about intent that the code does not state."
+      },
+      "assessment": "The dashboard screen and the student list screen scored 51 out of 100 on combined overlap, just below the 60 we require to call two parts of an application duplicates. We are reporting the pair but NOT recommending consolidation, and would like that confirmed. The two screens show the same student rows to the same person in two ways - counts on tiles, rows in a grid - and they do duplicate some real code: both independently implement the same logic for embedding a child screen inside the dashboard panel, and both build database queries by gluing text together rather than binding values. But the dashboard reads only 3 of the 10 columns of the student record and never reads an individual student, so we judge it a separate reporting concern that should be rebuilt as a read-only statistics view rather than folded into the record-management work. Two caveats a reviewer should weigh: the dashboard is also the navigation shell and the host for every other screen, so it cannot be cleanly separated at today's granularity - splitting its 1,211-line layout file is itself a work item - and the dashboard's own statistics definitions are not trustworthy as a specification, since the year tiles have been wrong since January 2024 and the gender tiles exclude one of the three values the system accepts.",
+      "reasoning": "Composite = 0.35 x entity overlap + 0.35 x operation overlap + 0.20 x persona + 0.10 x technology. For this pair: entity 30 (the dashboard touches only Gender, Course and YOA of the ten columns, against the list screen's SELECT * which exposes all ten), operation 30 (child-screen hosting implemented twice in both modules, two coexisting query-assembly conventions, and grid-refresh entry points declared in one and called from the other), persona 100 (one undifferentiated operator uses both - there is no login, no role and no read-only mode anywhere), technology 100 (same language, framework, runtime and assembly). That gives 10.5 + 10.5 + 20 + 10 = 51. The conflicting signals: the persona lens pushes this pair up hard and is the only reason it reaches 51 at all, while the entity lens - the one that actually distinguishes reporting from record management - puts it at 30. We let the capability test break the tie, which is also where upstream structural analysis lands: it assigns the dashboard its own student-statistics-read-model boundary and explicitly notes that the overlap between that boundary and the navigation shell is itself the finding.",
+      "evidence_refs": [
+        {
+          "name": "Pair composite",
+          "detail": "form1-dashboard / view-form composite 51 against a 60 threshold; entity 30, operation 30, persona 100, technology 100",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        },
+        {
+          "name": "Genuinely duplicated hosting code",
+          "detail": "Child-screen embedding (TopLevel=False, add to Form1.Panel5, BringToFront, Show) is implemented independently in both modules - Form1.vb:109 and ViewForm.vb:70",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "Dashboard is also the shell",
+          "detail": "One 1,211-line layout file with 77 controls acts simultaneously as navigation shell, child-screen host and statistics engine, and owns 2 of the application's 3 dependency cycles",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/quality-risk.json"
+        },
+        {
+          "name": "Upstream agrees the dashboard is its own boundary",
+          "detail": "structural-analysis recommends a separate student-statistics-read-model boundary for form1-dashboard, and flags its overlap with the ui-shell-and-navigation boundary as the finding",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "redundancy-scan-inventory",
+      "action": "aware",
+      "title": "Internal duplication scan recorded for the Student Management System: 6 internal parts compared, 15 comparisons, one duplicate group found.",
+      "why": "So the record shows exactly what was and was not examined, and on what evidence, before any consolidation decision is taken on this application.",
+      "subject": {
+        "kind": "application",
+        "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+        "label": "Student Management System (VB.NET)"
+      },
+      "confidence": {
+        "level": "high",
+        "score": 0.85,
+        "rationale": "All three required upstream inputs were present and complete, and the two independent passes corroborate each other on the same file-and-line evidence. The reservation is that no source repository was read by this pass and no uniqueness index could be confirmed upstream."
+      },
+      "assessment": "This application was examined on its own, part by part, for work that is done more than once inside it. All 6 internal parts were compared against each other - 15 comparisons in total, none skipped - and the application is fully covered by this record, so nothing is listed as unexamined. One duplicate group was found: the add, edit and list screens all manage the same student record and should become one component behind one shared service. Three parts were considered and ruled out, each with its score recorded: the dashboard (separate reporting concern), the database-connection module (duplicates nothing - 13 lines and no queries, but replacing it is a prerequisite for the consolidation) and the generated application plumbing (no data and no user surface). Three disagreements between duplicated copies of the same rule are recorded separately as source-of-truth conflicts: the gender values, the admission-year definition, and whether the roll number can be changed. Two things this record does NOT contain, stated so they are not mistaken for clean results: no comparison against other applications, because this was a single-application examination by design - that work is done separately at portfolio scale; and no regulatory consistency findings, because the upstream analysis traced none of this application's 60 business rules to any regulation. On that last point, the governing profile for this run is the FAA profile as declared, and the upstream analysis recorded - as its own finding, which we restate here only as context - that an aviation-regulator profile does not obviously fit an academic student-records desktop tool. That is a profile-assignment question for a reviewer, not a conclusion of this scan.",
+      "reasoning": "Scope was intra-app, so the unit of comparison is the application's internal modules, taken verbatim from the upstream structural map: form1-dashboard, insert-form, edit-form, view-form, module1-db-connection, my-project-infrastructure. The count of applications examined is reported as 1, which is the honest figure - the 6 internal modules are not applications and are deliberately not counted as such, and every comparison below is written with the application id prefixed so an internal part can never be mistaken for a separate application. Each pair was scored on business entities handled, operations performed, human role served, and technology, weighted 0.35 / 0.35 / 0.20 / 0.10; the technology lens is weighted low on purpose because all 6 parts share one language and one assembly and would otherwise make everything look like a duplicate of everything. Evidence came entirely from the three supplied upstream analyses - business rules, structural map, and quality/risk - which agree with each other on the same file-and-line citations. No source repository was read by this pass, so every figure is marked as derived from supplied analysis rather than from a tool run. Known gaps carried forward from upstream and not papered over: record counts and database column types were never resolved, and no unique index on the roll number could be confirmed, so the roll-number recommendation needs checking against a live database engine.",
+      "evidence_refs": [
+        {
+          "name": "Comparison coverage",
+          "detail": "6 internal modules, all 15 unordered pairs scored, 0 skipped; 1 duplicate group (3 members), 3 modules ruled out with their failing scores recorded (46, 18, 10)",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/intra-app-redundancy.json"
+        },
+        {
+          "name": "Upstream inputs used",
+          "detail": "All three required inputs present: 60 business rules across the 6 modules; the structural map with its own duplication findings; and the quality/risk assessment (debt 74/100, HIGH risk tier)",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+        },
+        {
+          "name": "No regulatory variance computable",
+          "detail": "Zero of 60 business rules trace to any regulation; the FAA profile's regulatory sources (14 CFR Parts 47, 61, 63, 67, 183) were determined not applicable upstream, with the profile/domain mismatch raised there as a finding",
+          "artifact_path": "rationalization/wave-3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe/c70846ac-0948-4953-990c-c68a2be292d9/regulatory-variance.json"
+        },
+        {
+          "name": "Measurement limits",
+          "detail": "No repository or tool was run by this pass - all figures derive from the supplied analyses; record counts, database column types and any unique index on the roll number remain unresolved upstream",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        }
+      ]
+    }
+  ]
+}
