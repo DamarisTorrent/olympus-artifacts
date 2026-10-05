@@ -1,0 +1,12 @@
+{
+  "apps": [
+    {
+      "path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9",
+      "identifiers": {},
+      "total_files_scanned": 0,
+      "source_system_id": "fea13d45-0afd-4787-b915-572018c14160"
+    }
+  ],
+  "cross_app_matches": [],
+  "privacy_findings": []
+}
