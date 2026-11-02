@@ -1,0 +1,28 @@
+{
+  "action": "cadence",
+  "actor": "engine",
+  "cadence": "weekly",
+  "compiler_version": 6,
+  "path": "governance/650aa38b-87e7-4f20-a1d0-00399778a64f/gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261102T070000Z/decisions/491873b9369d/001-cadence-intake.json",
+  "pinned_hash": "1978f9566c632bf89ee7d0fa3ea747fd804760adc19256f8f002bbde581b7cca",
+  "program_hash": "1978f9566c632bf89ee7d0fa3ea747fd804760adc19256f8f002bbde581b7cca",
+  "reason": "schedule_id 'gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261102T070000Z' selects cadence 'weekly': it runs ['drift-detection', 'pattern-extraction', 'health-report', 'skill-evolution', 'factory-capacity']",
+  "record_type": "run",
+  "recorded_at": "2026-11-02T07:00:04.849012+00:00",
+  "runs": [
+    "drift-detection",
+    "pattern-extraction",
+    "health-report",
+    "skill-evolution",
+    "factory-capacity"
+  ],
+  "schema": "olympus:artifact:decision-record:v1",
+  "scope": {
+    "app_id": "",
+    "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+    "wave_id": "",
+    "workflow_id": "governance-650aa38b-87e7-4f20-a1d0-00399778a64f-weekly-2026-11-02T07:00:00Z"
+  },
+  "sequence": 1,
+  "step": "intake"
+}
