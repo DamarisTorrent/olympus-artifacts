@@ -1,0 +1,17 @@
+{
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "schedule_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "cadence": "weekly",
+  "task_type": "governance-skill-evolution",
+  "profile": "baseline",
+  "generated_at": "2026-11-09T07:00:00+00:00",
+  "proposals": [],
+  "notes": [
+    "DEGRADED-INPUT: governance/650aa38b-87e7-4f20-a1d0-00399778a64f/gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z/pattern-extraction.json absent",
+    "DEGRADED-INPUT: governance/650aa38b-87e7-4f20-a1d0-00399778a64f/latest-patterns.json absent",
+    "DEGRADED-INPUT: modernization/*/ralph-loop-metrics.json absent",
+    "No skill create/refine/deprecate proposals were made this sweep: 0 of 3 declared inputs were staged, so there were no extracted patterns, Ralph-Loop metrics, gate pass/fail figures or escalation records to base a proposal on. Making up proposals with no evidence would break the rule that skill-registry changes must rest on measured factory outcomes.",
+    "Profile 'baseline' declares no profile-specific skill overlays (profile.yaml skills: []), so there are no profile skills to refine either.",
+    "Suggested follow-up: check that the Governance pattern-extraction step (Step 3) for this schedule finished and wrote pattern-extraction.json, and that modernization runs are writing ralph-loop-metrics.json. Then re-run skill evolution, or let the next weekly sweep pick up the evidence."
+  ]
+}

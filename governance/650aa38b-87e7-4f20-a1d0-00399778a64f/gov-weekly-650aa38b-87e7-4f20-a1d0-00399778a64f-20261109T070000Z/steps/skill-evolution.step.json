@@ -1,0 +1,18 @@
+{
+  "step": "skill-evolution",
+  "artifacts": [
+    "I wrote `skill-evolution.json`, but it contains no proposals: none of the three inputs this step reads were provided, so there was no evidence to base a skill change on.\n\n**Missing inputs:** each one is recorded in the file's notes as `DEGRADED-INPUT \u2026 absent`.\n- This sweep's `pattern-extraction.json`\n- The rolling `latest-patterns.json`\n- `modernization/*/ralph-loop-metrics.json`\n\nThe only file present was the dispatch context file, and it just confirms that all three were missing. Without patterns, loop metrics, gate pass/fail data or escalation records, any create, refine or deprecate proposal would have been made up. The `baseline` profile also defines no profile-specific skills, so there were none to refine either.\n\n**Departure from the documented format:** besides the `proposals` array, I added a top-level `notes` array and a few context fields (portfolio, schedule, cadence, profile). No schema is bound to this file, and the notes were the only place to put the missing-input records. If something downstream expects only `proposals`, those extra fields may need dropping.\n\n**Next step:** check that this schedule's pattern-extraction step (Governance Step 3) finished and wrote its file, and that modernization runs are writing loop metrics. Then re-run this step, or let next week's sweep pick them up. No database or registry changes follow from this file; registry changes are approved by people on the dashboard.\n\nFile: `outputs/skill-evolution.json`"
+  ],
+  "file_artifacts": [
+    "skill-evolution.json"
+  ],
+  "model_used": "claude-opus-5-5",
+  "duration_ms": 30991,
+  "token_usage": {
+    "input": 1136,
+    "output": 2219
+  },
+  "cost_estimate_usd": 0.17976040000000001,
+  "timestamp": "2026-11-09T07:02:18.683753+00:00",
+  "skill_id": "skill-builder"
+}
