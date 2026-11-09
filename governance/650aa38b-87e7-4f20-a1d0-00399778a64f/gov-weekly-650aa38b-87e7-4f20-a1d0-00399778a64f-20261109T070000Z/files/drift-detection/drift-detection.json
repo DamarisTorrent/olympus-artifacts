@@ -1,0 +1,15 @@
+{
+  "sweep_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "cadence": "weekly",
+  "triggered_at": "2026-11-09T07:00:00+00:00",
+  "governing_profile": "baseline",
+  "alerts": [],
+  "notes": [
+    "DEGRADED-INPUT: architecture/*/architecture-blueprint.json absent",
+    "DEGRADED-INPUT: data/*/data-architecture.json absent",
+    "DEGRADED-INPUT: deployment/*/cost-savings-certification.json absent",
+    "No application inventory or per-app baselines were staged and no database reads were available, so no category (architecture, compliance, performance, cost, adoption) could be evaluated. The empty alerts list means the sweep could not evaluate anything. It is not evidence that no drift exists. No application ids were invented.",
+    "Re-run once the portfolio inventory and upstream baselines are staged."
+  ]
+}

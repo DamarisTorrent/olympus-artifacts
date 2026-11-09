@@ -1,0 +1,18 @@
+{
+  "step": "drift-detection",
+  "artifacts": [
+    "I wrote `drift-detection.json` with an empty `alerts` list. The sweep did not evaluate any drift category, because none of the three declared inputs was staged. Those inputs are the architecture blueprints, the data architectures and the cost-savings certifications. No application inventory was available either.\n\nThe empty list does not mean the portfolio is free of drift. I didn't invent any application ids. The file records three `DEGRADED-INPUT \u2026 absent` notes and a note saying the sweep could not evaluate anything. Re-run the sweep once the portfolio inventory and baselines are staged.\n\nI didn't read anything under `profiles/baseline/`, so the defaults in the skill's threshold table are the only thresholds in play. No baseline thresholds override was loaded.\n\nThe file is in `/workspace/.tasks/650aa38b-87e7-4f20-a1d0-00399778a64f/governance/026395813186/schedule/gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z/drift-detection/outputs/`."
+  ],
+  "file_artifacts": [
+    "drift-detection.json"
+  ],
+  "model_used": "claude-sonnet-5-5",
+  "duration_ms": 18210,
+  "token_usage": {
+    "input": 1133,
+    "output": 1140
+  },
+  "cost_estimate_usd": 0.065844,
+  "timestamp": "2026-11-09T07:02:06.325148+00:00",
+  "skill_id": "drift-detection"
+}
