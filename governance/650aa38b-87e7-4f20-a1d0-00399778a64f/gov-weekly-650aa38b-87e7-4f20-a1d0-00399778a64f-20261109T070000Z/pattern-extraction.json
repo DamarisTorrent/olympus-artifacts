@@ -1,0 +1,15 @@
+{
+  "patterns": [],
+  "notes": [
+    "DEGRADED-INPUT: modernization/*/generate/*/ absent",
+    "DEGRADED-INPUT: modernization/*/design/service-layout.json absent",
+    "DEGRADED-INPUT: build/*/design/service-layout.json absent",
+    "DEGRADED-INPUT: applications/*/services/*/ absent",
+    "DEGRADED-INPUT: applications/*/apps/*/ absent",
+    "DEGRADED-INPUT: applications/*/libs/*/ absent",
+    "DEGRADED-INPUT: modernization/*/ralph-loop-metrics.json absent",
+    "DEGRADED-INPUT: modernization/*/escalation-record.json absent",
+    "No pattern proposals emitted for weekly sweep gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z (portfolio 650aa38b-87e7-4f20-a1d0-00399778a64f): 0 of 8 declared inputs were staged, so there was no generated code, Ralph-Loop metrics or escalation records to extract from. Inventing patterns would put made-up rows in the pattern table and send them to active Modernization workflows. The patterns array is left empty on purpose, and the cold-start registry latest-patterns.json should be kept as it is, not cleared.",
+    "Governing profile: baseline (taken from the dispatch declaration). The profile declares no skill overlays (skills: []). No staged artifact stated a different profile."
+  ]
+}

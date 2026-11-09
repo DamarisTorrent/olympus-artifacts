@@ -1,0 +1,18 @@
+{
+  "step": "pattern-extraction",
+  "artifacts": [
+    "I wrote `outputs/pattern-extraction.json`, but it contains no patterns. None of the 8 declared inputs were staged for this sweep, so there was nothing to extract patterns from. The only file in the inputs folder was the dispatch context, and it lists every input as not staged.\n\n- **Missing inputs:** the generated code, the service-layout files, the Ralph-Loop metrics and the escalation records were all missing. The file records each one as `DEGRADED-INPUT: <address> absent`.\n- **Why I left `patterns` empty:** making up patterns with no evidence would put fake rows into the `pattern` table and send them to active Modernization workflows.\n- **Extra field:** the output format only defines `patterns`, but I added a top-level `notes` array to hold the missing-input records. No JSON Schema is bound to this file, so it should pass the existence and non-empty check. If something downstream rejects unknown fields, delete the `notes` array.\n- **Profile:** I used `baseline`, as the dispatch declared. It has no skill overlays, and no staged artifact named a different profile.\n\n**What to check next:** find out why nothing was staged. The likely causes are that no application has finished generation yet, or that staging failed. When the sweep refreshes `latest-patterns.json`, it should keep the existing registry rather than overwrite it with this empty list."
+  ],
+  "file_artifacts": [
+    "pattern-extraction.json"
+  ],
+  "model_used": "claude-opus-5-5",
+  "duration_ms": 25788,
+  "token_usage": {
+    "input": 1137,
+    "output": 1968
+  },
+  "cost_estimate_usd": 0.188531,
+  "timestamp": "2026-11-09T07:02:13.994503+00:00",
+  "skill_id": "skill-builder"
+}
