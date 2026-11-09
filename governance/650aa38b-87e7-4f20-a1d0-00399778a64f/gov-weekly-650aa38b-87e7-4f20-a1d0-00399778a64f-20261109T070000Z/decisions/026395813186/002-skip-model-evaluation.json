@@ -1,0 +1,21 @@
+{
+  "action": "skip",
+  "actor": "engine",
+  "by": "cadence",
+  "compiler_version": 6,
+  "path": "governance/650aa38b-87e7-4f20-a1d0-00399778a64f/gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z/decisions/026395813186/002-skip-model-evaluation.json",
+  "pinned_hash": "e537eea35c28679e9b31303054377f566d42e3f67ad578806c706a4d4bef0006",
+  "program_hash": "e537eea35c28679e9b31303054377f566d42e3f67ad578806c706a4d4bef0006",
+  "reason": "not in cadence weekly",
+  "record_type": "run",
+  "recorded_at": "2026-11-09T07:01:16.855394+00:00",
+  "schema": "olympus:artifact:decision-record:v1",
+  "scope": {
+    "app_id": "",
+    "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+    "wave_id": "",
+    "workflow_id": "governance-650aa38b-87e7-4f20-a1d0-00399778a64f-weekly-2026-11-09T07:00:00Z"
+  },
+  "sequence": 2,
+  "step": "model-evaluation"
+}
