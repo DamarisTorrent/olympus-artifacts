@@ -1,0 +1,98 @@
+{
+  "skill_id": "factory-capacity-manager",
+  "sweep": "factory-capacity",
+  "cadence": "weekly",
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "schedule_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "sweep_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "triggered_at": "2026-11-09T07:00:00+00:00",
+  "governing_profile": "baseline",
+  "status": "degraded",
+  "data_basis": "no_measured_data",
+  "summary": "Degraded sweep. No wave plan was staged and this dispatch had no factory execution telemetry (agent_task, step_execution, gate decisions) and no prior factory_capacity_plan rows. Every measured metric is null, so none is reported as zero. The recommended cap of 1 concurrent wave is a conservative default, not a measured value. Rationalization should not raise concurrency above 1 until a later sweep measures throughput, gate first-pass rate and human reviewer capacity.",
+
+  "recommendation": {
+    "concurrent_wave_max": 1,
+    "basis": "conservative_default",
+    "measured": false,
+    "rationale": [
+      "There is no measured throughput, gate first-pass rate, escalation rate or reviewer queue depth to support running waves in parallel.",
+      "Human bottleneck: SME reviews and the two-signature gates in the baseline profile do not parallelize well. G-DA, G-02, G-DE-2, G-V3 and G-DP-2 each require minimum_approvals = 2 from distinct roles.",
+      "Contention rule 4 (never sacrifice quality gates for throughput) favours serial waves until capacity is measured."
+    ],
+    "revisit_when": "A sweep has at least one completed wave's execution data and measured reviewer capacity for portfolio_manager, compliance_lead, arch_lead/arch_review_board, operations_lead and safety_board."
+  },
+
+  "metrics": {
+    "throughput_apps_per_month": null,
+    "cost_per_app_usd": null,
+    "gate_first_pass_rate": null,
+    "ralph_loop_iteration_avg": null,
+    "escalation_rate": null,
+    "pattern_reuse_rate": null,
+    "automation_ratio": null,
+    "time_to_modernize_days": null
+  },
+  "metric_status": {
+    "throughput_apps_per_month": "not_computed: no wave-plan.json and no step_execution data staged",
+    "cost_per_app_usd": "not_computed: no agent_task cost data staged",
+    "gate_first_pass_rate": "not_computed: no gate decision data staged",
+    "ralph_loop_iteration_avg": "not_computed: no agent_task / step_execution data staged",
+    "escalation_rate": "not_computed: no BC escalation data staged",
+    "pattern_reuse_rate": "not_computed: no pattern catalog / consumption data staged",
+    "automation_ratio": "not_computed: no gate decision data staged",
+    "time_to_modernize_days": "not_computed: no app-to-deployed timing data staged"
+  },
+
+  "trend": {
+    "prior_sweeps_considered": 0,
+    "direction": "unknown",
+    "note": "This dispatch had no prior factory_capacity_plan rows, so no trend was computed."
+  },
+
+  "waves": {
+    "active_waves": [],
+    "note": "No rationalization/wave-*/wave-plan.json was staged. No wave was found or assigned, and the phase occupancy (P2/P4/P6) of any wave is unknown."
+  },
+
+  "monitoring": {
+    "claude_code_sessions_vs_capacity": "unknown: no telemetry staged",
+    "batch_api_queue_depth": "unknown: no telemetry staged",
+    "git_worktree_count_vs_storage": "unknown: no telemetry staged",
+    "human_sme_availability_per_wave": "unknown: no staffing or reviewer roster staged",
+    "gate_review_queue_depth": "unknown: no gate decision data staged"
+  },
+
+  "contention": {
+    "detected": null,
+    "constrained_lines": [],
+    "actions": [],
+    "policy": [
+      "Safety-critical (tier_1) waves always get priority.",
+      "Under contention, delay the non-critical phases of the lower-priority wave.",
+      "Under sustained contention, recommend sending the wave back to P1.4 for re-planning.",
+      "Never sacrifice quality gates for throughput."
+    ],
+    "note": "Contention could not be checked because no wave or telemetry data was staged. constrained_lines is empty because nothing was measured, not because capacity was confirmed."
+  },
+
+  "reference_context": {
+    "profile_portfolio_estimated_size": 25,
+    "profile_program_duration": "18 months",
+    "profile_objective_baseline.modernize_target": "15 apps by wave-4 (baseline 4 as of 2024-12-31)",
+    "note": "These are planning targets from profiles/baseline, not measured throughput. They are not used to fill any metric."
+  },
+
+  "notes": [
+    "DEGRADED-INPUT: rationalization/wave-*/wave-plan.json absent",
+    "DEGRADED-INPUT: factory execution data (agent_task, step_execution, gate decisions via Olympus MCP) gap. No MCP data tool was available in this dispatch and no export was staged.",
+    "DEGRADED-INPUT: prior factory_capacity_plan rows gap. None were staged, so no trend analysis was possible.",
+    "Workspace fixture fixtures/default.json (portfolio 'fixture-portfolio') was not used as data. It is a test fixture, not a declared input for this portfolio.",
+    "Path discrepancy, informational: the workspace directory is governance/026395813186/... but the declared artifact address is governance/650aa38b-87e7-4f20-a1d0-00399778a64f/<schedule_id>/factory-capacity.json. This artifact uses the dispatched portfolio_id."
+  ],
+  "open_questions": [
+    "Should the governance workflow stage the Olympus MCP factory telemetry exports (agent_task, step_execution, gate decisions) and prior factory_capacity_plan rows for this skill? Without them, every weekly sweep will be degraded.",
+    "Have any waves been planned for this portfolio yet? If they have, why was no wave-plan.json staged?"
+  ],
+  "computed_at": "2026-11-09T07:00:00+00:00"
+}

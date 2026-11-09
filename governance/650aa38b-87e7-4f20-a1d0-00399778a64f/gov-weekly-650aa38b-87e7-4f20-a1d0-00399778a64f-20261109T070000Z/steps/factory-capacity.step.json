@@ -1,0 +1,18 @@
+{
+  "step": "factory-capacity",
+  "artifacts": [
+    "I wrote `factory-capacity.json`, but this week's capacity plan has no real data behind it. None of the inputs this sweep needs were available, so all eight capacity metrics are blank.\n\n**What was missing:**\n- **Wave plans:** `rationalization/wave-*/wave-plan.json` was not staged (0 of 1 inputs).\n- **Factory execution data:** there was no connection to the Olympus MCP and no export staged, so I had nothing on agent tasks, step executions or gate decisions.\n- **Prior capacity plans:** no earlier `factory_capacity_plan` rows were staged, so there's no trend.\n\nAll three are recorded as `DEGRADED-INPUT` notes in the file.\n\n**What's in the output:**\n- **Recommended cap: 1 concurrent wave.** This is a cautious default I chose, not a measured figure, and the file marks it as such. My reasons: there's no throughput or reviewer-capacity data at all. Several gates in the baseline profile each need two sign-offs from different roles (G-DA, G-02, G-DE-2, G-V3, G-DP-2), and human reviewers don't scale the way agent sessions do. The skill's rules also say never to trade quality gates for throughput. Rationalization reads this number when sizing waves, so it stays at 1 until a sweep has real data.\n- **Metrics:** throughput, cost per app, gate first-pass rate, Ralph-Loop iterations, escalation rate, pattern reuse, automation ratio and time to modernize are all left empty, each with its reason. None is filled in as zero.\n- **Contention:** not checked, because no waves or monitoring data were available. The empty list of constrained lines means \"not measured\", not \"capacity confirmed\".\n- **Status:** the file is marked `degraded`, with two open questions for whoever runs the workflow.\n\n**Two other things you should know:**\n- I ignored `fixtures/default.json` in the workspace. It's test data for a portfolio called \"fixture-portfolio\", not this one.\n- The workspace folder is `governance/026395813186/...`, but the expected output address uses the portfolio ID `650aa38b-\u2026`. I used the dispatched portfolio ID in the file and noted the mismatch.\n\nUntil the governance workflow passes this step the factory telemetry and the earlier capacity-plan rows, every weekly sweep will come out like this one.\n\nFiles are in `outputs/`:\n- `factory-capacity.json`\n- `factory-capacity-summary.md` (short write-up for the quarterly governance review)"
+  ],
+  "file_artifacts": [
+    "factory-capacity.json"
+  ],
+  "model_used": "claude-opus-5-5",
+  "duration_ms": 61380,
+  "token_usage": {
+    "input": 1146,
+    "output": 5844
+  },
+  "cost_estimate_usd": 0.345723,
+  "timestamp": "2026-11-09T07:02:50.211645+00:00",
+  "skill_id": "factory-capacity-manager"
+}
