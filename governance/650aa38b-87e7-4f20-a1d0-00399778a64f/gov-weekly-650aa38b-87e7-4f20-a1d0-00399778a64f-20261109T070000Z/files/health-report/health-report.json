@@ -1,0 +1,30 @@
+{
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "schedule_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "cadence": "weekly",
+  "sweep_date": "2026-11-09",
+  "governing_profile": "baseline",
+  "status": "no_data_assessed",
+  "portfolio_health_index": null,
+  "portfolio_health_index_note": "Not computed. No portfolio data was reachable in this dispatch (no Postgres/MCP read path, no staged input artifacts), so any index would be fabricated. The health_check row should not be treated as a green result.",
+  "per_dimension_findings": {
+    "security_compliance": {"status": "not_assessed", "reason": "patching_compliance, application.validation_critical_vuln_count unavailable"},
+    "sla_performance": {"status": "not_assessed", "reason": "sla_compliance_record, incident_log unavailable"},
+    "architecture": {"status": "not_assessed", "reason": "no EA re-scan data"},
+    "cost": {"status": "not_assessed", "reason": "cost_anomaly_record, cost_savings_realized_usd, tco unavailable"},
+    "adoption": {"status": "not_assessed", "reason": "deployed_at / adoption baselines unavailable"},
+    "disposition_progress": {"status": "not_assessed", "reason": "portfolio_score and disposition data unavailable"}
+  },
+  "drift_alerts": [],
+  "applications_at_risk": [],
+  "index_weighting_guidance": "When data is available: composite weighted, security and compliance weighted above cost and adoption. Use cost_savings_realized_usd (not cost_savings_annual_usd) for realized savings. Roll up Sustainment tables by portfolio_id + app_id. Include Retain apps.",
+  "notes": [
+    "DEGRADED-INPUT: application.portfolio_score gap",
+    "DEGRADED-INPUT: application.tco gap",
+    "DEGRADED-INPUT: application.validation_parity_score, validation_critical_vuln_count, validation_accessibility_score gap",
+    "DEGRADED-INPUT: application.cost_savings_realized_usd, deployed_at, deployment_env gap",
+    "DEGRADED-INPUT: patching_compliance, incident_log, sla_compliance_record, do_not_modify_flag, cost_anomaly_record gap (Sustainment tables not queryable in this dispatch)",
+    "The only staged inputs were the dispatch context and baseline profile files (scoring.yaml, compliance.yaml etc.), which supply weights/standards but no portfolio measurements. A fixtures/default.json in the workspace is a test fixture for a different portfolio ('fixture-portfolio') and was deliberately not used as data.",
+    "Action: re-run the sweep once the DB read path is available; the downstream health_check projection should skip or flag this row since health_index is null."
+  ]
+}
