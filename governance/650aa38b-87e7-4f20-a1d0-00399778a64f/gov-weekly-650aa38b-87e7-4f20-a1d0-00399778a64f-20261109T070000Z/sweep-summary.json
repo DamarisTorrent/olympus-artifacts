@@ -1,0 +1,36 @@
+{
+  "portfolio_id": "650aa38b-87e7-4f20-a1d0-00399778a64f",
+  "schedule_id": "gov-weekly-650aa38b-87e7-4f20-a1d0-00399778a64f-20261109T070000Z",
+  "triggered_at": "2026-11-09T07:00:00+00:00",
+  "completed_at": "2026-11-09T07:03:08.329029+00:00",
+  "cadence": "weekly",
+  "activities": {
+    "drift-detection": {
+      "artifact": "drift-detection.json",
+      "skill_id": "drift-detection",
+      "findings_count": 1
+    },
+    "pattern-extraction": {
+      "artifact": "pattern-extraction.json",
+      "skill_id": "skill-builder",
+      "findings_count": 1
+    },
+    "health-report": {
+      "artifact": "health-report.json",
+      "skill_id": "portfolio-health-check",
+      "findings_count": 1
+    },
+    "skill-evolution": {
+      "artifact": "skill-evolution.json",
+      "skill_id": "skill-builder",
+      "findings_count": 1
+    },
+    "factory-capacity": {
+      "artifact": "factory-capacity.json",
+      "skill_id": "factory-capacity-manager",
+      "findings_count": 1
+    }
+  },
+  "wave_patterns_ready": [],
+  "pattern_reuse_acks": []
+}
