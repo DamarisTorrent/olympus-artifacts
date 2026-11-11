@@ -1,0 +1,120 @@
+{
+  "$schema": "https://olympus.framework/schemas/rationalization/integration-graph.schema.json",
+  "review_asks": [
+    {
+      "ask_slug": "integration-graph-recorded",
+      "action": "aware",
+      "title": "This wave's integration graph covers one application with no peer systems, no cross-app data flows, and one unowned external hyperlink dependency.",
+      "why": "States for the record what this synthesis pass found so downstream Rationalization and G-RR evidence review start from an accurate baseline.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Student Management System (VB.NET)"
+      },
+      "assessment": "The wave contains a single application, 'Student Management System (VB.NET)' (c70846ac-0948-4953-990c-c68a2be292d9) — a standalone WinForms desktop CRUD tool over a local MS Access file with no network, API, batch, or messaging surface. No multi-subsystem decomposition fires (one tech-stack family, one top-level build directory, one build manifest). Because there is no peer application in scope, the graph records exactly one system node, an empty cross-app data_flows[], shared_identifiers[], and cross_system_capabilities[] (the last requires 2+ systems by schema), and one external_deps[] entry for the application's sole outbound reference: a hardcoded public GitHub link to the author's project-report PDF, which has no internal or external owner of record.",
+      "reasoning": "Derived directly from the per-app Discovery bundle: catalog.json (archetype, tech stack, business domain), structural-analysis.json (module map, coupling indicators, integration_points, interface-inventory), and call-graph.json (9 code-to-code edges, 7 code-to-data edges, 1 outbound edge — all internal to this single build target, none crossing to another registered application). No data-flow-tracer or identity-landscape artifacts were staged for this app, consistent with it being a simple, non-SSO, non-batch desktop tool.",
+      "evidence_refs": [
+        {
+          "name": "catalog.json",
+          "detail": "archetype=desktop, tech_stack=VB.NET/WinForms/.NET 4.8/MS Access, complexity_tier=simple, no network/web/batch component per README and project report",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json"
+        },
+        {
+          "name": "structural-analysis.json summary_metrics",
+          "detail": "build_projects=1, solutions=1, deployment_surfaces=1, http_endpoints=0, scheduled_jobs=0, message_queues=0, outbound_integrations=1",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "call-graph.json",
+          "detail": "9 code-to-code edges, 7 code-to-data edges, 1 outbound edge; all nodes are internal modules of the one build target plus the local .accdb file and one public GitHub URL",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/call-graph.json"
+        }
+      ]
+    },
+    {
+      "ask_slug": "external-dependency-unowned",
+      "action": "context",
+      "title": "The dashboard's 'Report' button opens a hardcoded public GitHub URL with no internal owner — should this external reference survive migration, or be dropped as an unimplemented requirement?",
+      "why": "Nobody can decide whether to carry this dependency forward, replace it, or retire it until an owner (or a decision that it has none) is recorded, and it currently blocks closing out the application's only outbound integration.",
+      "subject": {
+        "kind": "wave",
+        "id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+        "label": "Wave 3f6bdbb9 — Student Management System (VB.NET)"
+      },
+      "assessment": "ext-github-project-report has no internal business owner and no external organizational owner — it is a hardcoded Process.Start call to a specific public GitHub file URL. Discovery's own structural-analysis explicitly recommends treating it as 'a requirements gap to confirm with stakeholders, not as an integration to migrate', since the button is labelled 'Report' but produces no actual report.",
+      "reasoning": "The call graph models this as the application's only outbound network edge (form1-dashboard -> external.github-project-report), and the interface-inventory lists it with audience='public' and authentication='none'. No CMDB, ownership, or ICD/MOU documentation was provided for it, and it does not match any entry a client external-dependency catalog would be expected to carry (it is not a partner-gov API, SaaS, or mainframe).",
+      "evidence_refs": [
+        {
+          "name": "structural-analysis.json coupling_indicators.hardcoded-external-url-as-reporting",
+          "detail": "'The dashboard's Report button does not generate a report: it shells out to Process.Start against a hardcoded github.com URL ... Treat as a requirements gap to confirm with stakeholders, not as an integration to migrate.'",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json"
+        },
+        {
+          "name": "call-graph.json edge form1-dashboard -> external.github-project-report",
+          "detail": "The application's only outbound HTTPS call, evidenced at Flat Design/Form1.vb:156-157",
+          "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/call-graph.json"
+        }
+      ],
+      "confidence": {
+        "level": "high",
+        "score": 0.9,
+        "rationale": "Both Discovery passes independently and explicitly flag this as unowned/non-functional rather than a real integration; no contradicting evidence was found."
+      }
+    }
+  ],
+  "metadata": {
+    "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+    "generated_date": "2026-10-05",
+    "applications_analyzed": 1,
+    "analyst": "portfolio-integration-mapper",
+    "source_artifacts": [
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/catalog.json",
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/structural-analysis.json",
+      "discovery/c70846ac-0948-4953-990c-c68a2be292d9/files/structural-analysis/call-graph.json"
+    ],
+    "isolated_systems": [
+      "c70846ac-0948-4953-990c-c68a2be292d9"
+    ],
+    "unresolved_references": [
+      {
+        "finding": "Single-application wave: this wave contains exactly one in-scope application (c70846ac-0948-4953-990c-c68a2be292d9), so there is no peer application to form a cross-app integration edge with. data_flows[], shared_identifiers[], and cross_system_capabilities[] are intentionally empty for this reason, not omitted in error.",
+        "severity": "info"
+      },
+      {
+        "finding": "GOVERNING-PROFILE DISCREPANCY (flagged by the input artifacts, not asserted here as fact). This task's governing client profile is declared as 'faa', but both the application catalog (catalog.json open_questions) and the structural-analysis pass (structural-analysis.json open_questions, 'GOVERNING-PROFILE DISCREPANCY') independently report that the in-scope application's source, README, and project report describe a generic single-developer student-record-management desktop tool with no aviation, NAS, air-traffic, certification, or FAA-adjacent content of any kind. This mapper does not adopt or restate any alternative governing profile; it records the upstream artifacts' discrepancy for the engagement owner to resolve before FAA-specific gating (safety tiering, NAS impact assessment, compliance mapping) consumes this graph.",
+        "severity": "high"
+      },
+      {
+        "finding": "No client-profile risk-classification.yaml or scoring.yaml was available in this workspace to derive systems[].tier, and the application's own safety_tier was left null by Discovery pending authoritative Safety Board / stakeholder input. tier is therefore omitted from the one systems[] entry rather than inferred.",
+        "severity": "medium"
+      },
+      {
+        "finding": "Unprotected PII in source control: the committed studentDB.accdb (784 KB) holds live student personal data (name, father's name, two mobile numbers, DOB) with no database password and no application authentication, in what the structural-analysis pass identifies as a public GitHub repository. This is a data-protection finding orthogonal to integration mapping, carried forward here because it bears on whether/how this system's data store should be exposed in any future state architecture.",
+        "severity": "high"
+      }
+    ]
+  },
+  "systems": [
+    {
+      "id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "name": "Student Management System (VB.NET)",
+      "archetype": "desktop",
+      "primary_language": "Visual Basic .NET"
+    }
+  ],
+  "data_flows": [],
+  "shared_identifiers": [],
+  "external_deps": [
+    {
+      "id": "ext-github-project-report",
+      "name": "GitHub project-report PDF link",
+      "kind": "public-web-link",
+      "owner": "unknown — no internal or external organizational owner recorded; publicly hosted on github.com under the original author's personal repository",
+      "description": "Dashboard 'Report' button shells out via Process.Start to a hardcoded public GitHub URL for the author's project-report PDF. Produces no report; it is the application's only outbound network reference. Discovery recommends treating it as an unimplemented requirements gap rather than an integration to migrate.",
+      "systems_using": [
+        "c70846ac-0948-4953-990c-c68a2be292d9"
+      ]
+    }
+  ],
+  "cross_system_capabilities": []
+}

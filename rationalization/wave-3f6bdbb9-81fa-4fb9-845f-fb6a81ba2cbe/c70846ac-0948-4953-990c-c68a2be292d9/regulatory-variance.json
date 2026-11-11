@@ -1,0 +1,54 @@
+{
+  "artifact": "regulatory-variance",
+  "produced_by": "redundancy-analyzer",
+  "scope": "intra-app",
+  "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+  "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+  "application_name": "Student Management System (VB.NET)",
+  "governing_profile": "faa",
+  "generated_date": "2026-10-05",
+  "determination": "NOT COMPUTABLE - no regulatory implementation variance exists to report, because no regulation is traced to any business rule in this application. This is a stated null result, not an omission and not a clean pass.",
+  "regulated_units_analyzed": 0,
+  "regulation_sections_compared": 0,
+  "variances": [],
+  "basis": {
+    "regulatory_traceability_available": false,
+    "detail": "The regulatory-redundancy methodology requires grouping units by shared regulation and then comparing their per-section implementations. The upstream business-logic extraction records 60 business rules across this application's 6 modules and traces ZERO of them to any regulation: regulatory_traceability is omitted from every rule rather than stubbed, rules_missing_from_regulation is 0, and no BR-MISSING records were generated. With no regulation mapped to any module, there are no regulated units to group and no section implementations to compare, so every input to a variance score is absent.",
+    "profile_regulatory_sources_considered": [
+      "14 CFR Part 47 (aircraft registration)",
+      "14 CFR Part 61 (pilot certification)",
+      "14 CFR Part 63 (other flight crewmembers)",
+      "14 CFR Part 67 (medical standards)",
+      "14 CFR Part 183 (representatives of the Administrator)"
+    ],
+    "profile_regulatory_sources_result": "No match on any entry. The upstream pass evaluated the governing faa profile's regulatory_sources against this application's single ten-column students table and 461 hand-written lines of code and determined them NOT APPLICABLE; this pass reproduces that determination rather than re-deriving it, and does not substitute a different regulation for them.",
+    "evidence_refs": [
+      {
+        "name": "Zero traced rules",
+        "detail": "60 business rules, none carrying regulatory_traceability; 23 flagged requires_sme_review",
+        "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+      },
+      {
+        "name": "Profile regulatory sources determined not applicable",
+        "detail": "profiles/faa/compliance.yaml regulatory_sources evaluated upstream with match_result 'No match on any entry'; the Part 47 applicable_systems list additionally carries an unresolved TODO(human) marker",
+        "artifact_path": "discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json"
+      }
+    ]
+  },
+  "profile_note": {
+    "declared_governing_profile": "faa",
+    "artifact_named_profile": "faa",
+    "discrepancy_against_this_dispatch": false,
+    "detail": "The authoritative dispatch declaration names faa as the governing profile and the staged business-logic.json names the same profile, so there is NO profile discrepancy arising from the input artifacts for this run. Separately, that upstream pass raised its own discrepancy_finding that an aviation-regulator profile does not plausibly govern a standalone academic student-records desktop application with no aviation concept in its data model or code, and marked it sme_review_required ('profile assignment, not business logic'). That finding is restated here as context only. It is not re-adjudicated by this pass: the faa profile stands as authoritative per the dispatch rules and was used as the sole policy source, and resolving whether the assignment is correct is a reviewer decision recorded upstream."
+  },
+  "unregulated_risk_surface_carried_forward": {
+    "note": "No regulation is traced, but the application does carry a regulatory SURFACE that a compliance reviewer should see even though it produces no variance rows here. Reported as carried-forward context from the upstream quality-risk pass, not as a finding of this skill.",
+    "items": [
+      "Live unredacted student PII (first/last name, father's name, two mobile numbers, date of birth) stored in studentDB.accdb with no encryption, no database password and no authentication or authorization layer anywhere in the application (AuthenticationMode=0, no login form in any of the 4 forms).",
+      "The PII dataset sits in public source control alongside a confirmed, exploitable SQL-injection path (ViewForm.vb:50) capable of exfiltrating it - escalated upstream as escalation-record.json ESC-1 / trigger ET-1 against all five data-touching modules.",
+      "No audit trail and no provenance columns on the students table, and physical deletion with no recovery path, so a data subject's access, correction or erasure request cannot be serviced or evidenced.",
+      "No education-sector or privacy regulation (for example FERPA or GDPR) appears anywhere in the staged inputs. Whether any such regime applies is OUT OF SCOPE for this skill and unanswerable from the supplied artifacts; it is named here so the gap is explicit rather than silent."
+    ]
+  },
+  "consolidation_implication": "None arising from regulation. The one consolidation cluster recorded in intra-app-redundancy.json (smsvb-student-record-crud: insert-form, edit-form, view-form) is justified entirely on entity, operation and persona overlap, with no regulatory-consistency component. Its three recorded source-of-truth conflicts - the gender value domain, the admission-year definition and roll-number mutability - are internal business-rule contradictions, NOT regulatory implementation variance, and must not be reported downstream as the latter."
+}

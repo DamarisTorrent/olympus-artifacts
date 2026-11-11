@@ -1,0 +1,39 @@
+{
+  "wave_id": "3f6bdbb9-81fa-4fb9-845f-fb6a81ba2cbe",
+  "scope": "cross-app",
+  "generated_date": "2026-10-05",
+  "governing_profile": "faa",
+  "analyst": "redundancy-analyzer skill (scope=cross-app). Companion nil report to redundancy-matrix.json.",
+  "determination": "NO VARIANCE COMPUTABLE — nil report, for two independent reasons, either of which alone would be sufficient.",
+  "reasons": [
+    {
+      "reason": "no_regulated_applications_in_wave",
+      "detail": "Regulatory variance analysis applies only to applications whose business rules trace to a regulation. The upstream business-logic-extraction pass evaluated this wave's sole application against the governing faa profile's regulatory_sources (14 CFR Part 47 aircraft registration, Part 61 pilot certification, Part 63 other flight crewmembers, Part 67 medical standards, Part 183 representatives of the Administrator) and recorded match_result 'No match on any entry': the application is a standalone student-academic-records desktop tool with no airman, certificate, rating, medical, endorsement, aircraft, registration, designee or examiner entity anywhere in its single 10-column table or its 461 lines of hand-written code. All 60 extracted rules are business conventions, defects or implementation artifacts, and regulatory_traceability is omitted from every one of them rather than populated with a fabricated citation.",
+      "evidence_path": "input-artifacts/wave-cross-app-redundancy/discovery/c70846ac-0948-4953-990c-c68a2be292d9/business-logic.json#/totals/regulatory_applicability"
+    },
+    {
+      "reason": "single_application_wave",
+      "detail": "Implementation variance is a comparison of how two or more applications implement the same regulation section. The wave roster declared in the dispatch context contains exactly one application (c70846ac-0948-4953-990c-c68a2be292d9), so even for a regulation that WERE implemented here there would be no second implementation to compare it against and no canonical-versus-divergent determination to make.",
+      "evidence_path": "input-artifacts/wave-cross-app-redundancy/_dispatch-context-wave-cross-app-redundancy.json#/app_ids"
+    }
+  ],
+  "applications_assessed": [
+    {
+      "application_id": "c70846ac-0948-4953-990c-c68a2be292d9",
+      "application_name": "Student Management System (VB.NET)",
+      "business_domain": "Admin",
+      "regulations_implemented": [],
+      "rules_with_regulatory_traceability": 0,
+      "rules_total": 60
+    }
+  ],
+  "regulation_groups": [],
+  "variance_findings": [],
+  "consolidation_opportunities": [],
+  "notes": [
+    "A nil report is emitted rather than no file at all, so that a reader of this wave's evidence body can tell that regulatory variance was assessed and found undefined, rather than skipped.",
+    "Carried forward, NOT adopted as a finding of this skill: the governing profile for this dispatch is 'faa' and every input artifact agrees faa is authoritative, so there is no profile-declaration conflict. What the catalog, structural-analysis, business-logic and ux-accessibility passes each independently flag is that this application's domain has no plausible aviation, NAS or FAA relevance — a profile-ASSIGNMENT question for the engagement owner, not a redundancy or variance question. It is recorded here because it is the reason the regulatory match set is empty.",
+    "The faa profile's compliance.yaml Part 47 applicable_systems list is self-described by the upstream pass as carrying an unresolved TODO(human) marker, so that list is unconfirmed. This does not change the determination: the application has no aviation entity of any kind, so no plausible completion of that list would produce a match.",
+    "If a later wave introduces a second application that implements any of the faa profile's regulatory sources, regulatory variance becomes computable for that wave and must be rescored. Nothing in this nil report forecloses that."
+  ]
+}
